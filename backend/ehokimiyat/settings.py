@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'users',
     'organizations',
     'tasks',
-    # 'audit',
+    'audit',
     'analytics',
     'notifications',
     'chat',
