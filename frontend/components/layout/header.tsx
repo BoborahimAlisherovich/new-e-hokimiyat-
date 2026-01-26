@@ -219,13 +219,17 @@ export function Header({ title, description }: HeaderProps) {
               <span className="font-semibold text-gray-900">{currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Фойдалнувчи"}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50">
-              <Settings className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">Созламалар</span>
+            <DropdownMenuItem asChild className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50">
+              <Link href="/dashboard/settings">
+                <User className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-700">Профил</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">Профил</span>
+            <DropdownMenuItem asChild className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50">
+              <Link href="/dashboard/settings">
+                <Settings className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-700">Созламалар</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={handleLogout}
