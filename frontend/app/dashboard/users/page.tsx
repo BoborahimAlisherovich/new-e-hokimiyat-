@@ -13,6 +13,13 @@ import {
   Eye,
   Edit,
   Lock,
+  UserCheck,
+  Shield,
+  AlertCircle,
+  Building,
+  Archive,
+  Phone,
+  Mail,
   Loader2,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useMemo } from "react"
@@ -39,6 +46,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { User, Organization } from "@/types"
 import { getUsers, getOrganizations } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 // Constants
 const ROLE_COLORS = {

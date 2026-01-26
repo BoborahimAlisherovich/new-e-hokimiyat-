@@ -68,7 +68,7 @@ export default function AppealsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
-  // Priority filter removed – not needed for appeals
+  const [priorityFilter, setPriorityFilter] = useState("all")
   const [districtFilter, setDistrictFilter] = useState("all")
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -147,11 +147,12 @@ export default function AppealsPage() {
 
       const matchesStatus = statusFilter === 'all' || (appeal.status || '').toUpperCase() === mapStatus(statusFilter)
       const matchesCategory = categoryFilter === 'all' || (appeal.category || '').toLowerCase() === (categoryFilter || '').toLowerCase()
+      const matchesPriority = priorityFilter === 'all' || (appeal.priority || '').toUpperCase() === (priorityFilter || '').toUpperCase()
       const matchesDistrict = districtFilter === 'all' || (appeal.district || '').toLowerCase() === (districtFilter || '').toLowerCase()
 
-      return matchesSearch && matchesStatus && matchesCategory && matchesDistrict
+      return matchesSearch && matchesStatus && matchesCategory && matchesPriority && matchesDistrict
     })
-  }, [appeals, searchQuery, statusFilter, categoryFilter, districtFilter])
+  }, [appeals, searchQuery, statusFilter, categoryFilter, priorityFilter, districtFilter])
 
   // Stats calculations
   const calculatedStats = useMemo(() => ({

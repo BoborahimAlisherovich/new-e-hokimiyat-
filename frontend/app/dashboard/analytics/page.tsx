@@ -172,6 +172,24 @@ export default function AnalyticsPage() {
               </Tabs>
             </section>
 
+            {/* Village-level map placeholder */}
+            <section className="animate-slide-up" style={{ animationDelay: "300ms" }}>
+              <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="text-lg">Қишлоқлар кесимидаги харита</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Харита маълумотлари ҳозирча мавжуд эмас. Маълумотлар киритилганда карта автоматик кўрсатилади.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
             {/* Additional Metrics */}
             <section className="animate-slide-up" style={{ animationDelay: "400ms" }}>
               <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
