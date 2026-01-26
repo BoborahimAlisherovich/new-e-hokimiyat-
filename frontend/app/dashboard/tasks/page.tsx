@@ -195,37 +195,6 @@ export default function TasksPage() {
           </div>
         </div>
       </>
-      {/* Task Detail Dialog */}
-      <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedTask?.title}</DialogTitle>
-            <DialogDescription>{selectedTask?.description}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <strong>Категория:</strong> {selectedTask?.category}
-            </div>
-            <div>
-              <strong>Муҳимлик:</strong> {PRIORITY_LABELS[selectedTask?.priority]}
-            </div>
-            <div>
-              <strong>Жавобгар:</strong> {selectedTask?.assignedTo?.firstName} {selectedTask?.assignedTo?.lastName}
-            </div>
-            <div>
-              <strong>Муддат:</strong> {new Date(selectedTask?.dueDate).toLocaleDateString("uz-UZ")}
-            </div>
-            <div>
-              <strong>Ҳолат:</strong> {STATUS_LABELS[selectedTask?.status]}
-            </div>
-          </div>
-          <DialogFooter className="flex justify-end">
-            <DialogClose asChild>
-              <Button variant="outline">Ёпиш</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     )
   }
 
