@@ -120,8 +120,9 @@ export default function TasksPage() {
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const query = searchQuery.toLowerCase()
+      const matchesSearch = (task.title || "").toLowerCase().includes(query) ||
+                         (task.description || "").toLowerCase().includes(query)
       
       const matchesStatus = statusFilter === "all" || task.status === statusFilter
       const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
