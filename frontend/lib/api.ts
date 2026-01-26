@@ -144,6 +144,19 @@ async function fetchApi<T>(
   }
   
   if (!response.ok) {
+    // Analytics endpoints may require elevated permissions; return empty data on 403.
+    if (response.status === 403 && endpoint.startsWith('/api/analytics/')) {
+      if (endpoint.includes('/api/analytics/organizations/')) {
+        return [] as T
+      }
+      if (endpoint.includes('/api/analytics/trends/')) {
+        return [] as T
+      }
+      if (endpoint.includes('/api/analytics/dashboard/')) {
+        return {} as T
+      }
+    }
+
     // Special handling for missing Settings endpoint – return empty object instead of throwing.
     if (response.status === 404 && endpoint.includes('/settings/')) {
       // Return an empty object typed as T to allow callers to handle missing data gracefully.
