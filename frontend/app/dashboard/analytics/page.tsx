@@ -32,8 +32,8 @@ export default function AnalyticsPage() {
     Promise.all([getTasks(), getOrganizations()])
       .then(([tasksList, orgsList]) => {
         if (!mounted) return
-        setTasks(tasksList)
-        setOrgs(orgsList)
+        setTasks(Array.isArray(tasksList) ? tasksList : [])
+        setOrgs(Array.isArray(orgsList) ? orgsList : [])
       })
       .catch(() => {})
     return () => {

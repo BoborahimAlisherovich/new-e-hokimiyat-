@@ -140,10 +140,11 @@ export default function UsersPage() {
   // Filtered users
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.phone.includes(searchQuery)
+      const query = searchQuery.toLowerCase()
+      const matchesSearch = (user.firstName || "").toLowerCase().includes(query) ||
+                         (user.lastName || "").toLowerCase().includes(query) ||
+                         (user.email || "").toLowerCase().includes(query) ||
+                         (user.phone || "").includes(searchQuery)
       
       const matchesRole = roleFilter === "all" || user.role === roleFilter
       const matchesStatus = statusFilter === "all" || user.status === statusFilter
