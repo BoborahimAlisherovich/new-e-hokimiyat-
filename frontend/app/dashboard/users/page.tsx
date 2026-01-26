@@ -501,11 +501,9 @@ export default function UsersPage() {
               Ёпиш
             </Button>
           </DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">
-                  Close
-                </Button>
-              </DialogClose>
+        </DialogContent>
+      </Dialog>
+
       {/* Create User Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-md">
@@ -619,10 +617,8 @@ export default function UsersPage() {
               Қўшиш
             </Button>
           </DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button onClick={handleCreateSubmit}>Save</Button>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }
