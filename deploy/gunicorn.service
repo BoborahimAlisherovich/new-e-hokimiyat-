@@ -1,0 +1,13 @@
+[Unit]
+Description=gunicorn daemon for E-Hokimiyat Backend
+After=network.target
+
+[Service]
+# User/Group - serveringizdagi foydalanuvchi nomiga o'zgartiring (masalan: ubuntu yoki root)
+User=root
+Group=www-data
+WorkingDirectory=/var/www/e-hokimiyat-hatirchi/backend
+ExecStart=/var/www/e-hokimiyat-hatirchi/backend/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/e-hokimiyat-hatirchi/backend/gunicorn.sock ehokimiyat.asgi:application -k uvicorn.workers.UvicornWorker
+
+[Install]
+WantedBy=multi-user.target
