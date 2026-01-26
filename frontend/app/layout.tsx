@@ -1,7 +1,6 @@
 // @ts-nocheck
 import type React from "react"
 import type { Metadata } from "next"
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -46,7 +45,6 @@ export default function RootLayout({
           </a>
           <I18nProvider>
             {children}
-            <Analytics />
           </I18nProvider>
         </ThemeProvider>
       </body>
