@@ -27,7 +27,8 @@ import type {
 } from '@/types'
 
 // API Base URL - Django backend
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api'
+// Use API subdomain in production, allow override via env
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.gameroom.uz'
 
 // ==================== Token Management ====================
 
