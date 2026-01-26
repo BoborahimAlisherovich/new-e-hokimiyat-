@@ -1,0 +1,38 @@
+[
+  {
+    "id": "qishloq-1",
+    "name": "Qishloq 1",
+    "path": "M50 50 L350 50 L350 200 L50 200 Z",
+    "stats": { "total": 120, "resolved": 80, "inProgress": 25, "pending": 15 }
+  },
+  {
+    "id": "qishloq-2",
+    "name": "Qishloq 2",
+    "path": "M380 50 L680 50 L680 200 L380 200 Z",
+    "stats": { "total": 95, "resolved": 60, "inProgress": 20, "pending": 15 }
+  },
+  {
+    "id": "qishloq-3",
+    "name": "Qishloq 3",
+    "path": "M710 50 L950 50 L950 200 L710 200 Z",
+    "stats": { "total": 60, "resolved": 40, "inProgress": 12, "pending": 8 }
+  },
+  {
+    "id": "qishloq-4",
+    "name": "Qishloq 4",
+    "path": "M50 230 L350 230 L350 430 L50 430 Z",
+    "stats": { "total": 140, "resolved": 95, "inProgress": 30, "pending": 15 }
+  },
+  {
+    "id": "qishloq-5",
+    "name": "Qishloq 5",
+    "path": "M380 230 L680 230 L680 430 L380 430 Z",
+    "stats": { "total": 110, "resolved": 70, "inProgress": 25, "pending": 15 }
+  },
+  {
+    "id": "qishloq-6",
+    "name": "Qishloq 6",
+    "path": "M710 230 L950 230 L950 430 L710 430 Z",
+    "stats": { "total": 45, "resolved": 28, "inProgress": 10, "pending": 7 }
+  }
+]

@@ -1,0 +1,82 @@
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+import { Appeal } from "@/types"
+import { Archive, Eye, MoreHorizontal } from "lucide-react"
+import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "./appeal-constants"
+
+interface AppealTableProps {
+  appeals: Appeal[]
+  onView: (appeal: Appeal) => void
+  onArchive: (appealId: string) => void
+}
+
+export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
+  return (
+    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Фуқаро</TableHead>
+              <TableHead>Мавзу</TableHead>
+              <TableHead>Категория</TableHead>
+              <TableHead>Ҳолат</TableHead>
+              <TableHead>Муҳимлик</TableHead>
+              <TableHead>Ҳудуд</TableHead>
+              <TableHead>Сана</TableHead>
+              <TableHead>Амаллар</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {appeals.map((appeal) => (
+              <TableRow key={appeal.id} className="hover:bg-muted/50 transition-colors">
+                <TableCell className="font-medium">{appeal.citizenName}</TableCell>
+                <TableCell>
+                  <div className="max-w-xs truncate" title={appeal.subject}>
+                    {appeal.subject}
+                  </div>
+                </TableCell>
+                <TableCell>{appeal.category}</TableCell>
+                <TableCell>
+                  <Badge className={cn("px-2 py-1 text-xs font-medium", STATUS_COLORS[appeal.status])}>
+                    {STATUS_LABELS[appeal.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={cn("px-2 py-1 text-xs font-medium", PRIORITY_COLORS[appeal.priority])}>
+                    {PRIORITY_LABELS[appeal.priority]}
+                  </Badge>
+                </TableCell>
+                <TableCell>{appeal.district}</TableCell>
+                <TableCell>{new Date(appeal.createdAt).toLocaleDateString("uz-UZ")}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onView(appeal)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Батафсил
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onArchive(appeal.id)}>
+                        <Archive className="mr-2 h-4 w-4" />
+                        Архивлаш
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+}

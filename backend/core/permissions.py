@@ -1,0 +1,161 @@
+"""
+Core permissions - Role-based access control for E-Hokimiyat.
+"""
+
+from rest_framework import permissions
+
+
+class RolePermission(permissions.BasePermission):
+    """
+    Base permission class for role-based access control.
+    """
+    allowed_roles = []
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.role in self.allowed_roles
+
+
+class IsHokim(RolePermission):
+    """
+    Permission for Hokim (Mayor) role.
+    """
+    allowed_roles = ['HOKIM']
+
+
+class IsHokimOrHokimlikMasul(RolePermission):
+    """
+    Permission for Hokim or Hokimlik Mas'uli roles.
+    """
+    allowed_roles = ['HOKIM', 'HOKIMLIK_MASUL']
+
+
+class IsTashkilotRahbari(RolePermission):
+    """
+    Permission for Tashkilot Rahbari (Organization Director) role.
+    """
+    allowed_roles = ['TASHKILOT_RAHBARI']
+
+
+class IsTashkilotMasul(RolePermission):
+    """
+    Permission for Tashkilot Mas'uli (Organization Responsible) role.
+    """
+    allowed_roles = ['TASHKILOT_MASUL']
+
+
+class CanManageUsers(permissions.BasePermission):
+    """
+    Permission to manage users based on hierarchy.
+    
+    Hierarchy:
+    - Hokim can add: Hokimlik mas'uli, Tashkilot rahbari, Tashkilot mas'uli
+    - Hokimlik mas'uli can add: Tashkilot rahbari, Tashkilot mas'uli
+    - Tashkilot rahbari can add: Tashkilot mas'uli
+    - Tashkilot mas'uli cannot add anyone
+    """
+    
+    ROLE_HIERARCHY = {
+        'HOKIM': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'HOKIMLIK_MASUL': ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'TASHKILOT_RAHBARI': ['TASHKILOT_MASUL'],
+        'TASHKILOT_MASUL': [],
+        'ADMIN': ['HOKIM', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+    }
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # GET requests are allowed for authenticated users
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        
+        # For POST/PUT/DELETE, check role hierarchy
+        return request.user.role in self.ROLE_HIERARCHY
+
+    def can_add_role(self, user_role, target_role):
+        """
+        Check if a user with user_role can add a user with target_role.
+        """
+        allowed_roles = self.ROLE_HIERARCHY.get(user_role, [])
+        return target_role in allowed_roles
+
+
+class CanManageOrganizations(permissions.BasePermission):
+    """
+    Permission to manage organizations.
+    Only Hokim and Hokimlik mas'uli can manage organizations.
+    """
+    allowed_roles = ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        
+        return request.user.role in self.allowed_roles
+
+
+class CanCreateTasks(permissions.BasePermission):
+    """
+    Permission to create tasks.
+    Only Hokim and Hokimlik mas'uli can create tasks.
+    """
+    allowed_roles = ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        
+        if request.method == 'POST':
+            return request.user.role in self.allowed_roles
+        
+        return True
+
+
+class CanExecuteTasks(permissions.BasePermission):
+    """
+    Permission to execute tasks (accept, report, etc.).
+    Tashkilot rahbari and Tashkilot mas'uli can execute tasks.
+    """
+    allowed_roles = ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.role in self.allowed_roles
+
+
+class CanCloseTask(permissions.BasePermission):
+    """
+    Permission to close/remove control from tasks.
+    Only Hokim can close tasks.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.role == 'HOKIM'
+
+
+class IsOwnerOrAdmin(permissions.BasePermission):
+    """
+    Permission for object owners or admins.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.user.role == 'ADMIN':
+            return True
+        
+        # Check if user is the owner
+        if hasattr(obj, 'user'):
+            return obj.user == request.user
+        if hasattr(obj, 'created_by'):
+            return obj.created_by == request.user
+        
+        return False

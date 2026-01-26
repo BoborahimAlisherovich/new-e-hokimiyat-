@@ -1,0 +1,925 @@
+FOYDALANUVCHILARNI QO‘SHISH VA BIRIKTIRISH MODELI
+
+(PNFL / JSHSHR + OneID asosida)
+
+1. ASOSIY KONSEPSIYA (MUHIM)
+
+👉 Foydalanuvchi tizimga oldindan kiritiladi
+👉 OneID orqali birinchi kirganda profili avtomatik faollashadi
+👉 Kim kimni qo‘sha olishi qat’iy ierarxiya bilan belgilanadi
+
+Bu model:
+
+xavfsiz
+
+nazoratli
+
+“begona odam kirib ketishi”ni imkonsiz qiladi
+
+2. IERARXIYA VA KIM KIMNI QO‘SHA OLADI
+
+✅ TUMAN HOKIMI qo‘sha oladi:
+
+Hokimlik masʼuli
+
+Tashkilot rahbari
+
+Tashkilot masʼuli
+
+✅ HOKIMLIK MASʼULI qo‘sha oladi:
+
+Tashkilot rahbari
+
+Tashkilot masʼuli
+
+✅ TASHKILOT RAHBARI qo‘sha oladi:
+
+Tashkilot masʼuli
+
+❌ Tashkilot masʼuli:
+
+hech kimni qo‘sha olmaydi
+
+3. FOYDALANUVCHI QO‘SHISH JARAYONI (TEXNIK OQIM)
+
+1-bosqich. PNFL (JSHSHR) orqali qo‘shish
+
+Vakolatli shaxs quyidagi ma’lumotlarni kiritadi:
+
+PNFL (JSHSHR) — majburiy
+
+F.I.Sh
+
+Rol (faqat o‘ziga ruxsat etilgan rollar)
+
+Tashkilot (agar mavjud bo‘lsa)
+
+Lavozim
+
+Telefon (ixtiyoriy)
+
+📌 Bu vaqtda foydalanuvchi holati:
+
+status = "KUTILMOQDA"
+
+oneid_connected = false
+
+2-bosqich. OneID orqali kirish
+
+Foydalanuvchi:
+
+OneID login/paroli bilan tizimga kiradi
+
+OneID’dan kelgan JSHSHR tizimdagi JSHSHR bilan match qilinadi
+
+Agar mos kelsa:
+
+status = "FAOL"
+
+oneid_connected = true
+
+first_login_at = timestamp
+
+❌ Agar JSHSHR mos kelmasa — kirish rad etiladi.
+
+4. TEXNIK QOIDALAR (JUDAYAM MUHIM)
+
+🔐 Xavfsizlik:
+
+OneID’dan kelgan JSHSHR — asosiy identifikator
+
+Foydalanuvchi JSHSHR ni o‘zi o‘zgartira olmaydi
+
+Bitta JSHSHR = bitta aktiv profil
+
+🧾 Audit log:
+
+Har bir amal yoziladi:
+
+kim qo‘shdi
+
+qaysi rol bilan
+
+qachon
+
+qaysi tashkilotga
+
+Misol:
+
+2026-01-17 10:32
+
+Hokim (ID:1)
+
+Tashkilot rahbari qo‘shdi
+
+PNFL: ***********
+
+5. ROL VA KABINETLARGA BIRIKTIRISH (UI LOGIKA)
+
+Kabinet rolga qarab avtomatik ochiladi.
+
+6. CHEGARALAR VA BLOKIROVKALAR
+
+Hokim:
+
+o‘zini o‘chira olmaydi
+
+Hokimlik masʼuli:
+
+hokimni o‘chira olmaydi
+
+hokim huquqlarini pasaytira olmaydi
+
+Tashkilot rahbari:
+
+boshqa tashkilotga foydalanuvchi qo‘sha olmaydi
+
+7. NIMA UCHUN BU MODEL TO‘G‘RI?
+
+PNFL = real shaxs
+
+OneID = davlat tasdiqlagan autentifikatsiya
+
+Oldindan qo‘shish = nazorat
+
+Ierarxiya = tartib
+
+Audit log = masʼuliyat
+
+Bu model my.gov.uz, e-ijro, e-xatlov kabi tizimlarda qo‘llanadigan klassik va ishonchli yondashuv.
+
+8. QISQA TEXNIK FORMULA
+
+User (PNFL) -> Pre-created
+
+↓
+
+OneID login
+
+↓
+
+PNFL match
+
+↓
+
+Profile activated
+
+↓
+
+Role-based cabinet
+
+YAKUNIY XULOSA
+
+👉 Siz aytgan talab 100% to‘g‘ri va professional
+👉 Bu yondashuv bilan tizim:
+
+xavfsiz bo‘ladi
+
+boshqariladigan bo‘ladi
+
+davlat auditi talablariga mos bo‘ladi
+
+9. FOYDALANUVCHI HAYOT SIKLI (USER LIFECYCLE)
+
+9.1. Holatlar (statuslar)
+
+DRAFT        – tizimga PNFL kiritilgan, lekin hali faollashmagan
+
+KUTILMOQDA   – OneID orqali kirishi kutilmoqda
+
+FAOL         – OneID orqali muvaffaqiyatli kirgan
+
+BLOKLANGAN  – vaqtincha o‘chirilgan
+
+ARXIV       – lavozimdan ketgan (tarix saqlanadi)
+
+9.2. Hayot sikli oqimi
+
+[PNFL kiritildi]
+
+↓
+
+[DRAFT / KUTILMOQDA]
+
+↓  (OneID login)
+
+[FAOL]
+
+↓
+
+[BLOKLANGAN] → qayta FAOL bo‘lishi mumkin
+
+↓
+
+[ARXIV] (qayta faollashtirib bo‘lmaydi)
+
+❗ Topshiriqlar va loglar ARXIV foydalanuvchida ham saqlanadi
+
+10. MA’LUMOTLAR BAZASI MODELI (SODDALASHTIRILGAN)
+
+10.1. User (foydalanuvchi)
+
+User
+
+- id
+
+- pnfl (unique, indexed)
+
+- first_name
+
+- last_name
+
+- middle_name
+
+- phone
+
+- role_id
+
+- organization_id (nullable)
+
+- status
+
+- oneid_connected (bool)
+
+- created_by (FK User)
+
+- created_at
+
+- activated_at
+
+10.2. Role
+
+Role
+
+- id
+
+- name
+
+(Hokim, Hokimlik masʼuli, Tashkilot rahbari, Tashkilot masʼuli, Admin)
+
+10.3. Organization
+
+Organization
+
+- id
+
+- name
+
+- parent_org (nullable)
+
+- is_active
+
+10.4. UserAssignment (kim kimni qo‘shgan)
+
+UserAssignment
+
+- id
+
+- assigned_user
+
+- assigned_by
+
+- assigned_role
+
+- assigned_at
+
+Bu jadval audit va ierarxiyani tekshirish uchun juda muhim.
+
+11. ROLE → PERMISSION MATRIX (ANIQ)
+
+12. FOYDALANUVCHI QO‘SHISH API OQIMI
+
+12.1. User create (PNFL orqali)
+
+POST /api/users/
+
+{
+
+"pnfl": "12345678901234",
+
+"role": "ORG_MANAGER",
+
+"organization_id": 5
+
+}
+
+Server tekshiradi:
+
+rol ruxsat etilganmi
+
+tashkilot mos keladimi
+
+ierarxiya buzilmaganmi
+
+12.2. OneID login callback
+
+OneID → redirect → /auth/oneid/callback
+
+Backend:
+
+OneID’dan pnfl oladi
+
+bazadagi pnfl bilan solishtiradi
+
+mos bo‘lsa → FAOL qiladi
+
+13. ONEID INTEGRATSIYA SXEMASI
+
+User → Login via OneID
+
+↓
+
+OneID Auth Server
+
+↓
+
+Callback (pnfl, fio)
+
+↓
+
+Local DB check
+
+↓
+
+Profile activation
+
+❌ PNFL topilmasa:
+
+“Siz tizimga oldindan kiritilmagansiz”
+
+14. XAVFSIZLIK CHEGARALARI
+
+OneID ma’lumotlari:
+
+faqat backendda saqlanadi
+
+Frontend PNFL ko‘rmaydi (masking)
+
+Har bir:
+
+qo‘shish
+
+o‘chirish
+
+rol o‘zgarishi
+alohida audit logga yoziladi
+
+15. NIMA UCHUN BU ARXITEKTURA MUVAFFAQIYATLI?
+
+Ierarxiya buzilmaydi
+
+Hokim to‘liq nazoratda
+
+Masʼuliyat shaxsga bog‘langan
+
+OneID bilan davlat darajasida tasdiq
+
+Audit tekshiruvdan o‘tadi
+
+16. TOPSHIRIQ HAYOT SIKLI (TASK LIFECYCLE)
+
+17.1. Topshiriq statuslari (yakuniy, standartlashtirilgan)
+
+YANGI
+
+IJRODA
+
+BAJARILDI
+
+QAYTA_IJROGA_YUBORILDI
+
+MUDDATI_KECH
+
+BAJARILMADI
+
+NAZORATDAN_YECHILDI
+
+❗ Muhim:
+“NAZORATDAN_YECHILDI” — yakuniy status
+undan keyin hech qanday o‘zgarish bo‘lmaydi.
+
+16.2. Status o‘zgarishlariga KIM RUXSAT BERADI
+
+16.3. Avtomatik statuslar (SYSTEM ACTION)
+
+Quyidagi statuslar foydalanuvchi tomonidan emas, tizim tomonidan o‘zgartiriladi:
+
+IJRODA → MUDDATI_KECH
+
+MUDDATI_KECH → BAJARILMADI
+
+📌 Bu Celery background job orqali ishlaydi (har 5–10 daqiqa).
+
+17. TOPSHIRIQ IJROSI (IJRO JURNALI)
+
+17.1. TaskExecution modeli
+
+TaskExecution
+
+- id
+
+- task_id
+
+- executed_by (User)
+
+- action_type
+
+- comment
+
+- attachments
+
+- created_at
+
+action_type qiymatlari:
+
+IJROGA_OLINDI
+
+HISOBOT_TOPSHIRILDI
+
+QAYTA_YUBORILDI
+
+NAZORATDAN_YECHILDI
+
+MUDDAT_UZAYTIRISH_SOROVI
+
+Bu jadval:
+
+sud
+
+prokuratura
+
+audit
+uchun asosiy dalil bo‘ladi.
+
+18. CHAT + IJRO = BITTA TIMELINE
+
+❗ Muhim dizayn qarori:
+Chat alohida emas, topshiriq tarixining bir qismi bo‘ladi.
+
+TaskTimeline
+
+- message
+
+- file
+
+- audio
+
+- system_log
+
+Natija:
+
+“Nima bo‘ldi?” degan savolga bitta sahifada javob
+
+19. MUDDAT UZAYTIRISH MEXANIZMI
+
+19.1. Kim so‘rov yubora oladi
+
+Tashkilot rahbari
+
+Tashkilot masʼuli
+
+19.2. Kim tasdiqlaydi
+
+Faqat Hokim
+
+19.3. Status oqimi
+
+IJRODA
+
+↓ (so‘rov)
+
+MUDDAT_UZAYTIRISH_KUTILMOQDA
+
+↓ (hokim)
+
+IJRODA (yangi deadline)
+
+20. BIR NECHTA TASHKILOTGA BIRIKTIRILGAN TOPSHIRIQ
+
+Muhim qoida:
+
+Topshiriq bitta,
+
+lekin ijro sub-tasklar bo‘ladi.
+
+Task
+
+├── TaskOrganization (Org A) → status
+
+├── TaskOrganization (Org B) → status
+
+└── TaskOrganization (Org C) → status
+
+🔹 Hokim:
+
+har bir tashkilot ijrosini alohida ko‘radi
+
+umumiy statusni faqat o‘zi yopadi
+
+21. ANALITIKA UCHUN MUHIM METRIKALAR
+
+Tizim avtomatik hisoblaydi:
+
+o‘rtacha ijro muddati
+
+kechikish foizi
+
+tashkilot reytingi
+
+ustuvorlik bo‘yicha yuklama
+
+masʼul xodimlar samaradorligi
+
+Bu AI modulga to‘g‘ridan-to‘g‘ri ozuqa bo‘ladi.
+
+22. REAL HAYOTDAGI SCENARIY (MISOL)
+
+Hokim topshiriq yaratdi (3 ta tashkilot)
+
+Tashkilot A → ijroga oldi
+
+Tashkilot B → kechikdi
+
+Tashkilot C → bajarib hisobot yukladi
+
+Hokim:
+
+C ni nazoratdan yechdi
+
+B ni qayta ijroga yubordi
+
+👉 Hammasi bitta topshiriq ichida, aniq va shaffof.
+
+23. API ENDPOINTLAR (IMPLEMENTATSIYAGA TAYYOR)
+
+23.1. AUTENTIFIKATSIYA (OneID)
+
+GET  /auth/oneid/login
+
+GET  /auth/oneid/callback
+
+POST /auth/logout
+
+GET  /auth/me
+
+/auth/me
+– foydalanuvchi roli
+– kabinet turi
+– tashkilot
+– huquqlar (permissions)
+
+23.2. FOYDALANUVCHILAR (PNFL ASOSIDA)
+
+Foydalanuvchi qo‘shish
+
+POST /api/users/
+
+{
+
+"pnfl": "12345678901234",
+
+"role": "ORG_MANAGER",
+
+"organization_id": 7,
+
+"position": "Bo‘lim boshlig‘i"
+
+}
+
+➡️ Backend tekshiradi:
+
+kim qo‘shyapti
+
+qaysi rolni qo‘sha oladi
+
+ierarxiya buzilmaganmi
+
+Foydalanuvchilar ro‘yxati
+
+GET /api/users/?role=ORG_MANAGER&status=FAOL
+
+Foydalanuvchini bloklash / arxivlash
+
+PATCH /api/users/{id}/block
+
+PATCH /api/users/{id}/archive
+
+23.3. TASHKILOTLAR
+
+POST   /api/organizations/
+
+GET    /api/organizations/
+
+PUT    /api/organizations/{id}
+
+DELETE /api/organizations/{id}
+
+⚠️ Faqat:
+
+Hokim
+
+Hokimlik masʼuli
+
+23.4. TOPSHIRIQLAR
+
+Topshiriq yaratish
+
+POST /api/tasks/
+
+{
+
+"title": "Ichki yo‘llarni ta’mirlash",
+
+"description": "...",
+
+"priority": "MUHIM_SHOSHILINCH",
+
+"deadline": "2026-02-01",
+
+"organizations": [3,5,7],
+
+"location": {
+
+"lat": 40.123,
+
+"lng": 67.456
+
+}
+
+}
+
+Topshiriqlar ro‘yxati
+
+GET /api/tasks/?status=IJRODA&priority=MUHIM
+
+Filtrlar:
+
+status
+
+muddat
+
+tashkilot
+
+ustuvorlik
+
+kechikkan / kechikmagan
+
+23.5. TOPSHIRIQ IJROSI
+
+Ijroga olish
+
+POST /api/tasks/{id}/accept
+
+Hisobot topshirish
+
+POST /api/tasks/{id}/report
+
+{
+
+"comment": "Bajarildi",
+
+"attachments": ["file1.pdf", "photo.jpg"]
+
+}
+
+Muddat uzaytirish so‘rovi
+
+POST /api/tasks/{id}/extend-request
+
+23.6. HOKIM AMALLARI (FAKAT HOKIM)
+
+POST /api/tasks/{id}/close
+
+POST /api/tasks/{id}/reassign
+
+POST /api/tasks/{id}/remove-control
+
+23.7. CHAT / TIMELINE
+
+GET  /api/tasks/{id}/timeline
+
+POST /api/tasks/{id}/message
+
+{
+
+"type": "text | file | audio",
+
+"content": "Izoh..."
+
+}
+
+23.8. ANALITIKA
+
+GET /api/analytics/dashboard
+
+GET /api/analytics/organizations
+
+GET /api/analytics/users
+
+24. BACKEND TEXNIK QOIDALAR
+
+Har bir endpoint:
+
+permission check
+
+audit log yozadi
+
+PNFL frontendga to‘liq ko‘rinmaydi (masking)
+
+Fayllar alohida storage’da
+
+Status o‘zgarishi → signal → notification
+
+25. FRONTEND UCHUN TAYYOR HOLAT
+
+Shu API bilan:
+
+frontend mustaqil ishlay oladi
+
+mobil ilova keyin qo‘shilishi mumkin
+
+boshqa davlat tizimlari integratsiyasi oson
+
+Rol
+
+Kabinet
+
+Hokim
+
+Hokim kabineti
+
+Hokimlik masʼuli
+
+Hokimlik kabineti
+
+Tashkilot rahbari
+
+Tashkilot kabineti
+
+Tashkilot masʼuli
+
+Tashkilot kabineti
+
+Admin
+
+Texnik admin
+
+Amal
+
+Hokim
+
+Hokimlik masʼuli
+
+Tashkilot rahbari
+
+Tashkilot masʼuli
+
+Hokimlik masʼulini qo‘shish
+
+✅
+
+✅
+
+❌
+
+❌
+
+Tashkilot rahbarini qo‘shish
+
+✅
+
+✅
+
+❌
+
+❌
+
+Tashkilot masʼulini qo‘shish
+
+✅
+
+✅
+
+✅
+
+❌
+
+Tashkilot yaratish
+
+✅
+
+✅
+
+❌
+
+❌
+
+Topshiriq yaratish
+
+✅
+
+✅
+
+❌
+
+❌
+
+Nazoratdan yechish
+
+✅
+
+❌
+
+❌
+
+❌
+
+Hisobot yuklash
+
+❌
+
+❌
+
+✅
+
+✅
+
+Status o‘zgarishi
+
+Hokim
+
+Hokimlik masʼuli
+
+Tashkilot rahbari
+
+Tashkilot masʼuli
+
+YANGI → IJRODA
+
+❌ (avto)
+
+❌
+
+✅
+
+✅
+
+IJRODA → BAJARILDI
+
+❌
+
+❌
+
+✅
+
+✅
+
+BAJARILDI → NAZORATDAN_YECHILDI
+
+✅
+
+❌
+
+❌
+
+❌
+
+BAJARILDI → QAYTA_IJROGA_YUBORILDI
+
+✅
+
+❌
+
+❌
+
+❌
+
+IJRODA → MUDDATI_KECH
+
+❌ (avto)
+
+❌
+
+❌
+
+❌
+
+MUDDATI_KECH → BAJARILDI
+
+❌
+
+❌
+
+✅
+
+✅
+
+MUDDATI_KECH → BAJARILMADI
+
+❌ (avto)
+
+❌
+
+❌
+
+❌
