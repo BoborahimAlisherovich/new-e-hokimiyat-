@@ -6,7 +6,7 @@ import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: "Топшириқлар Бошқарув Тизими",
+  title: "E-Hokimiyat",
   description: "Туман ҳокимлиги топшириқлар бошқарув тизими - вазифалар, ижро назорати, аналитика",
   generator: "v0.app",
   icons: {
