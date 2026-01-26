@@ -15,7 +15,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-this-in
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,.ngrok-free.app,.ngrok.io').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1,0.0.0.0,.ngrok-free.app,.ngrok.io,api.gameroom.uz,gameroom.uz'
+).split(',')
 
 # Application definition
 INSTALLED_APPS = [
