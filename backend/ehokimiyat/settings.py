@@ -173,7 +173,7 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,https://be80eeee622c.ngrok-free.app'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz'
 ).split(',')
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.ngrok-free\.app$",
@@ -200,6 +200,11 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://gameroom.uz,https://api.gameroom.uz'
+).split(',')
 
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
