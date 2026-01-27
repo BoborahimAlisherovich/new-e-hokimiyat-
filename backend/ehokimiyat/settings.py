@@ -17,7 +17,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,0.0.0.0,.ngrok-free.app,.ngrok.io,api.gameroom.uz,gameroom.uz'
+    'localhost,127.0.0.1,0.0.0.0,10.115.92.158,api.gameroom.uz,gameroom.uz'
 ).split(',')
 
 # Application definition

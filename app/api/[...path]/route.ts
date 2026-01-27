@@ -48,7 +48,8 @@ async function proxyRequest(
   method: string
 ) {
   const path = pathSegments.join('/')
-  const url = `${API_BASE}/api/${path}`
+  // Django requires trailing slash for POST requests
+  const url = `${API_BASE}/api/${path}${path.endsWith('/') ? '' : '/'}`
   
   // Get headers from original request
   const headers: Record<string, string> = {}

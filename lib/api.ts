@@ -159,7 +159,7 @@ async function fetchApi<T>(
   // Non‑401 response handling
   if (!response.ok) {
     // Gracefully handle missing Settings endpoint – return empty object instead of throwing.
-    if (response.status === 404 && endpoint.includes('/api/settings/')) {
+    if (response.status === 404 && endpoint.includes('/settings/')) {
       return {} as T
     }
     const errorText = await response.text().catch(() => 'No response body')
@@ -190,7 +190,7 @@ async function tryRefreshToken(): Promise<boolean> {
   if (!refreshToken) return false
   
   try {
-    const response = await fetch(`${API_BASE}/api/auth/token/refresh/`, {
+    const response = await fetch(`${API_BASE}/auth/token/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh: refreshToken }),
@@ -220,7 +220,7 @@ function buildQueryString(params: Record<string, any>): string {
 // ==================== Auth API ====================
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/api/auth/login/`, {
+  const response = await fetch(`${API_BASE}/auth/login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -243,14 +243,14 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 
 export async function logout(): Promise<void> {
   try {
-    await fetchApi('/api/auth/logout/', { method: 'POST' })
+    await fetchApi('/auth/logout/', { method: 'POST' })
   } finally {
     clearTokens()
   }
 }
 
 export async function getCurrentUser(): Promise<User> {
-  return fetchApi<User>('/api/auth/me/')
+  return fetchApi<User>('/auth/me/')
 }
 
 export async function refreshToken(): Promise<TokenRefreshResponse> {
@@ -281,34 +281,34 @@ export async function getUsers(
 ): Promise<User[]> {
   const params = { ...filters, page, page_size: pageSize }
   const queryString = buildQueryString(params)
-  const response = await fetchApi<PaginatedResponse<User>>(`/api/users${queryString}`)
+  const response = await fetchApi<PaginatedResponse<User>>(`/users${queryString}`)
   return response.results || []
 }
 
 export async function getUserById(id: number | string): Promise<User> {
-  return fetchApi<User>(`/api/users/${id}/`)
+  return fetchApi<User>(`/users/${id}/`)
 }
 
 export async function createUser(data: UserCreateInput): Promise<User> {
-  return fetchApi<User>('/api/users/', {
+  return fetchApi<User>('/users/', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 export async function updateUser(id: number | string, data: UserUpdateInput): Promise<User> {
-  return fetchApi<User>(`/api/users/${id}/`, {
+  return fetchApi<User>(`/users/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
 export async function deleteUser(id: number | string): Promise<void> {
-  return fetchApi<void>(`/api/users/${id}/`, { method: 'DELETE' })
+  return fetchApi<void>(`/users/${id}/`, { method: 'DELETE' })
 }
 
 export async function getUserStatistics(id: number | string) {
-  return fetchApi<any>(`/api/users/${id}/statistics/`)
+  return fetchApi<any>(`/users/${id}/statistics/`)
 }
 
 // ==================== Organizations API ====================
@@ -320,16 +320,16 @@ export async function getOrganizations(
 ): Promise<Organization[]> {
   const params = { ...filters, page, page_size: pageSize }
   const queryString = buildQueryString(params)
-  const response = await fetchApi<PaginatedResponse<Organization>>(`/api/organizations${queryString}`)
+  const response = await fetchApi<PaginatedResponse<Organization>>(`/organizations${queryString}`)
   return response.results || []
 }
 
 export async function getOrganizationById(id: number | string): Promise<Organization> {
-  return fetchApi<Organization>(`/api/organizations/${id}/`)
+  return fetchApi<Organization>(`/organizations/${id}/`)
 }
 
 export async function createOrganization(data: OrganizationCreateInput): Promise<Organization> {
-  return fetchApi<Organization>('/api/organizations/', {
+  return fetchApi<Organization>('/organizations/', {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -339,22 +339,22 @@ export async function updateOrganization(
   id: number | string,
   data: OrganizationUpdateInput
 ): Promise<Organization> {
-  return fetchApi<Organization>(`/api/organizations/${id}/`, {
+  return fetchApi<Organization>(`/organizations/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
 export async function deleteOrganization(id: number | string): Promise<void> {
-  return fetchApi<void>(`/api/organizations/${id}/`, { method: 'DELETE' })
+  return fetchApi<void>(`/organizations/${id}/`, { method: 'DELETE' })
 }
 
 export async function getOrganizationStatistics(id: number | string): Promise<any> {
-  return fetchApi<any>(`/api/organizations/${id}/statistics/`)
+  return fetchApi<any>(`/organizations/${id}/statistics/`)
 }
 
 export async function getOrganizationTree(): Promise<Organization[]> {
-  return fetchApi<Organization[]>('/api/organizations/tree/')
+  return fetchApi<Organization[]>('/organizations/tree/')
 }
 
 // ==================== Tasks API ====================
@@ -366,69 +366,69 @@ export async function getTasks(
 ): Promise<Task[]> {
   const params = { ...filters, page, page_size: pageSize }
   const queryString = buildQueryString(params)
-  const response = await fetchApi<PaginatedResponse<Task>>(`/api/tasks${queryString}`)
+  const response = await fetchApi<PaginatedResponse<Task>>(`/tasks${queryString}`)
   if (!response || !response.results) return []
   return response.results
 }
 
 export async function getTaskById(id: number | string): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/`)
+  return fetchApi<Task>(`/tasks/${id}/`)
 }
 
 export async function createTask(data: TaskCreateInput | FormData): Promise<Task> {
   const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
-  return fetchApi<Task>('/api/tasks/', {
+  return fetchApi<Task>('/tasks/', {
     method: 'POST',
     body: isFormData ? data : JSON.stringify(data),
   })
 }
 
 export async function updateTask(id: number | string, data: TaskUpdateInput): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/`, {
+  return fetchApi<Task>(`/tasks/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
 export async function deleteTask(id: number | string): Promise<void> {
-  return fetchApi<void>(`/api/tasks/${id}/`, { method: 'DELETE' })
+  return fetchApi<void>(`/tasks/${id}/`, { method: 'DELETE' })
 }
 
 // Task status actions
 export async function acceptTask(id: number | string): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/accept/`, { method: 'POST' })
+  return fetchApi<Task>(`/tasks/${id}/accept/`, { method: 'POST' })
 }
 
 export async function startTask(id: number | string): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/start/`, { method: 'POST' })
+  return fetchApi<Task>(`/tasks/${id}/start/`, { method: 'POST' })
 }
 
 export async function submitTaskForReview(
   id: number | string,
   data: { comment?: string }
 ): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/submit_for_review/`, {
+  return fetchApi<Task>(`/tasks/${id}/submit_for_review/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 export async function approveTask(id: number | string, data: { comment?: string }): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/approve/`, {
+  return fetchApi<Task>(`/tasks/${id}/approve/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 export async function rejectTask(id: number | string, data: { comment: string }): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/reject/`, {
+  return fetchApi<Task>(`/tasks/${id}/reject/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 export async function cancelTask(id: number | string, data: { comment: string }): Promise<Task> {
-  return fetchApi<Task>(`/api/tasks/${id}/cancel/`, {
+  return fetchApi<Task>(`/tasks/${id}/cancel/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -436,14 +436,14 @@ export async function cancelTask(id: number | string, data: { comment: string })
 
 // Task executions
 export async function getTaskExecutions(taskId: number | string): Promise<TaskExecution[]> {
-  return fetchApi<TaskExecution[]>(`/api/tasks/${taskId}/executions/`)
+  return fetchApi<TaskExecution[]>(`/tasks/${taskId}/executions/`)
 }
 
 export async function createTaskExecution(
   taskId: number | string,
   data: { comment: string; progress_percentage?: number }
 ): Promise<TaskExecution> {
-  return fetchApi<TaskExecution>(`/api/tasks/${taskId}/executions/`, {
+  return fetchApi<TaskExecution>(`/tasks/${taskId}/executions/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -451,7 +451,7 @@ export async function createTaskExecution(
 
 // Task chat
 export async function getTaskChat(taskId: number | string): Promise<TaskChatMessage[]> {
-  return fetchApi<TaskChatMessage[]>(`/api/tasks/${taskId}/timeline/`)
+  return fetchApi<TaskChatMessage[]>(`/tasks/${taskId}/timeline/`)
 }
 
 export async function sendTaskMessage(
@@ -472,7 +472,7 @@ export async function sendTaskMessage(
   if (hasContent) form.append('content', data.content!.trim())
   if (hasAttachment) form.append('attachment', data.attachment)
   
-  return fetchApi<TaskChatMessage>(`/api/tasks/${taskId}/timeline/`, {
+  return fetchApi<TaskChatMessage>(`/tasks/${taskId}/timeline/`, {
     method: 'POST',
     body: form,
   })
@@ -483,7 +483,7 @@ export async function updateTaskMessage(
   messageId: number | string,
   content: string
 ): Promise<TaskChatMessage> {
-  return fetchApi<TaskChatMessage>(`/api/tasks/${taskId}/messages/${messageId}/`, {
+  return fetchApi<TaskChatMessage>(`/tasks/${taskId}/messages/${messageId}/`, {
     method: 'PATCH',
     body: JSON.stringify({ content }),
   })
@@ -493,7 +493,7 @@ export async function deleteTaskMessage(
   taskId: number | string,
   messageId: number | string
 ): Promise<void> {
-  return fetchApi<void>(`/api/tasks/${taskId}/messages/${messageId}/`, {
+  return fetchApi<void>(`/tasks/${taskId}/messages/${messageId}/`, {
     method: 'DELETE',
   })
 }
@@ -501,11 +501,11 @@ export async function deleteTaskMessage(
 // ==================== Direct Chat API ====================
 
 export async function getChatConversations(): Promise<any[]> {
-  return fetchApi<any[]>('/api/chat/messages/conversations/')
+  return fetchApi<any[]>('/chat/messages/conversations/')
 }
 
 export async function getChatMessages(userId: number | string): Promise<any[]> {
-  return fetchApi<any[]>(`/api/chat/messages/conversation/${userId}/`)
+  return fetchApi<any[]>(`/chat/messages/conversation/${userId}/`)
 }
 
 export async function sendChatMessage(
@@ -524,13 +524,13 @@ export async function sendChatMessage(
           })
       formData.append('attachment', file)
     }
-    return fetchApi<any>(`/api/chat/messages/message/${userId}/`, {
+    return fetchApi<any>(`/chat/messages/message/${userId}/`, {
       method: 'POST',
       body: formData,
     })
   }
 
-  return fetchApi<any>(`/api/chat/messages/message/${userId}/`, {
+  return fetchApi<any>(`/chat/messages/message/${userId}/`, {
     method: 'POST',
     body: JSON.stringify({ content: data.content || '' }),
   })
@@ -538,16 +538,16 @@ export async function sendChatMessage(
 
 // Task history
 export async function getTaskHistory(taskId: number | string) {
-  return fetchApi<any[]>(`/api/tasks/${taskId}/history/`)
+  return fetchApi<any[]>(`/tasks/${taskId}/history/`)
 }
 
 // Task statistics
 export async function getMyTasks(): Promise<Task[]> {
-  return fetchApi<Task[]>('/api/tasks/my_tasks/')
+  return fetchApi<Task[]>('/tasks/my_tasks/')
 }
 
 export async function getOverdueTasks(): Promise<Task[]> {
-  return fetchApi<Task[]>('/api/tasks/overdue/')
+  return fetchApi<Task[]>('/tasks/overdue/')
 }
 
 // ==================== Notifications API ====================
@@ -557,27 +557,27 @@ export async function getNotifications(
   pageSize = 100
 ): Promise<Notification[]> {
   const response = await fetchApi<PaginatedResponse<Notification>>(
-    `/api/notifications/?page=${page}&page_size=${pageSize}`
+    `/notifications/?page=${page}&page_size=${pageSize}`
   )
   return response.results || []
 }
 
 export async function getNotificationById(id: number | string): Promise<Notification> {
-  return fetchApi<Notification>(`/api/notifications/${id}/`)
+  return fetchApi<Notification>(`/notifications/${id}/`)
 }
 
 export async function markNotificationRead(id: number | string): Promise<Notification> {
-  return fetchApi<Notification>(`/api/notifications/${id}/mark_read/`, {
+  return fetchApi<Notification>(`/notifications/${id}/mark_read/`, {
     method: 'POST',
   })
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  return fetchApi<void>('/api/notifications/mark_all_read/', { method: 'POST' })
+  return fetchApi<void>('/notifications/mark_all_read/', { method: 'POST' })
 }
 
 export async function getUnreadNotificationsCount(): Promise<number> {
-  const data = await fetchApi<{ count: number }>('/api/notifications/unread_count/')
+  const data = await fetchApi<{ count: number }>('/notifications/unread_count/')
   return data.count
 }
 
@@ -596,31 +596,31 @@ export async function getAuditLogs(
 ): Promise<AuditLog[]> {
   const params = { ...filters, page, page_size: pageSize }
   const queryString = buildQueryString(params)
-  const response = await fetchApi<PaginatedResponse<AuditLog>>(`/api/audit${queryString}`)
+  const response = await fetchApi<PaginatedResponse<AuditLog>>(`/audit${queryString}`)
   return response.results || []
 }
 
 // ==================== Analytics API ====================
 
 export async function getAnalyticsDashboard(): Promise<DashboardStats> {
-  return fetchApi<DashboardStats>('/api/analytics/dashboard/')
+  return fetchApi<DashboardStats>('/analytics/dashboard/')
 }
 
 export async function getAnalyticsOrganizations(): Promise<OrganizationAnalytics[]> {
-  return fetchApi<OrganizationAnalytics[]>('/api/analytics/organizations/')
+  return fetchApi<OrganizationAnalytics[]>('/analytics/organizations/')
 }
 
 export async function getAnalyticsUsers() {
-  return fetchApi<any>('/api/analytics/users/')
+  return fetchApi<any>('/analytics/users/')
 }
 
 export async function getAnalyticsTrends(period: 'week' | 'month' | 'year' = 'month'): Promise<TaskTrends> {
-  return fetchApi<TaskTrends>(`/api/analytics/trends/?period=${period}`)
+  return fetchApi<TaskTrends>(`/analytics/trends/?period=${period}`)
 }
 
 export async function getAnalyticsExport(format: 'xlsx' | 'pdf' = 'xlsx'): Promise<Blob> {
   const token = getAccessToken()
-  const response = await fetch(`${API_BASE}/api/analytics/export/?format=${format}`, {
+  const response = await fetch(`${API_BASE}/analytics/export/?format=${format}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -636,22 +636,22 @@ export async function getAnalyticsExport(format: 'xlsx' | 'pdf' = 'xlsx'): Promi
 // ==================== Regions & Districts API ====================
 
 export async function getRegions(): Promise<Region[]> {
-  return fetchApi<Region[]>('/api/regions/')
+  return fetchApi<Region[]>('/regions/')
 }
 
 export async function getDistricts(regionId?: number): Promise<District[]> {
   const query = regionId ? `?region=${regionId}` : ''
-  return fetchApi<District[]>(`/api/districts/${query}`)
+  return fetchApi<District[]>(`/districts/${query}`)
 }
 
 // ==================== Settings API ====================
 
 export async function getSettings(): Promise<any> {
-  return fetchApi<any>('/api/settings/')
+  return fetchApi<any>('/settings/')
 }
 
 export async function updateSettings(data: any): Promise<any> {
-  return fetchApi<any>('/api/settings/', {
+  return fetchApi<any>('/settings/', {
     method: 'PUT',
     body: JSON.stringify(data),
   })
@@ -667,7 +667,7 @@ export async function uploadFile(file: File, taskId?: number): Promise<{ url: st
   }
   
   const token = getAccessToken()
-  const response = await fetch(`${API_BASE}/api/files/upload/`, {
+  const response = await fetch(`${API_BASE}/files/upload/`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
