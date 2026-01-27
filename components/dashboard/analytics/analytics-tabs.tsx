@@ -15,7 +15,7 @@ export function AnalyticsTabs() {
             value="sector"
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            Сўҳа бўйича
+            Соҳа бўйича
           </TabsTrigger>
           <TabsTrigger
             value="organizations"

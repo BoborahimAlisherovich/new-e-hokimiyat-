@@ -12,7 +12,6 @@ git pull origin main
 
 # 2. Frontendni tozalash va build qilish
 echo "🏗️ Frontend Build..."
-cd frontend
 rm -rf .next
 rm -rf node_modules/.cache
 npm install
