@@ -40,7 +40,7 @@ export default function OrganizationsPage() {
   }, [])
 
   const filteredOrganizations = organizations.filter((org) => {
-    const matchesStatus = statusFilter === "all" || (org.isActive ? "ACTIVE" : "INACTIVE") === statusFilter
+    const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
     const matchesType = typeFilter === "all" || org.sector === typeFilter
     const matchesSearch =
       (org.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||

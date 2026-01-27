@@ -60,14 +60,14 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 {task.title}
               </div>
             </TableCell>
-            <TableCell>{task.category}</TableCell>
+            <TableCell>{task.category || '—'}</TableCell>
             <TableCell>
               <Badge className={cn("px-2 py-1 text-xs font-medium", PRIORITY_COLORS[task.priority])}>
                 {PRIORITY_LABELS[task.priority]}
               </Badge>
             </TableCell>
             <TableCell>{task.created_by?.first_name} {task.created_by?.last_name}</TableCell>
-            <TableCell onClick={(e) => e.stopPropagation()}>{new Date(task.due_date).toLocaleDateString("uz-UZ")}</TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>{task.deadline ? new Date(task.deadline).toLocaleDateString("uz-UZ") : '—'}</TableCell>
             <TableCell>
               <Badge className={cn("px-2 py-1 text-xs font-medium", (STATUS_COLORS as any)[task.status])}>
                 {(STATUS_LABELS as any)[task.status]}

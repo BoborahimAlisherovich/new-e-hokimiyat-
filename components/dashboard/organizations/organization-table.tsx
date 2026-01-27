@@ -52,12 +52,12 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                   <Badge
                     variant="outline"
                     className={`font-normal border-border/50 ${
-                      org.isActive
+                      org.is_active
                         ? "bg-accent/10 text-accent hover:bg-accent/20"
                         : "bg-muted/20 text-muted-foreground hover:bg-muted/30"
                     } transition-colors duration-200`}
                   >
-                    {org.isActive ? "Фаол" : "Нофаол"}
+                    {org.is_active ? "Фаол" : "Нофаол"}
                   </Badge>
                 </TableCell>
                 <TableCell className="px-6 py-4">
@@ -81,11 +81,11 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className={`hover:bg-amber/10 hover:text-amber-600 transition-all duration-300 rounded-lg ${
-                          !org.isActive ? "text-muted-foreground" : ""
+                          !org.is_active ? "text-muted-foreground" : ""
                         }`}
                       >
                         <Lock className="mr-2 h-4 w-4" />
-                        {org.isActive ? "Нофаоллаштириш" : "Фаоллаштириш"}
+                        {org.is_active ? "Нофаоллаштириш" : "Фаоллаштириш"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
