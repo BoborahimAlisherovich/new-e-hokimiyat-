@@ -139,7 +139,7 @@ export default function SettingsPage() {
         <div className="max-w-4xl mx-auto">
           <Tabs defaultValue="profile" className="space-y-6">
             <SettingsTabs t={t} isAdmin={isAdmin} />
-            <SettingsProfileTab t={t} currentUser={userForProfile} />
+            <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
             <SettingsNotificationsTab
               t={t}
               emailNotifications={emailNotifications}

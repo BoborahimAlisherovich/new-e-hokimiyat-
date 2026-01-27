@@ -119,9 +119,16 @@ export function Sidebar() {
     
     // Fetch current user
     let isMounted = true
-    getCurrentUser()
-      .then((user) => isMounted && setCurrentUser(user))
-      .catch(() => {})
+    const fetchUser = () => {
+      getCurrentUser()
+        .then((user) => isMounted && setCurrentUser(user))
+        .catch(() => {})
+    }
+    fetchUser()
+    
+    // Listen for user profile updates
+    const handleUserUpdated = () => fetchUser()
+    window.addEventListener('userUpdated', handleUserUpdated)
     
     // Fetch unread counts
     const fetchUnreadCounts = async () => {
@@ -144,6 +151,7 @@ export function Sidebar() {
     return () => {
       isMounted = false
       window.removeEventListener("resize", handleResize)
+      window.removeEventListener('userUpdated', handleUserUpdated)
       clearInterval(interval)
     }
   }, [])
