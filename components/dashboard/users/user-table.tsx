@@ -54,7 +54,7 @@ export function UserTable({ users, onView, onEdit, onDelete }: UserTableProps) {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-sm">{maskPnfl(user.pnfl)}</TableCell>
+                <TableCell className="font-mono text-sm">{(user as any).masked_pnfl || maskPnfl(user.pnfl || '')}</TableCell>
                 <TableCell>{user.position}</TableCell>
                 <TableCell>{user.organization?.name || "Ташкилот белгиланмаган"}</TableCell>
                 <TableCell>

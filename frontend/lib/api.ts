@@ -659,12 +659,77 @@ export async function postSettings(body: any) {
   return updateSettings(body)
 }
 
+// Map Task status to Appeal status
+function mapTaskStatusToAppealStatus(status: string): 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED' {
+  switch (status) {
+    case 'YANGI':
+      return 'PENDING'
+    case 'IJRODA':
+    case 'QABUL_QILINDI':
+    case 'JARAYONDA':
+      return 'IN_PROGRESS'
+    case 'BAJARILDI':
+    case 'NAZORATDAN_YECHILDI':
+      return 'RESOLVED'
+    case 'RAD_ETILDI':
+    case 'BEKOR_QILINDI':
+      return 'REJECTED'
+    default:
+      return 'PENDING'
+  }
+}
+
+// Map Task priority to Appeal priority
+function mapTaskPriorityToAppealPriority(priority: string): 'LOW' | 'MEDIUM' | 'HIGH' {
+  switch (priority) {
+    case 'PAST':
+      return 'LOW'
+    case 'ODDIY':
+      return 'MEDIUM'
+    case 'YUQORI':
+    case 'FAVQULODDA':
+      return 'HIGH'
+    default:
+      return 'MEDIUM'
+  }
+}
+
+// Map Task to Appeal interface
+function mapTaskToAppeal(task: any): any {
+  // Extract citizen name from description if available
+  let citizenName = 'Номаълум фуқаро'
+  const descMatch = task.description?.match(/Fuqaro\s+(\S+\s+\S+)/i)
+  if (descMatch) {
+    citizenName = descMatch[1]
+  }
+  
+  return {
+    id: String(task.id),
+    citizenName: citizenName,
+    citizenPhone: '',
+    citizenEmail: '',
+    subject: task.title || '',
+    description: task.description || '',
+    category: task.category || 'IJRO',
+    priority: mapTaskPriorityToAppealPriority(task.priority),
+    status: mapTaskStatusToAppealStatus(task.status),
+    assignedTo: task.created_by,
+    organization: task.assigned_organizations?.[0]?.organization,
+    district: task.address || 'Xatirchi tumani',
+    address: task.address || '',
+    createdAt: task.created_at,
+    updatedAt: task.updated_at,
+  }
+}
+
 export async function getAppeals() {
   // Appeals are now handled as tasks with specific category
   const tasks = await getTasks({ category: 'IJRO' })
-  return tasks || []
+  // Map tasks to Appeal format
+  return (tasks || []).map(mapTaskToAppeal)
 }
 
 export async function getAppealById(id: string) {
-  return getTaskById(id)
+  const task = await getTaskById(id)
+  return mapTaskToAppeal(task)
 }

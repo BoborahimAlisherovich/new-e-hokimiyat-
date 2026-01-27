@@ -16,16 +16,31 @@ export function OrganizationRatings() {
     getAnalyticsOrganizations()
       .then((list) => {
         if (!mounted) return
-        setOrgs(list)
+        // Map API response to component's expected format
+        const mappedList = (list || []).map((item: any) => ({
+          id: item.organization?.id || item.id,
+          name: item.organization?.name || item.name,
+          shortName: item.organization?.short_name || item.short_name,
+          totalTasks: item.total_tasks ?? 0,
+          completedTasks: item.completed_tasks ?? 0,
+          inProgressTasks: item.in_progress_tasks ?? 0,
+          overdueTasks: item.overdue_tasks ?? 0,
+          completionRate: item.completion_rate ?? 0,
+          rating: item.rating ?? 0,
+          performance: item.rating ?? item.completion_rate ?? 0,
+        }))
+        setOrgs(mappedList)
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("Tashkilotlar reytingini yuklashda xatolik:", err)
+      })
     return () => {
       mounted = false
     }
   }, [])
 
-  // API already returns rating/completion data, sort by completionRate/performance
-  const sortedOrgs = [...orgs].sort((a, b) => (b.performance ?? 0) - (a.performance ?? 0))
+  // Sort by rating/performance descending
+  const sortedOrgs = [...orgs].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
 
   const getRankColor = (index: number) => {
     switch (index) {
