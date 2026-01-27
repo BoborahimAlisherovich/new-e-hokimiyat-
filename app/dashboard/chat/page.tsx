@@ -67,6 +67,7 @@ interface ChatUser {
 interface Conversation {
   user: ChatUser
   messages: Message[]
+  unreadCount?: number
 }
 
 export default function ChatPage() {
@@ -151,6 +152,7 @@ export default function ChatPage() {
         convMap.set(otherId, {
           user,
           messages: lastMsg ? [lastMsg] : [],
+          unreadCount: conv.unread_count || 0,
         })
       })
       setConversations(convMap)
@@ -399,13 +401,17 @@ export default function ChatPage() {
         const newMap = new Map(prev)
         const conv = newMap.get(userId)
         if (conv) {
-          newMap.set(userId, { ...conv, messages: mapped })
+          // Messages are now read, set unreadCount to 0
+          newMap.set(userId, { ...conv, messages: mapped, unreadCount: 0 })
         } else {
           const user = users.find(u => u.id === userId)
-          if (user) newMap.set(userId, { user, messages: mapped })
+          if (user) newMap.set(userId, { user, messages: mapped, unreadCount: 0 })
         }
         return newMap
       })
+      
+      // Dispatch event to update sidebar unread count
+      window.dispatchEvent(new Event('chatRead'))
     } catch (error) {
       console.error("Chat tarixini yuklashda xatolik:", error)
     }
@@ -481,6 +487,8 @@ export default function ChatPage() {
                 {filteredUsers.map((user) => {
                   const lastMsg = getLastMessage(user.id)
                   const isSelected = selectedUserId === user.id
+                  const conv = conversations.get(user.id)
+                  const unreadCount = conv?.unreadCount || 0
                   
                   return (
                     <button
@@ -500,17 +508,23 @@ export default function ChatPage() {
                         {user.is_online && (
                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
                         )}
+                        {/* Unread message badge */}
+                        {unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center justify-between gap-2 min-w-0">
-                          <p className="font-medium text-sm truncate">
+                          <p className={cn("font-medium text-sm truncate", unreadCount > 0 && "font-bold")}>
                             {user.first_name} {user.last_name}
                           </p>
                           {lastMsg && (
                             <span className="text-xs text-muted-foreground shrink-0">{lastMsg.time}</span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className={cn("text-xs text-muted-foreground truncate", unreadCount > 0 && "font-semibold text-foreground")}>
                           {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Фойдаланувчи")}
                         </p>
                       </div>
