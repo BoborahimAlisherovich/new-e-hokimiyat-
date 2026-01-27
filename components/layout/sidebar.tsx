@@ -130,6 +130,10 @@ export function Sidebar() {
     const handleUserUpdated = () => fetchUser()
     window.addEventListener('userUpdated', handleUserUpdated)
     
+    // Listen for chat read events
+    const handleChatRead = () => fetchUnreadCounts()
+    window.addEventListener('chatRead', handleChatRead)
+    
     // Fetch unread counts
     const fetchUnreadCounts = async () => {
       try {
@@ -152,6 +156,7 @@ export function Sidebar() {
       isMounted = false
       window.removeEventListener("resize", handleResize)
       window.removeEventListener('userUpdated', handleUserUpdated)
+      window.removeEventListener('chatRead', handleChatRead)
       clearInterval(interval)
     }
   }, [])
@@ -313,7 +318,7 @@ export function Sidebar() {
                   )} />
                   {/* Badge for collapsed state */}
                   {collapsed && hasBadge && (
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
                       {item.badge > 99 ? '99+' : item.badge}
                     </span>
                   )}
@@ -331,8 +336,7 @@ export function Sidebar() {
                     {/* Badge for expanded state */}
                     {hasBadge && (
                       <Badge 
-                        variant="destructive" 
-                        className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px] font-bold"
+                        className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-emerald-500 text-white hover:bg-emerald-600 border-0"
                       >
                         {item.badge > 99 ? '99+' : item.badge}
                       </Badge>
