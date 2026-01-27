@@ -27,14 +27,14 @@ import type {
 } from '@/types'
 
 // API Base URL - Django backend
-// Production: https://api.gameroom.uz, Development: /api (proxy)
+// Production: https://api.gameroom.uz/api, Development: /api (proxy)
 const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL
   }
   // Production environment detection
   if (typeof window !== 'undefined' && window.location.hostname === 'gameroom.uz') {
-    return 'https://api.gameroom.uz'
+    return 'https://api.gameroom.uz/api'
   }
   return '/api'
 }
