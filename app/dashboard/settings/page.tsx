@@ -11,11 +11,14 @@ import { SettingsProfileTab } from "@/components/dashboard/settings/settings-pro
 import { SettingsNotificationsTab } from "@/components/dashboard/settings/settings-notifications-tab"
 import { SettingsSecurityTab } from "@/components/dashboard/settings/settings-security-tab"
 import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-appearance-tab"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const t = useTranslation()
+  const { toast } = useToast()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   
   // Notification settings (stored locally for now)
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -65,19 +68,39 @@ export default function SettingsPage() {
   const isAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "HOKIM"
 
   const saveSettings = async () => {
-    // Save notification settings to localStorage
-    const notificationSettings = {
-      email: emailNotifications,
-      telegram: telegramNotifications,
-      push: pushNotifications,
-      deadline: taskDeadlineReminder,
-      newTask: newTaskNotification,
+    setSaving(true)
+    try {
+      // Save notification settings to localStorage
+      const notificationSettings = {
+        email: emailNotifications,
+        telegram: telegramNotifications,
+        push: pushNotifications,
+        deadline: taskDeadlineReminder,
+        newTask: newTaskNotification,
+      }
+      localStorage.setItem("notifications", JSON.stringify(notificationSettings))
+      localStorage.setItem("language", language)
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      toast({
+        title: "Muvaffaqiyatli saqlandi",
+        description: "Sozlamalar muvaffaqiyatli saqlandi",
+      })
+    } catch (error) {
+      toast({
+        title: "Xatolik",
+        description: "Sozlamalarni saqlashda xatolik yuz berdi",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
-    localStorage.setItem("notifications", JSON.stringify(notificationSettings))
-    localStorage.setItem("language", language)
   }
 
   const userForProfile = currentUser ? {
+    id: currentUser.id,
     firstName: currentUser.first_name || "",
     lastName: currentUser.last_name || "",
     middleName: currentUser.middle_name || "",
@@ -116,7 +139,7 @@ export default function SettingsPage() {
         <div className="max-w-4xl mx-auto">
           <Tabs defaultValue="profile" className="space-y-6">
             <SettingsTabs t={t} isAdmin={isAdmin} />
-            <SettingsProfileTab t={t} currentUser={userForProfile} onSave={saveSettings} />
+            <SettingsProfileTab t={t} currentUser={userForProfile} />
             <SettingsNotificationsTab
               t={t}
               emailNotifications={emailNotifications}
@@ -130,9 +153,10 @@ export default function SettingsPage() {
               taskDeadlineReminder={taskDeadlineReminder}
               onDeadlineChange={setTaskDeadlineReminder}
               onSave={saveSettings}
+              saving={saving}
             />
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
-            <SettingsAppearanceTab t={t} language={language} onLanguageChange={setLanguage} onSave={saveSettings} />
+            <SettingsAppearanceTab t={t} language={language} onLanguageChange={setLanguage} onSave={saveSettings} saving={saving} />
           </Tabs>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TabsContent } from "@/components/ui/tabs"
 import { useTranslation } from "@/lib/i18n/context"
-import { Globe, Save } from "lucide-react"
+import { Globe, Save, Loader2 } from "lucide-react"
 
 type Translation = ReturnType<typeof useTranslation>
 
@@ -12,10 +12,11 @@ interface SettingsAppearanceTabProps {
   t: Translation
   language: string
   onLanguageChange: (value: string) => void
-  onSave: () => void
+  onSave: () => Promise<void>
+  saving?: boolean
 }
 
-export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave }: SettingsAppearanceTabProps) {
+export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, saving }: SettingsAppearanceTabProps) {
   return (
     <TabsContent value="appearance">
       <Card className="bg-card border-border">
@@ -40,9 +41,17 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave }:
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={onSave} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              <Save className="mr-2 h-4 w-4" />
-              {t.common.save}
+            <Button 
+              onClick={onSave} 
+              disabled={saving}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {saving ? "Saqlanmoqda..." : t.common.save}
             </Button>
           </div>
         </CardContent>

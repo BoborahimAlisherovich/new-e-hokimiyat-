@@ -18,6 +18,8 @@ import {
   Users,
   MessageSquare,
   MapPin,
+  Check,
+  CheckCheck,
 } from "lucide-react"
 import { getChatConversations, getChatMessages, getCurrentUser, getUsers, sendChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -48,6 +50,7 @@ interface Message {
   content: string
   attachment?: MessageAttachment
   timestamp: string
+  is_read: boolean
 }
 
 interface ChatUser {
@@ -194,6 +197,7 @@ export default function ChatPage() {
       content: msg.content || "",
       attachment,
       timestamp: msg.created_at || new Date().toISOString(),
+      is_read: msg.is_read ?? false,
     }
   }
 
@@ -570,6 +574,19 @@ export default function ChatPage() {
                             <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
                               <span className="text-sm font-medium text-foreground">{msg.senderName}</span>
                               <span className="text-xs text-muted-foreground">{formatDateTime(msg.timestamp)}</span>
+                              {/* Read status checkmarks - only show for current user's messages */}
+                              {isCurrentUser && (
+                                <span className={cn(
+                                  "flex items-center",
+                                  msg.is_read ? "text-blue-500" : "text-muted-foreground"
+                                )}>
+                                  {msg.is_read ? (
+                                    <CheckCheck className="h-4 w-4" />
+                                  ) : (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </span>
+                              )}
                             </div>
                             <div
                               className={cn(

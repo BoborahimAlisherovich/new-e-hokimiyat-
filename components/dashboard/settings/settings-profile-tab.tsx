@@ -7,12 +7,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "@/lib/i18n/context"
-import { Save, UserCheck } from "lucide-react"
-import { useState } from "react"
+import { Save, UserCheck, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { updateCurrentUserProfile } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 type Translation = ReturnType<typeof useTranslation>
 
 interface CurrentUser {
+  id?: number | string
   firstName: string
   lastName: string
   middleName?: string
@@ -24,14 +27,61 @@ interface CurrentUser {
 interface SettingsProfileTabProps {
   t: Translation
   currentUser: CurrentUser
-  onSave: () => void
+  onSave?: () => Promise<void>
+  saving?: boolean
 }
 
-export function SettingsProfileTab({ t, currentUser, onSave }: SettingsProfileTabProps) {
+export function SettingsProfileTab({ t, currentUser }: SettingsProfileTabProps) {
+  const { toast } = useToast()
   const [firstName, setFirstName] = useState(currentUser.firstName)
   const [lastName, setLastName] = useState(currentUser.lastName)
   const [middleName, setMiddleName] = useState(currentUser.middleName || "")
   const [phone, setPhone] = useState(currentUser.phone || "")
+  const [saving, setSaving] = useState(false)
+
+  // Update state when currentUser changes
+  useEffect(() => {
+    setFirstName(currentUser.firstName)
+    setLastName(currentUser.lastName)
+    setMiddleName(currentUser.middleName || "")
+    setPhone(currentUser.phone || "")
+  }, [currentUser])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await updateCurrentUserProfile({
+        first_name: firstName,
+        last_name: lastName,
+        middle_name: middleName,
+        phone: phone,
+      }, currentUser.id)
+      
+      // Update localStorage user
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        user.first_name = firstName
+        user.last_name = lastName
+        user.middle_name = middleName
+        user.phone = phone
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+      
+      toast({
+        title: "Muvaffaqiyatli saqlandi",
+        description: "Profil ma'lumotlari backendga saqlandi",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Xatolik",
+        description: error.message || "Profilni saqlashda xatolik yuz berdi",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const getInitials = () => {
     const first = firstName?.[0] || ""
@@ -133,11 +183,16 @@ export function SettingsProfileTab({ t, currentUser, onSave }: SettingsProfileTa
 
           <div className="flex justify-end pt-4">
             <Button
-              onClick={onSave}
-              className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+              onClick={handleSave}
+              disabled={saving}
+              className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-medium disabled:opacity-50"
             >
-              <Save className="mr-2 h-4 w-4" />
-              {t.common.save}
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {saving ? "Saqlanmoqda..." : t.common.save}
             </Button>
           </div>
         </CardContent>
