@@ -27,14 +27,20 @@ import type {
 } from '@/types'
 
 // API Base URL - Django backend
-// Production: https://api.gameroom.uz/api, Development: /api (proxy)
+// Production: https://api.gameroom.uz/api, Development: http://localhost:8000/api
 const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL
   }
   // Production environment detection
-  if (typeof window !== 'undefined' && window.location.hostname === 'gameroom.uz') {
-    return 'https://api.gameroom.uz/api'
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'gameroom.uz') {
+      return 'https://api.gameroom.uz/api'
+    }
+    // Development - to'g'ridan-to'g'ri backend'ga murojaat
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:8000/api'
+    }
   }
   return '/api'
 }
@@ -323,6 +329,32 @@ export async function getUserStatistics(id: number | string) {
   return fetchApi<any>(`/users/${id}/statistics/`)
 }
 
+export async function updateCurrentUserProfile(
+  data: {
+    first_name?: string
+    last_name?: string
+    middle_name?: string
+    phone?: string
+    email?: string
+  },
+  userId?: number | string
+): Promise<User> {
+  // Use provided userId or get from localStorage
+  let id = userId
+  if (!id) {
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    if (!userStr) {
+      throw new ApiError('User not found', 401)
+    }
+    const user = JSON.parse(userStr)
+    id = user.id
+  }
+  return fetchApi<User>(`/users/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
 // ==================== Organizations API ====================
 
 export async function getOrganizations(
@@ -512,18 +544,37 @@ export async function deleteTaskMessage(
 
 // ==================== Direct Chat API ====================
 
-export async function getChatConversations(): Promise<any[]> {
-  return fetchApi<any[]>('/chat/messages/conversations/')
+export interface ChatMessage {
+  id: number
+  sender: { id: string; first_name: string; last_name: string; full_name?: string }
+  sender_name: string
+  recipient: { id: string; first_name: string; last_name: string; full_name?: string }
+  recipient_name: string
+  content: string
+  attachment?: string | null
+  created_at: string
+  updated_at: string
+  is_read: boolean
 }
 
-export async function getChatMessages(userId: number | string): Promise<any[]> {
-  return fetchApi<any[]>(`/chat/messages/conversation/${userId}/`)
+export interface ChatConversation {
+  user: { id: string; first_name: string; last_name: string; full_name?: string }
+  last_message: ChatMessage
+  unread_count: number
+}
+
+export async function getChatConversations(): Promise<ChatConversation[]> {
+  return fetchApi<ChatConversation[]>('/chat/messages/conversations/')
+}
+
+export async function getChatMessages(userId: number | string): Promise<ChatMessage[]> {
+  return fetchApi<ChatMessage[]>(`/chat/messages/conversation/${userId}/`)
 }
 
 export async function sendChatMessage(
   userId: number | string,
   data: { content?: string; attachment?: File | Blob | null }
-): Promise<any> {
+): Promise<ChatMessage> {
   const hasAttachment = data.attachment instanceof File || data.attachment instanceof Blob
   if (hasAttachment) {
     const formData = new FormData()
@@ -536,16 +587,28 @@ export async function sendChatMessage(
           })
       formData.append('attachment', file)
     }
-    return fetchApi<any>(`/chat/messages/message/${userId}/`, {
+    return fetchApi<ChatMessage>(`/chat/messages/message/${userId}/`, {
       method: 'POST',
       body: formData,
     })
   }
 
-  return fetchApi<any>(`/chat/messages/message/${userId}/`, {
+  return fetchApi<ChatMessage>(`/chat/messages/message/${userId}/`, {
     method: 'POST',
     body: JSON.stringify({ content: data.content || '' }),
   })
+}
+
+export async function markChatMessagesAsRead(messageIds: number[]): Promise<void> {
+  return fetchApi<void>('/chat/messages/mark-as-read/', {
+    method: 'POST',
+    body: JSON.stringify({ message_ids: messageIds }),
+  })
+}
+
+export async function getUnreadChatCount(): Promise<number> {
+  const data = await fetchApi<{ unread_count: number }>('/chat/messages/unread-count/')
+  return data.unread_count
 }
 
 // Task history
@@ -589,8 +652,8 @@ export async function markAllNotificationsRead(): Promise<void> {
 }
 
 export async function getUnreadNotificationsCount(): Promise<number> {
-  const data = await fetchApi<{ count: number }>('/notifications/unread_count/')
-  return data.count
+  const data = await fetchApi<{ unread: number }>('/notifications/unread_count/')
+  return data.unread
 }
 
 // ==================== Audit API ====================

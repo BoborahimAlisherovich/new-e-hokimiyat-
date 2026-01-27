@@ -24,7 +24,8 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getCurrentUser } from "@/lib/api"
+import { Badge } from "@/components/ui/badge"
+import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 
 // Role-based menu configuration based on texnik topshiriq.txt
@@ -99,6 +100,8 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
 
   useEffect(() => {
     const handleResize = () => {
@@ -120,9 +123,28 @@ export function Sidebar() {
       .then((user) => isMounted && setCurrentUser(user))
       .catch(() => {})
     
+    // Fetch unread counts
+    const fetchUnreadCounts = async () => {
+      try {
+        const [chatCount, notifCount] = await Promise.all([
+          getUnreadChatCount().catch(() => 0),
+          getUnreadNotificationsCount().catch(() => 0),
+        ])
+        if (isMounted) {
+          setUnreadChatCount(chatCount)
+          setUnreadNotificationsCount(notifCount)
+        }
+      } catch (e) {}
+    }
+    
+    fetchUnreadCounts()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCounts, 30000)
+    
     return () => {
       isMounted = false
       window.removeEventListener("resize", handleResize)
+      clearInterval(interval)
     }
   }, [])
 
@@ -161,6 +183,7 @@ export function Sidebar() {
       title: "Билдиришномалар",
       href: "/dashboard/notifications",
       icon: Bell,
+      badge: unreadNotificationsCount,
     },
     {
       title: "Мурожаатлар",
@@ -171,6 +194,7 @@ export function Sidebar() {
       title: "Чат",
       href: "/dashboard/chat",
       icon: MessageSquare,
+      badge: unreadChatCount,
     },
     {
       title: "Аналитика",
@@ -259,6 +283,7 @@ export function Sidebar() {
       >
         {navItems.map((item, index) => {
           const isActive = pathname === item.href
+          const hasBadge = item.badge && item.badge > 0
           
           return (
             <Link key={item.href} href={item.href}>
@@ -273,22 +298,42 @@ export function Sidebar() {
                 role="menuitem"
                 aria-current={isActive ? "page" : undefined}
               >
-                <item.icon className={cn(
-                  "h-5 w-5 flex-shrink-0 transition-colors duration-150",
-                  isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
-                )} />
+                <div className="relative">
+                  <item.icon className={cn(
+                    "h-5 w-5 flex-shrink-0 transition-colors duration-150",
+                    isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
+                  )} />
+                  {/* Badge for collapsed state */}
+                  {collapsed && hasBadge && (
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </div>
                 
                 {!collapsed && (
-                  <span className={cn(
-                    "truncate transition-colors duration-150",
-                    isActive ? "font-semibold" : "text-sm"
-                  )}>
-                    {item.title}
-                  </span>
+                  <>
+                    <span className={cn(
+                      "truncate transition-colors duration-150 flex-1",
+                      isActive ? "font-semibold" : "text-sm"
+                    )}>
+                      {item.title}
+                    </span>
+                    
+                    {/* Badge for expanded state */}
+                    {hasBadge && (
+                      <Badge 
+                        variant="destructive" 
+                        className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px] font-bold"
+                      >
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </Badge>
+                    )}
+                  </>
                 )}
                 
                 {/* Active indicator */}
-                {isActive && !collapsed && (
+                {isActive && !collapsed && !hasBadge && (
                   <div className="ml-auto">
                     <div className="w-2 h-2 bg-white rounded-full opacity-90"></div>
                   </div>

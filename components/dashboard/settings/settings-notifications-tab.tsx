@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { TabsContent } from "@/components/ui/tabs"
-import { AlertCircle, Bell, Mail, MessageSquare, Save, Smartphone } from "lucide-react"
+import { AlertCircle, Bell, Mail, MessageSquare, Save, Smartphone, Loader2 } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
 
 type Translation = ReturnType<typeof useTranslation>
@@ -20,7 +20,8 @@ interface SettingsNotificationsTabProps {
   onNewTaskChange: (value: boolean) => void
   taskDeadlineReminder: boolean
   onDeadlineChange: (value: boolean) => void
-  onSave: () => void
+  onSave: () => Promise<void>
+  saving?: boolean
 }
 
 export function SettingsNotificationsTab({
@@ -36,6 +37,7 @@ export function SettingsNotificationsTab({
   taskDeadlineReminder,
   onDeadlineChange,
   onSave,
+  saving,
 }: SettingsNotificationsTabProps) {
   return (
     <TabsContent value="notifications" className="animate-fade-in">
@@ -130,10 +132,15 @@ export function SettingsNotificationsTab({
           <div className="flex justify-end pt-6">
             <Button
               onClick={onSave}
-              className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-250 hover:scale-105"
+              disabled={saving}
+              className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-250 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <Save className="mr-2 h-5 w-5" />
-              {t.common.save}
+              {saving ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-5 w-5" />
+              )}
+              {saving ? "Saqlanmoqda..." : t.common.save}
             </Button>
           </div>
         </CardContent>

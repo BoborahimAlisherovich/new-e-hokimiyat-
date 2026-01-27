@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import {
   Shield,
   ExternalLink,
@@ -9,16 +10,14 @@ import {
   CheckCircle2,
   XCircle,
   Info,
+  MapPin,
+  Building2,
+  Sparkles,
+  ArrowRight,
+  Fingerprint,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -38,6 +37,11 @@ export default function LoginPage() {
   const [step, setStep] = useState<LoginStep>("initial")
   const [pnfl, setPnfl] = useState("")
   const [error, setError] = useState("")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handlePnflCheck = async () => {
     if (!/^\d{14}$/.test(pnfl)) {
@@ -49,21 +53,15 @@ export default function LoginPage() {
     setStep("checking")
 
     try {
-      // Call Django API to check PNFL and login
       const response = await login({ pnfl })
-      
-      // Store tokens
       setAccessToken(response.access)
       setRefreshToken(response.refresh)
       
-      // Store user info
       if (typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(response.user))
       }
       
       setStep("success")
-      
-      // Redirect to dashboard after success animation
       setTimeout(() => {
         router.push("/dashboard")
       }, 1000)
@@ -80,8 +78,6 @@ export default function LoginPage() {
   }
 
   const handleOneIdLogin = () => {
-    // In production, this would redirect to OneID
-    // For now, we'll simulate the login
     handlePnflCheck()
   }
 
@@ -94,193 +90,242 @@ export default function LoginPage() {
   const termsHtml = t.auth.agreeToTerms
     .replace(
       "{terms}",
-      `<a href="#" class="text-primary hover:underline">${t.auth.termsOfService}</a>`
+      `<a href="#" class="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">${t.auth.termsOfService}</a>`
     )
     .replace(
       "{policy}",
-      `<a href="#" class="text-primary hover:underline">${t.auth.privacyPolicy}</a>`
+      `<a href="#" class="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">${t.auth.privacyPolicy}</a>`
     )
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 flex items-center justify-center p-4">
-      {/* Background blur */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-emerald-400/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-3xl" />
+    <div className="min-h-screen flex overflow-hidden">
+      {/* Left Side - Image Section */}
+      <div className="hidden lg:flex lg:w-[55%] relative">
+        {/* Full Background Image */}
+        <Image
+          src="/xatirchi-login.png"
+          alt="Xatirchi tumani"
+          fill
+          className="object-cover"
+          priority
+        />
+        
+        {/* Subtle Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <Card className="bg-card/95 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden border-0">
-          <CardHeader className="text-center space-y-4 p-8 pb-4">
-            <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
-              <Shield className="h-8 w-8 text-white" />
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 relative">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-100/40 to-blue-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-100/30 to-emerald-100/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          {/* Mobile Header */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <Building2 className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-xl font-bold text-gray-900">E-Hokimiyat</h2>
+                <p className="text-sm text-emerald-600 font-medium">Xatirchi tumani</p>
+              </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-foreground">
-              {t.auth.systemName}
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              {t.auth.systemDescription}
-            </CardDescription>
-          </CardHeader>
+          </div>
 
-          <CardContent className="space-y-6 p-8 pt-4">
+          {/* Form Header */}
+          <div className="text-center lg:text-left mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold mb-4">
+              <Shield className="h-3.5 w-3.5" />
+              Xavfsiz kirish
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
+              Xush kelibsiz!
+            </h1>
+            <p className="text-gray-500 text-base">
+              Tizimga kirish uchun PNFL raqamingizni kiriting
+            </p>
+          </div>
+
+          {/* Login Card */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-gray-200/50 p-7 sm:p-9 border border-gray-100/80">
             {step === "initial" && (
-              <>
-                <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/50 dark:border-blue-800">
-                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <AlertDescription className="text-blue-700 dark:text-blue-300">
-                    {t.auth.loginWithOneId}
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pnfl" className="text-foreground">{t.auth.pnflLabel}</Label>
-                  <Input
-                    id="pnfl"
-                    value={pnfl}
-                    onChange={(e) =>
-                      setPnfl(
-                        e.target.value.replace(/\D/g, "").slice(0, 14)
-                      )
-                    }
-                    maxLength={14}
-                    placeholder="31234567890123"
-                    className="text-center text-lg tracking-widest font-mono"
-                  />
-                  {error && (
-                    <p className="text-sm text-destructive">{error}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {pnfl.length}/14 ta raqam kiritildi
-                  </p>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="pnfl" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                    <Fingerprint className="h-4 w-4 text-emerald-600" />
+                    PNFL (Shaxsiy raqam)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="pnfl"
+                      value={pnfl}
+                      onChange={(e) =>
+                        setPnfl(e.target.value.replace(/\D/g, "").slice(0, 14))
+                      }
+                      maxLength={14}
+                      placeholder="• • • • • • • • • • • • • •"
+                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-gray-50/50 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
+                    />
+                    {pnfl.length === 14 && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in duration-200" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-gray-400">
+                      {pnfl.length}/14 ta raqam
+                    </p>
+                    {error && (
+                      <p className="text-xs text-red-500 font-medium">{error}</p>
+                    )}
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${(pnfl.length / 14) * 100}%` }}
+                    />
+                  </div>
                 </div>
 
                 <Button
-                  className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all duration-300 group"
                   onClick={handlePnflCheck}
                   disabled={pnfl.length !== 14}
                 >
-                  <Shield className="mr-2 h-5 w-5" />
-                  {t.auth.check}
+                  <span>Tizimga kirish</span>
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
-                <div className="relative">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+                    <span className="w-full border-t border-gray-200" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">
-                      yoki
-                    </span>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-xs text-gray-400 uppercase tracking-wider">yoki</span>
                   </div>
                 </div>
 
                 <Button
                   variant="outline"
-                  className="w-full h-12 text-base bg-transparent"
+                  className="w-full h-14 text-base font-medium border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 rounded-xl transition-all duration-300 group"
                   onClick={() => setStep("oneid_redirect")}
                   disabled={pnfl.length !== 14}
                 >
-                  <ExternalLink className="mr-2 h-5 w-5" />
-                  OneID orqali kirish
+                  <Image src="/oneid-logo.svg" alt="OneID" width={20} height={20} className="mr-2" onError={(e) => e.currentTarget.style.display = 'none'} />
+                  <span>OneID orqali kirish</span>
+                  <ExternalLink className="ml-2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 </Button>
 
                 <p
-                  className="text-xs text-muted-foreground text-center leading-relaxed"
+                  className="text-xs text-gray-400 text-center leading-relaxed pt-2"
                   dangerouslySetInnerHTML={{ __html: termsHtml }}
                 />
-              </>
+              </div>
             )}
 
             {step === "checking" && (
-              <div className="flex flex-col items-center py-10">
+              <div className="flex flex-col items-center py-14">
                 <div className="relative">
-                  <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-                  <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-blue-100" />
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-white" />
+                  </div>
                 </div>
-                <p className="mt-6 text-muted-foreground font-medium">
-                  {t.auth.checking}
+                <p className="mt-8 text-gray-800 font-semibold text-lg">
+                  Tekshirilmoqda...
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Ma'lumotlar tekshirilmoqda...
+                <p className="mt-2 text-sm text-gray-400">
+                  Iltimos, biroz kuting
                 </p>
               </div>
             )}
 
             {step === "oneid_redirect" && (
-              <>
-                <Alert className="bg-green-50 border-green-200 dark:bg-green-950/50 dark:border-green-800">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <AlertDescription className="text-green-700 dark:text-green-300">
-                    PNFL tasdiqlandi. OneID tizimiga yo'naltirilmoqdasiz.
-                  </AlertDescription>
-                </Alert>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-800 font-medium text-sm">PNFL tasdiqlandi</p>
+                    <p className="text-emerald-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
+                  </div>
+                </div>
 
                 <Button
-                  className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300"
                   onClick={handleOneIdLogin}
                 >
                   <ExternalLink className="mr-2 h-5 w-5" />
-                  {t.auth.loginWithOneId}
+                  OneID ga o'tish
                 </Button>
 
                 <Button 
                   variant="ghost" 
-                  className="w-full" 
+                  className="w-full text-gray-500 hover:text-gray-700 rounded-xl" 
                   onClick={resetForm}
                 >
-                  {t.auth.differentPnfl}
+                  ← Orqaga qaytish
                 </Button>
-              </>
+              </div>
             )}
 
             {step === "error" && (
-              <>
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {error || t.auth.userNotFound}
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full h-12" 
-                    onClick={resetForm}
-                  >
-                    {t.auth.retry}
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Muammo davom etsa, administrator bilan bog'laning
-                  </p>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-200">
+                  <div className="h-10 w-10 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <XCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-red-800 font-medium text-sm">Xatolik yuz berdi</p>
+                    <p className="text-red-600 text-xs">{error || t.auth.userNotFound}</p>
+                  </div>
                 </div>
-              </>
+
+                <Button 
+                  className="w-full h-14 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-xl shadow-lg transition-all duration-300" 
+                  onClick={resetForm}
+                >
+                  Qayta urinish
+                </Button>
+                <p className="text-xs text-center text-gray-400">
+                  Muammo davom etsa, administrator bilan bog'laning
+                </p>
+              </div>
             )}
 
             {step === "success" && (
-              <div className="flex flex-col items-center py-10">
-                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                  <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+              <div className="flex flex-col items-center py-14">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+                  <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <CheckCircle2 className="h-10 w-10 text-white" />
+                  </div>
                 </div>
-                <p className="mt-6 text-lg font-semibold text-foreground">
-                  {t.auth.success}
+                <p className="mt-8 text-xl font-bold text-gray-900">
+                  Muvaffaqiyatli!
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-gray-400">
                   Bosh sahifaga yo'naltirilmoqdasiz...
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-muted-foreground">
-            O'zbekiston Respublikasi Raqamli texnologiyalar vazirligi
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            E-Hokimiyat tizimi v1.0
-          </p>
+          {/* Footer */}
+          <div className="mt-8 text-center space-y-1">
+            <p className="text-xs text-gray-400">
+              O'zbekiston Respublikasi Raqamli texnologiyalar vazirligi
+            </p>
+            <p className="text-xs text-gray-300">
+              E-Hokimiyat tizimi v2.0 • 2026
+            </p>
+          </div>
         </div>
       </div>
     </div>
