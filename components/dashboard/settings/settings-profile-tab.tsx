@@ -27,11 +27,12 @@ interface CurrentUser {
 interface SettingsProfileTabProps {
   t: Translation
   currentUser: CurrentUser
+  onUserUpdate?: () => void
   onSave?: () => Promise<void>
   saving?: boolean
 }
 
-export function SettingsProfileTab({ t, currentUser }: SettingsProfileTabProps) {
+export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsProfileTabProps) {
   const { toast } = useToast()
   const [firstName, setFirstName] = useState(currentUser.firstName)
   const [lastName, setLastName] = useState(currentUser.lastName)
@@ -72,6 +73,12 @@ export function SettingsProfileTab({ t, currentUser }: SettingsProfileTabProps) 
         title: "Muvaffaqiyatli saqlandi",
         description: "Profil ma'lumotlari backendga saqlandi",
       })
+      
+      // Notify parent to refresh user data
+      onUserUpdate?.()
+      
+      // Dispatch event to update sidebar
+      window.dispatchEvent(new Event('userUpdated'))
     } catch (error: any) {
       toast({
         title: "Xatolik",
