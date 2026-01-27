@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
               <Tabs defaultValue="status" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-muted/20 rounded-xl p-1">
                   <TabsTrigger value="status" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Ҳолат бўйича</TabsTrigger>
-                  <TabsTrigger value="sector" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Сўҳа бўйича</TabsTrigger>
+                  <TabsTrigger value="sector" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Соҳа бўйича</TabsTrigger>
                   <TabsTrigger value="organizations" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Ташкилотлар</TabsTrigger>
                 </TabsList>
               </Tabs>
