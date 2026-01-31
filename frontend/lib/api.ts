@@ -172,7 +172,7 @@ async function fetchApi<T>(
     }
     console.error(`fetchApi: Request failed for ${endpoint}. Status: ${response.status}, Error Data:`, errorData);
     throw new ApiError(
-      errorData.detail || errorData.message || `Request failed with status ${response.status}`,
+      (errorData as any).detail || (errorData as any).message || `Request failed with status ${response.status}`,
       response.status,
       errorData
     );
@@ -471,7 +471,7 @@ export async function sendTaskMessage(
 
   const form = new FormData()
   if (hasContent) form.append('content', data.content!.trim())
-  if (hasAttachment) form.append('attachment', data.attachment)
+  if (hasAttachment && data.attachment) form.append('attachment', data.attachment)
   
   return fetchApi<TaskChatMessage>(`/api/tasks/${taskId}/timeline/`, {
     method: 'POST',
@@ -648,7 +648,7 @@ export async function uploadFile(file: File, taskId?: number): Promise<{ url: st
 // ==================== Legacy compatibility functions ====================
 
 export async function postTaskChat(taskId: string, body: { message: string }) {
-  return sendTaskMessage(taskId, body)
+  return sendTaskMessage(taskId, { content: body.message })
 }
 
 export async function postTaskExecution(taskId: string, body: any) {

@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Shield,
   UserCog,
+  Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -40,6 +41,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Hokimlik mas'uli - can add users, orgs, create tasks
@@ -52,6 +54,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Tashkilot rahbari - can add tashkilot mas'uli, view tasks, upload reports
@@ -82,6 +85,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
 }
@@ -213,6 +217,12 @@ export function Sidebar() {
       title: "Аналитика",
       href: "/dashboard/analytics",
       icon: BarChart4,
+      adminOnly: true,
+    },
+    {
+      title: "Телеграм Бот",
+      href: "/dashboard/telegram-bot",
+      icon: Bot,
       adminOnly: true,
     },
   ]

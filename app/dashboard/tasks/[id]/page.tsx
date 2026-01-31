@@ -90,9 +90,9 @@ export default function TaskDetailPage() {
   const normalizeChatMessages = (list: any[]) => {
     const normalized = (list || []).map(normalizeChatMessage).filter(Boolean)
     // Deduplicate by message ID
-    const seen = new Set()
+    const seen = new Set<number | string>()
     return normalized.filter((msg) => {
-      if (seen.has(msg.id)) return false
+      if (!msg || seen.has(msg.id)) return false
       seen.add(msg.id)
       return true
     })
@@ -456,7 +456,7 @@ export default function TaskDetailPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline" className="font-normal">
-                      {sectorLabels[task.sector]}
+                      {(sectorLabels as Record<string, string>)[task.sector] || task.sector}
                     </Badge>
                     <PriorityBadge priority={task.priority} />
                     <TaskStatusBadge status={task.status} />
@@ -496,7 +496,7 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Soha</p>
-                      <p className="font-medium">{sectorLabels[task.sector]}</p>
+                      <p className="font-medium">{(sectorLabels as Record<string, string>)[task.sector] || task.sector}</p>
                     </div>
                   </div>
 
@@ -815,7 +815,7 @@ export default function TaskDetailPage() {
                 <CardTitle className="text-base">Tashkilotlar holati</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(task.organizations || []).map((orgId) => {
+                {(task.organizations || []).map((orgId: string) => {
                   const org = orgsMap[orgId]
                   return (
                     <div key={orgId} className="flex items-center justify-between rounded-lg border border-border p-3">
@@ -825,7 +825,7 @@ export default function TaskDetailPage() {
                         </div>
                         <div>
                           <span className="text-sm font-medium">{org?.name}</span>
-                          {org && <p className="text-xs text-muted-foreground">{sectorLabels[org.sector]}</p>}
+                          {org && <p className="text-xs text-muted-foreground">{(sectorLabels as Record<string, string>)[org.sector] || org.sector}</p>}
                         </div>
                       </div>
                       <TaskStatusBadge status={task.status} />
@@ -842,7 +842,7 @@ export default function TaskDetailPage() {
                   <CardTitle className="text-base">Fayllar</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {task.attachments.map((file, i) => (
+                  {task.attachments.map((file: string, i: number) => (
                     <div
                       key={i}
                       className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer"

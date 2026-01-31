@@ -831,7 +831,7 @@ export const mockAppeals: Appeal[] = [
     assignedTo: "2",
     priority: "MUHIM",
     deadline: "2026-01-24T23:59:59Z",
-    response: null,
+    response: undefined,
   },
   {
     id: "2", 

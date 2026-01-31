@@ -54,11 +54,14 @@ export default function OrganizationDetailPage() {
     Promise.all([getOrganizations(), getUsers(), getTasks()])
       .then(([orgs, users, tasks]) => {
         if (!mounted) return
-        const org = orgs.results.find((o: any) => o.id === id) || null
+        const orgsList = Array.isArray(orgs) ? orgs : (orgs as any).results || []
+        const usersList = Array.isArray(users) ? users : (users as any).results || []
+        const tasksList = Array.isArray(tasks) ? tasks : (tasks as any).results || []
+        const org = orgsList.find((o: any) => o.id === id) || null
         setOrganization(org)
         setIsActive(Boolean(org?.isActive))
-        setOrgUsers(users.results.filter((u: any) => u.organizationId === id))
-        setOrgTasks(tasks.results.filter((t: any) => (t.organizations || []).includes(id)))
+        setOrgUsers(usersList.filter((u: any) => u.organizationId === id))
+        setOrgTasks(tasksList.filter((t: any) => (t.organizations || []).includes(id)))
       })
       .catch(() => {})
     return () => {
@@ -305,7 +308,7 @@ export default function OrganizationDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="font-normal">
-                                {roleLabels[user.role]}
+                                {(roleLabels as Record<string, string>)[user.role] || user.role}
                               </Badge>
                               <UserStatusBadge status={user.status} />
                             </div>

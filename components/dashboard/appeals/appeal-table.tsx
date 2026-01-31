@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils"
 import { Appeal } from "@/types"
 import { Archive, Eye, MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "./appeal-constants"
 
 interface AppealTableProps {
@@ -15,6 +16,14 @@ interface AppealTableProps {
 }
 
 export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
+  const router = useRouter()
+
+  const handleRowClick = (appeal: Appeal) => {
+    // tg- prefiksini olib tashlash
+    const id = appeal.id.startsWith('tg-') ? appeal.id.replace('tg-', '') : appeal.id
+    router.push(`/dashboard/appeals/${id}`)
+  }
+
   return (
     <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
       <CardContent className="p-0">
@@ -33,7 +42,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
           </TableHeader>
           <TableBody>
             {appeals.map((appeal) => (
-              <TableRow key={appeal.id} className="hover:bg-muted/50 transition-colors">
+              <TableRow 
+                key={appeal.id} 
+                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => handleRowClick(appeal)}
+              >
                 <TableCell className="font-medium">{appeal.citizenName}</TableCell>
                 <TableCell>
                   <div className="max-w-xs truncate" title={appeal.subject}>
@@ -53,7 +66,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 </TableCell>
                 <TableCell>{appeal.district}</TableCell>
                 <TableCell>{new Date(appeal.createdAt).toLocaleDateString("uz-UZ")}</TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -61,7 +74,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onView(appeal)}>
+                      <DropdownMenuItem onClick={() => handleRowClick(appeal)}>
                         <Eye className="mr-2 h-4 w-4" />
                         Батафсил
                       </DropdownMenuItem>

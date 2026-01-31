@@ -1,0 +1,592 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { 
+  Bot, 
+  Settings, 
+  Users, 
+  MessageSquare, 
+  MapPin, 
+  BarChart3,
+  Save,
+  RefreshCw,
+  Link,
+  Unlink,
+  Brain,
+  Bell,
+  Folder
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+
+interface BotSettings {
+  id: number;
+  bot_token: string;
+  bot_username: string;
+  webhook_url: string;
+  use_webhook: boolean;
+  is_active: boolean;
+  ai_provider: string;
+  ai_api_key: string;
+  ai_model: string;
+  has_token: boolean;
+  has_ai_key: boolean;
+  welcome_message_uz: string;
+  welcome_message_ru: string;
+  welcome_message_en: string;
+}
+
+interface BotStats {
+  total_users: number;
+  registered_users: number;
+  total_appeals: number;
+  pending_appeals: number;
+  approved_appeals: number;
+  rejected_appeals: number;
+  forwarded_appeals: number;
+  today_appeals: number;
+  this_week_appeals: number;
+  this_month_appeals: number;
+}
+
+export default function TelegramBotPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [settings, setSettings] = useState<BotSettings | null>(null);
+  const [stats, setStats] = useState<BotStats | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [settingsRes, statsRes] = await Promise.all([
+        api.get("/telegram-bot/settings/"),
+        api.get("/telegram-bot/stats/")
+      ]);
+      setSettings(settingsRes.data);
+      setStats(statsRes.data);
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Ma'lumotlarni yuklashda xato yuz berdi",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    if (!settings) return;
+    
+    try {
+      setSaving(true);
+      await api.put("/telegram-bot/settings/1/", settings);
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Sozlamalar saqlandi"
+      });
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Sozlamalarni saqlashda xato yuz berdi",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const testConnection = async () => {
+    try {
+      setTesting(true);
+      const response = await api.post("/telegram-bot/settings/test_connection/");
+      
+      if (response.data.success) {
+        toast({
+          title: "Ulanish muvaffaqiyatli",
+          description: `Bot: @${response.data.bot_info.username}`
+        });
+        setSettings(prev => prev ? { ...prev, bot_username: response.data.bot_info.username } : null);
+      } else {
+        toast({
+          title: "Ulanish xatosi",
+          description: response.data.error,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Ulanishni tekshirishda xato yuz berdi",
+        variant: "destructive"
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const setWebhook = async () => {
+    if (!settings?.webhook_url) {
+      toast({
+        title: "Xato",
+        description: "Webhook URL kiriting",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const response = await api.post("/telegram-bot/settings/set_webhook/", {
+        webhook_url: settings.webhook_url
+      });
+      
+      if (response.data.success) {
+        toast({
+          title: "Muvaffaqiyat",
+          description: "Webhook o'rnatildi"
+        });
+        setSettings(prev => prev ? { ...prev, use_webhook: true } : null);
+      } else {
+        toast({
+          title: "Xato",
+          description: response.data.error,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Webhook o'rnatishda xato yuz berdi",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteWebhook = async () => {
+    try {
+      const response = await api.post("/telegram-bot/settings/delete_webhook/");
+      
+      if (response.data.success) {
+        toast({
+          title: "Muvaffaqiyat",
+          description: "Webhook o'chirildi"
+        });
+        setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
+      }
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Webhook o'chirishda xato yuz berdi",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Bot className="h-6 w-6 text-blue-500" />
+            Telegram Bot
+          </h1>
+          <p className="text-muted-foreground">
+            Bot sozlamalari va statistikasi
+          </p>
+        </div>
+        <Button onClick={saveSettings} disabled={saving}>
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? "Saqlanmoqda..." : "Saqlash"}
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Foydalanuvchilar</p>
+                <p className="text-2xl font-bold">{stats?.registered_users || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Jami murojaatlar</p>
+                <p className="text-2xl font-bold">{stats?.total_appeals || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-yellow-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Kutilmoqda</p>
+                <p className="text-2xl font-bold">{stats?.pending_appeals || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-purple-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Bugun</p>
+                <p className="text-2xl font-bold">{stats?.today_appeals || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <Folder className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Topshiriq sifatida kiritilgan</p>
+                <p className="text-2xl font-bold">{stats?.forwarded_appeals || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Settings Tabs */}
+      <Tabs defaultValue="connection" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="connection">
+            <Link className="h-4 w-4 mr-2" />
+            Ulanish
+          </TabsTrigger>
+          <TabsTrigger value="ai">
+            <Brain className="h-4 w-4 mr-2" />
+            AI Sozlamalari
+          </TabsTrigger>
+          <TabsTrigger value="messages">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Xabarlar
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Connection Tab */}
+        <TabsContent value="connection">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bot ulanish sozlamalari</CardTitle>
+              <CardDescription>
+                Telegram Bot API ulanish parametrlari
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Bot holati</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Botni yoqish yoki o'chirish
+                  </p>
+                </div>
+                <Switch 
+                  checked={settings?.is_active}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => prev ? { ...prev, is_active: checked } : null)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bot_token">Bot Token</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="bot_token"
+                    type="password"
+                    placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                    value={settings?.bot_token || ""}
+                    onChange={(e) => 
+                      setSettings(prev => prev ? { ...prev, bot_token: e.target.value } : null)
+                    }
+                    className="flex-1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={testConnection}
+                    disabled={testing}
+                  >
+                    {testing ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Tekshirish"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  @BotFather dan olingan token
+                </p>
+              </div>
+
+              {settings?.bot_username && (
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <p className="text-green-600 dark:text-green-400">
+                    ✅ Bot ulangan: @{settings.bot_username}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="webhook_url">Webhook URL</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="webhook_url"
+                    placeholder="https://your-domain.com/api/telegram-bot/webhook/"
+                    value={settings?.webhook_url || ""}
+                    onChange={(e) => 
+                      setSettings(prev => prev ? { ...prev, webhook_url: e.target.value } : null)
+                    }
+                    className="flex-1"
+                  />
+                  {settings?.use_webhook ? (
+                    <Button variant="destructive" onClick={deleteWebhook}>
+                      <Unlink className="h-4 w-4 mr-2" />
+                      O'chirish
+                    </Button>
+                  ) : (
+                    <Button variant="outline" onClick={setWebhook}>
+                      <Link className="h-4 w-4 mr-2" />
+                      O'rnatish
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {settings?.use_webhook 
+                    ? "✅ Webhook faol" 
+                    : "Webhook o'rnatilmagan, polling rejimida ishlaydi"
+                  }
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* AI Tab */}
+        <TabsContent value="ai">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI tahlil sozlamalari</CardTitle>
+              <CardDescription>
+                Murojaatlarni sun'iy intellekt orqali tahlil qilish
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>AI Provayder</Label>
+                <Select 
+                  value={settings?.ai_provider || 'disabled'}
+                  onValueChange={(value) => 
+                    setSettings(prev => prev ? { ...prev, ai_provider: value } : null)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Provayderni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="disabled">O'chirilgan</SelectItem>
+                    <SelectItem value="openai">OpenAI (GPT-4)</SelectItem>
+                    <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {settings?.ai_provider === 'disabled' 
+                    ? "AI tahlil o'chirilgan" 
+                    : "Murojaatlar avtomatik tahlil qilinadi"
+                  }
+                </p>
+              </div>
+
+              {settings?.ai_provider && settings.ai_provider !== 'disabled' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="ai_api_key">API Kalit</Label>
+                    <Input 
+                      id="ai_api_key"
+                      type="password"
+                      placeholder={settings.ai_provider === 'openai' ? "sk-..." : "sk-ant-..."}
+                      value={settings?.ai_api_key || ""}
+                      onChange={(e) => 
+                        setSettings(prev => prev ? { ...prev, ai_api_key: e.target.value } : null)
+                      }
+                    />
+                    {settings?.has_ai_key && (
+                      <p className="text-sm text-green-600">✅ API kalit saqlangan</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>AI Model</Label>
+                    <Select 
+                      value={settings?.ai_model || 'gpt-4o-mini'}
+                      onValueChange={(value) => 
+                        setSettings(prev => prev ? { ...prev, ai_model: value } : null)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Modelni tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {settings.ai_provider === 'openai' ? (
+                          <>
+                            <SelectItem value="gpt-4o-mini">GPT-4o Mini (Tez, arzon)</SelectItem>
+                            <SelectItem value="gpt-4o">GPT-4o (Kuchli)</SelectItem>
+                            <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku (Tez, arzon)</SelectItem>
+                            <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
+                            <SelectItem value="claude-3-opus-20240229">Claude 3 Opus (Kuchli)</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Messages Tab */}
+        <TabsContent value="messages">
+          <Card>
+            <CardHeader>
+              <CardTitle>Xabar shablonlari</CardTitle>
+              <CardDescription>
+                Bot xabarlarini sozlash
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="welcome_uz">Xush kelibsiz xabari (O'zbekcha)</Label>
+                <Textarea 
+                  id="welcome_uz"
+                  rows={4}
+                  value={settings?.welcome_message_uz || ""}
+                  onChange={(e) => 
+                    setSettings(prev => prev ? { ...prev, welcome_message_uz: e.target.value } : null)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="welcome_ru">Xush kelibsiz xabari (Ruscha)</Label>
+                <Textarea 
+                  id="welcome_ru"
+                  rows={4}
+                  value={settings?.welcome_message_ru || ""}
+                  onChange={(e) => 
+                    setSettings(prev => prev ? { ...prev, welcome_message_ru: e.target.value } : null)
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push("/dashboard/telegram-bot/users")}
+        >
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="font-medium">Foydalanuvchilar</p>
+                <p className="text-sm text-muted-foreground">
+                  {stats?.registered_users || 0} ta ro'yxatdan o'tgan
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push("/dashboard/telegram-bot/appeals")}
+        >
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="font-medium">Murojaatlar</p>
+                <p className="text-sm text-muted-foreground">
+                  {stats?.pending_appeals || 0} ta kutilmoqda
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push("/dashboard/telegram-bot/regions")}
+        >
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-8 w-8 text-orange-500" />
+              <div>
+                <p className="font-medium">Hududlar</p>
+                <p className="text-sm text-muted-foreground">
+                  Mahalla va qishloqlar
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

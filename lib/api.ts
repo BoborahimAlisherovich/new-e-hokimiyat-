@@ -157,7 +157,7 @@ async function fetchApi<T>(
         }
         console.error(`fetchApi: Request failed for ${endpoint}. Status: ${retryResponse.status}, Error Data:`, errorData)
         throw new ApiError(
-          errorData.detail || errorData.message || `Request failed with status ${retryResponse.status}`,
+          (errorData as any).detail || (errorData as any).message || `Request failed with status ${retryResponse.status}`,
           retryResponse.status,
           errorData
         )
@@ -189,7 +189,7 @@ async function fetchApi<T>(
     }
     console.error(`fetchApi: Request failed for ${endpoint}. Status: ${response.status}, Error Data:`, errorData)
     throw new ApiError(
-      errorData.detail || errorData.message || `Request failed with status ${response.status}`,
+      (errorData as any).detail || (errorData as any).message || `Request failed with status ${response.status}`,
       response.status,
       errorData
     )
@@ -514,7 +514,7 @@ export async function sendTaskMessage(
 
   const form = new FormData()
   if (hasContent) form.append('content', data.content!.trim())
-  if (hasAttachment) form.append('attachment', data.attachment)
+  if (hasAttachment && data.attachment) form.append('attachment', data.attachment)
   
   return fetchApi<TaskChatMessage>(`/tasks/${taskId}/timeline/`, {
     method: 'POST',
@@ -760,7 +760,7 @@ export async function uploadFile(file: File, taskId?: number): Promise<{ url: st
 // ==================== Legacy compatibility functions ====================
 
 export async function postTaskChat(taskId: string, body: { message: string }) {
-  return sendTaskMessage(taskId, body)
+  return sendTaskMessage(taskId, { content: body.message })
 }
 
 export async function postTaskExecution(taskId: string, body: any) {
@@ -806,6 +806,70 @@ function mapTaskPriorityToAppealPriority(priority: string): 'LOW' | 'MEDIUM' | '
   }
 }
 
+// Map TelegramAppeal to Appeal interface
+function mapTelegramAppealToAppeal(appeal: any): any {
+  const statusMap: Record<string, 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED'> = {
+    'pending': 'PENDING',
+    'approved': 'IN_PROGRESS',
+    'in_progress': 'IN_PROGRESS',
+    'responded': 'RESOLVED',
+    'resolved': 'RESOLVED',
+    'rejected': 'REJECTED',
+  }
+  
+  const priorityMap: Record<string, 'LOW' | 'MEDIUM' | 'HIGH'> = {
+    'low': 'LOW',
+    'medium': 'MEDIUM',
+    'high': 'HIGH',
+    'urgent': 'HIGH',
+  }
+  
+  const telegramUser = appeal.telegram_user || {}
+  // Ism va familiya - telegram_user dan yoki user_name dan
+  const citizenName = telegramUser.full_name || 
+    [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') || 
+    appeal.user_name || 
+    'Telegram foydalanuvchi'
+  
+  // Mavzu - AI tahlilidan yoki murojaat matnining birinchi qismidan
+  let subject = 'Telegram murojaat'
+  if (appeal.ai_analysis) {
+    // AI tahlilidan mavzuni olish
+    const analysisMatch = appeal.ai_analysis.match(/Mavzu[:\s]+([^\n]+)/i)
+    if (analysisMatch) {
+      subject = analysisMatch[1].trim()
+    } else {
+      // Birinchi 50 ta belgini olish
+      subject = (appeal.text || '').substring(0, 50) + (appeal.text?.length > 50 ? '...' : '')
+    }
+  } else if (appeal.text) {
+    subject = appeal.text.substring(0, 50) + (appeal.text.length > 50 ? '...' : '')
+  }
+  
+  return {
+    id: `tg-${appeal.id}`,
+    citizenName: citizenName,
+    citizenPhone: telegramUser.phone || '',
+    citizenEmail: '',
+    subject: subject || 'Telegram murojaat',
+    description: appeal.text || '',
+    category: appeal.category_name || 'Boshqa', // Soha - category
+    priority: priorityMap[appeal.priority] || 'MEDIUM',
+    status: statusMap[appeal.status] || 'PENDING',
+    assignedTo: null,
+    organization: null,
+    district: telegramUser.region_name || 'Xatirchi tumani',
+    address: '',
+    createdAt: appeal.created_at,
+    updatedAt: appeal.updated_at,
+    source: 'telegram',
+    appealNumber: appeal.appeal_number,
+    appealType: appeal.appeal_type_name || '', // Tur
+    aiAnalysis: appeal.ai_analysis,
+    aiScore: appeal.ai_score,
+  }
+}
+
 // Map Task to Appeal interface
 function mapTaskToAppeal(task: any): any {
   // Extract citizen name from description if available
@@ -835,13 +899,129 @@ function mapTaskToAppeal(task: any): any {
 }
 
 export async function getAppeals() {
-  // Appeals are now handled as tasks with specific category
-  const tasks = await getTasks({ category: 'IJRO' })
-  // Map tasks to Appeal format
-  return (tasks || []).map(mapTaskToAppeal)
+  try {
+    // Faqat Telegram murojaatlarini olish
+    const response = await fetchApi<any>('/telegram-bot/appeals/')
+    // API paginated response qaytaradi: {results: [...], count: ...}
+    const telegramAppeals = Array.isArray(response) ? response : (response?.results || [])
+    return telegramAppeals.map(mapTelegramAppealToAppeal)
+  } catch (error) {
+    console.error('getAppeals error:', error)
+    return []
+  }
 }
 
 export async function getAppealById(id: string) {
-  const task = await getTaskById(id)
-  return mapTaskToAppeal(task)
+  // Telegram murojaat
+  const appealId = id.startsWith('tg-') ? id.replace('tg-', '') : id
+  const appeal = await fetchApi<any>(`/telegram-bot/appeals/${appealId}/`)
+  return mapTelegramAppealToAppeal(appeal)
 }
+
+// Telegram appeal messages
+export async function getAppealMessages(appealId: string) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any[]>(`/telegram-bot/appeals/${id}/messages/`)
+}
+
+// Telegram appeal history
+export async function getAppealHistory(appealId: string) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any[]>(`/telegram-bot/appeals/${id}/history/`)
+}
+
+// Send message to user
+export async function sendAppealMessage(appealId: string, text: string) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any>(`/telegram-bot/appeals/${id}/send_message/`, {
+    method: 'POST',
+    body: JSON.stringify({ text })
+  })
+}
+
+// Close appeal with response
+export async function closeAppeal(appealId: string, response: string) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any>(`/telegram-bot/appeals/${id}/close_appeal/`, {
+    method: 'POST',
+    body: JSON.stringify({ response })
+  })
+}
+
+// Review appeal (approve/reject)
+export async function reviewAppeal(appealId: string, data: {
+  action: 'approve' | 'reject' | 'respond'
+  response?: string
+  priority?: string
+  forward_to_site?: boolean
+  create_task?: boolean
+  organization_ids?: number[]
+}) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any>(`/telegram-bot/appeals/${id}/review/`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+// Create task from appeal
+export async function createTaskFromAppeal(appealId: string, data: {
+  title: string
+  deadline: string
+  priority: string
+  organization_ids: number[]
+}) {
+  const id = appealId.startsWith('tg-') ? appealId.replace('tg-', '') : appealId
+  return await fetchApi<any>(`/telegram-bot/appeals/${id}/create_task/`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+// Get organizations list
+export async function getOrganizations() {
+  return await fetchApi<any[]>('/organizations/')
+}
+
+// ==================== Axios-like API Object ====================
+// Provides get, post, put, patch, delete methods similar to axios
+
+export const api = {
+  async get<T = any>(url: string, config?: { params?: Record<string, any> }): Promise<{ data: T }> {
+    const queryString = config?.params ? buildQueryString(config.params) : ''
+    const data = await fetchApi<T>(`${url}${queryString}`)
+    return { data }
+  },
+
+  async post<T = any>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await fetchApi<T>(url, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return { data }
+  },
+
+  async put<T = any>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await fetchApi<T>(url, {
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return { data }
+  },
+
+  async patch<T = any>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await fetchApi<T>(url, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return { data }
+  },
+
+  async delete<T = any>(url: string): Promise<{ data: T }> {
+    const data = await fetchApi<T>(url, {
+      method: 'DELETE',
+    })
+    return { data }
+  },
+}
+

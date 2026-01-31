@@ -50,10 +50,10 @@ export const measureRenderTime = (componentName: string) => {
 
 export const measureBundleSize = () => {
   if (typeof window !== 'undefined') {
-    const resources = performance.getEntriesByType('resource')
+    const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
     const bundleSize = resources.reduce((total, entry) => {
       if (entry.name.includes('.js') || entry.name.includes('.css')) {
-        return total + entry.transferSize
+        return total + (entry.transferSize || 0)
       }
       return total
     }, 0)

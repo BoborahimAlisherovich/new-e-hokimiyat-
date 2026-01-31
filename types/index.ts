@@ -401,8 +401,8 @@ export interface Appeal {
   subject: string
   description: string
   category: string
-  priority: 'LOW' | 'MEDIUM' | 'HIGH'
-  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED'
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'low' | 'medium' | 'high' | 'urgent'
+  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED' | 'pending_ai' | 'pending_review' | 'approved' | 'rejected' | 'responded' | 'forwarded' | 'resolved'
   assignedTo?: User
   organization?: Organization
   district: string

@@ -26,7 +26,6 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Сарлавҳа</TableHead>
-          <TableHead>Топшириқ</TableHead>
           <TableHead>Категория</TableHead>
           <TableHead>Муҳимлик</TableHead>
           <TableHead>Жавобгар</TableHead>
@@ -43,21 +42,8 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
             onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
           >
             <TableCell>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                    {task.assigned_to?.first_name?.charAt(0)}{task.assigned_to?.last_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">{task.assigned_to?.first_name} {task.assigned_to?.last_name}</div>
-                  <div className="text-sm text-muted-foreground">{task.assigned_to?.position}</div>
-                </div>
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="max-w-xs truncate" title={task.title}>
-                {task.title}
+              <div className="max-w-xs truncate font-medium" title={task.title}>
+                {task.title || '—'}
               </div>
             </TableCell>
             <TableCell>{task.category || '—'}</TableCell>
@@ -66,8 +52,17 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 {PRIORITY_LABELS[task.priority]}
               </Badge>
             </TableCell>
-            <TableCell>{task.created_by?.first_name} {task.created_by?.last_name}</TableCell>
-            <TableCell onClick={(e) => e.stopPropagation()}>{task.deadline ? new Date(task.deadline).toLocaleDateString("uz-UZ") : '—'}</TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                    {task.created_by?.first_name?.charAt(0)}{task.created_by?.last_name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{task.created_by?.first_name} {task.created_by?.last_name}</span>
+              </div>
+            </TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>{task.due_date ? new Date(task.due_date).toLocaleDateString("uz-UZ") : '—'}</TableCell>
             <TableCell>
               <Badge className={cn("px-2 py-1 text-xs font-medium", (STATUS_COLORS as any)[task.status])}>
                 {(STATUS_LABELS as any)[task.status]}

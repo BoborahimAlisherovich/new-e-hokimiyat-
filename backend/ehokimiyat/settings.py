@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'analytics',
     'notifications',
     'chat',
+    'telegram_bot',
 ]
 
 MIDDLEWARE = [

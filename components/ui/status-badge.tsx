@@ -9,6 +9,8 @@ const taskStatusStyles: Record<TaskStatus, string> = {
   BAJARILDI: "bg-green-500/20 text-green-400 border-green-500/30",
   MUDDATI_KECH: "bg-red-500/20 text-red-400 border-red-500/30",
   NAZORATDAN_YECHILDI: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  QAYTA_IJROGA_YUBORILDI: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  BAJARILMADI: "bg-gray-500/20 text-gray-400 border-gray-500/30",
 }
 
 const userStatusStyles: Record<UserStatus, string> = {
