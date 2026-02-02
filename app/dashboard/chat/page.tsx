@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { getChatConversations, getChatMessages, getCurrentUser, getUsers, sendChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 // Role labels
 const ROLE_LABELS: Record<string, string> = {
@@ -450,8 +451,13 @@ export default function ChatPage() {
     return (
       <>
         <Header title="Chat" />
-        <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+          <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
+              <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
+            </div>
+          </div>
         </div>
       </>
     )
@@ -460,12 +466,20 @@ export default function ChatPage() {
   return (
     <>
       <Header title="Chat" />
-      <div className="p-3 sm:p-4 lg:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+        {/* Modern geometric background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
+        </div>
+        
+        <div className="relative z-10 p-3 sm:p-4 lg:p-6">
         <div className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Users List */}
           <Card
             className={cn(
-              "bg-card border-border w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden",
+              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               !showUserList && "hidden lg:flex"
             )}
           >
@@ -511,7 +525,7 @@ export default function ChatPage() {
                           </AvatarFallback>
                         </Avatar>
                         {user.is_online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
                         )}
                         {/* Unread message badge */}
                         {unreadCount > 0 && (
@@ -543,14 +557,14 @@ export default function ChatPage() {
           {/* Chat Area */}
           <Card
             className={cn(
-              "bg-card border-border flex flex-col flex-1 min-h-0 overflow-hidden",
+              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               showUserList && "hidden lg:flex"
             )}
           >
             {selectedUser ? (
               <>
                 {/* Chat Header */}
-                <CardHeader className="py-3 border-b border-border flex-shrink-0 bg-muted/30">
+                <CardHeader className="py-3 border-b border-slate-200 flex-shrink-0 bg-slate-50/50">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
@@ -663,7 +677,7 @@ export default function ChatPage() {
                         <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
                         <span className="text-sm text-red-600 dark:text-red-400 font-medium">Yozib olinmoqda...</span>
                         <div className="flex-1" />
-                        <Button variant="outline" size="sm" onClick={stopRecording} className="text-green-600 border-green-300">
+                        <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
                           Tugatish
                         </Button>
                         <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
@@ -751,17 +765,18 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-muted/30">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-10 w-10 text-primary" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/50">
+                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-10 w-10 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Suhbatni tanlang</h3>
-                <p className="text-muted-foreground max-w-sm">
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">Suhbatni tanlang</h3>
+                <p className="text-slate-600 max-w-sm">
                   Chap tomondagi ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
               </div>
             )}
           </Card>
+        </div>
         </div>
       </div>
     </>

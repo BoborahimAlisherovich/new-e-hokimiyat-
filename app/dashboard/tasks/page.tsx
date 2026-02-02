@@ -12,6 +12,7 @@ import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialo
 import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
+import { motion } from "framer-motion"
 
 
 export default function TasksPage() {
@@ -132,12 +133,12 @@ export default function TasksPage() {
   if (loading) {
     return (
       <>
-        <Header title="Топшириқлар бошқаруви" description="Барча топшириқларнинг рўйхати, фильтрлаш ва бошқаруви" />
+        <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
+              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -147,15 +148,13 @@ export default function TasksPage() {
 
   return (
     <>
-      <Header title="Топшириқлар бошқаруви" description="Барча топшириқларнинг рўйхати, фильтрлаш ва бошқаруви" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+      <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
-          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
         </div>
         
         <div className="relative z-10 p-6 space-y-6">
@@ -167,10 +166,15 @@ export default function TasksPage() {
           />
 
           {/* Filters and Actions – redesigned for clarity and UX */}
-          <Card className="bg-card border border-border shadow-md rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg">Фильтрлаш ва қидирув</CardTitle>
-            </CardHeader>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Filtrlash va qidiruv</CardTitle>
+              </CardHeader>
             <CardContent>
               <TaskFilters
                 searchQuery={searchQuery}
@@ -191,9 +195,15 @@ export default function TasksPage() {
               />
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Tasks Table */}
-          <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
             <CardContent className="p-0">
               <TaskTable
                 tasks={filteredTasks}
@@ -203,11 +213,17 @@ export default function TasksPage() {
               />
             </CardContent>
           </Card>
+          </motion.div>
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div>
-              Жами: <span className="font-medium text-foreground">{totalCount}</span>
-              {searchQuery && ` (фильтрланган: ${filteredTasks.length})`}
+          <motion.div 
+            className="flex items-center justify-between text-sm bg-white/95 backdrop-blur-xl shadow-lg p-5 rounded-2xl border border-slate-200 hover:shadow-xl transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="text-slate-700">
+              Jami: <span className="font-semibold text-slate-900">{totalCount}</span>
+              {searchQuery && <span className="text-slate-600"> (filtrlangan: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -215,10 +231,11 @@ export default function TasksPage() {
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Oldingi
               </Button>
-              <span>
+              <span className="font-semibold text-slate-900 bg-slate-100 px-4 py-1.5 rounded-lg">
                 {page} / {totalPages}
               </span>
               <Button
@@ -226,11 +243,12 @@ export default function TasksPage() {
                 size="sm"
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page >= totalPages}
+                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Keyingi
               </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 

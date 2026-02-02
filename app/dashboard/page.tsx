@@ -11,8 +11,8 @@ import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics
 export default function DashboardPage() {
   return (
     <>
-      <Header title="Бош саҳифа" description="Туман ҳокимлиги топшириқлар бошқарув тизими" />
-      <div className="min-h-screen bg-background">
+      <Header title="Bosh sahifa" description="Tuman hokimligi topshiriqlar boshqaruv tizimi" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-12 py-8">
 

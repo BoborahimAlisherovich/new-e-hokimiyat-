@@ -8,6 +8,7 @@ import { getTasks, getOrganizations } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { ArrowRight, Calendar, Building, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { motion } from "framer-motion"
 
 export function RecentTasks() {
   const [upcomingTasks, setUpcomingTasks] = React.useState<any[]>([])
@@ -64,26 +65,30 @@ export function RecentTasks() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl">
-      {/* Removed duplicate 'Муддати яқинлашаётган топшириқлар' section header to prevent double rendering. */}
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
+      {/* Removed duplicate 'Muddati yaqinlashayotgan topshiriqlar' section header to prevent double rendering. */}
       <CardContent className="space-y-4">
-        {upcomingTasks.map((task) => {
+        {upcomingTasks.map((task, index) => {
           const daysUntil = getDaysUntilDeadline(task.deadline)
           const deadlineColor = getDeadlineColor(daysUntil)
           const deadlineIcon = getDeadlineIcon(daysUntil)
           
           return (
-            <div
+            <motion.div
               key={task.id}
-              className="flex items-start justify-between gap-4 rounded-lg border border-gray-200/50 bg-white/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-white/80 hover:border-emerald-300/50 hover:shadow-md"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
+              whileHover={{ scale: 1.02, x: 4 }}
+              className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-lg"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-medium text-foreground">{task.title}</h4>
+                  <h4 className="font-medium text-slate-900">{task.title}</h4>
                   <PriorityBadge priority={task.priority} />
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <p className="text-sm text-slate-600 line-clamp-2">{task.description}</p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                   <span className={`flex items-center gap-1 ${deadlineColor}`}>
                     {deadlineIcon}
                     {daysUntil < 0 
@@ -106,16 +111,16 @@ export function RecentTasks() {
                 </div>
               </div>
               <TaskStatusBadge status={task.status} />
-            </div>
+            </motion.div>
           )
         })}
         
         {upcomingTasks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Calendar className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Топшириқлар топилмади</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Ҳозирча фаол топшириқлар мавжуд эмас. Барча топшириқлар бажарилган ёки нозоратдан ечилган.
+            <Calendar className="w-12 h-12 text-slate-400 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Топшириқлар топилмади</h3>
+            <p className="text-sm text-slate-600 max-w-md">
+              Hozircha faol topshiriqlar mavjud emas. Barcha topshiriqlar bajarilgan yoki nozoratdan yechildi.
             </p>
           </div>
         )}

@@ -134,6 +134,24 @@ export type {
 } from './organizations.api'
 
 // ============================================================================
+// Sectors
+// ============================================================================
+
+export {
+  getSectors,
+  getSectorById,
+  createSector,
+  updateSector,
+  deleteSector,
+} from './sectors.api'
+
+export type {
+  Sector,
+  SectorCreateInput,
+  SectorUpdateInput,
+} from './sectors.api'
+
+// ============================================================================
 // Tasks
 // ============================================================================
 

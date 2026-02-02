@@ -52,12 +52,12 @@ import { cn } from "@/lib/utils"
 const ROLE_COLORS = {
   ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
   MODERATOR: "bg-blue-100 text-blue-800 border-blue-200",
-  OPERATOR: "bg-green-100 text-green-800 border-green-200",
+  OPERATOR: "bg-emerald-100 text-emerald-800 border-emerald-200",
   USER: "bg-gray-100 text-gray-800 border-gray-200"
 }
 
 const STATUS_COLORS = {
-  ACTIVE: "bg-green-100 text-green-800 border-green-200",
+  ACTIVE: "bg-emerald-100 text-emerald-800 border-emerald-200",
   INACTIVE: "bg-red-100 text-red-800 border-red-200"
 }
 
@@ -257,11 +257,11 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Актив фойдаланувчилар</p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-emerald-600">
                       {users.filter(u => u.status === 'ACTIVE').length}
                     </p>
                   </div>
-                  <Shield className="h-8 w-8 text-green-600" />
+                  <Shield className="h-8 w-8 text-emerald-600" />
                 </div>
               </CardContent>
             </Card>

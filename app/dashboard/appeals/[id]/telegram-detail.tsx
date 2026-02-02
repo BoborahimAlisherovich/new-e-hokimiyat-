@@ -281,13 +281,13 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     const statusMap: Record<string, { label: string; variant: string; icon: React.ReactNode }> = {
       'pending_ai': { label: 'AI tekshiruvida', variant: 'bg-blue-100 text-blue-700', icon: <Bot className="h-3 w-3" /> },
       'pending_review': { label: 'Ko\'rib chiqilmoqda', variant: 'bg-yellow-100 text-yellow-700', icon: <Clock className="h-3 w-3" /> },
-      'approved': { label: 'Tasdiqlangan', variant: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'approved': { label: 'Tasdiqlangan', variant: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="h-3 w-3" /> },
       'rejected': { label: 'Rad etilgan', variant: 'bg-red-100 text-red-700', icon: <XCircle className="h-3 w-3" /> },
       'responded': { label: 'Javob berilgan', variant: 'bg-purple-100 text-purple-700', icon: <MessageSquare className="h-3 w-3" /> },
       'resolved': { label: 'Hal qilingan', variant: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="h-3 w-3" /> },
       'PENDING': { label: 'Kutilmoqda', variant: 'bg-yellow-100 text-yellow-700', icon: <Clock className="h-3 w-3" /> },
       'IN_PROGRESS': { label: 'Jarayonda', variant: 'bg-blue-100 text-blue-700', icon: <Clock className="h-3 w-3" /> },
-      'RESOLVED': { label: 'Hal qilingan', variant: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'RESOLVED': { label: 'Hal qilingan', variant: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="h-3 w-3" /> },
     }
     
     const info = statusMap[status] || { label: status, variant: 'bg-gray-100 text-gray-700', icon: null }

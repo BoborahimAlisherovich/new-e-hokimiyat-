@@ -46,7 +46,7 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  FAOL: "bg-green-500 text-white",
+  FAOL: "bg-emerald-500 text-white",
   KUTILMOQDA: "bg-yellow-500 text-white",
   BLOKLANGAN: "bg-red-500 text-white",
   ARXIV: "bg-gray-500 text-white",

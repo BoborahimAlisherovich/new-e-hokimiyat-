@@ -24,13 +24,13 @@ export function UserTable({ users }: UserTableProps) {
 
   if (users.length === 0) {
     return (
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+      <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <UserX className="h-8 w-8 text-muted-foreground" />
+          <div className="rounded-full bg-slate-100 p-4 mb-4">
+            <UserX className="h-8 w-8 text-slate-500" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-1">Foydalanuvchilar topilmadi</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-sm">
+          <h3 className="text-lg font-medium text-slate-900 mb-1">Foydalanuvchilar topilmadi</h3>
+          <p className="text-sm text-slate-600 text-center max-w-sm">
             Hozircha bu filtrlar bo'yicha foydalanuvchilar mavjud emas. Yangi foydalanuvchi qo'shing yoki filtrlarni o'zgartiring.
           </p>
         </CardContent>
@@ -39,18 +39,18 @@ export function UserTable({ users }: UserTableProps) {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>FIO</TableHead>
-              <TableHead>PNFL</TableHead>
-              <TableHead>Lavozim</TableHead>
-              <TableHead>Tashkilot</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Holat</TableHead>
-              <TableHead>Ro'yxatdan o'tgan</TableHead>
+              <TableHead className="text-slate-700">FIO</TableHead>
+              <TableHead className="text-slate-700">PNFL</TableHead>
+              <TableHead className="text-slate-700">Lavozim</TableHead>
+              <TableHead className="text-slate-700">Tashkilot</TableHead>
+              <TableHead className="text-slate-700">Rol</TableHead>
+              <TableHead className="text-slate-700">Holat</TableHead>
+              <TableHead className="text-slate-700">Ro'yxatdan o'tgan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -69,10 +69,10 @@ export function UserTable({ users }: UserTableProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium text-slate-900">
                         {user.last_name} {user.first_name} {user.middle_name}
                       </div>
-                      <div className="text-sm text-muted-foreground">{user.position}</div>
+                      <div className="text-sm text-slate-600">{user.position}</div>
                     </div>
                   </div>
                 </TableCell>

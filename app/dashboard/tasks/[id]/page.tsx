@@ -161,6 +161,18 @@ export default function TaskDetailPage() {
       if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
     }
   }, [id])
+  
+  // Initialize edit form when task loads
+  useEffect(() => {
+    if (task) {
+      setEditTitle(task.title || "")
+      setEditDescription(task.description || "")
+      setEditPriority(task.priority || "")
+      setEditDeadline(task.deadline || "")
+      setEditCategory(task.category || "")
+      setExtendDeadline(task.deadline || "")
+    }
+  }, [task])
 
   // Backend created_by ni ob'ekt sifatida yuboradi
   const creator = task?.created_by || (task?.createdBy ? usersMap[task.createdBy] : undefined)
@@ -182,18 +194,6 @@ export default function TaskDetailPage() {
   const canReassign = task.status === "BAJARILDI"
   const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
   
-  // Initialize edit form when task loads
-  useEffect(() => {
-    if (task) {
-      setEditTitle(task.title || "")
-      setEditDescription(task.description || "")
-      setEditPriority(task.priority || "")
-      setEditDeadline(task.deadline || "")
-      setEditCategory(task.category || "")
-      setExtendDeadline(task.deadline || "")
-    }
-  }, [task])
-  
   // Handle save task edits
   const handleSaveTask = async () => {
     if (!editTitle.trim()) {
@@ -207,8 +207,8 @@ export default function TaskDetailPage() {
         title: editTitle,
         description: editDescription,
         priority: editPriority as any,
-        deadline: editDeadline,
-        category: editCategory,
+        due_date: editDeadline,
+        category: editCategory as any,
       })
       setTask(updatedTask)
       setIsEditOpen(false)
@@ -830,7 +830,7 @@ export default function TaskDetailPage() {
                           <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
                           <span className="text-sm text-red-600 font-medium">Yozib olinmoqda...</span>
                           <div className="flex-1" />
-                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-green-600 border-green-300">
+                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
                             Tugatish
                           </Button>
                           <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">

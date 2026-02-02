@@ -44,6 +44,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Task, FilterOptions } from "@/types"
 import { getTasks, getUsers } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 // Constants
 const PRIORITY_COLORS = {
@@ -56,22 +57,22 @@ const PRIORITY_COLORS = {
 const STATUS_COLORS = {
   PENDING: "bg-blue-100 text-blue-800 border-blue-200",
   IN_PROGRESS: "bg-orange-100 text-orange-800 border-orange-200",
-  COMPLETED: "bg-green-100 text-green-800 border-green-200",
+  COMPLETED: "bg-emerald-100 text-emerald-800 border-emerald-200",
   CANCELLED: "bg-red-100 text-red-800 border-red-200"
 }
 
 const PRIORITY_LABELS = {
-  LOW: "Паст",
-  MEDIUM: "Ўртача", 
-  HIGH: "Юқори",
-  URGENT: "Фавқул"
+  LOW: "Past",
+  MEDIUM: "O'rtacha", 
+  HIGH: "Yuqori",
+  URGENT: "Favqulodda"
 }
 
 const STATUS_LABELS = {
-  PENDING: "Кутилмоқда",
-  IN_PROGRESS: "Бажарилмоқда",
-  COMPLETED: "Тугатилган",
-  CANCELLED: "Бекор қилинган"
+  PENDING: "Kutilmoqda",
+  IN_PROGRESS: "Bajarilmoqda",
+  COMPLETED: "Tugatilgan",
+  CANCELLED: "Bekor qilingan"
 }
 
 export default function TasksPage() {
@@ -186,12 +187,12 @@ export default function TasksPage() {
   if (loading) {
     return (
       <>
-        <Header title="Топшириқлар бошқаруви" description="Барча топшириқларнинг рўйхати, фильтрлаш ва бошқаруви" />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+        <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -201,37 +202,36 @@ export default function TasksPage() {
 
   return (
     <>
-      <Header title="Топшириқлар бошқаруви" description="Барча топшириқларнинг рўйхати, фильтрлаш ва бошқаруви" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+      <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
           <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
           <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
           <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
-          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         </div>
         
         <div className="relative z-10 p-6 space-y-6">
           {/* Stats Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Жами топшириқлар</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-sm font-medium text-slate-600">Jami topshiriqlar</p>
+                    <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-muted-foreground" />
+                  <CheckCircle className="h-8 w-8 text-slate-500" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Кутилмоқда</p>
+                    <p className="text-sm font-medium text-slate-600">Kutilmoqda</p>
                     <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
                   </div>
                   <Clock className="h-8 w-8 text-blue-600" />
@@ -239,11 +239,11 @@ export default function TasksPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Бажарилмоқда</p>
+                    <p className="text-sm font-medium text-slate-600">Bajarilmoqda</p>
                     <p className="text-2xl font-bold text-orange-600">{stats.inProgress}</p>
                   </div>
                   <AlertTriangle className="h-8 w-8 text-orange-600" />
@@ -251,29 +251,29 @@ export default function TasksPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Тугатилган</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                    <p className="text-sm font-medium text-slate-600">Tugatilgan</p>
+                    <p className="text-2xl font-bold text-emerald-600">{stats.completed}</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-8 w-8 text-emerald-600" />
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Filters and Actions */}
-          <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-lg">Фильтрлаш ва қидирув</CardTitle>
+              <CardTitle className="text-lg text-slate-900">Filtrlash va qidiruv</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 <div className="flex-1">
                   <Input
-                    placeholder="Топшириқларни қидирув..."
+                    placeholder="Topshiriqlarni qidiruv..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full"
@@ -281,47 +281,47 @@ export default function TasksPage() {
                 </div>
                 <Button onClick={handleCreateTask} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
-                  Янги топшириқ
+                  Yangi topshiriq
                 </Button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-4">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Ҳолатни танланг" />
+                    <SelectValue placeholder="Holatni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Барча ҳолатлар</SelectItem>
-                    <SelectItem value="PENDING">Кутилмоқда</SelectItem>
-                    <SelectItem value="IN_PROGRESS">Бажарилмоқда</SelectItem>
-                    <SelectItem value="COMPLETED">Тугатилган</SelectItem>
-                    <SelectItem value="CANCELLED">Бекор қилинган</SelectItem>
+                    <SelectItem value="all">Barcha holatlar</SelectItem>
+                    <SelectItem value="PENDING">Kutilmoqda</SelectItem>
+                    <SelectItem value="IN_PROGRESS">Bajarilmoqda</SelectItem>
+                    <SelectItem value="COMPLETED">Tugatilgan</SelectItem>
+                    <SelectItem value="CANCELLED">Bekor qilingan</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Муҳимликни танланг" />
+                    <SelectValue placeholder="Muhimlikni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Барча муҳимликлар</SelectItem>
-                    <SelectItem value="LOW">Паст</SelectItem>
-                    <SelectItem value="MEDIUM">Ўртача</SelectItem>
-                    <SelectItem value="HIGH">Юқори</SelectItem>
-                    <SelectItem value="URGENT">Фавқул</SelectItem>
+                    <SelectItem value="all">Barcha muhimliklar</SelectItem>
+                    <SelectItem value="LOW">Past</SelectItem>
+                    <SelectItem value="MEDIUM">O'rtacha</SelectItem>
+                    <SelectItem value="HIGH">Yuqori</SelectItem>
+                    <SelectItem value="URGENT">Favqulodda</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Категорияни танланг" />
+                    <SelectValue placeholder="Kategoriyani tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Барча категориялар</SelectItem>
-                    <SelectItem value="Ижтимоий">Ижтимоий</SelectItem>
-                    <SelectItem value="Иқтисодий">Иқтисодий</SelectItem>
-                    <SelectItem value="Ҳуқуқий">Ҳуқуқий</SelectItem>
-                    <SelectItem value="Бошқа">Бошқа</SelectItem>
+                    <SelectItem value="all">Barcha kategoriyalar</SelectItem>
+                    <SelectItem value="Ijtimoiy">Ijtimoiy</SelectItem>
+                    <SelectItem value="Iqtisodiy">Iqtisodiy</SelectItem>
+                    <SelectItem value="Huquqiy">Huquqiy</SelectItem>
+                    <SelectItem value="Boshqa">Boshqa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -329,19 +329,19 @@ export default function TasksPage() {
           </Card>
 
           {/* Tasks Table */}
-          <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Сарлавҳа</TableHead>
-                    <TableHead>Топшириқ</TableHead>
-                    <TableHead>Категория</TableHead>
-                    <TableHead>Муҳимлик</TableHead>
-                    <TableHead>Жавобгар</TableHead>
-                    <TableHead>Муддат</TableHead>
-                    <TableHead>Ҳолат</TableHead>
-                    <TableHead>Амаллар</TableHead>
+                    <TableHead className="text-slate-700">Sarlavha</TableHead>
+                    <TableHead className="text-slate-700">Topshiriq</TableHead>
+                    <TableHead className="text-slate-700">Kategoriya</TableHead>
+                    <TableHead className="text-slate-700">Muhimlik</TableHead>
+                    <TableHead className="text-slate-700">Javobgar</TableHead>
+                    <TableHead className="text-slate-700">Muddat</TableHead>
+                    <TableHead className="text-slate-700">Holat</TableHead>
+                    <TableHead className="text-slate-700">Amallar</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -388,15 +388,15 @@ export default function TasksPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleViewTask(task)}>
                               <Eye className="mr-2 h-4 w-4" />
-                              Батафсил
+                              Batafsil
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEditTask(task)}>
                               <Edit className="mr-2 h-4 w-4" />
-                              Таҳрирлаш
+                              Tahrirlash
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDeleteTask(task.id)}>
                               <Archive className="mr-2 h-4 w-4" />
-                              Ўчириш
+                              O'chirish
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -414,15 +414,15 @@ export default function TasksPage() {
       <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Топшириқ тафсилотлари</DialogTitle>
-            <DialogDescription>
-              Топшириқ ҳақида тўлиқ маълумотлар
+            <DialogTitle className="text-slate-900">Topshiriq tafsilotlari</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Topshiriq haqida to'liq ma'lumotlar
             </DialogDescription>
           </DialogHeader>
           {selectedTask && (
             <div className="space-y-6">
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Сарлавҳа</Label>
+                <Label className="text-sm font-medium text-slate-600">Sarlavha</Label>
                 <div className="flex items-center gap-3 mt-2">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
@@ -440,47 +440,47 @@ export default function TasksPage() {
               
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Топшириқ</Label>
-                  <p className="font-medium">{selectedTask.title}</p>
+                  <Label className="text-sm font-medium text-slate-600">Topshiriq</Label>
+                  <p className="font-medium text-slate-900">{selectedTask.title}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Категория</Label>
-                  <p className="font-medium">{selectedTask.category}</p>
+                  <Label className="text-sm font-medium text-slate-600">Kategoriya</Label>
+                  <p className="font-medium text-slate-900">{selectedTask.category}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Муҳимлик</Label>
+                  <Label className="text-sm font-medium text-slate-600">Muhimlik</Label>
                   <Badge className={cn("px-2 py-1 text-xs font-medium", PRIORITY_COLORS[selectedTask.priority])}>
                     {PRIORITY_LABELS[selectedTask.priority]}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Муддат</Label>
-                  <p className="font-medium">{new Date(selectedTask.dueDate).toLocaleDateString("uz-UZ")}</p>
+                  <Label className="text-sm font-medium text-slate-600">Muddat</Label>
+                  <p className="font-medium text-slate-900">{new Date(selectedTask.dueDate).toLocaleDateString("uz-UZ")}</p>
                 </div>
               </div>
               
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Тафсилотлар</Label>
-                <p className="text-muted-foreground whitespace-pre-wrap">{selectedTask.description}</p>
+                <Label className="text-sm font-medium text-slate-600">Tafsilotlar</Label>
+                <p className="text-slate-700 whitespace-pre-wrap">{selectedTask.description}</p>
               </div>
               
               <div className="flex gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Ҳолат</Label>
+                  <Label className="text-sm font-medium text-slate-600">Holat</Label>
                   <Badge className={cn("px-2 py-1 text-xs font-medium", STATUS_COLORS[selectedTask.status])}>
                     {STATUS_LABELS[selectedTask.status]}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Яратувчи</Label>
-                  <p className="font-medium">{selectedTask.createdBy?.firstName} {selectedTask.createdBy?.lastName}</p>
+                  <Label className="text-sm font-medium text-slate-600">Yaratuvchi</Label>
+                  <p className="font-medium text-slate-900">{selectedTask.createdBy?.firstName} {selectedTask.createdBy?.lastName}</p>
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTask(null)}>
-              Ёпиш
+              Yopish
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -490,60 +490,60 @@ export default function TasksPage() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Янги топшириқ қўшиш</DialogTitle>
-            <DialogDescription>
-              Тизимга янги топшириқ қўшиш учун маълумотларни киритинг
+            <DialogTitle className="text-slate-900">Yangi topshiriq qo'shish</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Tizimga yangi topshiriq qo'shish uchun ma'lumotlarni kiriting
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Топшириқ номи</Label>
+              <Label htmlFor="title" className="text-slate-700">Topshiriq nomi</Label>
               <Input
                 id="title"
                 value={createFormData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="Топшириқ номини киритинг"
+                placeholder="Topshiriq nomini kiriting"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Тафсилотлар</Label>
+              <Label htmlFor="description" className="text-slate-700">Tafsilotlar</Label>
               <Textarea
                 id="description"
                 value={createFormData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Топшириқ ҳақида тўлиқ маълумотларни киритинг"
+                placeholder="Topshiriq haqida to'liq ma'lumotlarni kiriting"
                 rows={4}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="priority">Муҳимлик</Label>
+                <Label htmlFor="priority" className="text-slate-700">Muhimlik</Label>
                 <Select value={createFormData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Паст</SelectItem>
-                    <SelectItem value="MEDIUM">Ўртача</SelectItem>
-                    <SelectItem value="HIGH">Юқори</SelectItem>
-                    <SelectItem value="URGENT">Фавқул</SelectItem>
+                    <SelectItem value="LOW">Past</SelectItem>
+                    <SelectItem value="MEDIUM">O'rtacha</SelectItem>
+                    <SelectItem value="HIGH">Yuqori</SelectItem>
+                    <SelectItem value="URGENT">Favqulodda</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Категория</Label>
+                <Label htmlFor="category" className="text-slate-700">Kategoriya</Label>
                 <Input
                   id="category"
                   value={createFormData.category}
                   onChange={(e) => handleInputChange("category", e.target.value)}
-                  placeholder="Категорияни киритинг"
+                  placeholder="Kategoriyani kiriting"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="assignedTo">Жавобгар</Label>
+                <Label htmlFor="assignedTo" className="text-slate-700">Javobgar</Label>
                 <Select value={createFormData.assignedTo} onValueChange={(value) => handleInputChange("assignedTo", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Жавобгарни танланг" />
+                    <SelectValue placeholder="Javobgarni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map(user => (
@@ -555,7 +555,7 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Муддат</Label>
+                <Label htmlFor="dueDate" className="text-slate-700">Muddat</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -567,10 +567,10 @@ export default function TasksPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Бекор қилиш
+              Bekor qilish
             </Button>
             <Button onClick={handleCreateSubmit}>
-              Қўшиш
+              Qo'shish
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -49,11 +49,11 @@ export function UserFilters({
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-lg">Filtrlash va qidiruv</CardTitle>
+            <CardTitle className="text-lg text-slate-900">Filtrlash va qidiruv</CardTitle>
             {hasActiveFilters && (
               <Badge variant="secondary" className="text-xs">
                 {filteredCount} / {totalCount} ta
@@ -61,7 +61,7 @@ export function UserFilters({
             )}
           </div>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-600 hover:text-slate-900">
               <X className="h-4 w-4 mr-1" />
               Tozalash
             </Button>
@@ -86,7 +86,7 @@ export function UserFilters({
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Rol bo'yicha</label>
+            <label className="text-xs font-medium text-slate-700">Rol bo'yicha</label>
             <Select value={roleFilter} onValueChange={onRoleChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Rolni tanlang" />
@@ -103,7 +103,7 @@ export function UserFilters({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Holat bo'yicha</label>
+            <label className="text-xs font-medium text-slate-700">Holat bo'yicha</label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Holatni tanlang" />
@@ -120,7 +120,7 @@ export function UserFilters({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Tashkilot bo'yicha</label>
+            <label className="text-xs font-medium text-slate-700">Tashkilot bo'yicha</label>
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Tashkilotni tanlang" />

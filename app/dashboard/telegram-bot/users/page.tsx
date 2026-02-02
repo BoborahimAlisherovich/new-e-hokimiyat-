@@ -464,7 +464,7 @@ export default function TelegramBotUsersPage() {
                           <Button 
                             size="sm" 
                             variant="ghost"
-                            className={user.is_blocked ? "text-green-500" : "text-red-500"}
+                            className={user.is_blocked ? "text-emerald-500" : "text-red-500"}
                             onClick={() => toggleBlock(user)}
                             title={user.is_blocked ? "Blokdan chiqarish" : "Bloklash"}
                           >

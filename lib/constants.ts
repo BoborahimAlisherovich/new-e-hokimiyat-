@@ -54,7 +54,8 @@ export type TaskPriority = 'FAVQULODDA' | 'YUQORI' | 'ODDIY' | 'PAST'
  * Foydalanuvchi roli
  */
 export type UserRole = 
-  | 'TUMAN_HOKIMI' 
+  | 'HOKIM' 
+  | 'HOKIM_YORDAMCHISI'
   | 'HOKIMLIK_MASUL' 
   | 'TASHKILOT_RAHBAR' 
   | 'TASHKILOT_MASUL' 
@@ -96,7 +97,8 @@ export type Sector =
 
 /** Rol nomlari */
 export const roleLabels: Readonly<Record<UserRole, string>> = Object.freeze({
-  TUMAN_HOKIMI: "Tuman hokimi",
+  HOKIM: "Hokim",
+  HOKIM_YORDAMCHISI: "Hokim yordamchisi",
   HOKIMLIK_MASUL: "Hokimlik mas'uli",
   TASHKILOT_RAHBAR: "Tashkilot rahbari",
   TASHKILOT_MASUL: "Tashkilot mas'uli",
@@ -105,7 +107,8 @@ export const roleLabels: Readonly<Record<UserRole, string>> = Object.freeze({
 
 /** Rol → Kabinet turi */
 export const roleCabinet: Readonly<Record<UserRole, CabinetType>> = Object.freeze({
-  TUMAN_HOKIMI: 'HOKIMLIK',
+  HOKIM: 'HOKIMLIK',
+  HOKIM_YORDAMCHISI: 'HOKIMLIK',
   HOKIMLIK_MASUL: 'HOKIMLIK',
   TASHKILOT_RAHBAR: 'TASHKILOT',
   TASHKILOT_MASUL: 'TASHKILOT',

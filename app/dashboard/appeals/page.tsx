@@ -8,6 +8,7 @@ import { AppealFilters } from "@/components/dashboard/appeals/appeal-filters"
 import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
 import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
+import { motion } from "framer-motion"
 
 export default function AppealsPage() {
   // State management
@@ -107,12 +108,16 @@ export default function AppealsPage() {
     return (
       <>
         <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
+            >
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-slate-700">Yuklanmoqda...</p>
+            </motion.div>
           </div>
         </div>
       </>
@@ -122,22 +127,31 @@ export default function AppealsPage() {
   return (
     <>
       <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
-          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
         </div>
         
         <div className="relative z-10 p-6 space-y-6">
           {/* Stats Cards */}
-          <AppealStats stats={calculatedStats} />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <AppealStats stats={calculatedStats} />
+          </motion.div>
 
           {/* Filters and Actions */}
-          <AppealFilters
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <AppealFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             statusFilter={statusFilter}
@@ -152,13 +166,20 @@ export default function AppealsPage() {
             totalCount={appeals.length}
             filteredCount={filteredAppeals.length}
           />
+          </motion.div>
 
           {/* Appeals Table */}
-          <AppealTable
-            appeals={filteredAppeals}
-            onView={handleViewAppeal}
-            onArchive={handleArchiveAppeal}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <AppealTable
+              appeals={filteredAppeals}
+              onView={handleViewAppeal}
+              onArchive={handleArchiveAppeal}
+            />
+          </motion.div>
         </div>
       </div>
       <AppealDetailDialog appeal={selectedAppeal} onClose={() => setSelectedAppeal(null)} />

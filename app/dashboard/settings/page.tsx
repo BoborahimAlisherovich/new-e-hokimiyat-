@@ -11,7 +11,10 @@ import { SettingsProfileTab } from "@/components/dashboard/settings/settings-pro
 import { SettingsNotificationsTab } from "@/components/dashboard/settings/settings-notifications-tab"
 import { SettingsSecurityTab } from "@/components/dashboard/settings/settings-security-tab"
 import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-appearance-tab"
+import { SettingsSectorsTab } from "@/components/dashboard/settings/settings-sectors-tab"
+import { SettingsBotTab } from "@/components/dashboard/settings/settings-bot-tab"
 import { useToast } from "@/hooks/use-toast"
+import { motion } from "framer-motion"
 
 export default function SettingsPage() {
   const t = useTranslation()
@@ -65,7 +68,11 @@ export default function SettingsPage() {
     localStorage.setItem("language", language)
   }, [language])
 
-  const isAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "HOKIM"
+  const isAdmin = currentUser?.role === "ADMIN"
+  const isHokim = currentUser?.role === "HOKIM" || currentUser?.role === "HOKIM_YORDAMCHISI"
+  const isHokimlikMasul = currentUser?.role === "HOKIMLIK_MASUL"
+  const isTashkilotRahbar = currentUser?.role === "TASHKILOT_RAHBAR"
+  const showAdminTabs = isAdmin || isHokim
 
   const saveSettings = async () => {
     setSaving(true)
@@ -120,12 +127,16 @@ export default function SettingsPage() {
     return (
       <>
         <Header title={t.settings.title} description={t.settings.description} />
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 p-6">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
+            >
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-slate-700">Юкланмоқда...</p>
+            </motion.div>
           </div>
         </div>
       </>
@@ -135,10 +146,20 @@ export default function SettingsPage() {
   return (
     <>
       <Header title={t.settings.title} description={t.settings.description} />
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 p-6">
+        {/* Modern geometric background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-purple-400/8 to-transparent rounded-full blur-2xl" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-4xl mx-auto relative z-10"
+        >
           <Tabs defaultValue="profile" className="space-y-6">
-            <SettingsTabs t={t} isAdmin={isAdmin} />
+            <SettingsTabs t={t} isAdmin={showAdminTabs} userRole={currentUser?.role} />
             <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
             <SettingsNotificationsTab
               t={t}
@@ -157,8 +178,18 @@ export default function SettingsPage() {
             />
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
             <SettingsAppearanceTab t={t} language={language} onLanguageChange={setLanguage} onSave={saveSettings} saving={saving} />
+            
+            {/* Admin-only tabs */}
+            {showAdminTabs && (
+              <>
+                {currentUser?.role === "ADMIN" && <SettingsBotTab t={t} />}
+                {(currentUser?.role === "ADMIN" || currentUser?.role === "HOKIM" || currentUser?.role === "HOKIM_YORDAMCHISI" || currentUser?.role === "HOKIMLIK_MASUL") && (
+                  <SettingsSectorsTab t={t} />
+                )}
+              </>
+            )}
           </Tabs>
-        </div>
+        </motion.div>
       </div>
     </>
   )

@@ -146,6 +146,6 @@ export async function markChatMessagesAsRead(userId: number | string): Promise<v
  * if (count > 0) showNotification(count)
  */
 export async function getUnreadChatCount(): Promise<number> {
-  const data = await fetchApi<{ unread: number }>('/chat/unread_count/')
-  return data.unread ?? 0
+  const data = await fetchApi<{ unread_count: number }>('/chat/messages/unread-count/')
+  return data.unread_count ?? 0
 }

@@ -260,7 +260,7 @@ export default function OrganizationDetailPage() {
                   className={cn(
                     "mt-3",
                     (organization.is_active || organization.isActive)
-                      ? "bg-green-500/10 text-green-600 border-green-500/30"
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
                       : "bg-muted text-muted-foreground",
                   )}
                 >
@@ -389,7 +389,7 @@ export default function OrganizationDetailPage() {
                                 {(roleLabels as Record<string, string>)[user.role] || user.role || '-'}
                               </Badge>
                               {user.is_active !== undefined ? (
-                                <Badge variant="outline" className={user.is_active ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                                <Badge variant="outline" className={user.is_active ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}>
                                   {user.is_active ? "Faol" : "Nofaol"}
                                 </Badge>
                               ) : (

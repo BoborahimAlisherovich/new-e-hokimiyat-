@@ -110,7 +110,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-green-500",
+  ACTIVE: "bg-emerald-500",
   PAUSED: "bg-yellow-500",
   COMPLETED: "bg-blue-500",
   CANCELLED: "bg-red-500",
@@ -555,8 +555,8 @@ export default function RecurringTasksPage() {
           <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div className="p-2 rounded-lg bg-emerald-100">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{statistics.active}</p>

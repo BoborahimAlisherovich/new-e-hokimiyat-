@@ -8,6 +8,7 @@ import { OrganizationFilters } from "@/components/dashboard/organizations/organi
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { motion } from "framer-motion"
 
 export default function OrganizationsPage() {
   const { toast } = useToast()
@@ -143,22 +144,23 @@ export default function OrganizationsPage() {
   return (
     <>
       <Header title="Tashkilotlar boshqaruvi" description="Tizimdagi barcha tashkilotlarning ro'yxati, ma'lumotlari va boshqaruvi" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
-          {/* Subtle grid pattern */}
-          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
         </div>
         
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-12 py-8">
 
             {/* Filters and Actions */}
-            <section className="animate-slide-up">
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
               <OrganizationFilters
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -170,7 +172,7 @@ export default function OrganizationsPage() {
                 totalCount={organizations.length}
                 filteredCount={filteredOrganizations.length}
               />
-            </section>
+            </motion.section>
 
             <OrganizationCreateDialog 
               open={isCreateOpen} 
@@ -182,7 +184,11 @@ export default function OrganizationsPage() {
             />
 
             {/* Organizations Table */}
-            <section className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -206,7 +212,7 @@ export default function OrganizationsPage() {
                   onToggleStatus={handleToggleStatus}
                 />
               )}
-            </section>
+            </motion.section>
           </div>
         </div>
       </div>

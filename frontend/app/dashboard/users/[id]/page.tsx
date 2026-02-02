@@ -36,12 +36,12 @@ export default function UserDetailPage() {
   if (loading) {
     return (
       <>
-        <Header title="Фойдаланувчи маълумотлари" description="Фойдаланувчи тафсилотлари" />
+        <Header title="Foydalanuvchi ma'lumotlari" description="Foydalanuvchi tafsilotlari" />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
+              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -52,11 +52,11 @@ export default function UserDetailPage() {
   if (!user) {
     return (
       <>
-        <Header title="Фойдаланувчи топилмади" description="Фойдаланувчи маълумотлари топилмади" />
+        <Header title="Foydalanuvchi topilmadi" description="Foydalanuvchi ma'lumotlari topilmadi" />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <p className="text-lg text-muted-foreground">Фойдаланувчи топилмади</p>
+              <p className="text-lg text-muted-foreground">Foydalanuvchi topilmadi</p>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function UserDetailPage() {
 
   return (
     <>
-      <Header title="Фойдаланувчи маълумотлари" description={`${user.firstName} ${user.lastName} - Фойдаланувчи тафсилотлари`} />
+      <Header title="Foydalanuvchi ma'lumotlari" description={`${user.firstName} ${user.lastName} - Foydalanuvchi tafsilotlari`} />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-8">
@@ -74,7 +74,7 @@ export default function UserDetailPage() {
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={() => window.history.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Оркага қайтиш
+                Orqaga qaytish
               </Button>
             </div>
 
@@ -108,7 +108,7 @@ export default function UserDetailPage() {
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <Phone className="h-4 w-4" />
-                          <span>Телефон</span>
+                          <span>Telefon</span>
                         </div>
                         <p className="text-foreground">{user.phone}</p>
                       </div>
@@ -124,9 +124,9 @@ export default function UserDetailPage() {
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <Building2 className="h-4 w-4" />
-                          <span>Ташкилот</span>
+                          <span>Tashkilot</span>
                         </div>
-                        <p className="text-foreground">{user.organization?.name || 'Ташкилот белгиланмаган'}</p>
+                        <p className="text-foreground">{user.organization?.name || 'Tashkilot belgilanmagan'}</p>
                       </div>
                     </div>
 
@@ -134,8 +134,8 @@ export default function UserDetailPage() {
                       <Badge className="bg-primary/10 text-primary px-3 py-1">
                         {user.role}
                       </Badge>
-                      <Badge className={user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                        {user.status === 'ACTIVE' ? 'Актив' : 'Нофаол'}
+                      <Badge className={user.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}>
+                        {user.status === 'ACTIVE' ? 'Aktiv' : 'Nofaol'}
                       </Badge>
                     </div>
                   </div>
@@ -149,11 +149,11 @@ export default function UserDetailPage() {
                 <div className="flex items-center gap-4">
                   <Button className="flex-1">
                     <Edit className="h-4 w-4 mr-2" />
-                    Таҳрирлаш
+                    Tahrirlash
                   </Button>
                   <Button variant="outline">
                     <Shield className="h-4 w-4 mr-2" />
-                    Хавфсизлик
+                    Xavfsizlik
                   </Button>
                 </div>
               </CardContent>
