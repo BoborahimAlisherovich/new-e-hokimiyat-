@@ -16,6 +16,7 @@ interface OrganizationCreateDialogProps {
   formData?: CreateOrganizationFormData
   onChange?: (field: keyof CreateOrganizationFormData, value: string) => void
   onSubmit?: () => void
+  loading?: boolean
 }
 
 export function OrganizationCreateDialog({ 
@@ -23,28 +24,29 @@ export function OrganizationCreateDialog({
   onOpenChange,
   formData = { name: '', servicePhone: '', address: '' },
   onChange = () => {},
-  onSubmit = () => {}
+  onSubmit = () => {},
+  loading = false
 }: OrganizationCreateDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Янги ташкилот қўшиш</DialogTitle>
-          <DialogDescription>Ташкилот маълумотларини киритинг</DialogDescription>
+          <DialogTitle>Yangi tashkilot qo'shish</DialogTitle>
+          <DialogDescription>Tashkilot ma'lumotlarini kiriting</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="orgName">Ташкилот номи</Label>
+            <Label htmlFor="orgName">Tashkilot nomi *</Label>
             <Input 
               id="orgName" 
               value={formData.name}
               onChange={(e) => onChange("name", e.target.value)}
-              placeholder="Ташкилот номини киритинг" 
+              placeholder="Tashkilot nomini kiriting" 
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="orgServicePhone">Ташкилот хизмат телефони</Label>
+            <Label htmlFor="orgServicePhone">Tashkilot xizmat telefoni</Label>
             <Input 
               id="orgServicePhone" 
               value={formData.servicePhone}
@@ -53,21 +55,23 @@ export function OrganizationCreateDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="orgAddress">Ташкилот манзили</Label>
+            <Label htmlFor="orgAddress">Tashkilot manzili</Label>
             <Textarea 
               id="orgAddress" 
               value={formData.address}
               onChange={(e) => onChange("address", e.target.value)}
-              placeholder="Ташкилот манзилини киритинг" 
+              placeholder="Tashkilot manzilini kiriting" 
               rows={3}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Бекор қилиш
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Bekor qilish
           </Button>
-          <Button onClick={onSubmit}>Қўшиш</Button>
+          <Button onClick={onSubmit} disabled={loading}>
+            {loading ? "Yuklanmoqda..." : "Qo'shish"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

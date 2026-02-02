@@ -1,34 +1,61 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
-import { getOrganizations } from "@/lib/api"
+import { getOrganizations, createOrganization, getUsers } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 import { useState, useEffect } from "react"
 import { OrganizationFilters } from "@/components/dashboard/organizations/organization-filters"
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
+import { useToast } from "@/hooks/use-toast"
 
 export default function OrganizationsPage() {
+  const { toast } = useToast()
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [organizations, setOrganizations] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    servicePhone: '',
+    address: ''
+  })
+
+  const loadOrganizations = async () => {
+    try {
+      const [orgsList, usersList] = await Promise.all([
+        getOrganizations(),
+        getUsers()
+      ])
+      const orgItems = Array.isArray(orgsList)
+        ? orgsList
+        : orgsList?.results || []
+      const userItems = Array.isArray(usersList)
+        ? usersList
+        : usersList?.results || []
+      setOrganizations(orgItems)
+      setUsers(userItems)
+      setError(null)
+    } catch (err) {
+      console.error("Tashkilotlarni yuklashda xatolik:", err)
+      setError("Tashkilotlarni yuklashda xatolik yuz berdi")
+    }
+  }
 
   useEffect(() => {
     let mounted = true
     const initAuth = async () => {
       try {
         await ensureDevAuth()
-        const orgsList = await getOrganizations()
-        if (!mounted) return
-        setOrganizations(orgsList || [])
-        setError(null)
+        await loadOrganizations()
       } catch (err) {
         console.error("Tashkilotlarni yuklashda xatolik:", err)
-        setError("Tashkilotlarni yuklashda xatolik yuz berdi")
+        if (mounted) setError("Tashkilotlarni yuklashda xatolik yuz berdi")
       } finally {
         if (mounted) setLoading(false)
       }
@@ -38,6 +65,47 @@ export default function OrganizationsPage() {
       mounted = false
     }
   }, [])
+
+  const handleFormChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Xato",
+        description: "Tashkilot nomini kiriting",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setCreating(true)
+      await createOrganization({
+        name: formData.name,
+        phone: formData.servicePhone,
+        address: formData.address
+      })
+      
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Tashkilot muvaffaqiyatli qo'shildi"
+      })
+      
+      setIsCreateOpen(false)
+      setFormData({ name: '', servicePhone: '', address: '' })
+      await loadOrganizations()
+    } catch (err: any) {
+      toast({
+        title: "Xato",
+        description: err?.message || "Tashkilot qo'shishda xatolik yuz berdi",
+        variant: "destructive"
+      })
+    } finally {
+      setCreating(false)
+    }
+  }
 
   const filteredOrganizations = organizations.filter((org) => {
     const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
@@ -79,7 +147,14 @@ export default function OrganizationsPage() {
               />
             </section>
 
-            <OrganizationCreateDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+            <OrganizationCreateDialog 
+              open={isCreateOpen} 
+              onOpenChange={setIsCreateOpen}
+              formData={formData}
+              onChange={handleFormChange}
+              onSubmit={handleSubmit}
+              loading={creating}
+            />
 
             {/* Organizations Table */}
             <section className="animate-slide-up" style={{ animationDelay: "200ms" }}>
@@ -99,7 +174,7 @@ export default function OrganizationsPage() {
                   </button>
                 </div>
               ) : (
-                <OrganizationTable organizations={filteredOrganizations} />
+                <OrganizationTable organizations={filteredOrganizations} users={users} />
               )}
             </section>
           </div>

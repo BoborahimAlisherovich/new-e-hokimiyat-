@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/mock-data"
+import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/constants"
 import { getTaskById, getTaskChat, getUsers, getOrganizations } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { 
   Users, 
   Search,
@@ -13,12 +13,23 @@ import {
   ChevronRight,
   Phone,
   MapPin,
-  Calendar
+  Calendar,
+  Send,
+  Image,
+  Video,
+  FileText,
+  MessageSquare,
+  Megaphone,
+  Upload,
+  X
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select, 
   SelectContent, 
@@ -32,6 +43,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -41,6 +53,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
@@ -83,10 +101,32 @@ export default function TelegramBotUsersPage() {
   const [users, setUsers] = useState<TelegramUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<TelegramUser | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [showBroadcastDialog, setShowBroadcastDialog] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  
+  // File input refs
+  const messageFileInputRef = useRef<HTMLInputElement>(null);
+  const broadcastFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Message form state
+  const [messageText, setMessageText] = useState("");
+  const [messageMediaType, setMessageMediaType] = useState<string>("");
+  const [messageFileUrl, setMessageFileUrl] = useState("");
+  const [messageFile, setMessageFile] = useState<File | null>(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  
+  // Broadcast form state
+  const [broadcastText, setBroadcastText] = useState("");
+  const [broadcastMediaType, setBroadcastMediaType] = useState<string>("");
+  const [broadcastFileUrl, setBroadcastFileUrl] = useState("");
+  const [broadcastFile, setBroadcastFile] = useState<File | null>(null);
+  const [broadcastFilterRegistered, setBroadcastFilterRegistered] = useState(false);
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -108,10 +148,16 @@ export default function TelegramBotUsersPage() {
         params.append("search", search);
       }
       
-      const response = await api.get(`/telegram-bot/users/?${params}`);
-      setUsers(response.data.results || response.data);
-      if (response.data.count) {
-        setTotalPages(Math.ceil(response.data.count / 20));
+      const response = await api.get<{ results?: TelegramUser[]; count?: number } | TelegramUser[]>(`/telegram-bot/users/?${params}`);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        setUsers(data.results || []);
+        if (data.count) {
+          setTotalUsers(data.count);
+          setTotalPages(Math.ceil(data.count / 20));
+        }
       }
     } catch (error) {
       toast({
@@ -134,6 +180,15 @@ export default function TelegramBotUsersPage() {
     setShowDetail(true);
   };
 
+  const openMessageDialog = (user: TelegramUser) => {
+    setSelectedUser(user);
+    setMessageText("");
+    setMessageMediaType("");
+    setMessageFileUrl("");
+    setMessageFile(null);
+    setShowMessageDialog(true);
+  };
+
   const toggleBlock = async (user: TelegramUser) => {
     try {
       const action = user.is_blocked ? "unblock" : "block";
@@ -147,12 +202,111 @@ export default function TelegramBotUsersPage() {
       });
       
       loadUsers();
+      if (showDetail) {
+        setSelectedUser(prev => prev ? { ...prev, is_blocked: !prev.is_blocked } : null);
+      }
     } catch (error) {
       toast({
         title: "Xato",
         description: "Amalni bajarishda xato yuz berdi",
         variant: "destructive"
       });
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!selectedUser || (!messageText && !messageFileUrl && !messageFile)) return;
+    
+    try {
+      setSendingMessage(true);
+      
+      if (messageMediaType && (messageFile || messageFileUrl)) {
+        // Media bilan yuborish
+        const formData = new FormData();
+        formData.append('media_type', messageMediaType);
+        formData.append('caption', messageText);
+        
+        if (messageFile) {
+          formData.append('file', messageFile);
+        } else if (messageFileUrl) {
+          formData.append('file_url', messageFileUrl);
+        }
+        
+        await api.postFormData(`/telegram-bot/users/${selectedUser.id}/send_media/`, formData);
+      } else {
+        // Oddiy xabar
+        await api.post(`/telegram-bot/users/${selectedUser.id}/send_message/`, {
+          text: messageText
+        });
+      }
+      
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Xabar yuborildi"
+      });
+      
+      setShowMessageDialog(false);
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.response?.data?.error || error?.message || "Xabar yuborishda xato",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const sendBroadcast = async () => {
+    if (!broadcastText && !broadcastFileUrl && !broadcastFile) return;
+    
+    try {
+      setSendingBroadcast(true);
+      
+      type BroadcastResponse = { success: boolean; success_count: number; fail_count: number; error?: string };
+      let response: { data: BroadcastResponse };
+      
+      if (broadcastMediaType && (broadcastFile || broadcastFileUrl)) {
+        // Media bilan yuborish
+        const formData = new FormData();
+        formData.append('text', broadcastText);
+        formData.append('media_type', broadcastMediaType);
+        formData.append('filter_registered', broadcastFilterRegistered.toString());
+        
+        if (broadcastFile) {
+          formData.append('file', broadcastFile);
+        } else if (broadcastFileUrl) {
+          formData.append('file_url', broadcastFileUrl);
+        }
+        
+        response = await api.postFormData<BroadcastResponse>(`/telegram-bot/users/broadcast/`, formData);
+      } else {
+        response = await api.post<BroadcastResponse>(`/telegram-bot/users/broadcast/`, {
+          text: broadcastText,
+          media_type: broadcastMediaType || null,
+          file_url: broadcastFileUrl || null,
+          filter_registered: broadcastFilterRegistered
+        });
+      }
+      
+      toast({
+        title: "Muvaffaqiyat",
+        description: `Xabar yuborildi: ${response.data.success_count} ta muvaffaqiyatli, ${response.data.fail_count} ta xato`
+      });
+      
+      setShowBroadcastDialog(false);
+      setBroadcastText("");
+      setBroadcastMediaType("");
+      setBroadcastFileUrl("");
+      setBroadcastFile(null);
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.response?.data?.error || "Xabar yuborishda xato",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingBroadcast(false);
     }
   };
 
@@ -164,15 +318,25 @@ export default function TelegramBotUsersPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="h-6 w-6 text-blue-500" />
             Telegram Foydalanuvchilar
+            <Badge variant="secondary" className="ml-2">{totalUsers}</Badge>
           </h1>
           <p className="text-muted-foreground">
-            Bot foydalanuvchilari ro'yxati
+            Bot foydalanuvchilari ro'yxati va boshqaruvi
           </p>
         </div>
-        <Button onClick={loadUsers} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Yangilash
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowBroadcastDialog(true)} 
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Megaphone className="h-4 w-4 mr-2" />
+            Barchaga xabar
+          </Button>
+          <Button onClick={loadUsers} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Yangilash
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -267,14 +431,25 @@ export default function TelegramBotUsersPage() {
                             size="sm" 
                             variant="ghost"
                             onClick={() => openDetail(user)}
+                            title="Ko'rish"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost"
+                            className="text-blue-500"
+                            onClick={() => openMessageDialog(user)}
+                            title="Xabar yuborish"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
                             className={user.is_blocked ? "text-green-500" : "text-red-500"}
                             onClick={() => toggleBlock(user)}
+                            title={user.is_blocked ? "Blokdan chiqarish" : "Bloklash"}
                           >
                             {user.is_blocked ? (
                               <CheckCircle className="h-4 w-4" />
@@ -388,10 +563,19 @@ export default function TelegramBotUsersPage() {
 
                 <div className="flex justify-end gap-2">
                   <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetail(false);
+                      openMessageDialog(selectedUser);
+                    }}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Xabar yuborish
+                  </Button>
+                  <Button 
                     variant={selectedUser.is_blocked ? "default" : "destructive"}
                     onClick={() => {
                       toggleBlock(selectedUser);
-                      setShowDetail(false);
                     }}
                   >
                     {selectedUser.is_blocked ? (
@@ -410,6 +594,320 @@ export default function TelegramBotUsersPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Message Dialog */}
+      <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-500" />
+              Xabar yuborish
+            </DialogTitle>
+            <DialogDescription>
+              {selectedUser?.full_name} ga xabar yuboring
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Xabar matni</Label>
+              <Textarea 
+                placeholder="Xabar matnini kiriting..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Media turi (ixtiyoriy)</Label>
+              <Select value={messageMediaType || "none"} onValueChange={(val) => setMessageMediaType(val === "none" ? "" : val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Media turini tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Oddiy xabar</SelectItem>
+                  <SelectItem value="photo">
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4" /> Rasm
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="video">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4" /> Video
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="document">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Fayl
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {messageMediaType && (
+              <div className="space-y-4">
+                {/* Fayl yuklash */}
+                <div className="space-y-2">
+                  <Label>Fayl yuklash</Label>
+                  <input
+                    type="file"
+                    ref={messageFileInputRef}
+                    className="hidden"
+                    accept={messageMediaType === 'photo' ? 'image/*' : messageMediaType === 'video' ? 'video/*' : '*'}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setMessageFile(file);
+                        setMessageFileUrl("");
+                      }
+                    }}
+                  />
+                  {messageFile ? (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <FileText className="h-4 w-4" />
+                      <span className="flex-1 text-sm truncate">{messageFile.name}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setMessageFile(null);
+                          if (messageFileInputRef.current) {
+                            messageFileInputRef.current.value = "";
+                          }
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => messageFileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Fayl tanlash
+                    </Button>
+                  )}
+                </div>
+
+                {/* Yoki URL orqali */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">yoki</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Fayl URL</Label>
+                  <Input 
+                    placeholder="https://example.com/file.jpg"
+                    value={messageFileUrl}
+                    onChange={(e) => {
+                      setMessageFileUrl(e.target.value);
+                      if (e.target.value) setMessageFile(null);
+                    }}
+                    disabled={!!messageFile}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMessageDialog(false)}>
+              Bekor qilish
+            </Button>
+            <Button 
+              onClick={sendMessage}
+              disabled={sendingMessage || (!messageText && !messageFileUrl && !messageFile)}
+            >
+              {sendingMessage ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Yuborilmoqda...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Yuborish
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Broadcast Dialog */}
+      <Dialog open={showBroadcastDialog} onOpenChange={setShowBroadcastDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-purple-500" />
+              Barchaga xabar yuborish
+            </DialogTitle>
+            <DialogDescription>
+              Barcha foydalanuvchilarga ommaviy xabar yuboring
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ Diqqat! Bu xabar barcha {totalUsers} ta bloklanmagan foydalanuvchiga yuboriladi.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Xabar matni</Label>
+              <Textarea 
+                placeholder="Xabar matnini kiriting..."
+                value={broadcastText}
+                onChange={(e) => setBroadcastText(e.target.value)}
+                rows={5}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Media turi (ixtiyoriy)</Label>
+              <Select value={broadcastMediaType || "none"} onValueChange={(val) => setBroadcastMediaType(val === "none" ? "" : val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Media turini tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Oddiy xabar</SelectItem>
+                  <SelectItem value="photo">
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4" /> Rasm
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="video">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4" /> Video
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="document">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Fayl
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {broadcastMediaType && (
+              <div className="space-y-4">
+                {/* Fayl yuklash */}
+                <div className="space-y-2">
+                  <Label>Fayl yuklash</Label>
+                  <input
+                    type="file"
+                    ref={broadcastFileInputRef}
+                    className="hidden"
+                    accept={broadcastMediaType === 'photo' ? 'image/*' : broadcastMediaType === 'video' ? 'video/*' : '*'}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setBroadcastFile(file);
+                        setBroadcastFileUrl("");
+                      }
+                    }}
+                  />
+                  {broadcastFile ? (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <FileText className="h-4 w-4" />
+                      <span className="flex-1 text-sm truncate">{broadcastFile.name}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setBroadcastFile(null);
+                          if (broadcastFileInputRef.current) {
+                            broadcastFileInputRef.current.value = "";
+                          }
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => broadcastFileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Fayl tanlash
+                    </Button>
+                  )}
+                </div>
+
+                {/* Yoki URL orqali */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">yoki</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Fayl URL</Label>
+                  <Input 
+                    placeholder="https://example.com/file.jpg"
+                    value={broadcastFileUrl}
+                    onChange={(e) => {
+                      setBroadcastFileUrl(e.target.value);
+                      if (e.target.value) setBroadcastFile(null);
+                    }}
+                    disabled={!!broadcastFile}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="filter-registered"
+                checked={broadcastFilterRegistered}
+                onCheckedChange={(checked) => setBroadcastFilterRegistered(checked as boolean)}
+              />
+              <Label htmlFor="filter-registered" className="text-sm">
+                Faqat ro'yxatdan o'tganlarga yuborish
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBroadcastDialog(false)}>
+              Bekor qilish
+            </Button>
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={sendBroadcast}
+              disabled={sendingBroadcast || (!broadcastText && !broadcastFileUrl && !broadcastFile)}
+            >
+              {sendingBroadcast ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Yuborilmoqda...
+                </>
+              ) : (
+                <>
+                  <Megaphone className="h-4 w-4 mr-2" />
+                  Barchaga yuborish
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

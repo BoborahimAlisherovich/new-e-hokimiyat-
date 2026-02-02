@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialog"
 import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
 import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
 import type { Task, TaskCategory } from "@/types"
-import { getOrganizations, getTasks, getUsers } from "@/lib/api"
+import { getOrganizations, getTaskStats, getTasksPage, getUsers } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 
 
@@ -18,37 +19,69 @@ export default function TasksPage() {
   const [users, setUsers] = useState<any[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(100)
+  const [totalCount, setTotalCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<Task["status"] | "all">("all")
   const [priorityFilter, setPriorityFilter] = useState<Task["priority"] | "all">("all")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+  })
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const usersPromise = getUsers()
       const orgsPromise = getOrganizations()
-      const tasksPromise = getTasks(buildTaskFilters())
-      const [usersData, orgsData, tasksData] = await Promise.all([usersPromise, orgsPromise, tasksPromise])
+      const tasksPromise = getTasksPage(buildTaskFilters(), page, pageSize)
+      const statsPromise = getTaskStats(buildTaskFilters())
+      const [usersData, orgsData, tasksPage, statsData] = await Promise.all([
+        usersPromise,
+        orgsPromise,
+        tasksPromise,
+        statsPromise,
+      ])
       setUsers(usersData || [])
       setOrganizations(orgsData || [])
-      setTasks(tasksData || [])
+      setTasks(tasksPage?.results || [])
+      setTotalCount(tasksPage?.count ?? 0)
+      setStats({
+        total: statsData.total ?? 0,
+        pending: statsData.pending ?? 0,
+        inProgress: statsData.in_progress ?? 0,
+        completed: statsData.completed ?? 0,
+      })
     } catch (error) {
       setUsers([])
       setOrganizations([])
       setTasks([])
+      setTotalCount(0)
+      setStats({
+        total: 0,
+        pending: 0,
+        inProgress: 0,
+        completed: 0,
+      })
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, categoryFilter, searchQuery])
+  }, [statusFilter, priorityFilter, categoryFilter, page, pageSize])
 
-  const CATEGORY_MAP: Record<string, TaskCategory> = {
-    "Ижтимоий": "IJRO",
-    "Иқтисодий": "NAZORAT",
-    "Ҳуқуқий": "HISOBOT",
-    "Бошқа": "BOSHQA",
+  const CATEGORY_MAP: Record<string, string> = {
+    "IJTIMOIY": "IJTIMOIY",
+    "IQTISODIY": "IQTISODIY",
+    "HUQUQIY": "HUQUQIY",
+    "INFRASTRUKTURA": "INFRASTRUKTURA",
+    "TA_LIM": "TA_LIM",
+    "SOG_LIQNI_SAQLASH": "SOG_LIQNI_SAQLASH",
+    "BOSHQA": "BOSHQA",
   }
 
   const buildTaskFilters = () => {
@@ -58,7 +91,6 @@ export default function TasksPage() {
     if (categoryFilter && categoryFilter !== "all") {
       filters.category = CATEGORY_MAP[categoryFilter] || categoryFilter
     }
-    if (searchQuery) filters.search = searchQuery
     return filters
   }
 
@@ -69,6 +101,10 @@ export default function TasksPage() {
     }
     init()
   }, [loadData])
+
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, priorityFilter, categoryFilter])
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -80,15 +116,6 @@ export default function TasksPage() {
       return matchesSearch && matchesStatus && matchesPriority && matchesCategory
     })
   }, [tasks, searchQuery, statusFilter, priorityFilter, categoryFilter])
-
-  // Stats calculations
-  // Stats based on backend TaskStatus values
-  const stats = useMemo(() => ({
-    total: tasks.length,
-    pending: tasks.filter(t => t.status === 'YANGI').length,
-    inProgress: tasks.filter(t => t.status === 'QABUL_QILINDI' || t.status === 'JARAYONDA').length,
-    completed: tasks.filter(t => t.status === 'BAJARILDI').length,
-  }), [tasks])
 
   // Event handlers
   const handleViewTask = (task: Task) => {
@@ -181,6 +208,33 @@ export default function TasksPage() {
               />
             </CardContent>
           </Card>
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div>
+              Жами: <span className="font-medium text-foreground">{totalCount}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Oldingi
+              </Button>
+              <span>
+                {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+              >
+                Keyingi
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

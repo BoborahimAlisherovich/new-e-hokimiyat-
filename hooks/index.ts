@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+// Re-export audio recorder hook
+export { useAudioRecorder, formatTime } from './use-audio-recorder'
+
 // Generic debounce hook
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,

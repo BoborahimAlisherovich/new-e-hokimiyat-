@@ -103,6 +103,7 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     """
     Minimal task serializer for lists.
     """
+    created_by = UserMinimalSerializer(read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     assigned_organizations = TaskOrganizationSerializer(many=True, read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
@@ -111,8 +112,8 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'title', 'priority', 'status', 'deadline',
-            'created_by_name', 'assigned_organizations', 
+            'id', 'title', 'priority', 'category', 'status', 'deadline',
+            'created_by', 'created_by_name', 'assigned_organizations', 
             'is_overdue', 'days_remaining', 'created_at'
         ]
 

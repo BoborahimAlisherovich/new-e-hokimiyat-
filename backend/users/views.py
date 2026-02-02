@@ -1,58 +1,106 @@
 """
 User views for E-Hokimiyat API.
+
+Bu modul foydalanuvchilar bilan ishlash uchun API endpointlarni o'z ichiga oladi.
+
+Endpointlar:
+    Auth:
+        - POST /api/auth/login/ - Tizimga kirish
+        - POST /api/auth/logout/ - Tizimdan chiqish
+        - GET /api/auth/me/ - Joriy foydalanuvchi ma'lumotlari
+        - POST /api/auth/refresh/ - Token yangilash
+    
+    Users:
+        - GET/POST /api/users/ - Foydalanuvchilar ro'yxati va yaratish
+        - GET/PUT/DELETE /api/users/{id}/ - Foydalanuvchi detallari
+        - PATCH /api/users/{id}/block/ - Bloklash
+        - PATCH /api/users/{id}/unblock/ - Blokdan chiqarish
+        - PATCH /api/users/{id}/archive/ - Arxivlash
 """
 
-from rest_framework import viewsets, status, generics
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List, Type
+
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework import generics, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import Serializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from audit.models import AuditLog
+from core.constants import AuditAction, Messages, UserRole
+from core.permissions import CanManageUsers
 
 from .models import User, UserAssignment
 from .serializers import (
-    UserSerializer, UserCreateSerializer, UserUpdateSerializer,
-    LoginSerializer, UserMeSerializer, UserMinimalSerializer,
-    UserAssignmentSerializer
+    LoginSerializer,
+    UserAssignmentSerializer,
+    UserCreateSerializer,
+    UserMeSerializer,
+    UserMinimalSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
-from core.permissions import CanManageUsers
-from audit.models import AuditLog
 
+if TYPE_CHECKING:
+    pass
+
+
+# =============================================================================
+# AUTHENTICATION VIEWSET
+# =============================================================================
 
 class AuthViewSet(viewsets.ViewSet):
-    """
-    Authentication endpoints.
+    """Autentifikatsiya endpointlari.
     
-    For development: Mock authentication with PNFL
-    For production: Replace with OneID OAuth
+    Development uchun: Mock autentifikatsiya PNFL bilan
+    Production uchun: OneID OAuth integratsiyasi
+    
+    Endpointlar:
+        - login: Tizimga kirish
+        - logout: Tizimdan chiqish
+        - me: Joriy foydalanuvchi profili
+        - refresh: Access token yangilash
     """
+    
     permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
-    def login(self, request):
-        """
-        Mock login endpoint.
+    def login(self, request: Request) -> Response:
+        """Tizimga kirish.
         
-        POST /api/auth/login/
-        {
-            "pnfl": "12345678901234",
-            "password": "optional_password"
-        }
+        Mock login endpoint - development uchun.
+        
+        Args:
+            request: HTTP so'rov
+                - pnfl: 14 raqamli JSHSHR
+                - password: Parol (ixtiyoriy)
+        
+        Returns:
+            Response: JWT tokenlar va foydalanuvchi ma'lumotlari
+                - access: Access token
+                - refresh: Refresh token
+                - user: Foydalanuvchi profili
         """
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         user = serializer.validated_data['user']
         
-        # Generate JWT tokens
+        # JWT tokenlar generatsiya qilish
         refresh = RefreshToken.for_user(user)
         
-        # Log the login
+        # Login logini yozish
         AuditLog.log(
             user=user,
-            action='USER_LOGIN',
+            action=AuditAction.USER_LOGIN,
             entity_type='USER',
             entity_id=user.id,
             description=f"{user.full_name} tizimga kirdi",
@@ -67,11 +115,17 @@ class AuthViewSet(viewsets.ViewSet):
         })
     
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
-    def logout(self, request):
-        """
-        Logout endpoint.
+    def logout(self, request: Request) -> Response:
+        """Tizimdan chiqish.
         
-        POST /api/auth/logout/
+        Refresh tokenni blacklist'ga qo'shadi.
+        
+        Args:
+            request: HTTP so'rov
+                - refresh: Refresh token
+        
+        Returns:
+            Response: Muvaffaqiyat xabari
         """
         try:
             refresh_token = request.data.get('refresh')
@@ -79,47 +133,67 @@ class AuthViewSet(viewsets.ViewSet):
                 token = RefreshToken(refresh_token)
                 token.blacklist()
             
-            # Log the logout
             AuditLog.log(
                 user=request.user,
-                action='USER_LOGOUT',
+                action=AuditAction.USER_LOGOUT,
                 entity_type='USER',
                 entity_id=request.user.id,
                 description=f"{request.user.full_name} tizimdan chiqdi",
                 ip_address=getattr(request, 'client_ip', None)
             )
             
-            return Response({'detail': 'Muvaffaqiyatli chiqildi'})
+            return Response({'detail': Messages.LOGOUT_SUCCESS})
         except Exception:
-            return Response({'detail': 'Logout amalga oshirildi'})
+            return Response({'detail': Messages.LOGOUT_SUCCESS})
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def me(self, request):
-        """
-        Get current user profile.
+    def me(self, request: Request) -> Response:
+        """Joriy foydalanuvchi profilini olish.
         
-        GET /api/auth/me/
+        Args:
+            request: HTTP so'rov
+        
+        Returns:
+            Response: Foydalanuvchi profili
         """
         return Response(UserMeSerializer(request.user).data)
     
     @action(detail=False, methods=['post'])
-    def refresh(self, request):
-        """
-        Refresh access token.
+    def refresh(self, request: Request) -> Response:
+        """Access tokenni yangilash.
         
-        POST /api/auth/refresh/
-        {
-            "refresh": "refresh_token"
-        }
+        Args:
+            request: HTTP so'rov
+                - refresh: Refresh token
+        
+        Returns:
+            Response: Yangi access token
         """
         from rest_framework_simplejwt.views import TokenRefreshView
         return TokenRefreshView.as_view()(request._request)
 
 
+# =============================================================================
+# USER VIEWSET
+# =============================================================================
+
 class UserViewSet(viewsets.ModelViewSet):
+    """Foydalanuvchilar bilan ishlash uchun ViewSet.
+    
+    Bu ViewSet foydalanuvchilarni boshqarish uchun CRUD operatsiyalarni
+    va qo'shimcha action'larni o'z ichiga oladi.
+    
+    Attributes:
+        queryset: Barcha foydalanuvchilar
+        permission_classes: Autentifikatsiya va CanManageUsers
+        
+    Qo'shimcha action'lar:
+        - block: Foydalanuvchini bloklash
+        - unblock: Blokdan chiqarish
+        - archive: Arxivlash
+        - activate: Faollashtirish
     """
-    User management endpoints.
-    """
+    
     queryset = User.objects.all()
     permission_classes = [IsAuthenticated, CanManageUsers]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -128,27 +202,38 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'last_name', 'first_name']
     ordering = ['-created_at']
     
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return UserCreateSerializer
-        elif self.action in ['update', 'partial_update']:
-            return UserUpdateSerializer
-        elif self.action == 'list':
-            return UserSerializer
-        return UserSerializer
+    def get_serializer_class(self) -> Type[Serializer]:
+        """So'rov turiga qarab serializer tanlash.
+        
+        Returns:
+            Tegishli Serializer class
+        """
+        serializer_map = {
+            'create': UserCreateSerializer,
+            'update': UserUpdateSerializer,
+            'partial_update': UserUpdateSerializer,
+        }
+        return serializer_map.get(self.action, UserSerializer)
     
-    def get_queryset(self):
-        """Filter users based on current user's role and organization."""
+    def get_queryset(self) -> QuerySet[User]:
+        """Foydalanuvchi roliga qarab filtrlash.
+        
+        Tashkilot rahbari faqat o'z tashkiloti xodimlarini,
+        tashkilot mas'uli faqat o'zini ko'radi.
+        
+        Returns:
+            Filtrlangan foydalanuvchilar queryset'i
+        """
         user = self.request.user
         queryset = User.objects.select_related('organization', 'created_by')
         
-        # Tashkilot rahbari can only see users in their organization
-        if user.role == 'TASHKILOT_RAHBARI':
-            queryset = queryset.filter(organization=user.organization)
+        # Tashkilot rahbari - faqat o'z tashkiloti
+        if user.role == UserRole.TASHKILOT_RAHBARI:
+            return queryset.filter(organization=user.organization)
         
-        # Tashkilot mas'uli can only see themselves
-        elif user.role == 'TASHKILOT_MASUL':
-            queryset = queryset.filter(id=user.id)
+        # Tashkilot mas'uli - faqat o'zi
+        if user.role == UserRole.TASHKILOT_MASUL:
+            return queryset.filter(id=user.id)
         
         return queryset
     

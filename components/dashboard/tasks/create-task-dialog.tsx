@@ -33,6 +33,10 @@ type CreateFormState = {
 const CATEGORIES = ["Ижтимоий", "Иқтисодий", "Ҳуқуқий", "Бошқа"] as const
 
 export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated }: CreateTaskDialogProps) {
+  const organizationItems = Array.isArray(organizations)
+    ? organizations
+    : (organizations as { results?: any[] } | null | undefined)?.results || []
+
   const [form, setForm] = useState<CreateFormState>({
     title: "",
     description: "",
@@ -99,12 +103,12 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
 
   const validate = () => {
     const next: Record<string, string> = {}
-    if (!form.title.trim()) next.title = "Топшириқ номи мажбурий"
-    if (!form.description.trim()) next.description = "Тафсилотлар мажбурий"
-    if (!form.priority) next.priority = "Муҳимлик даражасини танланг"
-    if (!form.category) next.category = "Соҳани танланг"
-    if (!form.organization_id) next.organization_id = "Ташкилотни танланг"
-    if (!form.due_date) next.due_date = "Муддатни танланг"
+    if (!form.title.trim()) next.title = "Topshiriq nomi majburiy"
+    if (!form.description.trim()) next.description = "Tafsilotlar majburiy"
+    if (!form.priority) next.priority = "Muhimlik darajasini tanlang"
+    if (!form.category) next.category = "Sohani tanlang"
+    if (!form.organization_id) next.organization_id = "Tashkilotni tanlang"
+    if (!form.due_date) next.due_date = "Muddatni tanlang"
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -145,9 +149,9 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[700px] max-h-[85vh] overflow-y-auto bg-card">
         <DialogHeader>
-          <DialogTitle>Янги топшириқ қўшиш</DialogTitle>
+          <DialogTitle>Yangi topshiriq qo'shish</DialogTitle>
           <DialogDescription>
-            Тизимга янги топшириқ қўшиш учун маълумотларни киритинг
+            Tizimga yangi topshiriq qo'shish uchun ma'lumotlarni kiriting
           </DialogDescription>
         </DialogHeader>
         <form
@@ -158,24 +162,24 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="title">Топшириқ номи <span className="text-destructive">*</span></Label>
+            <Label htmlFor="title">Topshiriq nomi <span className="text-destructive">*</span></Label>
             <Input
               id="title"
               value={form.title}
               onChange={(e) => setField("title", e.target.value)}
-              placeholder="Топшириқ номини киритинг"
+              placeholder="Topshiriq nomini kiriting"
               aria-invalid={!!errors.title}
             />
             {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Тафсилотлар <span className="text-destructive">*</span></Label>
+            <Label htmlFor="description">Tafsilotlar <span className="text-destructive">*</span></Label>
             <Textarea
               id="description"
               value={form.description}
               onChange={(e) => setField("description", e.target.value)}
-              placeholder="Топшириқ ҳақида тўлиқ маълумотларни киритинг"
+              placeholder="Topshiriq haqida to'liq ma'lumotlarni kiriting"
               rows={4}
               aria-invalid={!!errors.description}
             />
@@ -184,39 +188,42 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="priority">Муҳимлик даражаси <span className="text-destructive">*</span></Label>
+              <Label htmlFor="priority">Muhimlik darajasi <span className="text-destructive">*</span></Label>
               <Select value={form.priority} onValueChange={handlePriorityChange}>
                 <SelectTrigger aria-invalid={!!errors.priority}>
-                  <SelectValue placeholder="Муҳимлик даражасини танланг" />
+                  <SelectValue placeholder="Muhimlik darajasini tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="FAVQULODDA">Муҳим ва шошилинч (1 кун)</SelectItem>
-                  <SelectItem value="YUQORI">Муҳим, лекин шошилинч эмас (3 кун)</SelectItem>
-                  <SelectItem value="ODDIY">Шошилинч, лекин муҳим эмас (5 кун)</SelectItem>
-                  <SelectItem value="PAST">Муҳим эмас ва шошилинч эмас (7 кун)</SelectItem>
+                <SelectContent className="bg-popover z-[100]">
+                  <SelectItem value="FAVQULODDA">Muhim va shoshilinch (1 kun)</SelectItem>
+                  <SelectItem value="YUQORI">Muhim, lekin shoshilinch emas (3 kun)</SelectItem>
+                  <SelectItem value="ODDIY">Shoshilinch, lekin muhim emas (5 kun)</SelectItem>
+                  <SelectItem value="PAST">Muhim emas va shoshilinch emas (7 kun)</SelectItem>
                 </SelectContent>
               </Select>
               {errors.priority && <p className="text-xs text-destructive">{errors.priority}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Соҳа <span className="text-destructive">*</span></Label>
+              <Label htmlFor="category">Soha <span className="text-destructive">*</span></Label>
               <Select value={form.category} onValueChange={(value) => setField("category", value)}>
                 <SelectTrigger aria-invalid={!!errors.category}>
-                  <SelectValue placeholder="Соҳани танланг" />
+                  <SelectValue placeholder="Sohani tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="Ижтимоий">Ижтимоий</SelectItem>
-                  <SelectItem value="Иқтисодий">Иқтисодий</SelectItem>
-                  <SelectItem value="Ҳуқуқий">Ҳуқуқий</SelectItem>
-                  <SelectItem value="Бошқа">Бошқа</SelectItem>
+                <SelectContent className="bg-popover z-[100]">
+                  <SelectItem value="IJTIMOIY">Ijtimoiy</SelectItem>
+                  <SelectItem value="IQTISODIY">Iqtisodiy</SelectItem>
+                  <SelectItem value="HUQUQIY">Huquqiy</SelectItem>
+                  <SelectItem value="INFRASTRUKTURA">Infrastruktura</SelectItem>
+                  <SelectItem value="TA_LIM">Ta'lim</SelectItem>
+                  <SelectItem value="SOG_LIQNI_SAQLASH">Sog'liqni saqlash</SelectItem>
+                  <SelectItem value="BOSHQA">Boshqa</SelectItem>
                 </SelectContent>
               </Select>
               {errors.category && <p className="text-xs text-destructive">{errors.category}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label>Ташкилот <span className="text-destructive">*</span></Label>
+              <Label>Tashkilot <span className="text-destructive">*</span></Label>
               <Popover open={orgOpen} onOpenChange={setOrgOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -225,18 +232,18 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
                     className={cn("w-full justify-between", errors.organization_id && "border-destructive")}
                   >
                     {form.organization_id
-                      ? organizations.find((org) => String(org.id) === String(form.organization_id))?.name
-                      : "Ташкилотни танланг"}
+                      ? organizationItems.find((org) => String(org.id) === String(form.organization_id))?.name
+                      : "Tashkilotni tanlang"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Қидириш..." />
+                    <CommandInput placeholder="Qidirish..." />
                     <CommandList>
-                      <CommandEmpty>Топилмади</CommandEmpty>
+                      <CommandEmpty>Topilmadi</CommandEmpty>
                       <CommandGroup>
-                        {organizations.map((org) => (
+                        {organizationItems.map((org) => (
                           <CommandItem
                             key={org.id}
                             value={org.name}
@@ -265,7 +272,7 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="due_date">Муддат <span className="text-destructive">*</span></Label>
+              <Label htmlFor="due_date">Muddat <span className="text-destructive">*</span></Label>
               <Input
                 id="due_date"
                 type="date"
@@ -278,7 +285,7 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="attachments">Файллар (расм/видео/ҳужжат)</Label>
+            <Label htmlFor="attachments">Fayllar (rasm/video/hujjat)</Label>
             <Input
               id="attachments"
               type="file"
@@ -295,10 +302,10 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
 
           <DialogFooter className="pt-2">
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
-              Бекор қилиш
+              Bekor qilish
             </Button>
             <Button type="submit" disabled={isSubmitDisabled}>
-              Қўшиш
+              Qo'shish
             </Button>
           </DialogFooter>
         </form>

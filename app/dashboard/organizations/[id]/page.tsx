@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
-import { roleLabels } from "@/lib/mock-data"
+import { roleLabels } from "@/lib/constants"
 import { getOrganizations, getUsers, getTasks } from "@/lib/api"
 import { UserStatusBadge, TaskStatusBadge } from "@/components/ui/status-badge"
 import { ArrowLeft, Building2, Users, ClipboardList, TrendingUp, Edit, Trash2, UserPlus } from "lucide-react"
@@ -57,11 +57,19 @@ export default function OrganizationDetailPage() {
         const orgsList = Array.isArray(orgs) ? orgs : (orgs as any).results || []
         const usersList = Array.isArray(users) ? users : (users as any).results || []
         const tasksList = Array.isArray(tasks) ? tasks : (tasks as any).results || []
-        const org = orgsList.find((o: any) => o.id === id) || null
+        const org = orgsList.find((o: any) => String(o.id) === String(id)) || null
         setOrganization(org)
-        setIsActive(Boolean(org?.isActive))
-        setOrgUsers(usersList.filter((u: any) => u.organizationId === id))
-        setOrgTasks(tasksList.filter((t: any) => (t.organizations || []).includes(id)))
+        setIsActive(Boolean(org?.is_active || org?.isActive))
+        // Backend uses 'organization' field (UUID)
+        setOrgUsers(usersList.filter((u: any) => String(u.organization) === String(id) || String(u.organization_id) === String(id)))
+        // Tasks may have assigned_organizations array
+        setOrgTasks(tasksList.filter((t: any) => {
+          const orgs = t.assigned_organizations || t.organizations || []
+          return orgs.some((org: any) => {
+            const orgId = typeof org === 'object' ? (org.organization?.id || org.organization_id || org.id) : org
+            return String(orgId) === String(id)
+          })
+        }))
       })
       .catch(() => {})
     return () => {
@@ -180,12 +188,12 @@ export default function OrganizationDetailPage() {
                   variant="outline"
                   className={cn(
                     "mt-3",
-                    organization.isActive
-                      ? "bg-accent/10 text-accent border-accent/30"
+                    (organization.is_active || organization.isActive)
+                      ? "bg-green-500/10 text-green-600 border-green-500/30"
                       : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {organization.isActive ? "Фаол" : "Нофаол"}
+                  {(organization.is_active || organization.isActive) ? "Faol" : "Nofaol"}
                 </Badge>
               </div>
 
@@ -295,22 +303,28 @@ export default function OrganizationDetailPage() {
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
                                 <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                                  {user.firstName[0]}
-                                  {user.lastName[0]}
+                                  {(user.first_name || user.firstName || '?')[0]}
+                                  {(user.last_name || user.lastName || '?')[0]}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
                                 <p className="font-medium text-foreground">
-                                  {user.lastName} {user.firstName}
+                                  {user.last_name || user.lastName} {user.first_name || user.firstName}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{user.position}</p>
+                                <p className="text-sm text-muted-foreground">{user.position || '-'}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="font-normal">
-                                {(roleLabels as Record<string, string>)[user.role] || user.role}
+                                {(roleLabels as Record<string, string>)[user.role] || user.role || '-'}
                               </Badge>
-                              <UserStatusBadge status={user.status} />
+                              {user.is_active !== undefined ? (
+                                <Badge variant="outline" className={user.is_active ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                                  {user.is_active ? "Faol" : "Nofaol"}
+                                </Badge>
+                              ) : (
+                                <UserStatusBadge status={user.status} />
+                              )}
                             </div>
                           </Link>
                         ))}

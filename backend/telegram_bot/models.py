@@ -447,6 +447,7 @@ class TelegramAppeal(models.Model):
     )
     ai_rejection_reason = models.TextField(
         blank=True,
+        null=True,
         default='',
         verbose_name="AI rad etish sababi"
     )
@@ -484,6 +485,29 @@ class TelegramAppeal(models.Model):
         null=True, 
         blank=True,
         verbose_name="Saytdagi topshiriq ID"
+    )
+    
+    # Baholash
+    rating = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Baho (1-5)",
+        help_text="Foydalanuvchi xizmatni baholashi"
+    )
+    rating_comment = models.TextField(
+        blank=True,
+        default='',
+        verbose_name="Baho izohi"
+    )
+    rated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Baholangan vaqt"
+    )
+    closed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Yopilgan vaqt"
     )
     
     # Vaqtlar

@@ -466,10 +466,43 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Murojaat matni</p>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="whitespace-pre-wrap">{appeal.description}</p>
+                    <div className="p-4 bg-muted/30 rounded-lg overflow-hidden">
+                      <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{appeal.description}</p>
                     </div>
                   </div>
+                  
+                  {/* Baholash ko'rsatish */}
+                  {appeal.status === 'resolved' && (
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-green-700 dark:text-green-400">Murojaat yopilgan</p>
+                          {appeal.closed_at && (
+                            <p className="text-xs text-green-600 dark:text-green-500">
+                              {new Date(appeal.closed_at).toLocaleString('uz-UZ')}
+                            </p>
+                          )}
+                        </div>
+                        {appeal.rating ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{'⭐'.repeat(appeal.rating)}</span>
+                            <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                              {appeal.rating}/5
+                            </span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-400">
+                            Baholanmagan
+                          </Badge>
+                        )}
+                      </div>
+                      {appeal.rating_comment && (
+                        <p className="mt-2 text-sm text-green-600 dark:text-green-500 italic">
+                          "{appeal.rating_comment}"
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

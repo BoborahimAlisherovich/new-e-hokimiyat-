@@ -18,7 +18,7 @@ import {
   Cell,
   Legend,
 } from "recharts"
-import { taskStatusLabels, sectorLabels, sectorColors, type TaskStatus, type Sector } from "@/lib/mock-data"
+import { taskStatusLabels, sectorLabels, sectorColors, type TaskStatus, type Sector } from "@/lib/constants"
 import { getTasks, getOrganizations } from "@/lib/api"
 import React from "react"
 import { TrendingUp, TrendingDown, Clock, Target, Layers, Building2 } from "lucide-react"

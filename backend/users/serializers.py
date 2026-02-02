@@ -3,6 +3,7 @@ User serializers for E-Hokimiyat API.
 """
 
 from rest_framework import serializers
+from django.conf import settings
 from django.contrib.auth import authenticate
 from .models import User, UserAssignment
 
@@ -130,7 +131,19 @@ class LoginSerializer(serializers.Serializer):
         try:
             user = User.objects.get(pnfl=pnfl)
         except User.DoesNotExist:
-            raise serializers.ValidationError("Siz tizimga oldindan kiritilmagansiz")
+            # Dev mode: auto-create demo user for any PNFL
+            if getattr(settings, 'DEBUG', False) or getattr(settings, 'ALLOW_DEV_LOGIN', False):
+                user = User.objects.create_user(
+                    pnfl=pnfl,
+                    password=password or None,
+                    first_name='Demo',
+                    last_name='User',
+                    role='ADMIN',
+                    status='FAOL',
+                    is_staff=True
+                )
+            else:
+                raise serializers.ValidationError("Siz tizimga oldindan kiritilmagansiz")
         
         if user.status == 'ARXIV':
             raise serializers.ValidationError("Bu hisob arxivlangan")

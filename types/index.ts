@@ -10,7 +10,7 @@ export type OrganizationType = 'HOKIMIYAT' | 'MAKTAB' | 'BOLALAR_BOG' | 'SHIFOXO
 
 export type OrganizationStatus = 'ACTIVE' | 'INACTIVE'
 
-export type TaskStatus = 'YANGI' | 'QABUL_QILINDI' | 'JARAYONDA' | 'TEKSHIRUVDA' | 'BAJARILDI' | 'RAD_ETILDI' | 'BEKOR_QILINDI'
+export type TaskStatus = 'YANGI' | 'IJRODA' | 'BAJARILDI' | 'QAYTA_IJROGA_YUBORILDI' | 'MUDDATI_KECH' | 'BAJARILMADI' | 'NAZORATDAN_YECHILDI'
 
 export type TaskPriority = 'PAST' | 'ODDIY' | 'YUQORI' | 'FAVQULODDA'
 
@@ -409,6 +409,11 @@ export interface Appeal {
   address: string
   createdAt: string
   updatedAt: string
+  // Baholash maydonlari
+  rating?: number | null
+  rating_comment?: string
+  rated_at?: string | null
+  closed_at?: string | null
 }
 
 export interface Stats {
@@ -424,4 +429,91 @@ export interface FilterOptions {
   priority: Record<string, string>
   category: Record<string, string>
   districts: string[]
+}
+
+// ==================== Recurring Task Interfaces ====================
+
+export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM'
+
+export type RecurringStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED'
+
+export interface RecurringTask extends BaseModel {
+  title: string
+  description: string
+  frequency: RecurringFrequency
+  frequency_display: string
+  cron_expression?: string
+  cron_description?: string
+  start_date: string
+  end_date?: string
+  next_run_date?: string
+  last_run_date?: string
+  priority: TaskPriority
+  deadline_days: number
+  organizations: number[]
+  organizations_count: number
+  created_by: number
+  created_by_name: string
+  status: RecurringStatus
+  status_display: string
+  total_created: number
+}
+
+// ==================== AI Interfaces ====================
+
+export type AIMessageRole = 'system' | 'user' | 'assistant'
+
+export type AIActionType = 'CREATE_TASK' | 'CLOSE_TASK' | 'REMOVE_CONTROL' | 'GENERATE_REPORT' | 'SEND_NOTIFICATION' | 'CLOSE_APPEAL'
+
+export type AIActionStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+
+export interface AIConversation extends BaseModel {
+  title: string
+  status: 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+  last_message?: {
+    role: AIMessageRole
+    content: string
+    created_at: string
+  }
+}
+
+export interface AIMessage extends BaseModel {
+  role: AIMessageRole
+  content: string
+  is_audio_message: boolean
+  detected_intent?: string
+  intent_confidence?: number
+}
+
+export interface AIAction extends BaseModel {
+  action_type: AIActionType
+  status: AIActionStatus
+  parameters: Record<string, unknown>
+  result: Record<string, unknown>
+  initiated_by: number
+  initiated_by_name?: string
+  executed_at?: string
+}
+
+export interface AIReport extends BaseModel {
+  report_type: string
+  title: string
+  summary: string
+  content: Record<string, unknown>
+  period_start?: string
+  period_end?: string
+  requested_by: number
+  requested_by_name?: string
+}
+
+export interface AITaskMonitor extends BaseModel {
+  task: number
+  task_title: string
+  task_status: TaskStatus
+  task_deadline: string
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  needs_attention: boolean
+  ai_notes: string
+  warning_sent: boolean
+  warning_sent_at?: string
 }

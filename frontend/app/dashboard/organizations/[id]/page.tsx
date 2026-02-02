@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
-import { roleLabels } from "@/lib/mock-data"
+import { roleLabels } from "@/lib/constants"
 import { getOrganizations, getUsers, getTasks } from "@/lib/api"
 import { UserStatusBadge, TaskStatusBadge } from "@/components/ui/status-badge"
 import { ArrowLeft, Building2, Users, ClipboardList, TrendingUp, Edit, Trash2, UserPlus } from "lucide-react"

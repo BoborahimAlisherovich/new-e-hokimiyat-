@@ -8,7 +8,6 @@ import { ensureDevAuth } from "@/lib/dev-auth"
 import { UserStats } from "@/components/dashboard/users/user-stats"
 import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
-import { UserDetailDialog } from "@/components/dashboard/users/user-detail-dialog"
 import { UserCreateDialog } from "@/components/dashboard/users/user-create-dialog"
 
 export default function UsersPage() {
@@ -20,7 +19,6 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [organizationFilter, setOrganizationFilter] = useState<string>("all")
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [createFormData, setCreateFormData] = useState({
     firstName: "",
@@ -79,20 +77,8 @@ export default function UsersPage() {
   }, [users, searchQuery, roleFilter, statusFilter, organizationFilter])
 
   // Event handlers
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user)
-  }
-
   const handleCreateUser = () => {
     setIsCreateDialogOpen(true)
-  }
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user)
-  }
-
-  const handleDeleteUser = (userId: number) => {
-    setUsers(prev => prev.filter(user => user.id !== userId))
   }
 
   const handleCreateSubmit = async () => {
@@ -126,12 +112,12 @@ export default function UsersPage() {
   if (loading) {
     return (
       <>
-        <Header title="Фойдаланувчилар бошқаруви" description="Тизим фойдаланувчиларининг рўйхати, роллари ва бошқаруви" />
+        <Header title="Foydalanuvchilar boshqaruvi" description="Tizim foydalanuvchilarining ro'yxati, rollari va boshqaruvi" />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
+              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -141,7 +127,7 @@ export default function UsersPage() {
 
   return (
     <>
-      <Header title="Фойдаланувчилар бошқаруви" description="Тизим фойдаланувчиларининг рўйхати, роллари ва бошқаруви" />
+      <Header title="Foydalanuvchilar boshqaruvi" description="Tizim foydalanuvchilarining ro'yxati, rollari va boshqaruvi" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -156,8 +142,8 @@ export default function UsersPage() {
           {/* Stats Cards */}
           <UserStats
             total={users.length}
-            active={users.filter((u) => u.status === "ACTIVE").length}
-            inactive={users.filter((u) => u.status === "INACTIVE").length}
+            active={users.filter((u) => u.status === "FAOL").length}
+            inactive={users.filter((u) => u.status === "BLOKLANGAN" || u.status === "ARXIV" || u.status === "DRAFT").length}
             organizations={organizations.length}
           />
 
@@ -176,10 +162,9 @@ export default function UsersPage() {
           />
 
           {/* Users Table */}
-          <UserTable users={filteredUsers} onView={handleViewUser} onEdit={handleEditUser} onDelete={handleDeleteUser} />
+          <UserTable users={filteredUsers} />
         </div>
       </div>
-      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} />
       <UserCreateDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}

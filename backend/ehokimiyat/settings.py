@@ -5,9 +5,13 @@ Django settings for E-Hokimiyat project.
 from pathlib import Path
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env
+load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-this-in-production-ehokimiyat-2026')
@@ -153,8 +157,8 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -428,3 +432,20 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
+
+
+# ==============================================================================
+# AI SOZLAMALARI
+# ==============================================================================
+
+# AI Provider: 'openai' yoki 'anthropic'
+AI_PROVIDER = os.environ.get('AI_PROVIDER', 'openai')
+
+# AI API Key
+AI_API_KEY = os.environ.get('AI_API_KEY', os.environ.get('OPENAI_API_KEY', ''))
+
+# AI Model
+AI_MODEL = os.environ.get('AI_MODEL', 'gpt-4o-mini')
+
+# Whisper transkripsiya uchun til ('auto' bo'lsa avtomatik aniqlanadi)
+AI_TRANSCRIPTION_LANGUAGE = os.environ.get('AI_TRANSCRIPTION_LANGUAGE', 'auto')

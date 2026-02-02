@@ -18,35 +18,30 @@ import {
 import { useMemo } from "react"
 
 const STATUS_LABELS: Record<string, string> = {
-  YANGI: "Янги",
-  IJRODA: "Ижрода",
-  BAJARILDI: "Бажарилди",
-  NAZORATDAN_YECHILDI: "Назоратдан ечилди",
-  MUDDATI_KECH: "Кечиккан",
-  QAYTA_IJROGA_YUBORILDI: "Қайта ижро",
-  QABUL_QILINDI: "Қабул қилинди",
-  JARAYONDA: "Жараёнда",
-  TEKSHIRUVDA: "Текширувда",
-  RAD_ETILDI: "Рад этилди",
-  BEKOR_QILINDI: "Бекор қилинди",
+  YANGI: "Yangi",
+  IJRODA: "Ijroda",
+  BAJARILDI: "Bajarildi",
+  NAZORATDAN_YECHILDI: "Nazoratdan yechildi",
+  MUDDATI_KECH: "Muddati kechikkan",
+  QAYTA_IJROGA_YUBORILDI: "Qayta ijroga yuborildi",
+  BAJARILMADI: "Bajarilmadi",
 }
 
 const PRIORITY_LABELS: Record<string, string> = {
-  FAVQULODDA: "Фавқулодда",
-  MUHIM: "Муҳим",
-  MUHIM_SHOSHILINCH: "Муҳим/шошилинч",
-  SHOSHILINCH: "Шошилинч",
-  ODDIY: "Оддий",
-  PAST: "Паст",
-  YUQORI: "Юқори",
+  FAVQULODDA: "Favqulodda",
+  YUQORI: "Yuqori",
+  ODDIY: "O'rtacha",
+  PAST: "Past",
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  IJRO: "Ижро",
-  NAZORAT: "Назорат",
-  HISOBOT: "Ҳисобот",
-  YIGIRISH: "Йиғилиш",
-  BOSHQA: "Бошқа",
+  IJTIMOIY: "Ijtimoiy",
+  IQTISODIY: "Iqtisodiy",
+  HUQUQIY: "Huquqiy",
+  INFRASTRUKTURA: "Infrastruktura",
+  TA_LIM: "Ta'lim",
+  SOG_LIQNI_SAQLASH: "Sog'liqni saqlash",
+  BOSHQA: "Boshqa",
 }
 
 const PIE_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"]

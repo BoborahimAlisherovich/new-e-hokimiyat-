@@ -123,20 +123,25 @@ export default function ChatPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [me, usersData, convs] = await Promise.all([
+      const [meResult, usersResult, convsResult] = await Promise.allSettled([
         getCurrentUser(),
         getUsers(),
         getChatConversations(),
       ])
-      setCurrentUser(mapUserToChatUser(me))
-      
+
+      const me = meResult.status === "fulfilled" ? meResult.value : null
+      const usersData = usersResult.status === "fulfilled" ? usersResult.value : []
+      const convs = convsResult.status === "fulfilled" ? convsResult.value : []
+
+      if (me) setCurrentUser(mapUserToChatUser(me))
+
       const processedUsers = (usersData || [])
         .filter((u: any) => u.id !== me?.id)
         .map((user: any, index: number) => ({
           ...mapUserToChatUser(user),
           is_online: index % 3 === 0,
         }))
-      
+
       setUsers(processedUsers)
 
       const convMap = new Map<string, Conversation>()

@@ -61,14 +61,30 @@ class TelegramUserSerializer(serializers.ModelSerializer):
     
     region_name = serializers.CharField(source='region.name_uz', read_only=True)
     full_name = serializers.CharField(read_only=True)
+    appeals_count = serializers.SerializerMethodField()
+    last_activity = serializers.SerializerMethodField()
     
     class Meta:
         model = TelegramUser
         fields = [
             'id', 'telegram_id', 'username', 'first_name', 'last_name', 'full_name',
             'gender', 'phone', 'region', 'region_name', 'language',
-            'is_registered', 'is_blocked', 'created_at', 'updated_at'
+            'is_registered', 'is_blocked', 'appeals_count', 'last_activity',
+            'created_at', 'updated_at'
         ]
+    
+    def get_appeals_count(self, obj):
+        """Foydalanuvchining murojaatlari sonini hisoblash"""
+        return obj.appeals.count() if hasattr(obj, 'appeals') else 0
+    
+    def get_last_activity(self, obj):
+        """Oxirgi faollik vaqtini olish"""
+        # Oxirgi murojaat vaqtini tekshirish
+        last_appeal = obj.appeals.order_by('-created_at').first() if hasattr(obj, 'appeals') else None
+        if last_appeal:
+            return last_appeal.created_at
+        # Agar murojaat yo'q bo'lsa, updated_at qaytarish
+        return obj.updated_at
 
 
 class AppealCategorySerializer(serializers.ModelSerializer):
@@ -139,6 +155,7 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
             'text', 'status', 'priority', 'source',
             'ai_priority', 'ai_is_valid', 'ai_analysis', 'ai_score',
             'forwarded_to_site', 'attachments_count',
+            'rating', 'rated_at', 'closed_at',
             'created_at', 'updated_at'
         ]
     
@@ -166,6 +183,7 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
             'ai_response', 'ai_is_valid', 'ai_rejection_reason',
             'admin_response', 'reviewed_by', 'reviewed_by_detail', 'reviewed_at',
             'forwarded_to_site', 'site_appeal_id', 'site_task_id',
+            'rating', 'rating_comment', 'rated_at', 'closed_at',
             'attachments', 'messages',
             'created_at', 'updated_at'
         ]

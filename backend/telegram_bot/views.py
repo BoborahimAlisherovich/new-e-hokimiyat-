@@ -142,8 +142,130 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             return Response({
                 'success': False,
                 'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+    @action(detail=False, methods=['post'])
+    def start_bot(self, request):
+        """Bot polling'ni ishga tushirish"""
+        settings = self.get_object()
+        
+        if not settings.bot_token:
+            return Response(
+                {'error': 'Bot token kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if settings.use_webhook:
+            return Response(
+                {'error': 'Webhook rejimi faol. Avval webhook\'ni o\'chiring'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            import subprocess
+            import os
+            import signal
+            
+            # Avval eski processni to'xtatish
+            pid_file = '/tmp/telegram_bot.pid'
+            if os.path.exists(pid_file):
+                try:
+                    with open(pid_file, 'r') as f:
+                        old_pid = int(f.read().strip())
+                    os.kill(old_pid, signal.SIGTERM)
+                except (ProcessLookupError, ValueError):
+                    pass
+                os.remove(pid_file)
+            
+            # Yangi processni ishga tushirish
+            bot_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'run_bot.py')
+            process = subprocess.Popen(
+                ['python3', bot_script],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True
+            )
+            
+            # PID saqlash
+            with open(pid_file, 'w') as f:
+                f.write(str(process.pid))
+            
+            settings.is_active = True
+            settings.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Bot muvaffaqiyatli ishga tushirildi',
+                'pid': process.pid
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
+    @action(detail=False, methods=['post'])
+    def stop_bot(self, request):
+        """Bot polling'ni to'xtatish"""
+        settings = self.get_object()
+        
+        try:
+            import os
+            import signal
+            
+            pid_file = '/tmp/telegram_bot.pid'
+            if os.path.exists(pid_file):
+                try:
+                    with open(pid_file, 'r') as f:
+                        pid = int(f.read().strip())
+                    os.kill(pid, signal.SIGTERM)
+                    os.remove(pid_file)
+                except (ProcessLookupError, ValueError):
+                    pass
+            
+            settings.is_active = False
+            settings.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Bot muvaffaqiyatli to\'xtatildi'
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def bot_status(self, request):
+        """Bot holatini tekshirish"""
+        settings = self.get_object()
+        
+        is_running = False
+        pid = None
+        
+        try:
+            import os
+            import signal
+            
+            pid_file = '/tmp/telegram_bot.pid'
+            if os.path.exists(pid_file):
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                try:
+                    os.kill(pid, 0)  # Check if process exists
+                    is_running = True
+                except ProcessLookupError:
+                    is_running = False
+                    os.remove(pid_file)
+        except Exception:
+            is_running = False
+        
+        return Response({
+            'is_active': settings.is_active,
+            'is_running': is_running,
+            'use_webhook': settings.use_webhook,
+            'pid': pid if is_running else None
+        })
 
 class BotAdminViewSet(viewsets.ModelViewSet):
     """Bot adminlari API"""
@@ -193,6 +315,293 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
         user.is_blocked = False
         user.save()
         return Response({'success': True})
+    
+    @action(detail=True, methods=['post'])
+    def send_message(self, request, pk=None):
+        """Foydalanuvchiga xabar yuborish"""
+        user = self.get_object()
+        text = request.data.get('text')
+        
+        if not text:
+            return Response(
+                {'error': 'Xabar matni kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            settings = BotSettings.objects.first()
+            if not settings or not settings.bot_token:
+                return Response(
+                    {'error': 'Bot sozlamalari topilmadi'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            import requests as req
+            response = req.post(
+                f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
+                json={
+                    'chat_id': user.telegram_id,
+                    'text': text,
+                    'parse_mode': 'HTML'
+                },
+                timeout=10
+            )
+            
+            if response.json().get('ok'):
+                return Response({'success': True})
+            else:
+                return Response(
+                    {'error': response.json().get('description', 'Xabar yuborilmadi')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'])
+    def send_media(self, request, pk=None):
+        """Foydalanuvchiga media (rasm, video, fayl) yuborish"""
+        user = self.get_object()
+        media_type = request.data.get('media_type', 'photo')  # photo, video, document
+        caption = request.data.get('caption', '')
+        file_url = request.data.get('file_url')
+        uploaded_file = request.FILES.get('file')
+        
+        if not file_url and not uploaded_file:
+            return Response(
+                {'error': 'Fayl yoki URL kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            settings = BotSettings.objects.first()
+            if not settings or not settings.bot_token:
+                return Response(
+                    {'error': 'Bot sozlamalari topilmadi'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            import requests as req
+            
+            method_map = {
+                'photo': 'sendPhoto',
+                'video': 'sendVideo',
+                'document': 'sendDocument'
+            }
+            field_map = {
+                'photo': 'photo',
+                'video': 'video',
+                'document': 'document'
+            }
+            
+            method = method_map.get(media_type, 'sendPhoto')
+            field = field_map.get(media_type, 'photo')
+            
+            if uploaded_file:
+                # Faylni to'g'ridan-to'g'ri yuborish
+                files = {field: (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+                data = {
+                    'chat_id': user.telegram_id,
+                    'caption': caption,
+                    'parse_mode': 'HTML'
+                }
+                response = req.post(
+                    f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                    data=data,
+                    files=files,
+                    timeout=60
+                )
+            else:
+                # URL orqali yuborish
+                response = req.post(
+                    f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                    json={
+                        'chat_id': user.telegram_id,
+                        field: file_url,
+                        'caption': caption,
+                        'parse_mode': 'HTML'
+                    },
+                    timeout=30
+                )
+            
+            if response.json().get('ok'):
+                return Response({'success': True})
+            else:
+                return Response(
+                    {'error': response.json().get('description', 'Media yuborilmadi')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def broadcast(self, request):
+        """Barcha foydalanuvchilarga xabar yuborish"""
+        text = request.data.get('text')
+        media_type = request.data.get('media_type')  # None, photo, video, document
+        file_url = request.data.get('file_url')
+        uploaded_file = request.FILES.get('file')
+        filter_registered = request.data.get('filter_registered', False)
+        filter_region = request.data.get('filter_region')
+        
+        if not text and not file_url and not uploaded_file:
+            return Response(
+                {'error': 'Xabar matni yoki fayl kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            settings = BotSettings.objects.first()
+            if not settings or not settings.bot_token:
+                return Response(
+                    {'error': 'Bot sozlamalari topilmadi'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            import requests as req
+            
+            # Foydalanuvchilarni filtrlash
+            users = TelegramUser.objects.filter(is_blocked=False)
+            if filter_registered:
+                users = users.filter(is_registered=True)
+            if filter_region:
+                users = users.filter(region_id=filter_region)
+            
+            success_count = 0
+            fail_count = 0
+            
+            # Agar fayl yuklangan bo'lsa, avval uni Telegram'ga yuklash va file_id olish
+            file_id = None
+            if uploaded_file and media_type:
+                # Birinchi foydalanuvchiga yuborib file_id olish
+                first_user = users.first()
+                if first_user:
+                    method_map = {
+                        'photo': 'sendPhoto',
+                        'video': 'sendVideo',
+                        'document': 'sendDocument'
+                    }
+                    field_map = {
+                        'photo': 'photo',
+                        'video': 'video',
+                        'document': 'document'
+                    }
+                    method = method_map.get(media_type, 'sendPhoto')
+                    field = field_map.get(media_type, 'photo')
+                    
+                    files = {field: (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+                    data = {
+                        'chat_id': first_user.telegram_id,
+                        'caption': text or '',
+                        'parse_mode': 'HTML'
+                    }
+                    response = req.post(
+                        f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                        data=data,
+                        files=files,
+                        timeout=60
+                    )
+                    if response.json().get('ok'):
+                        result = response.json().get('result', {})
+                        # file_id olish
+                        if media_type == 'photo' and result.get('photo'):
+                            file_id = result['photo'][-1].get('file_id')
+                        elif media_type == 'video' and result.get('video'):
+                            file_id = result['video'].get('file_id')
+                        elif media_type == 'document' and result.get('document'):
+                            file_id = result['document'].get('file_id')
+                        success_count += 1
+                        users = users.exclude(id=first_user.id)
+                    else:
+                        fail_count += 1
+            
+            for user in users:
+                try:
+                    if file_id:
+                        # file_id orqali yuborish (tezroq)
+                        method_map = {
+                            'photo': 'sendPhoto',
+                            'video': 'sendVideo',
+                            'document': 'sendDocument'
+                        }
+                        field_map = {
+                            'photo': 'photo',
+                            'video': 'video',
+                            'document': 'document'
+                        }
+                        method = method_map.get(media_type, 'sendPhoto')
+                        field = field_map.get(media_type, 'photo')
+                        
+                        response = req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                            json={
+                                'chat_id': user.telegram_id,
+                                field: file_id,
+                                'caption': text or '',
+                                'parse_mode': 'HTML'
+                            },
+                            timeout=30
+                        )
+                    elif media_type and file_url:
+                        # Media yuborish
+                        method_map = {
+                            'photo': 'sendPhoto',
+                            'video': 'sendVideo',
+                            'document': 'sendDocument'
+                        }
+                        field_map = {
+                            'photo': 'photo',
+                            'video': 'video',
+                            'document': 'document'
+                        }
+                        method = method_map.get(media_type, 'sendPhoto')
+                        field = field_map.get(media_type, 'photo')
+                        
+                        response = req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                            json={
+                                'chat_id': user.telegram_id,
+                                field: file_url,
+                                'caption': text or '',
+                                'parse_mode': 'HTML'
+                            },
+                            timeout=30
+                        )
+                    else:
+                        # Oddiy xabar yuborish
+                        response = req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
+                            json={
+                                'chat_id': user.telegram_id,
+                                'text': text,
+                                'parse_mode': 'HTML'
+                            },
+                            timeout=10
+                        )
+                    
+                    if response.json().get('ok'):
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                except Exception:
+                    fail_count += 1
+            
+            return Response({
+                'success': True,
+                'total': users.count(),
+                'success_count': success_count,
+                'fail_count': fail_count
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class AppealCategoryViewSet(viewsets.ModelViewSet):
@@ -324,17 +733,28 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             text=text
         )
         
-        # Telegram orqali yuborish
+        # Telegram orqali yuborish - Javob berish tugmasi bilan
         try:
             settings = BotSettings.objects.first()
             if settings and settings.bot_token:
                 import requests
+                
+                # Javob berish tugmasi
+                keyboard = {
+                    'inline_keyboard': [
+                        [
+                            {'text': '💬 Javob berish', 'callback_data': f'user_reply:{appeal.id}'}  # type: ignore[attr-defined]
+                        ]
+                    ]
+                }
+                
                 requests.post(
                     f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
                     json={
                         'chat_id': appeal.telegram_user.telegram_id,
                         'text': f"📨 Sizning #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}",
-                        'parse_mode': 'HTML'
+                        'parse_mode': 'HTML',
+                        'reply_markup': keyboard
                     },
                     timeout=10
                 )
@@ -378,8 +798,8 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 keyboard = {
                     'inline_keyboard': [
                         [
-                            {'text': '✅ Qoniqdim', 'callback_data': f'satisfied:{appeal.id}'},  # type: ignore[attr-defined]
-                            {'text': '❌ Qoniqmadim', 'callback_data': f'unsatisfied:{appeal.id}'}  # type: ignore[attr-defined]
+                            {'text': '✅ Ha, rahmat', 'callback_data': f'satisfied:{appeal.id}'},  # type: ignore[attr-defined]
+                            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'unsatisfied:{appeal.id}'}  # type: ignore[attr-defined]
                         ]
                     ]
                 }
@@ -387,7 +807,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 message = f"📨 Sizning <b>#{appeal.appeal_number}</b> raqamli murojaatingizga javob berildi!\n\n"
                 if response_text:
                     message += f"<b>Javob:</b>\n{response_text}\n\n"
-                message += "Javobdan qoniqdingizmi?"
+                message += "Javobdan mamnunmisiz?"
                 
                 requests.post(
                     f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
@@ -566,6 +986,253 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    # ==========================================================================
+    # AI YORDAMCHI ENDPOINTLARI
+    # ==========================================================================
+    
+    @action(detail=True, methods=['get'])
+    def ai_analysis(self, request, pk=None):
+        """
+        AI orqali murojaatni qayta tahlil qilish.
+        Adminlar uchun qo'shimcha ma'lumot.
+        """
+        appeal = self.get_object()
+        
+        try:
+            from .bot.ai_service import analyze_appeal
+            settings_obj = BotSettings.objects.first()
+            
+            if not settings_obj:
+                return Response(
+                    {'error': 'Bot sozlamalari topilmadi'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            result = analyze_appeal(appeal, settings_obj)
+            
+            return Response({
+                'appeal_id': appeal.id,
+                'appeal_number': appeal.appeal_number,
+                'analysis': result
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'])
+    def ai_suggested_response(self, request, pk=None):
+        """
+        AI tomonidan tavsiya etiladigan javob olish.
+        Admin tasdiqlashi kerak.
+        """
+        appeal = self.get_object()
+        admin_notes = request.query_params.get('notes', '')
+        
+        try:
+            from .bot.ai_service import generate_ai_response_for_appeal
+            
+            suggested_response = generate_ai_response_for_appeal(appeal)
+            
+            return Response({
+                'appeal_id': appeal.id,
+                'appeal_number': appeal.appeal_number,
+                'suggested_response': suggested_response,
+                'admin_notes': admin_notes
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'])
+    def use_ai_response(self, request, pk=None):
+        """
+        AI tavsiyasidan foydalanib javob yuborish.
+        """
+        appeal = self.get_object()
+        suggested_text = request.data.get('suggested_text', '')
+        edited_text = request.data.get('edited_text', '')
+        
+        # Agar admin tahrirlamasa, original AI javobdan foydalanish
+        response_text = edited_text if edited_text else suggested_text
+        
+        if not response_text:
+            # AI javobni olish
+            try:
+                from .bot.ai_service import generate_ai_response_for_appeal
+                response_text = generate_ai_response_for_appeal(appeal)
+            except Exception:
+                return Response(
+                    {'error': 'Javob matni kiritilmagan'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Admin topish
+        admin = None
+        if hasattr(request.user, 'bot_admin_profiles'):
+            admin = request.user.bot_admin_profiles.first()
+        
+        # Javobni saqlash
+        appeal.admin_response = response_text
+        appeal.status = 'responded'
+        appeal.reviewed_by = admin
+        appeal.reviewed_at = timezone.now()
+        appeal.save()
+        
+        # Xabar saqlash
+        AppealMessage.objects.create(
+            appeal=appeal,
+            is_from_admin=True,
+            admin=admin,
+            text=response_text
+        )
+        
+        # Telegram orqali yuborish
+        try:
+            settings_obj = BotSettings.objects.first()
+            if settings_obj and settings_obj.bot_token:
+                import requests
+                
+                keyboard = {
+                    'inline_keyboard': [
+                        [
+                            {'text': '✅ Ha, rahmat', 'callback_data': f'satisfied:{appeal.id}'},
+                            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'unsatisfied:{appeal.id}'}
+                        ],
+                        [
+                            {'text': '⭐️ Baholash', 'callback_data': f'rate_appeal:{appeal.id}'}
+                        ]
+                    ]
+                }
+                
+                message = f"📨 Sizning <b>#{appeal.appeal_number}</b> raqamli murojaatingizga javob:\n\n{response_text}\n\nJavobdan mamnunmisiz?"
+                
+                requests.post(
+                    f'https://api.telegram.org/bot{settings_obj.bot_token}/sendMessage',
+                    json={
+                        'chat_id': appeal.telegram_user.telegram_id,
+                        'text': message,
+                        'parse_mode': 'HTML',
+                        'reply_markup': keyboard
+                    },
+                    timeout=10
+                )
+        except Exception as e:
+            pass  # Log xato
+        
+        return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
+    
+    @action(detail=True, methods=['get'])
+    def check_auto_close(self, request, pk=None):
+        """
+        Murojaatni avtomatik yopish kerakmi tekshirish.
+        """
+        appeal = self.get_object()
+        
+        try:
+            from .bot.ai_service import check_appeal_for_auto_close
+            
+            result = check_appeal_for_auto_close(appeal)
+            
+            return Response({
+                'appeal_id': appeal.id,
+                'appeal_number': appeal.appeal_number,
+                'should_close': result.get('should_close', False),
+                'reason': result.get('reason', ''),
+                'confidence': result.get('confidence', 0)
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def ai_daily_briefing(self, request):
+        """
+        Kunlik AI briefing - barcha murojaatlar haqida qisqacha.
+        """
+        try:
+            from .bot.ai_service import get_daily_briefing
+            
+            briefing = get_daily_briefing()
+            
+            return Response({
+                'briefing': briefing,
+                'generated_at': timezone.now().isoformat()
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def bulk_ai_analysis(self, request):
+        """
+        Bir nechta murojaatni birdan AI orqali tahlil qilish.
+        """
+        appeal_ids = request.data.get('appeal_ids', [])
+        
+        if not appeal_ids:
+            return Response(
+                {'error': 'Murojaat ID-lari kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        results = []
+        settings_obj = BotSettings.objects.first()
+        
+        if not settings_obj:
+            return Response(
+                {'error': 'Bot sozlamalari topilmadi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        from .bot.ai_service import analyze_appeal
+        
+        for appeal_id in appeal_ids[:10]:  # Max 10 ta
+            try:
+                appeal = TelegramAppeal.objects.get(id=appeal_id)
+                analysis = analyze_appeal(appeal, settings_obj)
+                
+                # Natijani saqlash
+                appeal.ai_analysis = analysis.get('analysis', '')
+                appeal.ai_score = analysis.get('score', 0)
+                appeal.ai_priority = analysis.get('priority', 'medium')
+                appeal.save()
+                
+                results.append({
+                    'appeal_id': appeal_id,
+                    'appeal_number': appeal.appeal_number,
+                    'status': 'success',
+                    'analysis': analysis
+                })
+            except TelegramAppeal.DoesNotExist:
+                results.append({
+                    'appeal_id': appeal_id,
+                    'status': 'error',
+                    'message': 'Murojaat topilmadi'
+                })
+            except Exception as e:
+                results.append({
+                    'appeal_id': appeal_id,
+                    'status': 'error',
+                    'message': str(e)
+                })
+        
+        return Response({
+            'processed': len(results),
+            'results': results
+        })
 
 
 class BotStatsView(APIView):

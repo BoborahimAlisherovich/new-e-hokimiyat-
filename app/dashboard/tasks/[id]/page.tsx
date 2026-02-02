@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/mock-data"
+import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
 import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
@@ -42,10 +42,21 @@ import {
   History,
   MessageSquare,
   Layers,
+  Lock,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
+
+const CATEGORY_LABELS: Record<string, string> = {
+  IJTIMOIY: "Ijtimoiy",
+  IQTISODIY: "Iqtisodiy",
+  HUQUQIY: "Huquqiy",
+  INFRASTRUKTURA: "Infrastruktura",
+  TA_LIM: "Ta'lim",
+  SOG_LIQNI_SAQLASH: "Sog'liqni saqlash",
+  BOSHQA: "Boshqa",
+}
 
 export default function TaskDetailPage() {
   const params = useParams()
@@ -140,7 +151,8 @@ export default function TaskDetailPage() {
     }
   }, [id])
 
-  const creator = task ? usersMap[task.createdBy] : undefined
+  // Backend created_by ni ob'ekt sifatida yuboradi
+  const creator = task?.created_by || (task?.createdBy ? usersMap[task.createdBy] : undefined)
 
   if (!task) {
     return (
@@ -151,7 +163,10 @@ export default function TaskDetailPage() {
     )
   }
 
-  const canEdit = task.status !== "NAZORATDAN_YECHILDI" && task.status !== "BAJARILMADI"
+  const CLOSED_STATUSES = ["BAJARILDI", "NAZORATDAN_YECHILDI", "BAJARILMADI"]
+  const isClosed = CLOSED_STATUSES.includes(task.status)
+  const canEdit = !isClosed
+  const canChat = !isClosed
   const canClose = task.status === "BAJARILDI"
   const canReassign = task.status === "BAJARILDI"
   const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
@@ -400,14 +415,14 @@ export default function TaskDetailPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Soha</Label>
-                      <Select defaultValue={task.sector} onValueChange={setSelectedSector}>
+                      <Select defaultValue={task.category} onValueChange={setSelectedSector}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {(Object.keys(sectorLabels) as Sector[]).map((sector) => (
-                            <SelectItem key={sector} value={sector}>
-                              {sectorLabels[sector]}
+                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -455,9 +470,11 @@ export default function TaskDetailPage() {
                     <p className="text-sm text-muted-foreground">{task.description}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="font-normal">
-                      {(sectorLabels as Record<string, string>)[task.sector] || task.sector}
-                    </Badge>
+                    {task.category && (
+                      <Badge variant="outline" className="font-normal">
+                        {CATEGORY_LABELS[task.category] || task.category}
+                      </Badge>
+                    )}
                     <PriorityBadge priority={task.priority} />
                     <TaskStatusBadge status={task.status} />
                   </div>
@@ -485,7 +502,7 @@ export default function TaskDetailPage() {
                     <div>
                       <p className="text-muted-foreground">Yaratuvchi</p>
                       <p className="font-medium">
-                        {creator?.lastName} {creator?.firstName}
+                        {creator?.full_name || `${creator?.last_name || creator?.lastName || ''} ${creator?.first_name || creator?.firstName || ''}`.trim() || '—'}
                       </p>
                     </div>
                   </div>
@@ -496,7 +513,7 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Soha</p>
-                      <p className="font-medium">{(sectorLabels as Record<string, string>)[task.sector] || task.sector}</p>
+                      <p className="font-medium">{CATEGORY_LABELS[task.category] || task.category || '—'}</p>
                     </div>
                   </div>
 
@@ -506,7 +523,11 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Tashkilotlar</p>
-                      <p className="font-medium">{(task.organizations || []).map((orgId: string) => orgsMap[orgId]?.name).filter(Boolean).join(", ")}</p>
+                      <p className="font-medium">
+                        {(task.assigned_organizations || task.organizations || []).map((org: any) => 
+                          typeof org === 'object' ? org.organization?.name || org.name : orgsMap[org]?.name
+                        ).filter(Boolean).join(", ") || '-'}
+                      </p>
                     </div>
                   </div>
 
@@ -516,7 +537,7 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Yaratilgan</p>
-                      <p className="font-medium">{new Date(task.createdAt).toLocaleDateString('en-GB')}</p>
+                      <p className="font-medium">{(task.createdAt || task.created_at) ? new Date(task.createdAt || task.created_at).toLocaleDateString('uz-UZ') : '-'}</p>
                     </div>
                   </div>
 
@@ -657,6 +678,12 @@ export default function TaskDetailPage() {
                     </div>
                   </ScrollArea>
                   <div className="border-t border-border p-4">
+                    {!canChat ? (
+                      <div className="text-center py-3 text-muted-foreground bg-muted rounded-lg">
+                        <Lock className="h-4 w-4 inline-block mr-2" />
+                        Bu topshiriq yopilgan, xabar yuborish mumkin emas
+                      </div>
+                    ) : (
                     <div className="flex flex-col gap-2">
                       {/* Audio Recording UI */}
                       {isRecording && (
@@ -768,6 +795,7 @@ export default function TaskDetailPage() {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </TabsContent>
 

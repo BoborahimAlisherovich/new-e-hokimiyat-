@@ -34,6 +34,10 @@ export function UserCreateDialog({
   onChange,
   onSubmit,
 }: UserCreateDialogProps) {
+  const organizationItems = Array.isArray(organizations)
+    ? organizations
+    : (organizations as { results?: Organization[] } | null | undefined)?.results || []
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -131,7 +135,7 @@ export function UserCreateDialog({
                   <SelectValue placeholder="Ташкилотни танланг" />
                 </SelectTrigger>
                 <SelectContent>
-                  {organizations.map((org) => (
+                  {organizationItems.map((org) => (
                     <SelectItem key={org.id} value={String(org.id)}>
                       {org.name}
                     </SelectItem>

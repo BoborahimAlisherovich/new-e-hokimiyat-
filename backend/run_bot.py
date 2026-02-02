@@ -37,8 +37,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_updates(token: str, offset: int = 0, timeout: int = 30) -> list:
-    """Telegram'dan yangilanishlarni olish"""
+def get_updates(token: str, offset: int = 0, timeout: int = 30) -> tuple:
+    """Telegram'dan yangilanishlarni olish
+    
+    Returns:
+        tuple: (updates_list, is_conflict_error)
+    """
     url = f'https://api.telegram.org/bot{token}/getUpdates'
     params = {
         'offset': offset,
@@ -51,16 +55,24 @@ def get_updates(token: str, offset: int = 0, timeout: int = 30) -> list:
         data = response.json()
         
         if data.get('ok'):
-            return data.get('result', [])
+            return data.get('result', []), False
         else:
-            logger.error(f"Telegram API xatosi: {data.get('description')}")
-            return []
+            error_desc = data.get('description', '')
+            error_code = data.get('error_code', 0)
+            
+            # 409 Conflict - boshqa bot ishlayapti
+            if error_code == 409:
+                logger.warning(f"Conflict xatosi: Boshqa bot ishlayapti. 10 soniya kutamiz...")
+                return [], True
+            
+            logger.error(f"Telegram API xatosi: {error_desc}")
+            return [], False
     except requests.exceptions.Timeout:
-        return []
+        return [], False
     except Exception as e:
         logger.error(f"Yangilanishlarni olishda xato: {e}")
         time.sleep(5)
-        return []
+        return [], False
 
 
 def run_polling():
@@ -88,20 +100,42 @@ def run_polling():
     
     logger.info(f"Bot ishga tushdi: @{settings.bot_username or 'unknown'}")
     
+    conflict_count = 0
+    max_conflicts = 10  # 10 marta ketma-ket conflict bo'lsa to'xtaydi
+    
     while True:
         try:
             # Yangilanishlarni olish
-            updates = get_updates(token, offset)
+            updates, is_conflict = get_updates(token, offset)
+            
+            if is_conflict:
+                conflict_count += 1
+                if conflict_count >= max_conflicts:
+                    logger.error(f"Juda ko'p conflict! Boshqa joyda bot ishlayapti. 60 soniya kutamiz...")
+                    time.sleep(60)
+                    conflict_count = 0
+                else:
+                    time.sleep(10)
+                continue
+            
+            # Conflict yo'q - reset counter
+            conflict_count = 0
             
             for update in updates:
                 update_id = update.get('update_id', 0)
                 offset = update_id + 1
                 
+                # Log update type
+                if 'callback_query' in update:
+                    logger.info(f"Callback query received: {update.get('callback_query', {}).get('data', 'unknown')}")
+                elif 'message' in update:
+                    logger.info(f"Message received from {update.get('message', {}).get('from', {}).get('id', 'unknown')}")
+                
                 try:
                     # Update'ni qayta ishlash
                     process_update(update)
                 except Exception as e:
-                    logger.error(f"Update qayta ishlashda xato: {e}")
+                    logger.error(f"Update qayta ishlashda xato: {e}", exc_info=True)
             
         except KeyboardInterrupt:
             logger.info("Bot to'xtatildi (Ctrl+C)")

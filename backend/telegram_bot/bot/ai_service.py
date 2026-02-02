@@ -1,6 +1,9 @@
 """
 AI xizmati - Murojaatlarni tahlil qilish
 OpenAI yoki Anthropic API yordamida
+
+Bu modul core.ai_service bilan integratsiya qilingan.
+Markazlashgan AI tizimidan foydalanadi.
 """
 
 import logging
@@ -37,6 +40,66 @@ def analyze_appeal(appeal, settings) -> Dict[str, Any]:
             'priority': 'medium',
             'is_valid': True
         }
+    
+    # Avval tez tekshirish (AI chaqirmasdan)
+    quick_check = validate_appeal_content(appeal.text or '')
+    if not quick_check['is_valid']:
+        return {
+            'analysis': quick_check['reason'],
+            'score': 20,
+            'priority': 'low',
+            'is_valid': False,
+            'reject_reason': quick_check['reason']
+        }
+    
+    # Markazlashgan AI Service-dan foydalanish
+    try:
+        from core.ai_service import AIService
+        ai_service = AIService()
+        
+        # AIService analyze_appeal metodidan foydalanish
+        result = ai_service.analyze_appeal(appeal)
+        
+        # Format conversion
+        priority_map = {
+            'past': 'low',
+            'oddiy': 'medium',
+            'yuqori': 'high',
+            'favqulodda': 'critical'
+        }
+        
+        priority = priority_map.get(result.get('priority', 'oddiy'), 'medium')
+        
+        # Score calculation based on AI analysis
+        score = 100
+        if result.get('requires_urgent_attention'):
+            score = 85
+        if result.get('sentiment') == 'salbiy':
+            score = 70
+        
+        return {
+            'analysis': result.get('summary', ''),
+            'score': score,
+            'priority': priority,
+            'is_valid': True,
+            'reject_reason': None,
+            'category_suggestion': result.get('category'),
+            'suggested_response': result.get('suggested_response', ''),
+            'suggested_organizations': result.get('suggested_organizations', []),
+            'keywords': result.get('keywords', [])
+        }
+        
+    except ImportError:
+        # Fallback: core.ai_service mavjud emas
+        logger.warning("core.ai_service import qilib bo'lmadi, fallback ishlatilmoqda")
+        return analyze_appeal_legacy(appeal, settings)
+    except Exception as e:
+        logger.error(f"AI tahlilida xato: {e}")
+        return analyze_appeal_legacy(appeal, settings)
+
+
+def analyze_appeal_legacy(appeal, settings) -> Dict[str, Any]:
+    """Legacy AI tahlil - to'g'ridan-to'g'ri API chaqirish"""
     
     provider = settings.ai_provider
     api_key = settings.ai_api_key
@@ -78,6 +141,52 @@ def analyze_appeal(appeal, settings) -> Dict[str, Any]:
             'priority': 'medium',
             'is_valid': True
         }
+
+
+def generate_ai_response_for_appeal(appeal) -> str:
+    """
+    Murojaat uchun AI tomonidan javob yaratish.
+    Admin ko'rib chiqish uchun taklif.
+    """
+    try:
+        from core.ai_service import AIService
+        ai_service = AIService()
+        return ai_service.generate_appeal_response(appeal)
+    except Exception as e:
+        logger.error(f"AI response generation error: {e}")
+        return f"""Hurmatli fuqaro!
+
+Sizning #{appeal.appeal_number} raqamli murojaatingiz qabul qilindi.
+Tez orada ko'rib chiqiladi.
+
+Hurmat bilan,
+Hatirchi tuman hokimligi"""
+
+
+def check_appeal_for_auto_close(appeal) -> Dict[str, Any]:
+    """
+    Murojaatni avtomatik yopish kerakmi tekshirish.
+    """
+    try:
+        from core.ai_service import AIService
+        ai_service = AIService()
+        return ai_service.should_auto_close_appeal(appeal)
+    except Exception as e:
+        logger.error(f"Auto-close check error: {e}")
+        return {"should_close": False, "reason": "Xato yuz berdi"}
+
+
+def get_daily_briefing() -> str:
+    """
+    Kunlik briefing - Admin uchun.
+    """
+    try:
+        from core.ai_service import AIService
+        ai_service = AIService()
+        return ai_service.get_daily_summary()
+    except Exception as e:
+        logger.error(f"Daily briefing error: {e}")
+        return "Kunlik hisobot yaratishda xato yuz berdi."
 
 
 def create_analysis_prompt(appeal) -> str:

@@ -15,7 +15,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Жами фойдаланувчилар</p>
+              <p className="text-sm font-medium text-muted-foreground">Jami foydalanuvchilar</p>
               <p className="text-2xl font-bold">{total}</p>
             </div>
             <UserCheck className="h-8 w-8 text-muted-foreground" />
@@ -27,7 +27,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Актив фойдаланувчилар</p>
+              <p className="text-sm font-medium text-muted-foreground">Faol foydalanuvchilar</p>
               <p className="text-2xl font-bold text-green-600">{active}</p>
             </div>
             <Shield className="h-8 w-8 text-green-600" />
@@ -39,7 +39,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Нофаол фойдаланувчилар</p>
+              <p className="text-sm font-medium text-muted-foreground">Nofaol foydalanuvchilar</p>
               <p className="text-2xl font-bold text-red-600">{inactive}</p>
             </div>
             <AlertCircle className="h-8 w-8 text-red-600" />
@@ -51,7 +51,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Ташкилотлар</p>
+              <p className="text-sm font-medium text-muted-foreground">Tashkilotlar</p>
               <p className="text-2xl font-bold text-blue-600">{organizations}</p>
             </div>
             <Building className="h-8 w-8 text-blue-600" />

@@ -4,18 +4,24 @@
 import { Card, CardContent } from "@/components/ui/card"
 import React from "react"
 import { ListTodo, CheckCircle, AlertCircle, Clock, TrendingUp, ArrowUp } from "lucide-react"
-import { getTasks } from "@/lib/api"
+import { getTaskStats } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { StatsCardSkeleton } from "@/components/ui/loading-skeleton"
 
-const computeStats = (tasks: any[]) => {
-  const totalTasks = tasks.length
-  const completedTasks = tasks.filter((t) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
-  const overdueTasks = tasks.filter((t) => t.status === "MUDDATI_KECH").length
-  const inProgressTasks = tasks.filter((t) => t.status === "IJRODA").length
-  const sectors = Array.from(new Set(tasks.map((t) => t.sector)))
-  const activeSectors = sectors.length
-  return { totalTasks, completedTasks, overdueTasks, inProgressTasks, activeSectors }
+const computeStats = (stats: {
+  total: number
+  completed: number
+  overdue: number
+  in_progress: number
+  active_sectors: number
+}) => {
+  return {
+    totalTasks: stats.total,
+    completedTasks: stats.completed,
+    overdueTasks: stats.overdue,
+    inProgressTasks: stats.in_progress,
+    activeSectors: stats.active_sectors,
+  }
 }
 
 export function StatsCards() {
@@ -31,10 +37,10 @@ export function StatsCards() {
   React.useEffect(() => {
     let mounted = true
     setIsLoading(true)
-    getTasks()
-      .then((tasks) => {
+    getTaskStats()
+      .then((stats) => {
         if (!mounted) return
-        setStatsData(computeStats(tasks))
+        setStatsData(computeStats(stats))
       })
       .catch(() => {})
       .finally(() => {

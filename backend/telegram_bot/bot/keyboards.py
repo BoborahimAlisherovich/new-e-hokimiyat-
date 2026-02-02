@@ -223,3 +223,40 @@ def admin_review_keyboard(appeal_id: int, language: str = 'uz') -> dict:
             {'text': '🟢 Past', 'callback_data': f'priority:{appeal_id}:low'}
         ]
     ])
+
+
+def user_reply_keyboard(appeal_id: int, language: str = 'uz') -> dict:
+    """Foydalanuvchi javob berish klaviaturasi"""
+    return create_inline_keyboard([
+        [
+            {'text': '💬 Javob berish', 'callback_data': f'user_reply:{appeal_id}'}
+        ]
+    ])
+
+
+def rating_keyboard(appeal_id: int, language: str = 'uz') -> dict:
+    """Xizmatni baholash klaviaturasi (1-5 yulduz)"""
+    return create_inline_keyboard([
+        [
+            {'text': '⭐', 'callback_data': f'rate:{appeal_id}:1'},
+            {'text': '⭐⭐', 'callback_data': f'rate:{appeal_id}:2'},
+            {'text': '⭐⭐⭐', 'callback_data': f'rate:{appeal_id}:3'},
+        ],
+        [
+            {'text': '⭐⭐⭐⭐', 'callback_data': f'rate:{appeal_id}:4'},
+            {'text': '⭐⭐⭐⭐⭐', 'callback_data': f'rate:{appeal_id}:5'},
+        ],
+        [
+            {'text': '⏭ Baholamasdan yopish', 'callback_data': f'rate:{appeal_id}:skip'}
+        ]
+    ])
+
+
+def satisfaction_with_rating_keyboard(appeal_id: int, language: str = 'uz') -> dict:
+    """Qoniqish va baholash so'rash klaviaturasi"""
+    return create_inline_keyboard([
+        [
+            {'text': '✅ Ha, rahmat', 'callback_data': f'close_satisfied:{appeal_id}'},
+            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'close_unsatisfied:{appeal_id}'}
+        ]
+    ])

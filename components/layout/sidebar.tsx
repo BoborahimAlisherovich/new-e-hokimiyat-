@@ -22,6 +22,8 @@ import {
   Shield,
   UserCog,
   Bot,
+  Sparkles,
+  Repeat,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -35,12 +37,14 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOKIM: [
     '/dashboard',
     '/dashboard/tasks',
+    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/ai-assistant',
     '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
@@ -48,12 +52,14 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOKIMLIK_MASUL: [
     '/dashboard',
     '/dashboard/tasks',
+    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/ai-assistant',
     '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
@@ -79,12 +85,14 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   ADMIN: [
     '/dashboard',
     '/dashboard/tasks',
+    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/ai-assistant',
     '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
@@ -185,6 +193,12 @@ export function Sidebar() {
       icon: CheckSquare2,
     },
     {
+      title: "Такрорланувчи",
+      href: "/dashboard/recurring-tasks",
+      icon: Repeat,
+      adminOnly: true,
+    },
+    {
       title: "Фойдаланувчилар",
       href: "/dashboard/users",
       icon: Users2,
@@ -212,6 +226,12 @@ export function Sidebar() {
       href: "/dashboard/chat",
       icon: MessageSquare,
       badge: unreadChatCount,
+    },
+    {
+      title: "AI Ёрдамчи",
+      href: "/dashboard/ai-assistant",
+      icon: Sparkles,
+      adminOnly: true,
     },
     {
       title: "Аналитика",

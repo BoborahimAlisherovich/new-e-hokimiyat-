@@ -15,7 +15,10 @@ import {
   Unlink,
   Brain,
   Bell,
-  Folder
+  Folder,
+  Play,
+  Square,
+  Circle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,8 +73,16 @@ export default function TelegramBotPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [settings, setSettings] = useState<BotSettings | null>(null);
   const [stats, setStats] = useState<BotStats | null>(null);
+  const [botStatus, setBotStatus] = useState<{
+    is_active: boolean;
+    is_running: boolean;
+    use_webhook: boolean;
+    pid: number | null;
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -80,12 +91,14 @@ export default function TelegramBotPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [settingsRes, statsRes] = await Promise.all([
-        api.get("/telegram-bot/settings/"),
-        api.get("/telegram-bot/stats/")
+      const [settingsRes, statsRes, statusRes] = await Promise.all([
+        api.get<BotSettings>("/telegram-bot/settings/"),
+        api.get<BotStats>("/telegram-bot/stats/"),
+        api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/")
       ]);
       setSettings(settingsRes.data);
       setStats(statsRes.data);
+      setBotStatus(statusRes.data);
     } catch (error) {
       toast({
         title: "Xato",
@@ -94,6 +107,62 @@ export default function TelegramBotPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startBot = async () => {
+    try {
+      setStarting(true);
+      const response = await api.post<{ success: boolean; error?: string; message?: string; pid?: number }>("/telegram-bot/settings/start_bot/");
+      
+      if (response.data.success) {
+        toast({
+          title: "Muvaffaqiyat",
+          description: "Bot muvaffaqiyatli ishga tushirildi"
+        });
+        // Statusni yangilash
+        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
+        setBotStatus(statusRes.data);
+      } else {
+        toast({
+          title: "Xato",
+          description: response.data.error,
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.response?.data?.error || "Botni ishga tushirishda xato",
+        variant: "destructive"
+      });
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const stopBot = async () => {
+    try {
+      setStopping(true);
+      const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/stop_bot/");
+      
+      if (response.data.success) {
+        toast({
+          title: "Muvaffaqiyat",
+          description: "Bot to'xtatildi"
+        });
+        // Statusni yangilash
+        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
+        setBotStatus(statusRes.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Xato",
+        description: "Botni to'xtatishda xato",
+        variant: "destructive"
+      });
+    } finally {
+      setStopping(false);
     }
   };
 
@@ -121,18 +190,18 @@ export default function TelegramBotPage() {
   const testConnection = async () => {
     try {
       setTesting(true);
-      const response = await api.post("/telegram-bot/settings/test_connection/");
+      const response = await api.post<{ success: boolean; error?: string; bot_info?: { username: string } }>("/telegram-bot/settings/test_connection/");
       
-      if (response.data.success) {
+      if (response.data.success && response.data.bot_info) {
         toast({
           title: "Ulanish muvaffaqiyatli",
           description: `Bot: @${response.data.bot_info.username}`
         });
-        setSettings(prev => prev ? { ...prev, bot_username: response.data.bot_info.username } : null);
+        setSettings(prev => prev ? { ...prev, bot_username: response.data.bot_info!.username } : null);
       } else {
         toast({
           title: "Ulanish xatosi",
-          description: response.data.error,
+          description: response.data.error || "Noma'lum xato",
           variant: "destructive"
         });
       }
@@ -158,7 +227,7 @@ export default function TelegramBotPage() {
     }
     
     try {
-      const response = await api.post("/telegram-bot/settings/set_webhook/", {
+      const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/set_webhook/", {
         webhook_url: settings.webhook_url
       });
       
@@ -171,7 +240,7 @@ export default function TelegramBotPage() {
       } else {
         toast({
           title: "Xato",
-          description: response.data.error,
+          description: response.data.error || "Noma'lum xato",
           variant: "destructive"
         });
       }
@@ -186,7 +255,7 @@ export default function TelegramBotPage() {
 
   const deleteWebhook = async () => {
     try {
-      const response = await api.post("/telegram-bot/settings/delete_webhook/");
+      const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/delete_webhook/");
       
       if (response.data.success) {
         toast({
@@ -220,16 +289,68 @@ export default function TelegramBotPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bot className="h-6 w-6 text-blue-500" />
             Telegram Bot
+            {/* Bot holati ko'rsatkichi */}
+            {botStatus?.is_running ? (
+              <span className="flex items-center gap-1 text-sm font-normal text-green-600">
+                <Circle className="h-3 w-3 fill-green-500 text-green-500" />
+                Ishlayapti
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-sm font-normal text-gray-500">
+                <Circle className="h-3 w-3 fill-gray-400 text-gray-400" />
+                To'xtatilgan
+              </span>
+            )}
           </h1>
           <p className="text-muted-foreground">
             Bot sozlamalari va statistikasi
           </p>
         </div>
-        <Button onClick={saveSettings} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? "Saqlanmoqda..." : "Saqlash"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Bot boshqaruv tugmalari */}
+          {!settings?.use_webhook && (
+            <>
+              {botStatus?.is_running ? (
+                <Button 
+                  variant="destructive" 
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={stopBot} 
+                  disabled={stopping}
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  {stopping ? "To'xtatilmoqda..." : "Botni to'xtatish"}
+                </Button>
+              ) : (
+                <Button 
+                  variant="default"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={startBot} 
+                  disabled={starting || !settings?.bot_token}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {starting ? "Ishga tushirilmoqda..." : "Botni ishga tushirish"}
+                </Button>
+              )}
+            </>
+          )}
+          <Button onClick={saveSettings} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? "Saqlanmoqda..." : "Saqlash"}
+          </Button>
+        </div>
       </div>
+
+      {/* Webhook rejimi haqida ogohlantirish */}
+      {settings?.use_webhook && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-4">
+            <p className="text-sm text-blue-700">
+              <strong>Webhook rejimi faol.</strong> Bot avtomatik ravishda Telegram serverlaridan 
+              xabarlarni qabul qiladi. Polling rejimiga o'tish uchun avval webhook'ni o'chiring.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

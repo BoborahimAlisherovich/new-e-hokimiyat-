@@ -21,7 +21,7 @@ from .keyboards import (
     regions_keyboard, appeal_types_keyboard, categories_keyboard,
     confirm_keyboard, attachment_keyboard, settings_keyboard,
     language_keyboard, back_keyboard, admin_review_keyboard,
-    remove_keyboard
+    remove_keyboard, rating_keyboard, satisfaction_with_rating_keyboard
 )
 
 logger = logging.getLogger(__name__)
@@ -448,6 +448,50 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
                 reply_markup=confirm_keyboard(lang)
             )
             set_user_state(user, 'appeal:confirm', data)
+    
+    # Foydalanuvchi javob berish holati
+    elif current_state == 'user_reply':
+        appeal_id = data.get('appeal_id')
+        if not appeal_id:
+            clear_user_state(user)
+            bot.send_message(
+                chat_id,
+                "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.",
+                reply_markup=main_menu_keyboard(lang)
+            )
+            return
+        
+        try:
+            appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+            
+            # Javobni saqlash
+            AppealMessage.objects.create(
+                appeal=appeal,
+                is_from_admin=False,
+                text=text
+            )
+            
+            # Holatni tozalash
+            clear_user_state(user)
+            
+            # Foydalanuvchiga tasdiqlash
+            bot.send_message(
+                chat_id,
+                f"✅ Javobingiz #{appeal.appeal_number} raqamli murojaatga yuborildi.\n\n"
+                f"Tez orada sizga javob beriladi.",
+                reply_markup=main_menu_keyboard(lang)
+            )
+            
+            # Adminlarga xabar yuborish
+            notify_admins_user_reply(appeal, text)
+            
+        except TelegramAppeal.DoesNotExist:
+            clear_user_state(user)
+            bot.send_message(
+                chat_id,
+                "❌ Murojaat topilmadi.",
+                reply_markup=main_menu_keyboard(lang)
+            )
 
 
 def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
@@ -682,6 +726,53 @@ def process_callback_query(callback_query: Dict):
         handle_satisfaction_callback(user, appeal_id, False, chat_id, message_id)
         return
     
+    # Murojaat yopish callbacklari (admin tomonidan yopilganda)
+    if data.startswith('close_satisfied:'):
+        appeal_id = int(data.split(':')[1])
+        handle_close_appeal_callback(user, appeal_id, True, chat_id, message_id)
+        return
+    
+    if data.startswith('close_unsatisfied:'):
+        appeal_id = int(data.split(':')[1])
+        handle_close_appeal_callback(user, appeal_id, False, chat_id, message_id)
+        return
+    
+    # Baholash callbacklari
+    if data.startswith('rate:'):
+        parts = data.split(':')
+        appeal_id = int(parts[1])
+        rating_value = parts[2]
+        
+        if rating_value == 'skip':
+            # Baholamasdan yopish
+            from django.utils import timezone
+            try:
+                appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+                appeal.status = 'resolved'
+                appeal.closed_at = timezone.now()
+                appeal.save()
+                
+                bot.edit_message_text(
+                    chat_id,
+                    message_id,
+                    f"✅ #{appeal.appeal_number} raqamli murojaatingiz yopildi.\n\n"
+                    f"Bizga murojaat qilganingiz uchun tashakkur!"
+                )
+                notify_admins_appeal_closed(appeal, satisfied=True)
+            except TelegramAppeal.DoesNotExist:
+                bot.edit_message_text(chat_id, message_id, "❌ Murojaat topilmadi.")
+        else:
+            rating = int(rating_value)
+            handle_rating_callback(user, appeal_id, rating, chat_id, message_id)
+        return
+    
+    # Foydalanuvchi javob berish callbacki
+    if data.startswith('user_reply:'):
+        logger.info(f"user_reply callback received: data={data}")
+        appeal_id = int(data.split(':')[1])
+        handle_user_reply_callback(user, appeal_id, chat_id, message_id)
+        return
+    
     # Sozlamalar
     if data.startswith('settings:'):
         setting = data.split(':')[1]
@@ -713,23 +804,24 @@ def complete_registration(user: TelegramUser, chat_id: int):
 
 def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfied: bool, chat_id: int, message_id: int):
     """Qoniqish callback'ini qayta ishlash"""
+    from django.utils import timezone
+    
     try:
         appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
         lang = user.language
         
         if is_satisfied:
-            # Murojaat yopiladi
-            appeal.status = 'resolved'
-            appeal.save()
-            
+            # Baholash so'rash
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"✅ #{appeal.appeal_number} raqamli murojaatingiz muvaffaqiyatli yopildi.\n\nRahmat! Bizga murojaat qilganingiz uchun tashakkur."
+                f"⭐ <b>#{appeal.appeal_number} raqamli murojaat</b>\n\n"
+                f"Xizmat ko'rsatishni qanday baholaysiz?\n\n"
+                f"1 yulduz - Juda yomon\n"
+                f"5 yulduz - A'lo",
+                parse_mode='HTML',
+                reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
             )
-            
-            # Adminlarga xabar
-            notify_admins_appeal_closed(appeal, satisfied=True)
         else:
             # Murojaat qayta ochiladi
             appeal.status = 'pending_review'
@@ -752,7 +844,126 @@ def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfie
         )
 
 
-def notify_admins_appeal_closed(appeal: TelegramAppeal, satisfied: bool = True):
+def handle_rating_callback(user: TelegramUser, appeal_id: int, rating: int, chat_id: int, message_id: int):
+    """Baholash callback'ini qayta ishlash"""
+    from django.utils import timezone
+    
+    try:
+        appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+        
+        # Bahoni saqlash
+        appeal.rating = rating
+        appeal.rated_at = timezone.now()
+        appeal.closed_at = timezone.now()
+        appeal.status = 'resolved'
+        appeal.save()
+        
+        # Yulduzlar ko'rsatish
+        stars = '⭐' * rating
+        
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            f"✅ <b>Rahmat!</b>\n\n"
+            f"#{appeal.appeal_number} raqamli murojaatingiz yopildi.\n"
+            f"Sizning bahoyingiz: {stars}\n\n"
+            f"Bizga murojaat qilganingiz uchun tashakkur!",
+            parse_mode='HTML'
+        )
+        
+        # Adminlarga xabar
+        notify_admins_appeal_closed(appeal, satisfied=True, rating=rating)
+        
+        logger.info(f"Appeal {appeal.appeal_number} rated {rating} stars by user {user.telegram_id}")
+        
+    except TelegramAppeal.DoesNotExist:
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            "❌ Murojaat topilmadi."
+        )
+
+
+def handle_close_appeal_callback(user: TelegramUser, appeal_id: int, is_satisfied: bool, chat_id: int, message_id: int):
+    """Murojaatni yopish callback'ini qayta ishlash (Admin tomonidan yopilganda)"""
+    from django.utils import timezone
+    
+    try:
+        appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+        
+        if is_satisfied:
+            # Baholash so'rash
+            bot.edit_message_text(
+                chat_id,
+                message_id,
+                f"⭐ <b>#{appeal.appeal_number} raqamli murojaat</b>\n\n"
+                f"Xizmat ko'rsatishni qanday baholaysiz?\n\n"
+                f"1 yulduz - Juda yomon\n"
+                f"5 yulduz - A'lo",
+                parse_mode='HTML',
+                reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
+            )
+        else:
+            # Murojaat qayta ochiladi
+            appeal.status = 'pending_review'
+            appeal.save()
+            
+            bot.edit_message_text(
+                chat_id,
+                message_id,
+                f"❌ #{appeal.appeal_number} raqamli murojaatingiz qayta ko'rib chiqish uchun yuborildi.\n\nTez orada sizga javob beriladi."
+            )
+            
+            notify_admins_appeal_reopened(appeal)
+            
+    except TelegramAppeal.DoesNotExist:
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            "❌ Murojaat topilmadi."
+        )
+
+
+def handle_user_reply_callback(user: TelegramUser, appeal_id: int, chat_id: int, message_id: int):
+    """Foydalanuvchi javob berish callback'ini qayta ishlash"""
+    logger.info(f"handle_user_reply_callback: user={user.telegram_id}, appeal_id={appeal_id}")
+    try:
+        appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+        logger.info(f"Appeal topildi: #{appeal.appeal_number}, status={appeal.status}")
+        
+        # Murojaat yopilganmi tekshirish
+        if appeal.status in ['resolved', 'closed']:
+            logger.info(f"Murojaat yopilgan: {appeal.status}")
+            bot.send_message(
+                chat_id,
+                "❌ Bu murojaat allaqachon yopilgan",
+            )
+            return
+        
+        # Javob yozish holatiga o'tkazish
+        set_user_state(user, 'user_reply', {'appeal_id': appeal_id})
+        logger.info(f"User state set: user_reply, appeal_id={appeal_id}")
+        
+        result = bot.edit_message_text(
+            chat_id,
+            message_id,
+            f"✍️ <b>#{appeal.appeal_number} raqamli murojaatga javob</b>\n\n"
+            f"Javobingizni yozing va yuboring.\n\n"
+            f"Bekor qilish uchun /cancel buyrug'ini yuboring.",
+            parse_mode='HTML'
+        )
+        logger.info(f"edit_message_text result: {result}")
+        
+    except TelegramAppeal.DoesNotExist:
+        logger.error(f"Appeal topilmadi: id={appeal_id}, user={user.telegram_id}")
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            "❌ Murojaat topilmadi yoki siz ushbu murojaatning egasi emassiz."
+        )
+
+
+def notify_admins_appeal_closed(appeal: TelegramAppeal, satisfied: bool = True, rating: Optional[int] = None):
     """Adminlarga murojaat yopilgani haqida xabar"""
     admins = BotAdmin.objects.filter(is_active=True)
     
@@ -763,9 +974,13 @@ def notify_admins_appeal_closed(appeal: TelegramAppeal, satisfied: bool = True):
             message += f"📌 <b>#{appeal.appeal_number}</b>\n"
             message += f"👤 {user.full_name}\n"
             message += f"📞 {user.phone or '-'}\n"
-            message += f"{'✅ Foydalanuvchi qoniqdi' if satisfied else '❌ Foydalanuvchi qoniqmadi'}"
+            message += f"{'✅ Foydalanuvchi qoniqdi' if satisfied else '❌ Foydalanuvchi qoniqmadi'}\n"
             
-            bot.send_message(int(admin.telegram_id), message)
+            if rating:
+                stars = '⭐' * rating
+                message += f"\n📊 <b>Baho:</b> {stars} ({rating}/5)"
+            
+            bot.send_message(int(admin.telegram_id), message, parse_mode='HTML')
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
 
@@ -785,6 +1000,31 @@ def notify_admins_appeal_reopened(appeal: TelegramAppeal):
             message += f"📞 {user.phone or '-'}\n"
             message += f"🏘 {region_name}\n\n"
             message += f"❌ Foydalanuvchi javobdan qoniqmadi.\nIltimos, qayta ko'rib chiqing."
+            
+            bot.send_message(
+                int(admin.telegram_id),
+                message,
+                reply_markup=admin_review_keyboard(appeal.id)  # type: ignore[attr-defined]
+            )
+        except Exception as e:
+            logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
+
+
+def notify_admins_user_reply(appeal: TelegramAppeal, reply_text: str):
+    """Adminlarga foydalanuvchi javobi haqida xabar"""
+    admins = BotAdmin.objects.filter(is_active=True)
+    
+    for admin in admins:
+        try:
+            user = appeal.telegram_user
+            region_name = user.region.name_uz if user.region else '-'
+            
+            message = f"💬 <b>Foydalanuvchidan javob!</b>\n\n"
+            message += f"📌 <b>#{appeal.appeal_number}</b>\n"
+            message += f"👤 {user.full_name}\n"
+            message += f"📞 {user.phone or '-'}\n"
+            message += f"🏘 {region_name}\n\n"
+            message += f"<b>Javob:</b>\n{reply_text[:500]}"
             
             bot.send_message(
                 int(admin.telegram_id),
