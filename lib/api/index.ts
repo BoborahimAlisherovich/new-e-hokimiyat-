@@ -154,6 +154,7 @@ export {
   approveTask,
   rejectTask,
   cancelTask,
+  requestDeadlineExtension,
   
   // Executions
   getTaskExecutions,
@@ -226,6 +227,7 @@ export {
   getNotificationById,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
   getUnreadNotificationsCount,
   
   // Audit

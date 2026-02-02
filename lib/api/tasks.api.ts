@@ -225,6 +225,23 @@ export async function cancelTask(
   })
 }
 
+/**
+ * Topshiriq muddatini uzaytirish so'rovi yuboradi
+ * 
+ * @param id - Topshiriq ID
+ * @param data - Yangi muddat va sabab
+ * @returns Yangilangan topshiriq
+ */
+export async function requestDeadlineExtension(
+  id: number | string, 
+  data: { requested_deadline: string; reason: string }
+): Promise<Task> {
+  return fetchApi<Task>(`/tasks/${id}/extend_request/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 // ============================================================================
 // Task Executions
 // ============================================================================

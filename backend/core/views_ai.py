@@ -143,6 +143,7 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             'TELEGRAM_STATUS',
             'LIST_ORGANIZATIONS',
             'LIST_USERS',
+            'ANALYTICS_QUERY',
         }
 
         # AI javob
@@ -186,6 +187,27 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                     preview_lines.append(f"Muddat: {params.get('deadline_days')} kun")
                 if params.get('assign_all'):
                     preview_lines.append("Tayinlash: barchaga")
+            if intent_result.get('intent') == 'CREATE_RECURRING_TASK':
+                if params.get('title'):
+                    preview_lines.append(f"Takrorlanuvchi topshiriq: {params.get('title')}")
+                if params.get('description'):
+                    preview_lines.append(f"Tavsif: {params.get('description')}")
+                if params.get('frequency'):
+                    preview_lines.append(f"Takrorlanish: {params.get('frequency')}")
+                if params.get('start_date'):
+                    preview_lines.append(f"Boshlanish: {params.get('start_date')}")
+                if params.get('end_date'):
+                    preview_lines.append(f"Tugash: {params.get('end_date')}")
+                if params.get('deadline_days'):
+                    preview_lines.append(f"Muddat: {params.get('deadline_days')} kun")
+                if params.get('cron_expression'):
+                    preview_lines.append(f"Cron: {params.get('cron_expression')}")
+                if params.get('assign_all'):
+                    preview_lines.append("Tayinlash: barchaga")
+            if intent_result.get('intent') == 'EXPORT_ANALYTICS':
+                preview_lines.append(
+                    f"Format: {params.get('format', 'xlsx')}"
+                )
 
             preview_text = "\n".join(preview_lines)
             ai_message.content = (
@@ -467,6 +489,8 @@ def execute_command(request):
     params = request.data.get('params', {})
     
     valid_commands = [
+        'CREATE_RECURRING_TASK',
+        'EXPORT_ANALYTICS',
         'CREATE_TASK', 'CLOSE_TASK', 'REMOVE_CONTROL',
         'GENERATE_REPORT', 'CLOSE_APPEAL', 'SEND_NOTIFICATION'
     ]

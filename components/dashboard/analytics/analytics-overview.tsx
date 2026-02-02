@@ -1,21 +1,23 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { Building2, Clock, Target, TrendingUp } from "lucide-react"
+import { Building2, Clock, Target, TrendingUp, MessageSquare } from "lucide-react"
 
 interface AnalyticsOverviewProps {
   tasks: any[]
   organizations: any[]
+  appeals: any[]
 }
 
-export function AnalyticsOverview({ tasks, organizations }: AnalyticsOverviewProps) {
+export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOverviewProps) {
   const completedCount = tasks.filter(
     (task) => task.status === "BAJARILDI" || task.status === "NAZORATDAN_YECHILDI",
   ).length
   const completionRate = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
   const overdueCount = tasks.filter((task) => task.status === "MUDDATI_KECH").length
+  const pendingAppeals = appeals.filter((a) => a.status === "PENDING" || a.status === "pending").length
 
   return (
     <section className="animate-slide-up">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
@@ -24,7 +26,7 @@ export function AnalyticsOverview({ tasks, organizations }: AnalyticsOverviewPro
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{tasks.length}</p>
-                <p className="text-sm text-muted-foreground">Жами топшириқлар</p>
+                <p className="text-sm text-muted-foreground">Jami topshiriqlar</p>
               </div>
             </div>
           </CardContent>
@@ -38,7 +40,7 @@ export function AnalyticsOverview({ tasks, organizations }: AnalyticsOverviewPro
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
-                <p className="text-sm text-muted-foreground">Бажарилганлик</p>
+                <p className="text-sm text-muted-foreground">Bajarilganlik</p>
               </div>
             </div>
           </CardContent>
@@ -52,7 +54,7 @@ export function AnalyticsOverview({ tasks, organizations }: AnalyticsOverviewPro
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{overdueCount}</p>
-                <p className="text-sm text-muted-foreground">Кечиккан топшириқлар</p>
+                <p className="text-sm text-muted-foreground">Kechikkan topshiriqlar</p>
               </div>
             </div>
           </CardContent>
@@ -66,7 +68,21 @@ export function AnalyticsOverview({ tasks, organizations }: AnalyticsOverviewPro
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{organizations.length}</p>
-                <p className="text-sm text-muted-foreground">Фаол ташкилотлар</p>
+                <p className="text-sm text-muted-foreground">Faol tashkilotlar</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{appeals.length}</p>
+                <p className="text-sm text-muted-foreground">Jami murojaatlar</p>
               </div>
             </div>
           </CardContent>

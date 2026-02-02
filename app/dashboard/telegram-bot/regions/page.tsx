@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   MapPin, 
   Plus, 
   Pencil, 
   Trash2,
   RefreshCw,
-  Save
+  Save,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,9 @@ interface Region {
 export default function TelegramBotRegionsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [regions, setRegions] = useState<Region[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -66,16 +70,19 @@ export default function TelegramBotRegionsPage() {
     is_active: true
   });
 
-  useEffect(() => {
-    loadRegions();
-  }, []);
-
-  const loadRegions = async () => {
+  const loadRegions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get("/telegram-bot/regions/");
-      setRegions(response.data.results || response.data);
-    } catch (error) {
+      setError(null);
+      const response = await api.get<{ results?: Region[] } | Region[]>("/telegram-bot/regions/");
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setRegions(data);
+      } else {
+        setRegions(data.results || []);
+      }
+    } catch (err) {
+      setError("Hududlarni yuklashda xato yuz berdi");
       toast({
         title: "Xato",
         description: "Hududlarni yuklashda xato yuz berdi",
@@ -84,9 +91,13 @@ export default function TelegramBotRegionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const openCreate = () => {
+  useEffect(() => {
+    loadRegions();
+  }, [loadRegions]);
+
+  const openCreate = useCallback(() => {
     setSelectedRegion(null);
     setFormData({
       name: "",
@@ -95,9 +106,9 @@ export default function TelegramBotRegionsPage() {
       is_active: true
     });
     setShowDialog(true);
-  };
+  }, [regions.length]);
 
-  const openEdit = (region: Region) => {
+  const openEdit = useCallback((region: Region) => {
     setSelectedRegion(region);
     setFormData({
       name: region.name,
@@ -106,14 +117,14 @@ export default function TelegramBotRegionsPage() {
       is_active: region.is_active
     });
     setShowDialog(true);
-  };
+  }, []);
 
-  const openDeleteDialog = (region: Region) => {
+  const openDeleteDialog = useCallback((region: Region) => {
     setSelectedRegion(region);
     setShowDelete(true);
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!formData.name) {
       toast({
         title: "Xato",
@@ -124,6 +135,7 @@ export default function TelegramBotRegionsPage() {
     }
 
     try {
+      setSaving(true);
       if (selectedRegion) {
         await api.put(`/telegram-bot/regions/${selectedRegion.id}/`, formData);
         toast({
@@ -139,19 +151,22 @@ export default function TelegramBotRegionsPage() {
       }
       setShowDialog(false);
       loadRegions();
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Saqlashda xato yuz berdi",
         variant: "destructive"
       });
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [formData, selectedRegion, toast, loadRegions]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!selectedRegion) return;
 
     try {
+      setDeleting(true);
       await api.delete(`/telegram-bot/regions/${selectedRegion.id}/`);
       toast({
         title: "Muvaffaqiyat",
@@ -159,14 +174,29 @@ export default function TelegramBotRegionsPage() {
       });
       setShowDelete(false);
       loadRegions();
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "O'chirishda xato yuz berdi",
         variant: "destructive"
       });
+    } finally {
+      setDeleting(false);
     }
-  };
+  }, [selectedRegion, toast, loadRegions]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={loadRegions} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Qayta urinish
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -182,8 +212,8 @@ export default function TelegramBotRegionsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadRegions} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={loadRegions} variant="outline" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Yangilash
           </Button>
           <Button onClick={openCreate}>
@@ -311,12 +341,16 @@ export default function TelegramBotRegionsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button variant="outline" onClick={() => setShowDialog(false)} disabled={saving}>
               Bekor qilish
             </Button>
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Saqlash
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              {saving ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -333,12 +367,13 @@ export default function TelegramBotRegionsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Bekor qilish</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600"
+              disabled={deleting}
             >
-              O'chirish
+              {deleting ? "O'chirilmoqda..." : "O'chirish"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

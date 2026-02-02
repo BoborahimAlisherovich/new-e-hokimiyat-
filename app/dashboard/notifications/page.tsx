@@ -2,12 +2,19 @@
 
 import { Header } from "@/components/layout/header"
 import { type Notification } from "@/types"
-import { getNotifications } from "@/lib/api"
+import {
+  deleteNotification,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/lib/api"
 import { useEffect, useState } from "react"
 import { NotificationActions } from "@/components/dashboard/notifications/notification-actions"
 import { NotificationList } from "@/components/dashboard/notifications/notification-list"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NotificationsPage() {
+  const { toast } = useToast()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<"all" | "unread">("all")
   const [loading, setLoading] = useState(true)
@@ -36,16 +43,53 @@ export default function NotificationsPage() {
 
   const filteredNotifications = filter === "all" ? notifications : notifications.filter((n) => !n.is_read)
 
-  const markAsRead = (id: number) => {
+  const markAsRead = async (id: number) => {
+    const previous = notifications
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)))
+    try {
+      const updated = await markNotificationRead(id)
+      setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)))
+    } catch (err) {
+      console.error("Bildirishnomani o'qilgan deb belgilashda xatolik:", err)
+      setNotifications(previous)
+      toast({
+        title: "Xatolik",
+        description: "Bildirishnomani o'qilgan deb belgilab bo'lmadi",
+        variant: "destructive",
+      })
+    }
   }
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    const previous = notifications
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+    try {
+      await markAllNotificationsRead()
+    } catch (err) {
+      console.error("Barcha bildirishnomalarni o'qilgan deb belgilashda xatolik:", err)
+      setNotifications(previous)
+      toast({
+        title: "Xatolik",
+        description: "Barcha bildirishnomalarni o'qilgan deb belgilab bo'lmadi",
+        variant: "destructive",
+      })
+    }
   }
 
-  const deleteNotification = (id: number) => {
+  const handleDeleteNotification = async (id: number) => {
+    const previous = notifications
     setNotifications((prev) => prev.filter((n) => n.id !== id))
+    try {
+      await deleteNotification(id)
+    } catch (err) {
+      console.error("Bildirishnomani o'chirishda xatolik:", err)
+      setNotifications(previous)
+      toast({
+        title: "Xatolik",
+        description: "Bildirishnomani o'chirib bo'lmadi",
+        variant: "destructive",
+      })
+    }
   }
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
@@ -96,7 +140,7 @@ export default function NotificationsPage() {
           <NotificationList
             notifications={filteredNotifications}
             onMarkAsRead={markAsRead}
-            onDelete={deleteNotification}
+            onDelete={handleDeleteNotification}
           />
         )}
         </div>

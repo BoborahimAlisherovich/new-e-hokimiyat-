@@ -144,10 +144,10 @@ export function VillageAnalytics() {
                 >
                   <p className="text-sm font-semibold text-foreground">{tooltip.village.name}</p>
                   <div className="mt-1 space-y-0.5 text-muted-foreground">
-                    <div>Жами: {tooltip.village.stats.total}</div>
-                    <div>Ҳал этилган: {tooltip.village.stats.resolved}</div>
-                    <div>Бажарилмоқда: {tooltip.village.stats.inProgress}</div>
-                    <div>Кутилмоқда: {tooltip.village.stats.pending}</div>
+                    <div>Jami: {tooltip.village.stats.total}</div>
+                    <div>Hal etilgan: {tooltip.village.stats.resolved}</div>
+                    <div>Bajarilmoqda: {tooltip.village.stats.inProgress}</div>
+                    <div>Kutilmoqda: {tooltip.village.stats.pending}</div>
                   </div>
                 </div>
               )}
@@ -156,25 +156,25 @@ export function VillageAnalytics() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Card className="border border-border bg-white/80">
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Жами мурожаатлар</p>
+                  <p className="text-sm text-muted-foreground">Jami murojaatlar</p>
                   <p className="text-2xl font-semibold text-foreground">{aggregated.total}</p>
                 </CardContent>
               </Card>
               <Card className="border border-border bg-white/80">
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Ҳал этилган</p>
+                  <p className="text-sm text-muted-foreground">Hal etilgan</p>
                   <p className="text-2xl font-semibold text-emerald-600">{aggregated.resolved}</p>
                 </CardContent>
               </Card>
               <Card className="border border-border bg-white/80">
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Бажарилмоқда</p>
+                  <p className="text-sm text-muted-foreground">Bajarilmoqda</p>
                   <p className="text-2xl font-semibold text-amber-600">{aggregated.inProgress}</p>
                 </CardContent>
               </Card>
               <Card className="border border-border bg-white/80">
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Кутилмоқда</p>
+                  <p className="text-sm text-muted-foreground">Kutilmoqda</p>
                   <p className="text-2xl font-semibold text-blue-600">{aggregated.pending}</p>
                 </CardContent>
               </Card>
@@ -184,17 +184,17 @@ export function VillageAnalytics() {
           <div className="space-y-4">
             <Card className="border border-border bg-white/80">
               <CardContent className="p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Танланган қишлоқ</p>
+                <p className="text-sm text-muted-foreground">Tanlangan qishloq</p>
                 {selectedVillage ? (
                   <div className="space-y-1">
                     <p className="text-lg font-semibold text-foreground">{selectedVillage.name}</p>
-                    <div className="text-sm text-muted-foreground">Жами: {selectedVillage.stats.total}</div>
-                    <div className="text-sm text-emerald-600">Ҳал этилган: {selectedVillage.stats.resolved}</div>
-                    <div className="text-sm text-amber-600">Бажарилмоқда: {selectedVillage.stats.inProgress}</div>
-                    <div className="text-sm text-blue-600">Кутилмоқда: {selectedVillage.stats.pending}</div>
+                    <div className="text-sm text-muted-foreground">Jami: {selectedVillage.stats.total}</div>
+                    <div className="text-sm text-emerald-600">Hal etilgan: {selectedVillage.stats.resolved}</div>
+                    <div className="text-sm text-amber-600">Bajarilmoqda: {selectedVillage.stats.inProgress}</div>
+                    <div className="text-sm text-blue-600">Kutilmoqda: {selectedVillage.stats.pending}</div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Маълумот топилмади</p>
+                  <p className="text-sm text-muted-foreground">Ma'lumot topilmadi</p>
                 )}
               </CardContent>
             </Card>
@@ -219,7 +219,7 @@ export function VillageAnalytics() {
                         <span className="text-muted-foreground">{village.stats.total}</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Ҳал этилган: {village.stats.resolved} • Бажарилмоқда: {village.stats.inProgress}
+                        Hal etilgan: {village.stats.resolved} • Bajarilmoqda: {village.stats.inProgress}
                       </div>
                     </button>
                   ))}

@@ -9,6 +9,7 @@ import { User } from "@/types"
 import { useRouter } from "next/navigation"
 import { ROLE_COLORS, ROLE_LABELS, STATUS_COLORS, STATUS_LABELS, getUserStatusKey } from "./user-constants"
 import { maskPnfl } from "./user-helpers"
+import { UserX } from "lucide-react"
 
 interface UserTableProps {
   users: User[]
@@ -19,6 +20,22 @@ export function UserTable({ users }: UserTableProps) {
 
   const handleRowClick = (user: User) => {
     router.push(`/dashboard/users/${user.id}`)
+  }
+
+  if (users.length === 0) {
+    return (
+      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="rounded-full bg-muted p-4 mb-4">
+            <UserX className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-1">Foydalanuvchilar topilmadi</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Hozircha bu filtrlar bo'yicha foydalanuvchilar mavjud emas. Yangi foydalanuvchi qo'shing yoki filtrlarni o'zgartiring.
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

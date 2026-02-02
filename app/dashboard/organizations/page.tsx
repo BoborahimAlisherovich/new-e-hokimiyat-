@@ -1,9 +1,9 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
-import { getOrganizations, createOrganization, getUsers } from "@/lib/api"
+import { getOrganizations, createOrganization, getUsers, deleteOrganization, updateOrganization } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { OrganizationFilters } from "@/components/dashboard/organizations/organization-filters"
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
@@ -26,7 +26,7 @@ export default function OrganizationsPage() {
     address: ''
   })
 
-  const loadOrganizations = async () => {
+  const loadOrganizations = useCallback(async () => {
     try {
       const [orgsList, usersList] = await Promise.all([
         getOrganizations(),
@@ -45,7 +45,7 @@ export default function OrganizationsPage() {
       console.error("Tashkilotlarni yuklashda xatolik:", err)
       setError("Tashkilotlarni yuklashda xatolik yuz berdi")
     }
-  }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -64,7 +64,7 @@ export default function OrganizationsPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [loadOrganizations])
 
   const handleFormChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -107,19 +107,42 @@ export default function OrganizationsPage() {
     }
   }
 
-  const filteredOrganizations = organizations.filter((org) => {
-    const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
-    const matchesType = typeFilter === "all" || org.sector === typeFilter
-    const matchesSearch =
-      (org.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (org.head || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (org.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesStatus && matchesType && matchesSearch
-  })
+  const filteredOrganizations = useMemo(() => {
+    return organizations.filter((org) => {
+      const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
+      const matchesType = typeFilter === "all" || org.sector === typeFilter
+      const matchesSearch =
+        (org.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (org.head || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (org.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesStatus && matchesType && matchesSearch
+    })
+  }, [organizations, statusFilter, typeFilter, searchQuery])
+
+  const handleDeleteOrganization = useCallback(async (id: number) => {
+    if (!confirm("Tashkilotni o'chirishni tasdiqlaysizmi?")) return
+    try {
+      await deleteOrganization(id)
+      toast({ title: "Muvaffaqiyat", description: "Tashkilot o'chirildi" })
+      await loadOrganizations()
+    } catch (err: any) {
+      toast({ title: "Xato", description: err?.message || "O'chirishda xatolik", variant: "destructive" })
+    }
+  }, [loadOrganizations, toast])
+
+  const handleToggleStatus = useCallback(async (id: number, currentStatus: boolean) => {
+    try {
+      await updateOrganization(id, { is_active: !currentStatus })
+      toast({ title: "Muvaffaqiyat", description: currentStatus ? "Tashkilot nofaollashtirildi" : "Tashkilot faollashtirildi" })
+      await loadOrganizations()
+    } catch (err: any) {
+      toast({ title: "Xato", description: err?.message || "Holatni o'zgartirishda xatolik", variant: "destructive" })
+    }
+  }, [loadOrganizations, toast])
 
   return (
     <>
-      <Header title="Ташкилотлар бошқаруви" description="Тизимдаги барча ташкилотларнинг рўйхати, маълумотлари ва бошқаруви" />
+      <Header title="Tashkilotlar boshqaruvi" description="Tizimdagi barcha tashkilotlarning ro'yxati, ma'lumotlari va boshqaruvi" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -144,6 +167,8 @@ export default function OrganizationsPage() {
                 statusFilter={statusFilter}
                 onStatusChange={setStatusFilter}
                 onCreate={() => setIsCreateOpen(true)}
+                totalCount={organizations.length}
+                filteredCount={filteredOrganizations.length}
               />
             </section>
 
@@ -174,7 +199,12 @@ export default function OrganizationsPage() {
                   </button>
                 </div>
               ) : (
-                <OrganizationTable organizations={filteredOrganizations} users={users} />
+                <OrganizationTable 
+                  organizations={filteredOrganizations} 
+                  users={users}
+                  onDelete={handleDeleteOrganization}
+                  onToggleStatus={handleToggleStatus}
+                />
               )}
             </section>
           </div>

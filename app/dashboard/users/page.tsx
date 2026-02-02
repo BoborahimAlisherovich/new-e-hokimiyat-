@@ -159,6 +159,8 @@ export default function UsersPage() {
             onOrganizationChange={setOrganizationFilter}
             organizations={organizations}
             onCreate={handleCreateUser}
+            totalCount={users.length}
+            filteredCount={filteredUsers.length}
           />
 
           {/* Users Table */}

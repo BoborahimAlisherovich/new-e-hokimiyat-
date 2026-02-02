@@ -36,10 +36,10 @@ export default function AppealsPage() {
       setStats(mockStats)
 
       const mockOptions: FilterOptions = {
-        status: { all: "Барчаси", pending: "Кутилмоқда", in_progress: "Бажарилмоқда", resolved: "Ҳал этилган" },
-        priority: { all: "Барчаси", low: "Паст", medium: "Ўртача", high: "Юқори" },
-        category: { all: "Барчаси", social: "Ижтимоий", economic: "Иқтисодий", legal: "Ҳуқуқий", other: "Бошқа" },
-        districts: ["Тошкент шаҳри", "Андижон вилояти", "Бухоро вилояти", "Фарғона вилояти", "Жиззах вилояти", "Қашқадарё вилояти", "Навоий вилояти", "Наманган вилояти", "Самарқанд вилояти", "Сирдарё вилояти", "Сурхондарё вилояти", "Тошкент вилояти", "Хоразм вилояти"]
+        status: { all: "Barchasi", pending: "Kutilmoqda", in_progress: "Bajarilmoqda", resolved: "Hal etilgan" },
+        priority: { all: "Barchasi", low: "Past", medium: "O'rtacha", high: "Yuqori" },
+        category: { all: "Barchasi", social: "Ijtimoiy", economic: "Iqtisodiy", legal: "Huquqiy", other: "Boshqa" },
+        districts: ["Hatirchi tumani"]
       }
       setOptions(mockOptions)
     } catch (error) {
@@ -106,12 +106,12 @@ export default function AppealsPage() {
   if (loading) {
     return (
       <>
-        <Header title="Мурожаатлар" description="Фуқаролар мурожаатлари бошқаруви тизими" />
+        <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Юкланмоқда...</p>
+              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function AppealsPage() {
 
   return (
     <>
-      <Header title="Мурожаатлар" description="Фуқаролар мурожаатлари бошқаруви тизими" />
+      <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -149,6 +149,8 @@ export default function AppealsPage() {
             districtFilter={districtFilter}
             onDistrictChange={setDistrictFilter}
             options={options}
+            totalCount={appeals.length}
+            filteredCount={filteredAppeals.length}
           />
 
           {/* Appeals Table */}

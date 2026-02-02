@@ -463,7 +463,7 @@ export interface RecurringTask extends BaseModel {
 
 export type AIMessageRole = 'system' | 'user' | 'assistant'
 
-export type AIActionType = 'CREATE_TASK' | 'CLOSE_TASK' | 'REMOVE_CONTROL' | 'GENERATE_REPORT' | 'SEND_NOTIFICATION' | 'CLOSE_APPEAL'
+export type AIActionType = 'CREATE_RECURRING_TASK' | 'EXPORT_ANALYTICS' | 'CREATE_TASK' | 'CLOSE_TASK' | 'REMOVE_CONTROL' | 'GENERATE_REPORT' | 'SEND_NOTIFICATION' | 'CLOSE_APPEAL'
 
 export type AIActionStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
 

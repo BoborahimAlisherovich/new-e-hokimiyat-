@@ -1281,6 +1281,8 @@ def notify_admins_user_blocked(user: TelegramUser, appeal: TelegramAppeal, reaso
 def notify_admins_about_appeal(appeal: TelegramAppeal):
     """Adminlarga yangi murojaat haqida xabar"""
     admins = BotAdmin.objects.filter(is_active=True)
+    from notifications.models import Notification
+    appeal_id = getattr(appeal, "id", None) or getattr(appeal, "pk", None)
     
     for admin in admins:
         try:
@@ -1315,10 +1317,28 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
                     score=appeal.ai_score or 0
                 )
             
-            bot.send_message(
-                int(admin.telegram_id),
-                text,
-                reply_markup=admin_review_keyboard(appeal.id)  # type: ignore[attr-defined]
-            )
+            if appeal_id is not None:
+                bot.send_message(
+                    int(admin.telegram_id),
+                    text,
+                    reply_markup=admin_review_keyboard(appeal_id)
+                )
+            else:
+                bot.send_message(
+                    int(admin.telegram_id),
+                    text,
+                )
+
+            if admin.user and admin.user.is_active:
+                Notification.objects.create(
+                    user=admin.user,
+                    title="Yangi murojaat",
+                    message=(
+                        f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) "
+                        f"{cat_name} / {type_name}"
+                    ),
+                    notification_type='INFO',
+                    link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals"
+                )
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage } from "@/lib/api"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import {
@@ -64,7 +64,6 @@ export default function TaskDetailPage() {
   const [newMessage, setNewMessage] = useState("")
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isExtendOpen, setIsExtendOpen] = useState(false)
-  const [selectedSector, setSelectedSector] = useState<string>("")
   const [task, setTask] = useState<any | null>(null)
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [taskExecutions, setTaskExecutions] = useState<any[]>([])
@@ -77,6 +76,18 @@ export default function TaskDetailPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [isLocationLoading, setIsLocationLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  // Edit form state
+  const [editTitle, setEditTitle] = useState("")
+  const [editDescription, setEditDescription] = useState("")
+  const [editPriority, setEditPriority] = useState("")
+  const [editDeadline, setEditDeadline] = useState("")
+  const [editCategory, setEditCategory] = useState("")
+  
+  // Extend form state
+  const [extendDeadline, setExtendDeadline] = useState("")
+  const [extendReason, setExtendReason] = useState("")
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -170,6 +181,101 @@ export default function TaskDetailPage() {
   const canClose = task.status === "BAJARILDI"
   const canReassign = task.status === "BAJARILDI"
   const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
+  
+  // Initialize edit form when task loads
+  useEffect(() => {
+    if (task) {
+      setEditTitle(task.title || "")
+      setEditDescription(task.description || "")
+      setEditPriority(task.priority || "")
+      setEditDeadline(task.deadline || "")
+      setEditCategory(task.category || "")
+      setExtendDeadline(task.deadline || "")
+    }
+  }, [task])
+  
+  // Handle save task edits
+  const handleSaveTask = async () => {
+    if (!editTitle.trim()) {
+      alert("Sarlavha majburiy")
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await updateTask(id, {
+        title: editTitle,
+        description: editDescription,
+        priority: editPriority as any,
+        deadline: editDeadline,
+        category: editCategory,
+      })
+      setTask(updatedTask)
+      setIsEditOpen(false)
+    } catch (error) {
+      console.error("Task update error:", error)
+      alert("Topshiriqni yangilashda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle extend deadline
+  const handleExtendDeadline = async () => {
+    if (!extendDeadline || !extendReason.trim()) {
+      alert("Yangi muddat va sabab majburiy")
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await requestDeadlineExtension(id, {
+        requested_deadline: extendDeadline,
+        reason: extendReason,
+      })
+      setTask(updatedTask)
+      setExtendReason("")
+      setIsExtendOpen(false)
+    } catch (error) {
+      console.error("Deadline extend error:", error)
+      alert("Muddatni uzaytirishda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle approve/close task
+  const handleApproveTask = async () => {
+    if (!confirm("Topshiriqni nazoratdan yechmoqchimisiz?")) return
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await approveTask(id, { comment: "Topshiriq nazoratdan yechildi" })
+      setTask(updatedTask)
+    } catch (error) {
+      console.error("Approve task error:", error)
+      alert("Topshiriqni tasdiqlashda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle reject (reassign) task
+  const handleRejectTask = async () => {
+    const reason = prompt("Qayta ijroga yuborish sababini kiriting:")
+    if (!reason?.trim()) return
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await rejectTask(id, { comment: reason })
+      setTask(updatedTask)
+    } catch (error) {
+      console.error("Reject task error:", error)
+      alert("Topshiriqni qayta ijroga yuborishda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const refreshChat = () => {
     getTaskChat(id)
@@ -355,18 +461,31 @@ export default function TaskDetailPage() {
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Yangi muddat</Label>
-                      <Input type="date" defaultValue={task.deadline} className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Input 
+                        type="date" 
+                        value={extendDeadline ? extendDeadline.split('T')[0] : ''} 
+                        onChange={(e) => setExtendDeadline(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Sabab</Label>
-                      <Textarea placeholder="Sababni kiriting..." className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Textarea 
+                        placeholder="Sababni kiriting..." 
+                        value={extendReason}
+                        onChange={(e) => setExtendReason(e.target.value)}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="border-border/50 bg-background/50">
                       Bekor qilish
                     </Button>
-                    <Button onClick={() => setIsExtendOpen(false)}>So'rov yuborish</Button>
+                    <Button onClick={handleExtendDeadline} disabled={isSaving}>
+                      {isSaving ? "Saqlanmoqda..." : "So'rov yuborish"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -386,16 +505,24 @@ export default function TaskDetailPage() {
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Sarlavha</Label>
-                      <Input defaultValue={task.title} className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Input 
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Tavsif</Label>
-                      <Textarea defaultValue={task.description} rows={3} />
+                      <Textarea 
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        rows={3} 
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Ustuvorlik</Label>
-                        <Select defaultValue={task.priority}>
+                        <Select value={editPriority} onValueChange={setEditPriority}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -410,12 +537,16 @@ export default function TaskDetailPage() {
                       </div>
                       <div className="space-y-2">
                         <Label>Muddat</Label>
-                        <Input type="date" defaultValue={task.deadline} />
+                        <Input 
+                          type="date" 
+                          value={editDeadline ? editDeadline.split('T')[0] : ''} 
+                          onChange={(e) => setEditDeadline(e.target.value)}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Soha</Label>
-                      <Select defaultValue={task.category} onValueChange={setSelectedSector}>
+                      <Select value={editCategory} onValueChange={setEditCategory}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -433,7 +564,9 @@ export default function TaskDetailPage() {
                     <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                       Bekor qilish
                     </Button>
-                    <Button onClick={() => setIsEditOpen(false)}>Saqlash</Button>
+                    <Button onClick={handleSaveTask} disabled={isSaving}>
+                      {isSaving ? "Saqlanmoqda..." : "Saqlash"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -443,16 +576,22 @@ export default function TaskDetailPage() {
               <Button
                 variant="outline"
                 className="text-orange-500 border-orange-500/30 hover:bg-orange-500/10 bg-transparent"
+                onClick={handleRejectTask}
+                disabled={isSaving}
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
-                Qayta ijroga
+                {isSaving ? "Yuborilmoqda..." : "Qayta ijroga"}
               </Button>
             )}
 
             {canClose && (
-              <Button className="bg-accent hover:bg-accent/90">
+              <Button 
+                className="bg-accent hover:bg-accent/90"
+                onClick={handleApproveTask}
+                disabled={isSaving}
+              >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Nazoratdan yechish
+                {isSaving ? "Yopilmoqda..." : "Nazoratdan yechish"}
               </Button>
             )}
           </div>

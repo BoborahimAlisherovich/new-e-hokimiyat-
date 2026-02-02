@@ -9,8 +9,8 @@ import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
 import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
-import type { Task, TaskCategory } from "@/types"
-import { getOrganizations, getTaskStats, getTasksPage, getUsers } from "@/lib/api"
+import type { Task } from "@/types"
+import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 
 
@@ -35,18 +35,24 @@ export default function TasksPage() {
     completed: 0,
   })
 
+  // Build filters object - memoized to avoid recreation
+  const buildTaskFilters = useCallback(() => {
+    const filters: Record<string, string> = {}
+    if (statusFilter && statusFilter !== "all") filters.status = statusFilter
+    if (priorityFilter && priorityFilter !== "all") filters.priority = priorityFilter
+    if (categoryFilter && categoryFilter !== "all") filters.category = categoryFilter
+    return filters
+  }, [statusFilter, priorityFilter, categoryFilter])
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
-      const usersPromise = getUsers()
-      const orgsPromise = getOrganizations()
-      const tasksPromise = getTasksPage(buildTaskFilters(), page, pageSize)
-      const statsPromise = getTaskStats(buildTaskFilters())
+      const filters = buildTaskFilters()
       const [usersData, orgsData, tasksPage, statsData] = await Promise.all([
-        usersPromise,
-        orgsPromise,
-        tasksPromise,
-        statsPromise,
+        getUsers(),
+        getOrganizations(),
+        getTasksPage(filters, page, pageSize),
+        getTaskStats(filters),
       ])
       setUsers(usersData || [])
       setOrganizations(orgsData || [])
@@ -59,6 +65,7 @@ export default function TasksPage() {
         completed: statsData.completed ?? 0,
       })
     } catch (error) {
+      console.error("Tasks load error:", error)
       setUsers([])
       setOrganizations([])
       setTasks([])
@@ -72,27 +79,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, categoryFilter, page, pageSize])
-
-  const CATEGORY_MAP: Record<string, string> = {
-    "IJTIMOIY": "IJTIMOIY",
-    "IQTISODIY": "IQTISODIY",
-    "HUQUQIY": "HUQUQIY",
-    "INFRASTRUKTURA": "INFRASTRUKTURA",
-    "TA_LIM": "TA_LIM",
-    "SOG_LIQNI_SAQLASH": "SOG_LIQNI_SAQLASH",
-    "BOSHQA": "BOSHQA",
-  }
-
-  const buildTaskFilters = () => {
-    const filters: any = {}
-    if (statusFilter && statusFilter !== "all") filters.status = statusFilter
-    if (priorityFilter && priorityFilter !== "all") filters.priority = priorityFilter
-    if (categoryFilter && categoryFilter !== "all") {
-      filters.category = CATEGORY_MAP[categoryFilter] || categoryFilter
-    }
-    return filters
-  }
+  }, [buildTaskFilters, page, pageSize])
 
   useEffect(() => {
     const init = async () => {
@@ -105,17 +92,16 @@ export default function TasksPage() {
   useEffect(() => {
     setPage(1)
   }, [statusFilter, priorityFilter, categoryFilter])
-  // Filtered tasks
+
+  // Client-side search filter only (status/priority/category are handled server-side)
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
-      const matchesSearch = (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (task.description || '').toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === "all" || task.status === statusFilter
-      const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
-      const matchesCategory = categoryFilter === "all" || task.category === categoryFilter
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory
-    })
-  }, [tasks, searchQuery, statusFilter, priorityFilter, categoryFilter])
+    if (!searchQuery.trim()) return tasks
+    const query = searchQuery.toLowerCase()
+    return tasks.filter(task => 
+      (task.title || '').toLowerCase().includes(query) ||
+      (task.description || '').toLowerCase().includes(query)
+    )
+  }, [tasks, searchQuery])
 
   // Event handlers
   const handleViewTask = (task: Task) => {
@@ -130,9 +116,18 @@ export default function TasksPage() {
     setSelectedTask(task)
   }
 
-  const handleDeleteTask = (taskId: number) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId))
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm("Haqiqatan ham bu topshiriqni o'chirmoqchimisiz?")) return
+    try {
+      await deleteTask(taskId)
+      setTasks(prev => prev.filter(task => task.id !== taskId))
+    } catch (error) {
+      console.error("Delete task error:", error)
+      alert("Topshiriqni o'chirishda xatolik yuz berdi")
+    }
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
   if (loading) {
     return (
@@ -212,6 +207,7 @@ export default function TasksPage() {
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div>
               Жами: <span className="font-medium text-foreground">{totalCount}</span>
+              {searchQuery && ` (фильтрланган: ${filteredTasks.length})`}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -223,13 +219,13 @@ export default function TasksPage() {
                 Oldingi
               </Button>
               <span>
-                {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}
+                {page} / {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => p + 1)}
-                disabled={page >= Math.ceil(totalCount / pageSize)}
+                disabled={page >= totalPages}
               >
                 Keyingi
               </Button>

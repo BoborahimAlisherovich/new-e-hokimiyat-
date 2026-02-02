@@ -26,12 +26,12 @@ import { cn } from "@/lib/utils"
 
 // Role labels
 const ROLE_LABELS: Record<string, string> = {
-  HOKIM: "Ҳоким",
-  HOKIMLIK_MASUL: "Ҳокимлик масъули",
-  TASHKILOT_RAHBAR: "Ташкилот раҳбари",
-  TASHKILOT_RAHBARI: "Ташкилот раҳбари",
-  TASHKILOT_MASUL: "Ташкилот масъули",
-  ADMIN: "Админ",
+  HOKIM: "Hokim",
+  HOKIMLIK_MASUL: "Hokimlik mas'uli",
+  TASHKILOT_RAHBAR: "Tashkilot rahbari",
+  TASHKILOT_RAHBARI: "Tashkilot rahbari",
+  TASHKILOT_MASUL: "Tashkilot mas'uli",
+  ADMIN: "Admin",
 }
 
 type AttachmentType = "IMAGE" | "VIDEO" | "AUDIO" | "FILE"
@@ -262,7 +262,7 @@ export default function ChatPage() {
     })
 
     const saved = await sendChatMessage(selectedUserId, {
-      content: "🎤 Овозли хабар",
+      content: "🎤 Ovozli xabar",
       attachment: file,
     })
 
@@ -284,7 +284,7 @@ export default function ChatPage() {
       })
       
       const { latitude, longitude } = position.coords
-      const locationMessage = `📍 Жойлашув: https://maps.google.com/maps?q=${latitude},${longitude}`
+      const locationMessage = `📍 Joylashuv: https://maps.google.com/maps?q=${latitude},${longitude}`
 
       const saved = await sendChatMessage(selectedUserId, {
         content: locationMessage,
@@ -293,7 +293,7 @@ export default function ChatPage() {
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
     } catch (error) {
       console.error('Location error:', error)
-      alert('Жойлашувни олишда хатолик. Илтимос, жойлашув рухсатини текширинг.')
+      alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
     } finally {
       setIsLocationLoading(false)
     }
@@ -449,7 +449,7 @@ export default function ChatPage() {
   if (loading) {
     return (
       <>
-        <Header title="Чат" />
+        <Header title="Chat" />
         <div className="flex items-center justify-center h-[calc(100vh-120px)]">
           <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         </div>
@@ -459,7 +459,7 @@ export default function ChatPage() {
 
   return (
     <>
-      <Header title="Чат" />
+      <Header title="Chat" />
       <div className="p-3 sm:p-4 lg:p-6">
         <div className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Users List */}
@@ -473,14 +473,14 @@ export default function ChatPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Фойдаланувчилар
+                  Foydalanuvchilar
                 </CardTitle>
                 <Badge variant="secondary">{users.length}</Badge>
               </div>
               <div className="relative mt-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Қидирув..."
+                  placeholder="Qidiruv..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-secondary/70 focus-visible:bg-white"
@@ -530,7 +530,7 @@ export default function ChatPage() {
                           )}
                         </div>
                         <p className={cn("text-xs text-muted-foreground truncate", unreadCount > 0 && "font-semibold text-foreground")}>
-                          {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Фойдаланувчи")}
+                          {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Foydalanuvchi")}
                         </p>
                       </div>
                     </button>
@@ -557,7 +557,7 @@ export default function ChatPage() {
                       size="icon"
                       className="lg:hidden"
                       onClick={() => setShowUserList(true)}
-                      title="Фойдаланувчилар рўйхати"
+                      title="Foydalanuvchilar ro'yxati"
                     >
                       <Users className="h-4 w-4" />
                     </Button>
@@ -569,7 +569,7 @@ export default function ChatPage() {
                     <div className="flex-1">
                       <p className="font-semibold">{selectedUser.first_name} {selectedUser.last_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {selectedUser.is_online ? "Онлайн" : "Оффлайн"}
+                        {selectedUser.is_online ? "Onlayn" : "Oflayn"}
                         {selectedUser.role && ` • ${ROLE_LABELS[selectedUser.role] || selectedUser.role}`}
                       </p>
                     </div>
@@ -661,13 +661,13 @@ export default function ChatPage() {
                     {isRecording && (
                       <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950 rounded-xl border border-red-200 dark:border-red-800">
                         <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">Ёзиб олинмоқда...</span>
+                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">Yozib olinmoqda...</span>
                         <div className="flex-1" />
                         <Button variant="outline" size="sm" onClick={stopRecording} className="text-green-600 border-green-300">
-                          Тугатиш
+                          Tugatish
                         </Button>
                         <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
-                          Бекор қилиш
+                          Bekor qilish
                         </Button>
                       </div>
                     )}
@@ -678,7 +678,7 @@ export default function ChatPage() {
                         <Mic className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
                         <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700">
-                          <Send className="h-3 w-3 mr-1" /> Юбориш
+                          <Send className="h-3 w-3 mr-1" /> Yuborish
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
                           <Trash2 className="h-3 w-3" />
@@ -706,7 +706,7 @@ export default function ChatPage() {
                           accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                           onChange={(e) => setChatFile(e.target.files?.[0] || null)}
                         />
-                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Файл бириктириш">
+                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Fayl biriktirish">
                           <Paperclip className="h-4 w-4" />
                         </Button>
                       </label>
@@ -718,7 +718,7 @@ export default function ChatPage() {
                         className={cn("shrink-0", isRecording && "text-red-500")}
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
-                        title={isRecording ? "Ёзишни тўхтатиш" : "Овозли хабар ёзиш"}
+                        title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
                       >
                         <Mic className="h-4 w-4" />
                       </Button>
@@ -731,13 +731,13 @@ export default function ChatPage() {
                         type="button"
                         onClick={sendLocation}
                         disabled={isLocationLoading}
-                        title="Жойлашувни юбориш"
+                        title="Joylashuvni yuborish"
                       >
                         <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                       </Button>
                       
                       <Input
-                        placeholder="Хабар ёзинг..."
+                        placeholder="Xabar yozing..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
@@ -755,9 +755,9 @@ export default function ChatPage() {
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                   <MessageSquare className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Суҳбатни танланг</h3>
+                <h3 className="text-xl font-semibold mb-2">Suhbatni tanlang</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Чап томондаги рўйхатдан фойдаланувчини танланг ва хабар ёзишни бошланг
+                  Chap tomondagi ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
               </div>
             )}

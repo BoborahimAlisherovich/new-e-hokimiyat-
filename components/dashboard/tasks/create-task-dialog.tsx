@@ -29,9 +29,6 @@ type CreateFormState = {
   organization_id: string
 }
 
-// Kategoriyalar to'g'ridan-to'g'ri backend'ga yuboriladi
-const CATEGORIES = ["Ижтимоий", "Иқтисодий", "Ҳуқуқий", "Бошқа"] as const
-
 export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated }: CreateTaskDialogProps) {
   const organizationItems = Array.isArray(organizations)
     ? organizations

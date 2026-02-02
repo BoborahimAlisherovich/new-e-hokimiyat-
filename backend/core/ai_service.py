@@ -43,6 +43,9 @@ class AIService:
 
     Sen quyidagi buyruqlarni bajarishga qodirsan:
     - TOPSHIRIQ_YARAT: Yangi topshiriq yaratish
+    - TAKRORIY_TOPSHIRIQ_YARAT: Takrorlanuvchi topshiriq yaratish
+    - ANALITIKA_EXPORT: Analitika faylini yaratish (xlsx/pdf)
+    - ANALITIKA_SO'ROV: Tashkilotlar, topshiriqlar, murojaatlar va foydalanuvchilar bo'yicha analitika
     - TOPSHIRIQ_YOP: Topshiriqni nazoratdan yechish
     - HISOBOT_YARAT: Hisobot generatsiya qilish
     - MUROJAAT_YOP: Murojaatni hal etilgan deb belgilash
@@ -172,6 +175,33 @@ Murojaatlar:
         
         # Oddiy keyword matching
         intents = {
+            'CREATE_RECURRING_TASK': [
+                'takrorlanuvchi topshiriq',
+                'muntazam topshiriq',
+                'takroriy topshiriq',
+                'har kuni topshiriq',
+                'har hafta topshiriq',
+                'har oy topshiriq',
+                'recurring task',
+            ],
+            'EXPORT_ANALYTICS': [
+                'analitika fayl',
+                'analitika export',
+                'analytics export',
+                'diagramma fayl',
+                'hisobot fayl',
+                'xlsx',
+                'pdf',
+            ],
+            'ANALYTICS_QUERY': [
+                'analitika',
+                'statistika',
+                'ko‘rsatkich',
+                'ko`rsatkich',
+                'grafik',
+                'diagramma',
+                'tahlil',
+            ],
             'CREATE_TASK': ['topshiriq yarat', 'vazifa ber', 'buyruq ber', 'tayinla'],
             'CLOSE_TASK': ['topshiriqni yop', 'nazoratdan yech', 'yakunla', 'tugat'],
             'GENERATE_REPORT': ['hisobot', 'statistika', 'tahlil', 'natija'],
@@ -244,6 +274,15 @@ Murojaatlar:
                     params['deadline_days'] = value * 30
                 break
 
+        def parse_date(date_text: str) -> str | None:
+            date_text = date_text.strip()
+            for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"):
+                try:
+                    return datetime.strptime(date_text, fmt).date().isoformat()
+                except ValueError:
+                    continue
+            return None
+
         if intent == 'CREATE_TASK':
             # Topshiriq nomi
             title_patterns = [
@@ -270,6 +309,98 @@ Murojaatlar:
             # Barchaga tayinlash
             if re.search(r'\b(barchaga|hamma|hammasiga)\b', text, re.IGNORECASE):
                 params['assign_all'] = True
+
+        if intent == 'CREATE_RECURRING_TASK':
+            # Title
+            title_patterns = [
+                r'takrorlanuvchi\s+topshiriq\s+nomi\s*[:\-]?\s*(.+?)(?=\s+(tavsif|takror|muddat|boshlanish|tugash|$))',
+                r'sarlavha\s*[:\-]?\s*(.+?)(?=\s+(tavsif|takror|muddat|boshlanish|tugash|$))',
+            ]
+            for pattern in title_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    params['title'] = match.group(1).strip()
+                    break
+
+            # Description
+            description_patterns = [
+                r'tavsif\s*[:\-]?\s*(.+?)(?=\s+(takror|muddat|boshlanish|tugash|$))',
+                r'izoh\s*[:\-]?\s*(.+?)(?=\s+(takror|muddat|boshlanish|tugash|$))',
+            ]
+            for pattern in description_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    params['description'] = match.group(1).strip()
+                    break
+
+            # Frequency
+            if re.search(r'ikki\s*hafta|2\s*hafta', text, re.IGNORECASE):
+                params['frequency'] = 'BIWEEKLY'
+            elif re.search(r'har\s*kuni|kunlik', text, re.IGNORECASE):
+                params['frequency'] = 'DAILY'
+            elif re.search(r'har\s*hafta|haftalik', text, re.IGNORECASE):
+                params['frequency'] = 'WEEKLY'
+            elif re.search(r'har\s*oy|oylik', text, re.IGNORECASE):
+                params['frequency'] = 'MONTHLY'
+            elif re.search(r'har\s*chorak|choraklik', text, re.IGNORECASE):
+                params['frequency'] = 'QUARTERLY'
+            elif re.search(r'har\s*yil|yillik', text, re.IGNORECASE):
+                params['frequency'] = 'YEARLY'
+
+            cron_match = re.search(r'cron\s*[:\-]?\s*([\w\s*/,-]+)', text, re.IGNORECASE)
+            if cron_match:
+                params['frequency'] = 'CUSTOM'
+                params['cron_expression'] = cron_match.group(1).strip()
+
+            # Start/end dates
+            start_match = re.search(r'(?:boshlanish|boshlanadi|start)\s*[:\-]?\s*([0-9./-]+)', text, re.IGNORECASE)
+            if start_match:
+                parsed = parse_date(start_match.group(1))
+                if parsed:
+                    params['start_date'] = parsed
+
+            end_match = re.search(r'(?:tugash|yakun|end|gacha)\s*[:\-]?\s*([0-9./-]+)', text, re.IGNORECASE)
+            if end_match:
+                parsed = parse_date(end_match.group(1))
+                if parsed:
+                    params['end_date'] = parsed
+
+            if re.search(r'\b(barchaga|hamma|hammasiga)\b', text, re.IGNORECASE):
+                params['assign_all'] = True
+
+        if intent == 'EXPORT_ANALYTICS':
+            if re.search(r'\bpdf\b', text, re.IGNORECASE):
+                params['format'] = 'pdf'
+            elif re.search(r'\b(xlsx|excel)\b', text, re.IGNORECASE):
+                params['format'] = 'xlsx'
+            if 'format' not in params:
+                params['format'] = 'xlsx'
+
+        if intent == 'ANALYTICS_QUERY':
+            scopes = set()
+            if re.search(r'\btashkilot\b', text, re.IGNORECASE):
+                scopes.add('organizations')
+            if re.search(r'\btopshiriq\b|\bvazifa\b', text, re.IGNORECASE):
+                scopes.add('tasks')
+            if re.search(r'\bmurojaat\b|\bappeal\b', text, re.IGNORECASE):
+                scopes.add('appeals')
+            if re.search(r'\bfoydalanuvchi\b|\bxodim\b|\bkadr\b', text, re.IGNORECASE):
+                scopes.add('users')
+            if scopes:
+                params['scopes'] = list(scopes)
+
+            period_match = re.search(r'oxirgi\s+(\d+)\s*(kun|hafta|oy|yil)', text, re.IGNORECASE)
+            if period_match:
+                value = int(period_match.group(1))
+                unit = period_match.group(2).lower()
+                if unit == 'kun':
+                    params['period_days'] = value
+                elif unit == 'hafta':
+                    params['period_days'] = value * 7
+                elif unit == 'oy':
+                    params['period_days'] = value * 30
+                elif unit == 'yil':
+                    params['period_days'] = value * 365
         
         return params
     
@@ -286,6 +417,10 @@ Murojaatlar:
         try:
             if action_type == 'CREATE_TASK':
                 result = self._create_task(params, action.initiated_by)
+            elif action_type == 'CREATE_RECURRING_TASK':
+                result = self._create_recurring_task(params, action.initiated_by)
+            elif action_type == 'EXPORT_ANALYTICS':
+                result = self._export_analytics(params)
                 
             elif action_type == 'CLOSE_TASK':
                 result = self._close_task(params, action.initiated_by)
@@ -379,6 +514,58 @@ Murojaatlar:
             active = BotSettings.objects.filter(is_active=True).exists()
             return f"Telegram bot: {'faol' if active else 'faol emas'}"
 
+        if intent == 'ANALYTICS_QUERY':
+            scopes = params.get('scopes') or ['tasks', 'appeals', 'users', 'organizations']
+            period_days = params.get('period_days')
+            if period_days:
+                end_date = timezone.now().date()
+                start_date = end_date - timedelta(days=period_days)
+                task_qs = Task.objects.filter(created_at__date__gte=start_date)
+                appeal_qs = TelegramAppeal.objects.filter(created_at__date__gte=start_date)
+            else:
+                task_qs = Task.objects.all()
+                appeal_qs = TelegramAppeal.objects.all()
+
+            parts = []
+            if period_days:
+                parts.append(f"Davr: oxirgi {period_days} kun")
+
+            if 'tasks' in scopes:
+                parts.append(
+                    "Topshiriqlar:\n"
+                    f"- Jami: {task_qs.count()}\n"
+                    f"- Faol: {task_qs.filter(status__in=['YANGI', 'IJRODA']).count()}\n"
+                    f"- Muddati o'tgan: {task_qs.filter(status='MUDDATI_KECH').count()}\n"
+                    f"- Bajarilgan: {task_qs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()}"
+                )
+
+            if 'appeals' in scopes:
+                parts.append(
+                    "Murojaatlar:\n"
+                    f"- Jami: {appeal_qs.count()}\n"
+                    f"- Ko'rib chiqilmagan: {appeal_qs.filter(status__in=['pending_ai', 'pending_review']).count()}\n"
+                    f"- Hal etilgan: {appeal_qs.filter(status='resolved').count()}"
+                )
+
+            if 'users' in scopes:
+                total_users = User.objects.count()
+                active_users = User.objects.filter(status='FAOL').count() if hasattr(User, 'status') else total_users
+                parts.append(
+                    "Foydalanuvchilar:\n"
+                    f"- Jami: {total_users}\n"
+                    f"- Faol: {active_users}"
+                )
+
+            if 'organizations' in scopes:
+                org_total = Organization.objects.filter(is_active=True).count()
+                parts.append(
+                    "Tashkilotlar:\n"
+                    f"- Jami: {org_total}\n"
+                    f"- Faol: {org_total}"
+                )
+
+            return "\n\n".join(parts) if parts else "Analitika topilmadi."
+
         return "So'rov tushunilmadi."
     
     def _create_task(self, params: Dict, user) -> Dict:
@@ -417,6 +604,77 @@ Murojaatlar:
             'success': True,
             'task_id': task_id,
             'message': f"Topshiriq #{task_id} yaratildi"
+        }
+
+    def _create_recurring_task(self, params: Dict, user) -> Dict:
+        """Takrorlanuvchi topshiriq yaratish"""
+        from tasks.models import RecurringTask
+        from organizations.models import Organization
+
+        title = params.get('title', 'Takrorlanuvchi topshiriq')
+        description = params.get('description', title)
+        frequency = params.get('frequency', 'MONTHLY')
+        cron_expression = params.get('cron_expression', '')
+        priority = params.get('priority', 'ODDIY')
+        deadline_days = params.get('deadline_days', 7)
+        assign_all = params.get('assign_all', False)
+        org_ids = params.get('organization_ids', [])
+        org_name = params.get('organization_name')
+
+        start_date = params.get('start_date')
+        end_date = params.get('end_date')
+
+        if frequency == 'CUSTOM' and not cron_expression:
+            return {
+                'success': False,
+                'error': "CUSTOM takrorlanish uchun cron ifodasi kerak"
+            }
+
+        if not start_date:
+            start_date = timezone.now().date().isoformat()
+
+        recurring = RecurringTask.objects.create(
+            title=title,
+            description=description,
+            frequency=frequency,
+            cron_expression=cron_expression,
+            start_date=start_date,
+            end_date=end_date or None,
+            priority=priority,
+            deadline_days=deadline_days,
+            created_by=user,
+        )
+
+        if assign_all:
+            org_ids = list(Organization.objects.values_list('id', flat=True))
+        elif not org_ids and org_name:
+            org_ids = list(
+                Organization.objects.filter(name__icontains=org_name).values_list('id', flat=True)
+            )
+
+        if org_ids:
+            recurring.organizations.set(org_ids)
+
+        recurring.calculate_next_run()
+
+        return {
+            'success': True,
+            'recurring_id': str(recurring.id),
+            'message': f"Takrorlanuvchi topshiriq #{recurring.id} yaratildi"
+        }
+
+    def _export_analytics(self, params: Dict) -> Dict:
+        """Analitika faylini yaratish (download link)."""
+        export_format = params.get('format', 'xlsx')
+        if export_format not in ['xlsx', 'pdf']:
+            export_format = 'xlsx'
+
+        download_url = f"/api/analytics/export/?format={export_format}"
+
+        return {
+            'success': True,
+            'message': f"Analitika fayli tayyor. Yuklab olish: {download_url}",
+            'download_url': download_url,
         }
     
     def _close_task(self, params: Dict, user) -> Dict:

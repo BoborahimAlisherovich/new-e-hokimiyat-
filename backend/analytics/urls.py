@@ -7,7 +7,8 @@ from .views import (
     DashboardAnalyticsView,
     OrganizationAnalyticsView,
     UserAnalyticsView,
-    TaskTrendsView
+    TaskTrendsView,
+    AnalyticsExportView
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('organizations/', OrganizationAnalyticsView.as_view(), name='analytics-organizations'),
     path('users/', UserAnalyticsView.as_view(), name='analytics-users'),
     path('trends/', TaskTrendsView.as_view(), name='analytics-trends'),
+    path('export/', AnalyticsExportView.as_view(), name='analytics-export'),
 ]

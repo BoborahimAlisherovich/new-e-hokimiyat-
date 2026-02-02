@@ -136,6 +136,8 @@ class AIAction(BaseModel):
     """AI tomonidan bajarilgan harakat."""
     
     ACTION_TYPES = [
+        ('CREATE_RECURRING_TASK', 'Takrorlanuvchi topshiriq yaratish'),
+        ('EXPORT_ANALYTICS', 'Analitika faylini yaratish'),
         ('CREATE_TASK', 'Topshiriq yaratish'),
         ('CLOSE_TASK', 'Topshiriqni yopish'),
         ('REMOVE_CONTROL', 'Nazoratdan yechish'),

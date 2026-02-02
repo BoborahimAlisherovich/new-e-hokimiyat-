@@ -1,35 +1,57 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
-import { getTasks, getOrganizations } from "@/lib/api"
-import { useEffect, useState } from "react"
+import { getTasks, getOrganizations, getAppeals } from "@/lib/api"
+import { useEffect, useState, useCallback } from "react"
 import { AnalyticsOverview } from "@/components/dashboard/analytics/analytics-overview"
 import { AnalyticsTabs } from "@/components/dashboard/analytics/analytics-tabs"
 import { AnalyticsMetrics } from "@/components/dashboard/analytics/analytics-metrics"
 import { VillageAnalytics } from "@/components/dashboard/analytics/village-analytics"
 import { AnalyticsCharts } from "@/components/dashboard/analytics/analytics-charts"
+import { Loader2 } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [orgs, setOrgs] = useState<any[]>([])
+  const [appeals, setAppeals] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let mounted = true
-    Promise.all([getTasks(), getOrganizations()])
-      .then(([tasksList, orgsList]) => {
-        if (!mounted) return
-        setTasks(tasksList)
-        setOrgs(orgsList)
-      })
-      .catch(() => {})
-    return () => {
-      mounted = false
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [tasksList, orgsList, appealsList] = await Promise.all([
+        getTasks(),
+        getOrganizations(),
+        getAppeals()
+      ])
+      setTasks(tasksList)
+      setOrgs(orgsList)
+      setAppeals(appealsList)
+    } catch (err) {
+      console.error('Analytics data load error:', err)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  if (loading) {
+    return (
+      <>
+        <Header title="Analitika" description="Tizimning statistik ko'rsatkichlari va analitik ma'lumotlari" />
+        <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
-      <Header title="Аналитика" description="Тизимнинг статистик кўрсаткичлари ва аналитик маълумотлари" />
+      <Header title="Analitika" description="Tizimning statistik ko'rsatkichlari va analitik ma'lumotlari" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -44,10 +66,10 @@ export default function AnalyticsPage() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-12 py-8">
 
-            <AnalyticsOverview tasks={tasks} organizations={orgs} />
+            <AnalyticsOverview tasks={tasks} organizations={orgs} appeals={appeals} />
             <AnalyticsTabs />
-            <AnalyticsCharts tasks={tasks} organizations={orgs} />
-            <AnalyticsMetrics />
+            <AnalyticsCharts tasks={tasks} organizations={orgs} appeals={appeals} />
+            <AnalyticsMetrics tasks={tasks} />
             <VillageAnalytics />
 
           </div>

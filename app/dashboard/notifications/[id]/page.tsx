@@ -3,34 +3,25 @@
 import { Header } from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getNotificationById, getUsers } from "@/lib/api"
-import { ArrowLeft, Send, Calendar, User, Bell, Check, X } from "lucide-react"
+import { getNotificationById, markNotificationRead } from "@/lib/api"
+import { ArrowLeft, Calendar, Check, Bell } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { type Notification } from "@/types"
+import { useToast } from "@/hooks/use-toast"
+import { notificationColors, notificationIcons } from "@/components/dashboard/notifications/notification-constants"
 
 export default function NotificationDetailPage() {
+  const { toast } = useToast()
   const params = useParams()
   const id = params.id as string
 
-  const [notification, setNotification] = useState<any | null>(null)
+  const [notification, setNotification] = useState<Notification | null>(null)
   const [isMarkingRead, setIsMarkingRead] = useState(false)
 
   useEffect(() => {
@@ -47,57 +38,20 @@ export default function NotificationDetailPage() {
   }, [id])
 
   const handleMarkAsRead = async () => {
+    if (!notification || notification.is_read) return
     setIsMarkingRead(true)
-    // Mock API call
-    setTimeout(() => {
-      setNotification({
-        ...notification,
-        read: true
+    try {
+      const updated = await markNotificationRead(notification.id)
+      setNotification(updated)
+    } catch (err) {
+      console.error("Bildirishnomani o'qilgan deb belgilashda xatolik:", err)
+      toast({
+        title: "Xatolik",
+        description: "Bildirishnomani o'qilgan deb belgilab bo'lmadi",
+        variant: "destructive",
       })
+    } finally {
       setIsMarkingRead(false)
-    }, 500)
-  }
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('uz-UZ', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "task_new": return <Calendar className="h-4 w-4" />
-      case "task_deadline": return <Bell className="h-4 w-4" />
-      case "task_completed": return <Check className="h-4 w-4" />
-      case "user_added": return <User className="h-4 w-4" />
-      case "system": return <Bell className="h-4 w-4" />
-      default: return <Bell className="h-4 w-4" />
-    }
-  }
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "task_new": return "bg-blue-100 text-blue-800"
-      case "task_deadline": return "bg-orange-100 text-orange-800"
-      case "task_completed": return "bg-green-100 text-green-800"
-      case "user_added": return "bg-purple-100 text-purple-800"
-      case "system": return "bg-gray-100 text-gray-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case "task_new": return "Янги вазифа"
-      case "task_deadline": return "Муддат яқинлаш"
-      case "task_completed": return "Вазифа якунланди"
-      case "user_added": return "Янги фойдаланувчи"
-      case "system": return "Тизим хабари"
-      default: return "Билдиришнома"
     }
   }
 
@@ -118,6 +72,8 @@ export default function NotificationDetailPage() {
       </>
     )
   }
+
+  const Icon = notificationIcons[notification.type] || Bell
 
   return (
     <>
@@ -147,18 +103,24 @@ export default function NotificationDetailPage() {
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "p-3 rounded-full",
-                    getTypeColor(notification.type)
+                    notificationColors[notification.type] || "bg-muted text-muted-foreground"
                   )}>
-                    {getTypeIcon(notification.type)}
+                    <Icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-foreground">{notification.title}</h3>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>{formatDate(notification.createdAt)}</span>
+                      <span>{new Date(notification.created_at).toLocaleDateString('uz-UZ', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}</span>
                     </div>
                   </div>
-                  {!notification.read && (
+                  {!notification.is_read && (
                     <Button 
                       onClick={handleMarkAsRead} 
                       disabled={isMarkingRead}
@@ -176,19 +138,19 @@ export default function NotificationDetailPage() {
                 <div className="space-y-4">
                   <Label className="text-sm font-medium text-foreground">Билдиришнома матни</Label>
                   <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-foreground leading-relaxed">{notification.description}</p>
+                    <p className="text-foreground leading-relaxed">{notification.message}</p>
                   </div>
                 </div>
 
                 {/* Additional Info */}
-                {notification.taskId && (
+                {notification.related_task_id && (
                   <div className="space-y-4">
                     <Label className="text-sm font-medium text-foreground">Боғлиқ вазифа</Label>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-primary/10 text-primary">
-                        #{notification.taskId}
+                        #{notification.related_task_id}
                       </Badge>
-                      <Link href={`/dashboard/tasks/${notification.taskId}`}>
+                      <Link href={`/dashboard/tasks/${notification.related_task_id}`}>
                         <Button variant="outline" size="sm">
                           Вазифага отиш
                         </Button>
@@ -197,19 +159,19 @@ export default function NotificationDetailPage() {
                   </div>
                 )}
 
-                {notification.userId && (
+                {notification.user_id ? (
                   <div className="space-y-4">
                     <Label className="text-sm font-medium text-foreground">Фойдаланувчи</Label>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {notification.userId?.charAt(0) || "U"}
+                          {String(notification.user_id).charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-foreground">Фойдаланувчи #{notification.userId}</span>
+                      <span className="text-foreground">Фойдаланувчи #{notification.user_id}</span>
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Status */}
                 <div className="space-y-4">
@@ -217,12 +179,18 @@ export default function NotificationDetailPage() {
                   <div className="flex items-center gap-3">
                     <Badge className={cn(
                       "px-4 py-2 text-sm font-medium",
-                      notification.read ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800"
+                      notification.is_read ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800"
                     )}>
-                      {notification.read ? "Ўқилган" : "Ўқилмаган"}
+                      {notification.is_read ? "Ўқилган" : "Ўқилмаган"}
                     </Badge>
                     <div className="text-sm text-muted-foreground">
-                      {formatDate(notification.createdAt)}
+                      {new Date(notification.created_at).toLocaleDateString('uz-UZ', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
                   </div>
                 </div>

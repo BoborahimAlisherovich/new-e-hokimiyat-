@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Organization } from "@/types"
-import { Plus } from "lucide-react"
+import { Plus, X } from "lucide-react"
 
 interface UserFiltersProps {
   searchQuery: string
@@ -16,6 +17,8 @@ interface UserFiltersProps {
   onOrganizationChange: (value: string) => void
   organizations: Organization[]
   onCreate: () => void
+  totalCount?: number
+  filteredCount?: number
 }
 
 export function UserFilters({
@@ -29,15 +32,41 @@ export function UserFilters({
   onOrganizationChange,
   organizations,
   onCreate,
+  totalCount = 0,
+  filteredCount = 0,
 }: UserFiltersProps) {
   const organizationItems = Array.isArray(organizations)
     ? organizations
     : (organizations as { results?: Organization[] } | null | undefined)?.results || []
 
+  const hasActiveFilters = searchQuery || roleFilter !== "all" || statusFilter !== "all" || organizationFilter !== "all"
+
+  const handleClearFilters = () => {
+    onSearchChange("")
+    onRoleChange("all")
+    onStatusChange("all")
+    onOrganizationChange("all")
+  }
+
   return (
     <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-      <CardHeader>
-        <CardTitle className="text-lg">Filtrlash va qidiruv</CardTitle>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CardTitle className="text-lg">Filtrlash va qidiruv</CardTitle>
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="text-xs">
+                {filteredCount} / {totalCount} ta
+              </Badge>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4 mr-1" />
+              Tozalash
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">

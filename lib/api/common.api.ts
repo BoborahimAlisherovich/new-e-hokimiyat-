@@ -15,6 +15,7 @@
 
 import type { 
   Notification, 
+  NotificationType,
   AuditLog, 
   DashboardStats, 
   OrganizationAnalytics, 
@@ -29,6 +30,66 @@ import { fetchApi, buildQueryString, getAccessToken, API_BASE, ApiError } from '
 // Notifications API
 // ============================================================================
 
+type NotificationApi = {
+  id: number
+  title: string
+  message: string
+  notification_type?: string
+  type?: string
+  is_read?: boolean
+  read_at?: string | null
+  created_at?: string
+  createdAt?: string
+  updated_at?: string
+  related_task?: number | null
+  related_task_id?: number | null
+  link?: string
+  user_id?: number
+}
+
+const mapNotificationType = (type?: string): NotificationType => {
+  switch (type) {
+    case 'TASK_ASSIGNED':
+    case 'TASK_UPDATED':
+    case 'TASK_COMPLETED':
+    case 'TASK_OVERDUE':
+    case 'MESSAGE':
+    case 'SYSTEM':
+      return type
+    case 'TASK':
+      return 'TASK_ASSIGNED'
+    case 'DEADLINE':
+      return 'TASK_OVERDUE'
+    case 'SUCCESS':
+      return 'TASK_COMPLETED'
+    case 'WARNING':
+      return 'TASK_UPDATED'
+    case 'ERROR':
+      return 'TASK_OVERDUE'
+    case 'INFO':
+    default:
+      return 'SYSTEM'
+  }
+}
+
+const normalizeNotification = (item: NotificationApi): Notification => {
+  const createdAt = item.created_at ?? item.createdAt ?? new Date().toISOString()
+
+  return {
+    id: item.id,
+    user_id: item.user_id ?? 0,
+    title: item.title,
+    message: item.message,
+    type: mapNotificationType(item.notification_type ?? item.type),
+    is_read: item.is_read ?? false,
+    read_at: item.read_at ?? undefined,
+    related_task_id: item.related_task_id ?? item.related_task ?? undefined,
+    link: item.link,
+    created_at: createdAt,
+    updated_at: item.updated_at ?? createdAt,
+  }
+}
+
 /**
  * Bildirishnomalar ro'yxatini oladi
  * 
@@ -40,12 +101,18 @@ export async function getNotifications(
   page = 1,
   pageSize = 100
 ): Promise<Notification[]> {
-  const queryString = buildQueryString({ page, page_size: pageSize })
-  const response = await fetchApi<PaginatedResponse<Notification>>(
+  const limit = pageSize
+  const offset = Math.max(0, (page - 1) * pageSize)
+  const queryString = buildQueryString({ limit, offset })
+  const response = await fetchApi<PaginatedResponse<NotificationApi> | NotificationApi[]>(
     `/notifications/${queryString}`
   )
-  
-  return response.results ?? []
+
+  if (Array.isArray(response)) {
+    return response.map(normalizeNotification)
+  }
+
+  return (response.results ?? []).map(normalizeNotification)
 }
 
 /**
@@ -54,7 +121,8 @@ export async function getNotifications(
  * @param id - Bildirishnoma ID
  */
 export async function getNotificationById(id: number | string): Promise<Notification> {
-  return fetchApi<Notification>(`/notifications/${id}/`)
+  const data = await fetchApi<NotificationApi>(`/notifications/${id}/`)
+  return normalizeNotification(data)
 }
 
 /**
@@ -63,9 +131,10 @@ export async function getNotificationById(id: number | string): Promise<Notifica
  * @param id - Bildirishnoma ID
  */
 export async function markNotificationRead(id: number | string): Promise<Notification> {
-  return fetchApi<Notification>(`/notifications/${id}/mark_read/`, {
-    method: 'POST',
+  const data = await fetchApi<NotificationApi>(`/notifications/${id}/read/`, {
+    method: 'PATCH',
   })
+  return normalizeNotification(data)
 }
 
 /**
@@ -73,6 +142,15 @@ export async function markNotificationRead(id: number | string): Promise<Notific
  */
 export async function markAllNotificationsRead(): Promise<void> {
   return fetchApi<void>('/notifications/mark_all_read/', { method: 'POST' })
+}
+
+/**
+ * Bildirishnomani o'chiradi
+ * 
+ * @param id - Bildirishnoma ID
+ */
+export async function deleteNotification(id: number | string): Promise<void> {
+  return fetchApi<void>(`/notifications/${id}/`, { method: 'DELETE' })
 }
 
 /**

@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Eye, Lock, MoreHorizontal } from "lucide-react"
+import { Edit, Eye, Lock, MoreHorizontal, Building2, Trash2, Unlock } from "lucide-react"
 import Link from "next/link"
 import { formatOrgId } from "./organization-helpers"
 
 interface OrganizationTableProps {
   organizations: any[]
   users?: any[]
+  onDelete?: (id: number) => void
+  onToggleStatus?: (id: number, currentStatus: boolean) => void
 }
 
 const getResponsibleUser = (org: any, users: any[]) => {
@@ -24,7 +26,23 @@ const getResponsibleUser = (org: any, users: any[]) => {
   return null
 }
 
-export function OrganizationTable({ organizations, users = [] }: OrganizationTableProps) {
+export function OrganizationTable({ organizations, users = [], onDelete, onToggleStatus }: OrganizationTableProps) {
+  if (organizations.length === 0) {
+    return (
+      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="rounded-full bg-muted p-4 mb-4">
+            <Building2 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-1">Tashkilotlar topilmadi</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Hozircha bu filtrlar bo'yicha tashkilotlar mavjud emas. Yangi tashkilot qo'shing yoki filtrlarni o'zgartiring.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
       <CardContent className="p-0">
@@ -91,18 +109,29 @@ export function OrganizationTable({ organizations, users = [] }: OrganizationTab
                           Batafsil ko'rish
                         </DropdownMenuItem>
                       </Link>
-                      <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Tahrirlash
-                      </DropdownMenuItem>
+                      <Link href={`/dashboard/organizations/${org.id}`}>
+                        <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Tahrirlash
+                        </DropdownMenuItem>
+                      </Link>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className={`hover:bg-amber/10 hover:text-amber-600 transition-all duration-300 rounded-lg ${
-                          !org.is_active ? "text-muted-foreground" : ""
-                        }`}
+                        onClick={() => onToggleStatus?.(org.id, org.is_active)}
+                        className="hover:bg-amber-500/10 hover:text-amber-600 transition-all duration-300 rounded-lg"
                       >
-                        <Lock className="mr-2 h-4 w-4" />
-                        {org.is_active ? "Nofaollashtirish" : "Faollashtirish"}
+                        {org.is_active ? (
+                          <><Lock className="mr-2 h-4 w-4" /> Nofaollashtirish</>
+                        ) : (
+                          <><Unlock className="mr-2 h-4 w-4" /> Faollashtirish</>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onDelete?.(org.id)}
+                        className="hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        O'chirish
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

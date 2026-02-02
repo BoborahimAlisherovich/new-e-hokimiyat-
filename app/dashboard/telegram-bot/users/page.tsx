@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { 
   Users, 
   Search,
@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Megaphone,
   Upload,
-  X
+  X,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 export default function TelegramBotUsersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<TelegramUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<TelegramUser | null>(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -128,13 +130,10 @@ export default function TelegramBotUsersPage() {
   const [broadcastFilterRegistered, setBroadcastFilterRegistered] = useState(false);
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, [page, filter]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       params.append("page", page.toString());
       
@@ -159,7 +158,8 @@ export default function TelegramBotUsersPage() {
           setTotalPages(Math.ceil(data.count / 20));
         }
       }
-    } catch (error) {
+    } catch (err) {
+      setError("Foydalanuvchilarni yuklashda xato yuz berdi");
       toast({
         title: "Xato",
         description: "Foydalanuvchilarni yuklashda xato yuz berdi",
@@ -168,28 +168,32 @@ export default function TelegramBotUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filter, search, toast]);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const handleSearch = useCallback(() => {
     setPage(1);
     loadUsers();
-  };
+  }, [loadUsers]);
 
-  const openDetail = (user: TelegramUser) => {
+  const openDetail = useCallback((user: TelegramUser) => {
     setSelectedUser(user);
     setShowDetail(true);
-  };
+  }, []);
 
-  const openMessageDialog = (user: TelegramUser) => {
+  const openMessageDialog = useCallback((user: TelegramUser) => {
     setSelectedUser(user);
     setMessageText("");
     setMessageMediaType("");
     setMessageFileUrl("");
     setMessageFile(null);
     setShowMessageDialog(true);
-  };
+  }, []);
 
-  const toggleBlock = async (user: TelegramUser) => {
+  const toggleBlock = useCallback(async (user: TelegramUser) => {
     try {
       const action = user.is_blocked ? "unblock" : "block";
       await api.post(`/telegram-bot/users/${user.id}/${action}/`);
@@ -205,16 +209,16 @@ export default function TelegramBotUsersPage() {
       if (showDetail) {
         setSelectedUser(prev => prev ? { ...prev, is_blocked: !prev.is_blocked } : null);
       }
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Amalni bajarishda xato yuz berdi",
         variant: "destructive"
       });
     }
-  };
+  }, [toast, loadUsers, showDetail]);
 
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!selectedUser || (!messageText && !messageFileUrl && !messageFile)) return;
     
     try {
@@ -246,18 +250,18 @@ export default function TelegramBotUsersPage() {
       });
       
       setShowMessageDialog(false);
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
         title: "Xato",
-        description: error?.response?.data?.error || error?.message || "Xabar yuborishda xato",
+        description: err?.response?.data?.error || err?.message || "Xabar yuborishda xato",
         variant: "destructive"
       });
     } finally {
       setSendingMessage(false);
     }
-  };
+  }, [selectedUser, messageText, messageFileUrl, messageFile, messageMediaType, toast]);
 
-  const sendBroadcast = async () => {
+  const sendBroadcast = useCallback(async () => {
     if (!broadcastText && !broadcastFileUrl && !broadcastFile) return;
     
     try {
@@ -299,16 +303,29 @@ export default function TelegramBotUsersPage() {
       setBroadcastMediaType("");
       setBroadcastFileUrl("");
       setBroadcastFile(null);
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
         title: "Xato",
-        description: error?.response?.data?.error || "Xabar yuborishda xato",
+        description: err?.response?.data?.error || "Xabar yuborishda xato",
         variant: "destructive"
       });
     } finally {
       setSendingBroadcast(false);
     }
-  };
+  }, [broadcastText, broadcastFileUrl, broadcastFile, broadcastMediaType, broadcastFilterRegistered, toast]);
+
+  if (error && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={loadUsers} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Qayta urinish
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -332,8 +349,8 @@ export default function TelegramBotUsersPage() {
             <Megaphone className="h-4 w-4 mr-2" />
             Barchaga xabar
           </Button>
-          <Button onClick={loadUsers} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={loadUsers} variant="outline" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Yangilash
           </Button>
         </div>

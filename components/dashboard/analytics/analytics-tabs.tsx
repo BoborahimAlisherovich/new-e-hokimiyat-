@@ -9,19 +9,19 @@ export function AnalyticsTabs() {
             value="status"
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            Ҳолат бўйича
+            Holat bo'yicha
           </TabsTrigger>
           <TabsTrigger
             value="sector"
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            Соҳа бўйича
+            Soha bo'yicha
           </TabsTrigger>
           <TabsTrigger
             value="organizations"
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            Ташкилотлар
+            Tashkilotlar
           </TabsTrigger>
         </TabsList>
       </Tabs>

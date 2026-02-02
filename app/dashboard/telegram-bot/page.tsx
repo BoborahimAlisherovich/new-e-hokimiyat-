@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Bot, 
@@ -18,7 +18,8 @@ import {
   Folder,
   Play,
   Square,
-  Circle
+  Circle,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ export default function TelegramBotPage() {
   const [testing, setTesting] = useState(false);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<BotSettings | null>(null);
   const [stats, setStats] = useState<BotStats | null>(null);
   const [botStatus, setBotStatus] = useState<{
@@ -84,13 +86,10 @@ export default function TelegramBotPage() {
     pid: number | null;
   } | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [settingsRes, statsRes, statusRes] = await Promise.all([
         api.get<BotSettings>("/telegram-bot/settings/"),
         api.get<BotStats>("/telegram-bot/stats/"),
@@ -99,7 +98,8 @@ export default function TelegramBotPage() {
       setSettings(settingsRes.data);
       setStats(statsRes.data);
       setBotStatus(statusRes.data);
-    } catch (error) {
+    } catch (err) {
+      setError("Ma'lumotlarni yuklashda xato yuz berdi");
       toast({
         title: "Xato",
         description: "Ma'lumotlarni yuklashda xato yuz berdi",
@@ -108,9 +108,13 @@ export default function TelegramBotPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const startBot = async () => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const startBot = useCallback(async () => {
     try {
       setStarting(true);
       const response = await api.post<{ success: boolean; error?: string; message?: string; pid?: number }>("/telegram-bot/settings/start_bot/");
@@ -130,18 +134,18 @@ export default function TelegramBotPage() {
           variant: "destructive"
         });
       }
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
         title: "Xato",
-        description: error?.response?.data?.error || "Botni ishga tushirishda xato",
+        description: err?.response?.data?.error || "Botni ishga tushirishda xato",
         variant: "destructive"
       });
     } finally {
       setStarting(false);
     }
-  };
+  }, [toast]);
 
-  const stopBot = async () => {
+  const stopBot = useCallback(async () => {
     try {
       setStopping(true);
       const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/stop_bot/");
@@ -155,7 +159,7 @@ export default function TelegramBotPage() {
         const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
         setBotStatus(statusRes.data);
       }
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Botni to'xtatishda xato",
@@ -164,9 +168,9 @@ export default function TelegramBotPage() {
     } finally {
       setStopping(false);
     }
-  };
+  }, [toast]);
 
-  const saveSettings = async () => {
+  const saveSettings = useCallback(async () => {
     if (!settings) return;
     
     try {
@@ -176,7 +180,7 @@ export default function TelegramBotPage() {
         title: "Muvaffaqiyat",
         description: "Sozlamalar saqlandi"
       });
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Sozlamalarni saqlashda xato yuz berdi",
@@ -185,9 +189,9 @@ export default function TelegramBotPage() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [settings, toast]);
 
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     try {
       setTesting(true);
       const response = await api.post<{ success: boolean; error?: string; bot_info?: { username: string } }>("/telegram-bot/settings/test_connection/");
@@ -205,7 +209,7 @@ export default function TelegramBotPage() {
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Ulanishni tekshirishda xato yuz berdi",
@@ -214,9 +218,9 @@ export default function TelegramBotPage() {
     } finally {
       setTesting(false);
     }
-  };
+  }, [toast]);
 
-  const setWebhook = async () => {
+  const setWebhook = useCallback(async () => {
     if (!settings?.webhook_url) {
       toast({
         title: "Xato",
@@ -244,16 +248,16 @@ export default function TelegramBotPage() {
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Webhook o'rnatishda xato yuz berdi",
         variant: "destructive"
       });
     }
-  };
+  }, [settings?.webhook_url, toast]);
 
-  const deleteWebhook = async () => {
+  const deleteWebhook = useCallback(async () => {
     try {
       const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/delete_webhook/");
       
@@ -264,19 +268,32 @@ export default function TelegramBotPage() {
         });
         setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
       }
-    } catch (error) {
+    } catch (err) {
       toast({
         title: "Xato",
         description: "Webhook o'chirishda xato yuz berdi",
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={loadData} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Qayta urinish
+        </Button>
       </div>
     );
   }
@@ -307,6 +324,12 @@ export default function TelegramBotPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Yangilash tugmasi */}
+          <Button variant="outline" onClick={loadData} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Yangilash
+          </Button>
+          
           {/* Bot boshqaruv tugmalari */}
           {!settings?.use_webhook && (
             <>

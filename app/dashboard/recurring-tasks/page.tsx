@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -51,6 +53,10 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Edit,
+  Trash2,
+  Eye,
+  Building2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { format, formatDistanceToNow } from "date-fns";
@@ -117,10 +123,14 @@ export default function RecurringTasksPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [editingTask, setEditingTask] = useState<RecurringTask | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const { toast } = useToast();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     title: "",
     description: "",
     frequency: "MONTHLY",
@@ -129,15 +139,12 @@ export default function RecurringTasksPage() {
     end_date: "",
     priority: "ODDIY",
     deadline_days: 7,
-  });
+  };
+  const [formData, setFormData] = useState(initialFormState);
 
-  useEffect(() => {
-    loadTasks();
-    loadStatistics();
-  }, [statusFilter]);
-
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     try {
+      setIsLoading(true);
       const params = statusFilter !== "all" ? `?status=${statusFilter}` : "";
       const response = await api.get<RecurringTask[] | { results: RecurringTask[] }>(
         `/tasks/recurring/${params}`
@@ -155,16 +162,21 @@ export default function RecurringTasksPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, toast]);
 
-  const loadStatistics = async () => {
+  const loadStatistics = useCallback(async () => {
     try {
       const response = await api.get<Statistics>("/tasks/recurring/statistics/");
       setStatistics(response.data);
     } catch (error) {
       console.error("Error loading statistics:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadTasks();
+    loadStatistics();
+  }, [loadTasks, loadStatistics]);
 
   const createRecurringTask = async () => {
     if (!formData.title || !formData.description) {
@@ -208,6 +220,99 @@ export default function RecurringTasksPage() {
     }
   };
 
+  const openEditDialog = (task: RecurringTask) => {
+    setEditingTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description,
+      frequency: task.frequency,
+      cron_expression: task.cron_expression || "",
+      start_date: task.start_date ? task.start_date.split("T")[0] : "",
+      end_date: task.end_date ? task.end_date.split("T")[0] : "",
+      priority: task.priority,
+      deadline_days: task.deadline_days,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const updateRecurringTask = async () => {
+    if (!editingTask) return;
+    if (!formData.title || !formData.description) {
+      toast({
+        title: "Xatolik",
+        description: "Sarlavha va tavsif to'ldirilishi shart",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.patch(`/tasks/recurring/${editingTask.id}/`, formData);
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Takrorlanuvchi topshiriq yangilandi",
+      });
+      closeDialog();
+      loadTasks();
+    } catch (error) {
+      console.error("Error updating recurring task:", error);
+      toast({
+        title: "Xatolik",
+        description: "Yangilashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteRecurringTask = async (id: string) => {
+    if (!confirm("Haqiqatan ham bu takrorlanuvchi topshiriqni o'chirmoqchimisiz?")) return;
+    
+    try {
+      await api.delete(`/tasks/recurring/${id}/`);
+      toast({
+        title: "O'chirildi",
+        description: "Takrorlanuvchi topshiriq o'chirildi",
+      });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      console.error("Error deleting recurring task:", error);
+      toast({
+        title: "Xatolik",
+        description: "O'chirishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const viewHistory = async (task: RecurringTask) => {
+    setEditingTask(task);
+    setHistoryLoading(true);
+    setIsHistoryOpen(true);
+    try {
+      const response = await api.get<any[]>(`/tasks/recurring/${task.id}/history/`);
+      setHistoryData(response.data || []);
+    } catch (error) {
+      console.error("Error loading history:", error);
+      toast({
+        title: "Xatolik",
+        description: "Tarixni yuklashda xatolik",
+        variant: "destructive",
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingTask(null);
+    setFormData(initialFormState);
+  };
+
   const pauseTask = async (id: string) => {
     try {
       await api.post(`/tasks/recurring/${id}/pause/`);
@@ -245,30 +350,49 @@ export default function RecurringTasksPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Repeat className="h-6 w-6" />
-            Takrorlanuvchi Topshiriqlar
-          </h1>
-          <p className="text-muted-foreground">
-            Avtomatik ravishda yaratiluvchi muntazam topshiriqlar
-          </p>
+    <>
+      <Header 
+        title="Takrorlanuvchi topshiriqlar" 
+        description="Avtomatik ravishda yaratiluvchi muntazam topshiriqlar" 
+      />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-200/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-200/15 to-transparent rounded-full blur-2xl" />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Yangi yaratish
-            </Button>
-          </DialogTrigger>
+        
+        <div className="relative z-10 p-6 space-y-6">
+          {/* Header Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Repeat className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Boshqaruv</h2>
+                <p className="text-sm text-muted-foreground">
+                  Takrorlanuvchi topshiriqlarni yarating va boshqaring
+                </p>
+              </div>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); else setIsDialogOpen(true); }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditingTask(null); setFormData(initialFormState); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yangi yaratish
+                </Button>
+              </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Yangi takrorlanuvchi topshiriq</DialogTitle>
+              <DialogTitle>
+                {editingTask ? "Takrorlanuvchi topshiriqni tahrirlash" : "Yangi takrorlanuvchi topshiriq"}
+              </DialogTitle>
               <DialogDescription>
-                Avtomatik ravishda yaratiluvchi topshiriq shabloni
+                {editingTask 
+                  ? "Takrorlanuvchi topshiriq sozlamalarini yangilang" 
+                  : "Avtomatik ravishda yaratiluvchi topshiriq shabloni"
+                }
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -393,16 +517,19 @@ export default function RecurringTasksPage() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsDialogOpen(false)}
+                onClick={closeDialog}
                 disabled={isSubmitting}
               >
                 Bekor qilish
               </Button>
-              <Button onClick={createRecurringTask} disabled={isSubmitting}>
+              <Button 
+                onClick={editingTask ? updateRecurringTask : createRecurringTask} 
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
-                Yaratish
+                {editingTask ? "Saqlash" : "Yaratish"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -411,11 +538,13 @@ export default function RecurringTasksPage() {
 
       {/* Statistics */}
       {statistics && (
-        <div className="grid grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Repeat className="h-5 w-5 text-blue-500" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100">
+                  <Repeat className="h-5 w-5 text-blue-600" />
+                </div>
                 <div>
                   <p className="text-2xl font-bold">{statistics.total}</p>
                   <p className="text-sm text-muted-foreground">Jami</p>
@@ -423,10 +552,12 @@ export default function RecurringTasksPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
                   <p className="text-2xl font-bold">{statistics.active}</p>
                   <p className="text-sm text-muted-foreground">Faol</p>
@@ -434,10 +565,12 @@ export default function RecurringTasksPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Pause className="h-5 w-5 text-yellow-500" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-yellow-100">
+                  <Pause className="h-5 w-5 text-yellow-600" />
+                </div>
                 <div>
                   <p className="text-2xl font-bold">{statistics.paused}</p>
                   <p className="text-sm text-muted-foreground">To&apos;xtatilgan</p>
@@ -445,15 +578,17 @@ export default function RecurringTasksPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <History className="h-5 w-5 text-purple-500" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100">
+                  <History className="h-5 w-5 text-purple-600" />
+                </div>
                 <div>
                   <p className="text-2xl font-bold">
                     {statistics.total_tasks_created}
                   </p>
-                  <p className="text-sm text-muted-foreground">Yaratilgan topshiriqlar</p>
+                  <p className="text-sm text-muted-foreground">Yaratilgan</p>
                 </div>
               </div>
             </CardContent>
@@ -571,16 +706,28 @@ export default function RecurringTasksPage() {
                               <Pause className="h-4 w-4 mr-2" />
                               To&apos;xtatib turish
                             </DropdownMenuItem>
-                          ) : (
+                          ) : task.status === "PAUSED" ? (
                             <DropdownMenuItem onClick={() => resumeTask(task.id)}>
                               <Play className="h-4 w-4 mr-2" />
                               Davom ettirish
                             </DropdownMenuItem>
-                          )}
+                          ) : null}
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditDialog(task)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Tahrirlash
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => viewHistory(task)}>
                             <History className="h-4 w-4 mr-2" />
                             Tarixni ko&apos;rish
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => deleteRecurringTask(task.id)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            O&apos;chirish
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -592,6 +739,76 @@ export default function RecurringTasksPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      
+      {/* History Dialog */}
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Yaratilgan topshiriqlar tarixi
+            </DialogTitle>
+            <DialogDescription>
+              {editingTask?.title} - oxirgi 20 ta topshiriq
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {historyLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : historyData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Hali topshiriq yaratilmagan</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {historyData.map((item: any, index: number) => (
+                    <div 
+                      key={item.id || index} 
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            Topshiriq #{item.created_task?.id || item.task_id}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.created_at 
+                              ? format(new Date(item.created_at), "dd.MM.yyyy HH:mm", { locale: uz })
+                              : "—"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => window.open(`/dashboard/tasks/${item.created_task?.id || item.task_id}`, '_blank')}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ko&apos;rish
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHistoryOpen(false)}>
+              Yopish
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+        </div>
+      </div>
+    </>
   );
 }
