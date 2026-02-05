@@ -24,7 +24,7 @@ class SectorViewSet(viewsets.ModelViewSet):
     """
     queryset = Sector.objects.all()
     serializer_class = SectorSerializer
-    permission_classes = [IsAuthenticated, CanManageOrganizations]
+    permission_classes = [IsAuthenticated]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'description']
     ordering = ['name']

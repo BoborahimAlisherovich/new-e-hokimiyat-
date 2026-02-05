@@ -19,7 +19,8 @@ import {
   Play,
   Square,
   Circle,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
+import { Header } from "@/components/layout/header";
+import { AdminOnly } from "@/components/auth/admin-only";
 
 interface BotSettings {
   id: number;
@@ -280,20 +283,20 @@ export default function TelegramBotPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      <AdminOnly title="Telegram Bot">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
             <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
           </div>
         </div>
-      </div>
+      </AdminOnly>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      <AdminOnly title="Telegram Bot">
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <AlertCircle className="h-12 w-12 text-red-600" />
           <p className="text-slate-700">{error}</p>
@@ -302,20 +305,13 @@ export default function TelegramBotPage() {
             Qayta urinish
           </Button>
         </div>
-      </div>
+      </AdminOnly>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-      {/* Modern geometric background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-        <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-      </div>
-      
-      <div className="relative z-10 p-6 space-y-6">
+    <AdminOnly title="Telegram Bot">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <motion.div 
         className="flex items-center justify-between"
@@ -769,6 +765,6 @@ export default function TelegramBotPage() {
         </Card>
       </motion.div>
       </div>
-    </div>
+    </AdminOnly>
   );
 }

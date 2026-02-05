@@ -34,8 +34,13 @@ function resolveApiBaseUrl(): string {
       return 'https://api.gameroom.uz/api'
     }
     
-    if (hostname === 'localhost') {
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:8000/api'
+    }
+    
+    // Local network IP addresses (192.168.x.x, 10.x.x.x, etc.)
+    if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname)) {
+      return `http://${hostname}:8000/api`
     }
   }
   

@@ -34,7 +34,7 @@ import type { User, UserRole } from "@/types"
 
 // Role-based menu configuration based on texnik topshiriq.txt
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  // Hokim - full access to everything
+  // Hokim - full access to everything except telegram-bot (admin only)
   HOKIM: [
     '/dashboard',
     '/dashboard/tasks',
@@ -46,7 +46,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/analytics',
     '/dashboard/chat',
     '/dashboard/ai-assistant',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Hokim yordamchisi - similar to Hokim but cannot close tasks
@@ -61,10 +60,9 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/analytics',
     '/dashboard/chat',
     '/dashboard/ai-assistant',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
-  // Hokimlik mas'uli - can add users, orgs, create tasks (NO AI Assistant) (NO AI Assistant)
+  // Hokimlik mas'uli - can add users, orgs, create tasks (NO AI Assistant)
   HOKIMLIK_MASUL: [
     '/dashboard',
     '/dashboard/tasks',
@@ -75,7 +73,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Tashkilot rahbari - can add tashkilot mas'uli, view tasks, upload reports
@@ -96,7 +93,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/chat',
     '/dashboard/settings',
   ],
-  // Admin - technical admin, full access
+  // Admin - technical admin, full access including telegram-bot
   ADMIN: [
     '/dashboard',
     '/dashboard/tasks',

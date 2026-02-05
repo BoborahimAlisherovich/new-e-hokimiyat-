@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Users, 
   Search,
@@ -22,7 +23,8 @@ import {
   Megaphone,
   Upload,
   X,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +63,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, getCurrentUser } from "@/lib/api";
+import { Header } from "@/components/layout/header";
 
 interface TelegramUser {
   id: number;

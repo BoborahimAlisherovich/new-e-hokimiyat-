@@ -138,10 +138,7 @@ export default function ChatPage() {
 
       const processedUsers = (usersData || [])
         .filter((u: any) => u.id !== me?.id)
-        .map((user: any, index: number) => ({
-          ...mapUserToChatUser(user),
-          is_online: index % 3 === 0,
-        }))
+        .map((user: any) => mapUserToChatUser(user))
 
       setUsers(processedUsers)
 
@@ -150,10 +147,7 @@ export default function ChatPage() {
         const other = conv.other_participant
         if (!other?.id) return
         const otherId = String(other.id)
-        const user = processedUsers.find((u: ChatUser) => u.id === otherId) || {
-          ...mapUserToChatUser(other),
-          is_online: false,
-        }
+        const user = processedUsers.find((u: ChatUser) => u.id === otherId) || mapUserToChatUser(other)
         const lastMsg = conv.last_message ? mapApiMessage(conv.last_message) : null
         convMap.set(otherId, {
           user,

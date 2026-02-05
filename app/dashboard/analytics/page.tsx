@@ -25,9 +25,15 @@ export default function AnalyticsPage() {
         getOrganizations(),
         getAppeals()
       ])
-      setTasks(tasksList)
-      setOrgs(orgsList)
-      setAppeals(appealsList)
+      console.log('Analytics Data Loaded:', {
+        tasks: tasksList?.length || 0,
+        organizations: orgsList?.length || 0,
+        appeals: appealsList?.length || 0,
+        orgsData: orgsList
+      })
+      setTasks(Array.isArray(tasksList) ? tasksList : [])
+      setOrgs(Array.isArray(orgsList) ? orgsList : [])
+      setAppeals(Array.isArray(appealsList) ? appealsList : [])
     } catch (err) {
       console.error('Analytics data load error:', err)
     } finally {

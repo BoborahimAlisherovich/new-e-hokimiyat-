@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, getCurrentUser } from "@/lib/api"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, getCurrentUser, approveTask, sendTaskMessage } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import {
   ArrowLeft,
@@ -42,16 +42,41 @@ import {
   Layers,
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+
+// WebSocket URL ni aniqlash
+function getWebSocketUrl(taskId: string, token: string): string {
+  if (typeof window === 'undefined') return ''
+  
+  const { hostname } = window.location
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  
+  // Local network yoki localhost
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `ws://localhost:8000/ws/tasks/${taskId}/chat/?token=${token}`
+  }
+  
+  // Local network IP
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname)) {
+    return `ws://${hostname}:8000/ws/tasks/${taskId}/chat/?token=${token}`
+  }
+  
+  // Production
+  return `${wsProtocol}//api.gameroom.uz/ws/tasks/${taskId}/chat/?token=${token}`
+}
 
 export default function TaskDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id as string
   const [newMessage, setNewMessage] = useState("")
+  const [isSending, setIsSending] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isExtendOpen, setIsExtendOpen] = useState(false)
+  const [isCloseOpen, setIsCloseOpen] = useState(false)
+  const [closeComment, setCloseComment] = useState("")
   const [selectedSector, setSelectedSector] = useState<string>("")
   const [task, setTask] = useState<any | null>(null)
   const [chatMessages, setChatMessages] = useState<any[]>([])
@@ -60,6 +85,7 @@ export default function TaskDetailPage() {
   const [orgsMap, setOrgsMap] = useState<Record<string, any>>({})
   const [currentUser, setCurrentUser] = useState<any | null>(null)
 
+  // Initial data fetch
   useEffect(() => {
     let mounted = true
     Promise.all([getTaskById(id), getTaskChat(id), getUsers(), getOrganizations(), getCurrentUser()])
@@ -68,7 +94,6 @@ export default function TaskDetailPage() {
         setTask(t)
         setChatMessages(chat)
         setCurrentUser(user)
-        // getTaskExecutions(t.id).then((execs) => setTaskExecutions(execs)).catch(() => setTaskExecutions([]))
         const uMap: Record<string, any> = {}
         users.forEach((u: any) => (uMap[u.id] = u))
         setUsersMap(uMap)
@@ -80,6 +105,30 @@ export default function TaskDetailPage() {
     return () => {
       mounted = false
     }
+  }, [id])
+
+  // Real-time chat polling - har 3 sekundda yangi xabarlarni tekshirish
+  useEffect(() => {
+    if (!id) return
+    
+    const pollChat = async () => {
+      try {
+        const messages = await getTaskChat(id)
+        setChatMessages(prev => {
+          // Faqat yangi xabarlar bo'lsa yangilash
+          if (JSON.stringify(prev) !== JSON.stringify(messages)) {
+            return messages
+          }
+          return prev
+        })
+      } catch (error) {
+        // Xatolikni e'tiborsiz qoldirish
+      }
+    }
+    
+    const interval = setInterval(pollChat, 3000) // 3 sekund
+    
+    return () => clearInterval(interval)
   }, [id])
 
   const creator = task ? usersMap[task.createdBy] : undefined
@@ -106,9 +155,61 @@ export default function TaskDetailPage() {
       </>
     )
   }
-  const sendMessage = () => {
-    if (!newMessage.trim()) return
+  const sendMessage = async () => {
+    if (!newMessage.trim() || isSending) return
+    
+    setIsSending(true)
+    const messageText = newMessage.trim()
     setNewMessage("")
+    
+    try {
+      const response = await sendTaskMessage(id, { content: messageText })
+      
+      // Yangi xabarni qo'shish
+      setChatMessages(prev => [...prev, {
+        id: response.id,
+        senderId: currentUser?.id,
+        content: messageText,
+        createdAt: new Date().toISOString(),
+        type: 'message'
+      }])
+      
+      // Agar AI javob bergan bo'lsa, uni ham qo'shish
+      if ((response as any).ai_response?.message) {
+        setChatMessages(prev => [...prev, {
+          id: `ai-${Date.now()}`,
+          senderId: null,
+          content: (response as any).ai_response.message,
+          createdAt: new Date().toISOString(),
+          type: 'system'
+        }])
+        
+        // Agar task yopilgan bo'lsa, sahifani yangilash
+        if ((response as any).ai_response.action === 'TASK_CLOSED') {
+          // Task ma'lumotlarini qayta yuklash
+          const updatedTask = await getTaskById(id)
+          setTask(updatedTask)
+        }
+      }
+    } catch (error) {
+      console.error('Send message error:', error)
+      // Xatolik bo'lsa xabarni qaytarish
+      setNewMessage(messageText)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const handleCloseTask = async () => {
+    try {
+      await approveTask(id, { comment: closeComment.trim() || undefined })
+      setIsCloseOpen(false)
+      router.push('/dashboard/tasks')
+    } catch (error: any) {
+      console.error('Task close error:', error)
+      const errorMessage = error?.message || 'Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.'
+      alert(errorMessage)
+    }
   }
 
   const formatDateTime = (dateStr: string) => {
@@ -250,10 +351,50 @@ export default function TaskDetailPage() {
             )}
 
             {canCloseTask && (
-              <Button className="bg-accent hover:bg-accent/90">
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Nazoratdan yechish
-              </Button>
+              <Dialog open={isCloseOpen} onOpenChange={setIsCloseOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-accent hover:bg-accent/90">
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Nazoratdan yechish
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-foreground">Topshiriqni nazoratdan yechish</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                      Topshiriq muvaffaqiyatli bajarildi va nazoratdan yechiladi. Izoh qoldiring (ixtiyoriy).
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Izoh (ixtiyoriy)</Label>
+                      <Textarea 
+                        placeholder="Topshiriq bajarilishi haqida izoh..." 
+                        value={closeComment}
+                        onChange={(e) => setCloseComment(e.target.value)}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all"
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsCloseOpen(false)
+                        setCloseComment("")
+                      }} 
+                      className="border-border/50 bg-background/50"
+                    >
+                      Bekor qilish
+                    </Button>
+                    <Button onClick={handleCloseTask} className="bg-accent hover:bg-accent/90">
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Tasdiqlash
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>
@@ -373,7 +514,7 @@ export default function TaskDetailPage() {
                       {chatMessages.map((msg) => {
                         const sender = usersMap[msg.senderId] || { firstName: "-", lastName: "-" }
                         const isSystem = msg.type === "system"
-                        const isCurrentUser = msg.senderId === "1"
+                        const isCurrentUser = msg.senderId === currentUser?.id
 
                         if (isSystem) {
                           return (
@@ -442,11 +583,16 @@ export default function TaskDetailPage() {
                         placeholder="Xabar yozing..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                        onKeyDown={(e) => e.key === "Enter" && !isSending && sendMessage()}
+                        disabled={isSending}
                         className="bg-secondary"
                       />
-                      <Button onClick={sendMessage} className="shrink-0">
-                        <Send className="h-4 w-4" />
+                      <Button onClick={sendMessage} disabled={isSending || !newMessage.trim()} className="shrink-0">
+                        {isSending ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>

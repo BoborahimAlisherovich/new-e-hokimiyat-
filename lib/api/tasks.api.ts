@@ -54,10 +54,11 @@ export async function getTasks(
 export async function getTasksPage(
   filters?: TaskFilters,
   page = 1,
-  pageSize = 100
+  pageSize = 100,
+  ordering = 'deadline'
 ): Promise<PaginatedResponse<Task>> {
   const offset = Math.max(0, (page - 1) * pageSize)
-  const params = { ...filters, limit: pageSize, offset }
+  const params = { ...filters, limit: pageSize, offset, ordering }
   const queryString = buildQueryString(params)
   return fetchApi<PaginatedResponse<Task>>(`/tasks${queryString}`)
 }
@@ -171,7 +172,7 @@ export async function submitTaskForReview(
 }
 
 /**
- * Topshiriqni tasdiqlaydi
+ * Topshiriqni tasdiqlaydi (nazoratdan yechish)
  * 
  * Holat: BAJARILDI → NAZORATDAN_YECHILDI
  * 
@@ -183,7 +184,7 @@ export async function approveTask(
   id: number | string, 
   data: { comment?: string } = {}
 ): Promise<Task> {
-  return fetchApi<Task>(`/tasks/${id}/approve/`, {
+  return fetchApi<Task>(`/tasks/${id}/close/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })

@@ -19,10 +19,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-this-in
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get(
-    'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,0.0.0.0,10.115.92.158,api.gameroom.uz,gameroom.uz'
-).split(',')
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -63,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'users.middleware.UpdateLastSeenMiddleware',  # Track user online status
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'audit.middleware.AuditMiddleware',
@@ -181,11 +179,12 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://192.168.200.86:3000,http://192.168.200.86:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz'
 ).split(',')
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.ngrok-free\.app$",
     r"^https://.*\.ngrok\.io$",
+    r"^http://192\.168\.\d+\.\d+:\d+$",  # Local network IPs
 ]
 
 CORS_ALLOW_CREDENTIALS = True

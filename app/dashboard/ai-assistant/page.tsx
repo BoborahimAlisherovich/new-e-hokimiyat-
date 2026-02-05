@@ -581,69 +581,77 @@ export default function AIAssistantPage() {
               ) : (
               <AnimatePresence>
                 <div className="space-y-2">
-                  {conversations.map((conv, index) => (
-                    <motion.div
-                      key={conv.id}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      className={`group relative rounded-xl cursor-pointer transition-all duration-200 ${
-                        currentConversation?.id === conv.id
-                          ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-slate-900 ring-2 ring-blue-400/50 shadow-lg"
-                          : "bg-white/60 hover:bg-white/90 hover:shadow-md border border-slate-100"
-                      }`}
-                    >
-                      <div
-                        onClick={() => selectConversation(conv)}
-                        className="p-3 pr-12"
+                  {conversations.map((conv, index) => {
+                    // Suhbat sarlavhasini aniqlash
+                    const displayTitle = conv.title && conv.title !== "Yangi suhbat" 
+                      ? conv.title 
+                      : conv.last_message?.content 
+                        ? conv.last_message.content.substring(0, 40) + (conv.last_message.content.length > 40 ? "..." : "")
+                        : "Yangi suhbat";
+                    
+                    return (
+                      <motion.div
+                        key={conv.id}
+                        variants={itemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        className={`group relative rounded-xl cursor-pointer transition-all duration-200 ${
+                          currentConversation?.id === conv.id
+                            ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-slate-900 ring-2 ring-blue-400/50 shadow-lg"
+                            : "bg-white/60 hover:bg-white/90 hover:shadow-md border border-slate-100"
+                        }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <motion.div
-                            animate={currentConversation?.id === conv.id ? { rotate: [0, 10, 0] } : {}}
-                            transition={{ duration: 0.5 }}
-                          >
-                            <MessageSquare className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                              currentConversation?.id === conv.id ? "text-blue-600" : "text-slate-400"
-                            }`} />
-                          </motion.div>
-                          <div className="min-w-0 flex-1">
-                            <p className={`font-semibold truncate text-sm ${
-                              currentConversation?.id === conv.id ? "text-blue-700" : "text-slate-800"
-                            }`}>
-                              {conv.title || "Yangi suhbat"}
-                            </p>
-                            {conv.last_message && (
-                              <p className="text-xs opacity-60 truncate mt-1">
-                                {conv.last_message.content}
+                        <div
+                          onClick={() => selectConversation(conv)}
+                          className="p-3 pr-10"
+                        >
+                          <div className="flex items-start gap-2">
+                            <motion.div
+                              animate={currentConversation?.id === conv.id ? { rotate: [0, 10, 0] } : {}}
+                              transition={{ duration: 0.5 }}
+                              className="shrink-0"
+                            >
+                              <MessageSquare className={`h-4 w-4 mt-0.5 ${
+                                currentConversation?.id === conv.id ? "text-blue-600" : "text-slate-400"
+                              }`} />
+                            </motion.div>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <p className={`font-medium text-sm leading-tight line-clamp-2 ${
+                                currentConversation?.id === conv.id ? "text-blue-700" : "text-slate-800"
+                              }`}
+                                title={displayTitle}
+                              >
+                                {displayTitle}
                               </p>
-                            )}
-                            <p className="text-xs opacity-40 mt-1.5 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(conv.updated_at), {
-                                addSuffix: true,
-                                locale: uz,
-                              })}
-                            </p>
+                              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0" />
+                                <span className="truncate">
+                                  {formatDistanceToNow(new Date(conv.updated_at), {
+                                    addSuffix: true,
+                                    locale: uz,
+                                  })}
+                                </span>
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Delete button */}
-                      <motion.button
-                        initial={{ opacity: 0 }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={(e) => deleteConversation(conv.id, e)}
-                        className="absolute top-2 right-2 p-2 rounded-lg bg-red-50 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all duration-200"
-                        title="Suhbatni o'chirish"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </motion.button>
-                    </motion.div>
-                  ))}
+                        
+                        {/* Delete button - har doim ko'rinadi */}
+                        <motion.button
+                          whileHover={{ scale: 1.1, backgroundColor: "rgb(254 202 202)" }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => deleteConversation(conv.id, e)}
+                          className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 rounded-lg bg-red-50 text-red-500 hover:text-red-600 hover:bg-red-100 transition-colors"
+                          title="Suhbatni o'chirish"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </motion.button>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </AnimatePresence>
               )}
@@ -657,12 +665,12 @@ export default function AIAssistantPage() {
         variants={itemVariants}
         className="flex-1 flex flex-col"
       >
-        <Card className="h-full backdrop-blur-xl bg-white/95 border-slate-200 shadow-2xl">
+        <Card className="h-full flex flex-col backdrop-blur-xl bg-white/95 border-slate-200 shadow-2xl overflow-hidden">
           {currentConversation ? (
             <>
-              <CardHeader className="pb-3 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50">
+              <CardHeader className="pb-3 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50 shrink-0">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold">
+                  <CardTitle className="text-lg font-semibold truncate max-w-[200px]" title={currentConversation.title || "Yangi suhbat"}>
                     {currentConversation.title || "Yangi suhbat"}
                   </CardTitle>
                   <motion.div
@@ -683,9 +691,9 @@ export default function AIAssistantPage() {
                   </motion.div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-0">
-                <ScrollArea className="h-full p-4">
-                  <div className="space-y-4">
+              <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="space-y-4 p-4">
                     {messages.length === 0 && !isLoading && (
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
@@ -754,27 +762,24 @@ export default function AIAssistantPage() {
                           }`}
                         >
                           <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className={`max-w-[80%] rounded-2xl p-4 shadow-lg ${
+                            whileHover={{ scale: 1.01 }}
+                            className={`max-w-[85%] rounded-2xl p-4 shadow-md ${
                               message.role === "user"
                                 ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
                                 : "bg-white border border-slate-200"
                             }`}
                           >
                             {message.role === "assistant" && (
-                              <div className="flex items-center gap-2 mb-2">
-                                <motion.div
-                                  animate={{ rotate: [0, 360] }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                >
-                                  <Bot className="h-5 w-5 text-blue-600" />
-                                </motion.div>
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <Bot className="h-4 w-4 text-blue-600 shrink-0" />
                                 <span className="text-sm font-semibold text-blue-700">AI Yordamchi</span>
                                 {getIntentBadge(message.detected_intent)}
                               </div>
                             )}
-                            <div className={`prose prose-sm max-w-none ${
-                              message.role === "user" ? "text-white prose-invert" : "text-slate-800"
+                            <div className={`prose prose-sm max-w-none break-words ${
+                              message.role === "user" 
+                                ? "text-white prose-invert [&>*]:text-white" 
+                                : "text-slate-800 [&>*]:text-slate-800"
                             }`}>
                               <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                                 {message.content}
@@ -1008,126 +1013,88 @@ export default function AIAssistantPage() {
           <CardContent className="space-y-4 pt-4">
             {stats ? (
               <motion.div initial="hidden" animate="visible" variants={containerVariants}>
+                {/* AI Faoliyat - asosiy statistika */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Topshiriqlar
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                    AI Faoliyat
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-200 p-3 shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                          <span className="text-xs text-blue-700 font-semibold text-base">Faol</span>
+                  
+                  {/* Bugungi suhbatlar */}
+                  <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }}>
+                    <div className="rounded-xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 border border-blue-200 p-4 shadow-md">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-blue-500/20">
+                            <MessageSquare className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-600">Bugungi suhbatlar</p>
+                            <p className="text-2xl font-bold text-blue-700">{stats.ai.conversations_today}</p>
+                          </div>
                         </div>
-                        <p className="text-2xl font-bold text-blue-700">{stats.tasks.active}</p>
                       </div>
-                    </motion.div>
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-red-500/10 to-pink-500/10 border border-red-200 p-3 shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertCircle className="h-4 w-4 text-red-600" />
-                          <span className="text-xs text-red-700 font-semibold text-base">O&apos;tgan</span>
-                        </div>
-                        <p className="text-2xl font-bold text-red-700">{stats.tasks.overdue}</p>
-                      </div>
-                    </motion.div>
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }} className="col-span-2">
-                      <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/10 border border-emerald-200 p-3 shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <span className="text-xs text-emerald-700 font-semibold text-base">Bugun bajarildi</span>
-                        </div>
-                        <p className="text-2xl font-bold text-emerald-700">{stats.tasks.completed_today}</p>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-
-                <Separator className="bg-white/20" />
-
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Tashkilotlar
-                  </h4>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Harakatlar va Hisobotlar */}
                   <div className="grid grid-cols-2 gap-3">
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
                       <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-200 p-3 shadow-md">
                         <div className="flex items-center gap-2 mb-1">
-                          <BarChart3 className="h-4 w-4 text-purple-600" />
-                          <span className="text-xs text-purple-700 font-semibold text-base">Jami</span>
+                          <Zap className="h-4 w-4 text-purple-600" />
+                          <span className="text-xs text-purple-700 font-medium">Harakatlar</span>
                         </div>
-                        <p className="text-2xl font-bold text-purple-700">{stats.organizations?.total ?? 0}</p>
+                        <p className="text-2xl font-bold text-purple-700">{stats.ai.actions_today}</p>
                       </div>
                     </motion.div>
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200 p-3 shadow-md">
+                      <div className="rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-200 p-3 shadow-md">
                         <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <span className="text-xs text-emerald-700 font-semibold text-base">Faol</span>
+                          <FileText className="h-4 w-4 text-indigo-600" />
+                          <span className="text-xs text-indigo-700 font-medium">Hisobotlar</span>
                         </div>
-                        <p className="text-2xl font-bold text-emerald-700">{stats.organizations?.active ?? 0}</p>
+                        <p className="text-2xl font-bold text-indigo-700">{stats.ai.reports_today}</p>
                       </div>
                     </motion.div>
                   </div>
                 </div>
 
-                <Separator className="bg-white/20" />
+                <Separator className="my-4" />
 
+                {/* AI imkoniyatlari */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Murojaatlar
+                    <Bot className="h-4 w-4 text-blue-600" />
+                    AI imkoniyatlari
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-200 p-3 shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <MessageSquare className="h-4 w-4 text-yellow-600" />
-                          <span className="text-xs text-yellow-700 font-semibold text-base">Kutmoqda</span>
-                        </div>
-                        <p className="text-2xl font-bold text-yellow-700">{stats.appeals.pending}</p>
-                      </div>
+                  <div className="space-y-2">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-100">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="text-xs text-slate-700">Topshiriqlar analitikasi</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-200 p-3 shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <span className="text-xs text-emerald-700 font-semibold text-base">Hal etildi</span>
-                        </div>
-                        <p className="text-2xl font-bold text-emerald-700">{stats.appeals.resolved_today}</p>
-                      </div>
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-100">
+                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span className="text-xs text-slate-700">Hisobot yaratish (PDF/XLSX)</span>
                     </motion.div>
-                  </div>
-                </div>
-
-                <Separator className="bg-white/20" />
-
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    AI Faoliyat
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <motion.div variants={itemVariants} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-blue-500/5 to-purple-500/5">
-                      <span className="text-slate-700">Suhbatlar</span>
-                      <span className="font-bold text-blue-700">{stats.ai.conversations_today}</span>
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-100">
+                      <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span className="text-xs text-slate-700">Tashkilotlar holati</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-purple-500/5 to-pink-500/5">
-                      <span className="text-slate-700">Harakatlar</span>
-                      <span className="font-bold text-purple-700">{stats.ai.actions_today}</span>
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-100">
+                      <CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0" />
+                      <span className="text-xs text-slate-700">Murojaatlar statistikasi</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-indigo-500/5 to-blue-500/5">
-                      <span className="text-slate-700">Hisobotlar</span>
-                      <span className="font-bold text-indigo-700">{stats.ai.reports_today}</span>
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-100">
+                      <CheckCircle2 className="h-4 w-4 text-cyan-600 shrink-0" />
+                      <span className="text-xs text-slate-700">Ovozli buyruqlar</span>
                     </motion.div>
                   </div>
                 </div>
 
                 {stats.alerts.high_risk_tasks > 0 && (
                   <>
-                    <Separator className="bg-white/20" />
+                    <Separator className="my-4" />
                     <motion.div 
                       variants={itemVariants}
                       animate={{ scale: [1, 1.02, 1] }}
@@ -1139,7 +1106,7 @@ export default function AIAssistantPage() {
                           <AlertCircle className="h-5 w-5" />
                         </motion.div>
                         <span className="text-sm font-bold">
-                          {stats.alerts.high_risk_tasks} yuqori xavfli topshiriq
+                          {stats.alerts.high_risk_tasks} yuqori xavfli
                         </span>
                       </div>
                     </motion.div>
