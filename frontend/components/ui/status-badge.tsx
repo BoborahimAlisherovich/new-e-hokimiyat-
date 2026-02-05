@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import type { TaskStatus, UserStatus, TaskPriority } from "@/lib/mock-data"
-import { taskStatusLabels, statusLabels, priorityLabels } from "@/lib/mock-data"
+import type { TaskStatus, UserStatus, TaskPriority } from "@/lib/constants"
+import { taskStatusLabels, statusLabels, priorityLabels } from "@/lib/constants"
 
 const taskStatusStyles: Record<TaskStatus, string> = {
   YANGI: "bg-blue-500/20 text-blue-400 border-blue-500/30",

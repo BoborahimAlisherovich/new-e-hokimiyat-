@@ -9,7 +9,7 @@ export function rateLimitMiddleware(
   windowMs: number = 60 * 1000 // 1 minute
 ) {
   return function middleware(request: NextRequest) {
-    const ip = request.ip || 'unknown'
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     const now = Date.now()
     const windowStart = now - windowMs
 

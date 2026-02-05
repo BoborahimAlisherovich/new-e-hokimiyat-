@@ -6,6 +6,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { BarChart4 } from "lucide-react"
 import React from "react"
 import { getAnalyticsTrends } from "@/lib/api"
+import { motion } from "framer-motion"
 
 type ChartPoint = {
   period: string
@@ -44,15 +45,20 @@ export function ActivityChart() {
   const last = data.length > 0 ? data[data.length - 1] : undefined
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl">
-      <CardHeader className="flex flex-row items-center justify-between rounded-t-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-lg">
-            <BarChart4 className="w-4 h-4 text-primary-foreground" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
+        <CardHeader className="flex flex-row items-center justify-between rounded-t-2xl bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+              <BarChart4 className="w-4 h-4 text-white" />
+            </div>
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Topshiriqlar dinamikasi</CardTitle>
           </div>
-          <CardTitle className="text-lg font-semibold text-foreground">Топшириқлар динамикаси</CardTitle>
-        </div>
-      </CardHeader>
+        </CardHeader>
       
       <CardContent className="p-6">
         <div className="h-[350px]">
@@ -75,24 +81,24 @@ export function ActivityChart() {
               
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                stroke="hsl(240, 10%, 25%)" 
-                className="opacity-30"
+                stroke="hsl(220, 13%, 85%)" 
+                className="opacity-50"
               />
               
               <XAxis 
                 dataKey="period" 
-                stroke="hsl(240, 5%, 50%)" 
+                stroke="hsl(220, 9%, 46%)" 
                 fontSize={12} 
                 tickLine={false}
-                tick={{ fill: 'hsl(240, 5%, 50%)' }}
+                tick={{ fill: 'hsl(220, 9%, 46%)' }}
               />
               
               <YAxis 
-                stroke="hsl(240, 5%, 50%)" 
+                stroke="hsl(220, 9%, 46%)" 
                 fontSize={12} 
                 tickLine={false} 
                 axisLine={false}
-                tick={{ fill: 'hsl(240, 5%, 50%)' }}
+                tick={{ fill: 'hsl(220, 9%, 46%)' }}
               />
               
               <Tooltip
@@ -114,7 +120,7 @@ export function ActivityChart() {
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#jami)"
-                name="Жами"
+                name="Jami"
                 strokeOpacity={0.6}
               />
               
@@ -125,7 +131,7 @@ export function ActivityChart() {
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#bajarildi)"
-                name="Бажарилган"
+                name="Bajarilgan"
               />
               
               <Area
@@ -145,7 +151,7 @@ export function ActivityChart() {
         <div className="mt-6 flex flex-wrap justify-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-sm text-foreground">Бажарилган</span>
+            <span className="text-sm text-foreground">Bajarilgan</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.bajarildi, 0)})</span>
           </div>
           
@@ -157,29 +163,30 @@ export function ActivityChart() {
           
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span className="text-sm text-foreground">Жами</span>
+            <span className="text-sm text-foreground">Jami</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.jami, 0)})</span>
           </div>
         </div>
         
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-lg bg-green-50/70 backdrop-blur-sm border border-green-200/50 hover:bg-green-100/70 transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-green-50 backdrop-blur-sm border border-green-200 hover:bg-green-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : (last?.bajarildi ?? 0)}</div>
-            <div className="text-xs text-muted-foreground">Ойлик бажарилган</div>
+            <div className="text-xs text-slate-600">Oylik bajarilgan</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-blue-50/70 backdrop-blur-sm border border-blue-200/50 hover:bg-blue-100/70 transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-blue-50 backdrop-blur-sm border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : (last?.yaratildi ?? 0)}</div>
-            <div className="text-xs text-muted-foreground">Ойлик яратилган</div>
+            <div className="text-xs text-slate-600">Oylik yaratilgan</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-amber-50/70 backdrop-blur-sm border border-amber-200/50 hover:bg-amber-100/70 transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-amber-50 backdrop-blur-sm border border-amber-200 hover:bg-amber-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : (last?.jami ?? 0)}</div>
-            <div className="text-xs text-muted-foreground">Ойлик жами</div>
+            <div className="text-xs text-slate-600">Oylik jami</div>
           </div>
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   )
 }

@@ -23,15 +23,16 @@ import {
 } from "lucide-react"
 import { getChatConversations, getChatMessages, getCurrentUser, getUsers, sendChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 // Role labels
 const ROLE_LABELS: Record<string, string> = {
-  HOKIM: "Ҳоким",
-  HOKIMLIK_MASUL: "Ҳокимлик масъули",
-  TASHKILOT_RAHBAR: "Ташкилот раҳбари",
-  TASHKILOT_RAHBARI: "Ташкилот раҳбари",
-  TASHKILOT_MASUL: "Ташкилот масъули",
-  ADMIN: "Админ",
+  HOKIM: "Hokim",
+  HOKIMLIK_MASUL: "Hokimlik mas'uli",
+  TASHKILOT_RAHBAR: "Tashkilot rahbari",
+  TASHKILOT_RAHBARI: "Tashkilot rahbari",
+  TASHKILOT_MASUL: "Tashkilot mas'uli",
+  ADMIN: "Admin",
 }
 
 type AttachmentType = "IMAGE" | "VIDEO" | "AUDIO" | "FILE"
@@ -123,20 +124,25 @@ export default function ChatPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [me, usersData, convs] = await Promise.all([
+      const [meResult, usersResult, convsResult] = await Promise.allSettled([
         getCurrentUser(),
         getUsers(),
         getChatConversations(),
       ])
-      setCurrentUser(mapUserToChatUser(me))
-      
+
+      const me = meResult.status === "fulfilled" ? meResult.value : null
+      const usersData = usersResult.status === "fulfilled" ? usersResult.value : []
+      const convs = convsResult.status === "fulfilled" ? convsResult.value : []
+
+      if (me) setCurrentUser(mapUserToChatUser(me))
+
       const processedUsers = (usersData || [])
         .filter((u: any) => u.id !== me?.id)
         .map((user: any, index: number) => ({
           ...mapUserToChatUser(user),
           is_online: index % 3 === 0,
         }))
-      
+
       setUsers(processedUsers)
 
       const convMap = new Map<string, Conversation>()
@@ -257,7 +263,7 @@ export default function ChatPage() {
     })
 
     const saved = await sendChatMessage(selectedUserId, {
-      content: "🎤 Овозли хабар",
+      content: "🎤 Ovozli xabar",
       attachment: file,
     })
 
@@ -279,7 +285,7 @@ export default function ChatPage() {
       })
       
       const { latitude, longitude } = position.coords
-      const locationMessage = `📍 Жойлашув: https://maps.google.com/maps?q=${latitude},${longitude}`
+      const locationMessage = `📍 Joylashuv: https://maps.google.com/maps?q=${latitude},${longitude}`
 
       const saved = await sendChatMessage(selectedUserId, {
         content: locationMessage,
@@ -288,7 +294,7 @@ export default function ChatPage() {
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
     } catch (error) {
       console.error('Location error:', error)
-      alert('Жойлашувни олишда хатолик. Илтимос, жойлашув рухсатини текширинг.')
+      alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
     } finally {
       setIsLocationLoading(false)
     }
@@ -444,9 +450,14 @@ export default function ChatPage() {
   if (loading) {
     return (
       <>
-        <Header title="Чат" />
-        <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <Header title="Chat" />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+          <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
+              <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
+            </div>
+          </div>
         </div>
       </>
     )
@@ -454,13 +465,21 @@ export default function ChatPage() {
 
   return (
     <>
-      <Header title="Чат" />
-      <div className="p-3 sm:p-4 lg:p-6">
+      <Header title="Chat" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+        {/* Modern geometric background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
+        </div>
+        
+        <div className="relative z-10 p-3 sm:p-4 lg:p-6">
         <div className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Users List */}
           <Card
             className={cn(
-              "bg-card border-border w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden",
+              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               !showUserList && "hidden lg:flex"
             )}
           >
@@ -468,14 +487,14 @@ export default function ChatPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Фойдаланувчилар
+                  Foydalanuvchilar
                 </CardTitle>
                 <Badge variant="secondary">{users.length}</Badge>
               </div>
               <div className="relative mt-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Қидирув..."
+                  placeholder="Qidiruv..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-secondary/70 focus-visible:bg-white"
@@ -506,7 +525,7 @@ export default function ChatPage() {
                           </AvatarFallback>
                         </Avatar>
                         {user.is_online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
                         )}
                         {/* Unread message badge */}
                         {unreadCount > 0 && (
@@ -525,7 +544,7 @@ export default function ChatPage() {
                           )}
                         </div>
                         <p className={cn("text-xs text-muted-foreground truncate", unreadCount > 0 && "font-semibold text-foreground")}>
-                          {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Фойдаланувчи")}
+                          {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Foydalanuvchi")}
                         </p>
                       </div>
                     </button>
@@ -538,21 +557,21 @@ export default function ChatPage() {
           {/* Chat Area */}
           <Card
             className={cn(
-              "bg-card border-border flex flex-col flex-1 min-h-0 overflow-hidden",
+              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               showUserList && "hidden lg:flex"
             )}
           >
             {selectedUser ? (
               <>
                 {/* Chat Header */}
-                <CardHeader className="py-3 border-b border-border flex-shrink-0 bg-muted/30">
+                <CardHeader className="py-3 border-b border-slate-200 flex-shrink-0 bg-slate-50/50">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="lg:hidden"
                       onClick={() => setShowUserList(true)}
-                      title="Фойдаланувчилар рўйхати"
+                      title="Foydalanuvchilar ro'yxati"
                     >
                       <Users className="h-4 w-4" />
                     </Button>
@@ -564,7 +583,7 @@ export default function ChatPage() {
                     <div className="flex-1">
                       <p className="font-semibold">{selectedUser.first_name} {selectedUser.last_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {selectedUser.is_online ? "Онлайн" : "Оффлайн"}
+                        {selectedUser.is_online ? "Onlayn" : "Oflayn"}
                         {selectedUser.role && ` • ${ROLE_LABELS[selectedUser.role] || selectedUser.role}`}
                       </p>
                     </div>
@@ -656,13 +675,13 @@ export default function ChatPage() {
                     {isRecording && (
                       <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950 rounded-xl border border-red-200 dark:border-red-800">
                         <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">Ёзиб олинмоқда...</span>
+                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">Yozib olinmoqda...</span>
                         <div className="flex-1" />
-                        <Button variant="outline" size="sm" onClick={stopRecording} className="text-green-600 border-green-300">
-                          Тугатиш
+                        <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
+                          Tugatish
                         </Button>
                         <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
-                          Бекор қилиш
+                          Bekor qilish
                         </Button>
                       </div>
                     )}
@@ -673,7 +692,7 @@ export default function ChatPage() {
                         <Mic className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
                         <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700">
-                          <Send className="h-3 w-3 mr-1" /> Юбориш
+                          <Send className="h-3 w-3 mr-1" /> Yuborish
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
                           <Trash2 className="h-3 w-3" />
@@ -701,7 +720,7 @@ export default function ChatPage() {
                           accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                           onChange={(e) => setChatFile(e.target.files?.[0] || null)}
                         />
-                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Файл бириктириш">
+                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Fayl biriktirish">
                           <Paperclip className="h-4 w-4" />
                         </Button>
                       </label>
@@ -713,7 +732,7 @@ export default function ChatPage() {
                         className={cn("shrink-0", isRecording && "text-red-500")}
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
-                        title={isRecording ? "Ёзишни тўхтатиш" : "Овозли хабар ёзиш"}
+                        title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
                       >
                         <Mic className="h-4 w-4" />
                       </Button>
@@ -726,13 +745,13 @@ export default function ChatPage() {
                         type="button"
                         onClick={sendLocation}
                         disabled={isLocationLoading}
-                        title="Жойлашувни юбориш"
+                        title="Joylashuvni yuborish"
                       >
                         <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                       </Button>
                       
                       <Input
-                        placeholder="Хабар ёзинг..."
+                        placeholder="Xabar yozing..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
@@ -746,17 +765,18 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-muted/30">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-10 w-10 text-primary" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/50">
+                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-10 w-10 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Суҳбатни танланг</h3>
-                <p className="text-muted-foreground max-w-sm">
-                  Чап томондаги рўйхатдан фойдаланувчини танланг ва хабар ёзишни бошланг
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">Suhbatni tanlang</h3>
+                <p className="text-slate-600 max-w-sm">
+                  Chap tomondagi ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
               </div>
             )}
           </Card>
+        </div>
         </div>
       </div>
     </>

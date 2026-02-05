@@ -3,15 +3,46 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Eye, Lock, MoreHorizontal } from "lucide-react"
+import { Edit, Eye, Lock, MoreHorizontal, Building2, Trash2, Unlock } from "lucide-react"
 import Link from "next/link"
-import { formatOrgId, getSectorLabel } from "./organization-helpers"
+import { formatOrgId } from "./organization-helpers"
 
 interface OrganizationTableProps {
   organizations: any[]
+  users?: any[]
+  onDelete?: (id: number) => void
+  onToggleStatus?: (id: number, currentStatus: boolean) => void
 }
 
-export function OrganizationTable({ organizations }: OrganizationTableProps) {
+const getResponsibleUser = (org: any, users: any[]) => {
+  // Find TASHKILOT_RAHBARI or TASHKILOT_MASUL assigned to this organization
+  const responsibleUser = users.find(u => 
+    (u.organization === org.id || u.organization_id === org.id) && 
+    (u.role === 'TASHKILOT_RAHBARI' || u.role === 'TASHKILOT_MASUL')
+  )
+  if (responsibleUser) {
+    return responsibleUser.full_name || `${responsibleUser.first_name || ''} ${responsibleUser.last_name || ''}`.trim() || responsibleUser.username
+  }
+  return null
+}
+
+export function OrganizationTable({ organizations, users = [], onDelete, onToggleStatus }: OrganizationTableProps) {
+  if (organizations.length === 0) {
+    return (
+      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="rounded-full bg-muted p-4 mb-4">
+            <Building2 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-1">Tashkilotlar topilmadi</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Hozircha bu filtrlar bo'yicha tashkilotlar mavjud emas. Yangi tashkilot qo'shing yoki filtrlarni o'zgartiring.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
       <CardContent className="p-0">
@@ -19,11 +50,11 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
           <TableHeader>
             <TableRow className="border-border hover:bg-muted/20 transition-colors duration-300 bg-muted/10">
               <TableHead className="text-foreground font-semibold px-6 py-4">ID</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Ташкилот номи</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Масъул шахс</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Телефон рақам</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Ҳолат</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4 w-[70px]">Амаллар</TableHead>
+              <TableHead className="text-foreground font-semibold px-6 py-4">Tashkilot nomi</TableHead>
+              <TableHead className="text-foreground font-semibold px-6 py-4">Rahbar</TableHead>
+              <TableHead className="text-foreground font-semibold px-6 py-4">Telefon</TableHead>
+              <TableHead className="text-foreground font-semibold px-6 py-4">Holat</TableHead>
+              <TableHead className="text-foreground font-semibold px-6 py-4 w-[70px]">Amallar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -39,11 +70,15 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                     <p className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
                       {org.name}
                     </p>
-                    <p className="text-sm text-muted-foreground">{getSectorLabel(org.sector)}</p>
+                    {org.sector_name && (
+                      <p className="text-sm text-muted-foreground">{org.sector_name}</p>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">
-                  <span className="text-sm text-muted-foreground font-medium">{org.head || "—"}</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {org.director_name || org.head || getResponsibleUser(org, users) || "—"}
+                  </span>
                 </TableCell>
                 <TableCell className="px-6 py-4">
                   <span className="text-sm text-muted-foreground font-medium">{org.phone || "—"}</span>
@@ -53,11 +88,11 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                     variant="outline"
                     className={`font-normal border-border/50 ${
                       org.is_active
-                        ? "bg-accent/10 text-accent hover:bg-accent/20"
+                        ? "bg-green-500/10 text-green-600 hover:bg-green-500/20"
                         : "bg-muted/20 text-muted-foreground hover:bg-muted/30"
                     } transition-colors duration-200`}
                   >
-                    {org.is_active ? "Фаол" : "Нофаол"}
+                    {org.is_active ? "Faol" : "Nofaol"}
                   </Badge>
                 </TableCell>
                 <TableCell className="px-6 py-4">
@@ -71,21 +106,32 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                       <Link href={`/dashboard/organizations/${org.id}`}>
                         <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
                           <Eye className="mr-2 h-4 w-4" />
-                          Батафсил кўриш
+                          Batafsil ko'rish
                         </DropdownMenuItem>
                       </Link>
-                      <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Таҳрирлаш
-                      </DropdownMenuItem>
+                      <Link href={`/dashboard/organizations/${org.id}`}>
+                        <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Tahrirlash
+                        </DropdownMenuItem>
+                      </Link>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className={`hover:bg-amber/10 hover:text-amber-600 transition-all duration-300 rounded-lg ${
-                          !org.is_active ? "text-muted-foreground" : ""
-                        }`}
+                        onClick={() => onToggleStatus?.(org.id, org.is_active)}
+                        className="hover:bg-amber-500/10 hover:text-amber-600 transition-all duration-300 rounded-lg"
                       >
-                        <Lock className="mr-2 h-4 w-4" />
-                        {org.is_active ? "Нофаоллаштириш" : "Фаоллаштириш"}
+                        {org.is_active ? (
+                          <><Lock className="mr-2 h-4 w-4" /> Nofaollashtirish</>
+                        ) : (
+                          <><Unlock className="mr-2 h-4 w-4" /> Faollashtirish</>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onDelete?.(org.id)}
+                        className="hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        O'chirish
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

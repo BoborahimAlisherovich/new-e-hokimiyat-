@@ -30,41 +30,97 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
-import { roleLabels } from "@/lib/mock-data"
-import { getOrganizations, getUsers, getTasks } from "@/lib/api"
+import { roleLabels } from "@/lib/constants"
+import { getOrganizationById, getUsers, getTasks, updateOrganization, deleteOrganization } from "@/lib/api"
 import { UserStatusBadge, TaskStatusBadge } from "@/components/ui/status-badge"
-import { ArrowLeft, Building2, Users, ClipboardList, TrendingUp, Edit, Trash2, UserPlus } from "lucide-react"
+import { ArrowLeft, Building2, Users, ClipboardList, TrendingUp, Edit, Trash2, UserPlus, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useState, useEffect, useCallback } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 export default function OrganizationDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { toast } = useToast()
   const id = params.id as string
 
   const [organization, setOrganization] = useState<any | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isActive, setIsActive] = useState(false)
+  const [editName, setEditName] = useState("")
   const [orgUsers, setOrgUsers] = useState<any[]>([])
   const [orgTasks, setOrgTasks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [org, users, tasks] = await Promise.all([
+        getOrganizationById(id),
+        getUsers(),
+        getTasks()
+      ])
+      const usersList = Array.isArray(users) ? users : (users as any).results || []
+      const tasksList = Array.isArray(tasks) ? tasks : (tasks as any).results || []
+      
+      setOrganization(org)
+      setIsActive(Boolean(org?.is_active || org?.isActive))
+      setEditName(org?.name || "")
+      
+      // Backend uses 'organization' field (UUID)
+      setOrgUsers(usersList.filter((u: any) => String(u.organization) === String(id) || String(u.organization_id) === String(id)))
+      // Tasks may have assigned_organizations array
+      setOrgTasks(tasksList.filter((t: any) => {
+        const orgs = t.assigned_organizations || t.organizations || []
+        return orgs.some((org: any) => {
+          const orgId = typeof org === 'object' ? (org.organization?.id || org.organization_id || org.id) : org
+          return String(orgId) === String(id)
+        })
+      }))
+    } catch (err) {
+      console.error("Yuklashda xatolik:", err)
+      toast({ title: "Xato", description: "Ma'lumotlarni yuklashda xatolik", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }, [id, toast])
 
   useEffect(() => {
-    let mounted = true
-    Promise.all([getOrganizations(), getUsers(), getTasks()])
-      .then(([orgs, users, tasks]) => {
-        if (!mounted) return
-        const org = orgs.results.find((o: any) => o.id === id) || null
-        setOrganization(org)
-        setIsActive(Boolean(org?.isActive))
-        setOrgUsers(users.results.filter((u: any) => u.organizationId === id))
-        setOrgTasks(tasks.results.filter((t: any) => (t.organizations || []).includes(id)))
+    loadData()
+  }, [loadData])
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+      await updateOrganization(id, {
+        name: editName,
+        is_active: isActive
       })
-      .catch(() => {})
-    return () => {
-      mounted = false
+      toast({ title: "Muvaffaqiyat", description: "Tashkilot yangilandi" })
+      setIsEditOpen(false)
+      await loadData()
+    } catch (err: any) {
+      toast({ title: "Xato", description: err?.message || "Saqlashda xatolik", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
     }
-  }, [id])
+  }
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      await deleteOrganization(id)
+      toast({ title: "Muvaffaqiyat", description: "Tashkilot o'chirildi" })
+      router.push("/dashboard/organizations")
+    } catch (err: any) {
+      toast({ title: "Xato", description: err?.message || "O'chirishda xatolik", variant: "destructive" })
+      setIsDeleting(false)
+    }
+  }
 
   const completedTasks = orgTasks.filter((t) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
   const pendingTasks = orgTasks.filter((t) => t.status === "YANGI" || t.status === "IJRODA").length
@@ -74,18 +130,36 @@ export default function OrganizationDetailPage() {
     return new Date(dateStr).toLocaleDateString('en-GB')
   }
 
+  if (loading) {
+    return (
+      <>
+        <Header title="Tashkilot ma'lumotlari" />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted-foreground">Yuklanmoqda...</span>
+        </div>
+      </>
+    )
+  }
+
   if (!organization) {
     return (
       <>
-        <Header title="Ташкилот маълумотлари" />
-        <div className="p-6">Юкланмоқда...</div>
+        <Header title="Tashkilot ma'lumotlari" />
+        <div className="p-6 text-center">
+          <Building2 className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+          <p className="text-muted-foreground mb-4">Tashkilot topilmadi</p>
+          <Link href="/dashboard/organizations">
+            <Button variant="outline">Tashkilotlarga qaytish</Button>
+          </Link>
+        </div>
       </>
     )
   }
 
   return (
     <>
-      <Header title="Ташкилот маълумотлари" />
+      <Header title="Tashkilot ma'lumotlari" />
       <div className="p-6 space-y-6">
         {/* Header with title and actions */}
         <div className="flex flex-col gap-4 mb-6">
@@ -96,43 +170,50 @@ export default function OrganizationDetailPage() {
               <Link href="/dashboard/organizations">
                 <Button variant="ghost" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
-                  Орқага
+                  Orqaga
                 </Button>
               </Link>
               <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Edit className="mr-2 h-4 w-4" />
-                    Таҳрирлаш
+                    Tahrirlash
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-foreground">Ташкилотни таҳрирлаш</DialogTitle>
+                    <DialogTitle className="text-xl font-bold text-foreground">Tashkilotni tahrirlash</DialogTitle>
                     <DialogDescription className="text-muted-foreground">
-                      Ташкилот маълумотларини янгиланг
+                      Tashkilot ma'lumotlarini yangilang
                     </DialogDescription>
                   </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground">Ташкилот номи</Label>
-                    <Input defaultValue={organization.name} className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                    <Label className="text-sm font-medium text-foreground">Tashkilot nomi</Label>
+                    <Input 
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium text-foreground">Фаол ҳолат</Label>
+                      <Label className="text-sm font-medium text-foreground">Faol holat</Label>
                       <p className="text-sm text-muted-foreground">
-                        Нофаол ташкилотларга топшириқ бириктириб бўлмайди
+                        Nofaol tashkilotlarga topshiriq biriktirib bo'lmaydi
                       </p>
                     </div>
                     <Switch checked={isActive} onCheckedChange={setIsActive} />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsEditOpen(false)} className="border-border/50 bg-background/50">
-                    Бекор қилиш
+                  <Button variant="outline" onClick={() => setIsEditOpen(false)} className="border-border/50 bg-background/50" disabled={isSaving}>
+                    Bekor qilish
                   </Button>
-                  <Button onClick={() => setIsEditOpen(false)}>Сақлаш</Button>
+                  <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Saqlash
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -141,22 +222,23 @@ export default function OrganizationDetailPage() {
                   <Button
                     variant="outline"
                     className="text-destructive border-destructive/30 hover:bg-destructive/10 bg-transparent"
+                    disabled={isDeleting}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Ўчириш
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    O'chirish
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-xl font-bold text-foreground">Ташкилотни ўчириш</AlertDialogTitle>
+                    <AlertDialogTitle className="text-xl font-bold text-foreground">Tashkilotni o'chirish</AlertDialogTitle>
                     <AlertDialogDescription className="text-muted-foreground">
-                      {organization.name} ни ўчирмоқчимисиз? Бу амални ортга қайтариб бўлмайди. Ташкилотга
-                      бириктирилган барча фойдаланувчилар ва топшириқлар ҳам ўчирилади.
+                      {organization.name} ni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi. Tashkilotga
+                      biriktirilgan barcha foydalanuvchilar va topshiriqlar ham o'chiriladi.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="border-border/50 bg-background/50">Бекор қилиш</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive hover:bg-destructive/90">Ўчириш</AlertDialogAction>
+                    <AlertDialogCancel className="border-border/50 bg-background/50">Bekor qilish</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">O'chirish</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -177,30 +259,29 @@ export default function OrganizationDetailPage() {
                   variant="outline"
                   className={cn(
                     "mt-3",
-                    organization.isActive
-                      ? "bg-accent/10 text-accent border-accent/30"
+                    (organization.is_active || organization.isActive)
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
                       : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {organization.isActive ? "Фаол" : "Нофаол"}
+                  {(organization.is_active || organization.isActive) ? "Faol" : "Nofaol"}
                 </Badge>
               </div>
 
-              {/* Stats */}
-              <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="space-y-1">
                   <div className="flex items-center justify-center">
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <p className="text-2xl font-bold text-foreground">{orgUsers.length}</p>
-                  <p className="text-xs text-muted-foreground">Ходимлар</p>
+                  <p className="text-xs text-muted-foreground">Xodimlar</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-center">
                     <ClipboardList className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <p className="text-2xl font-bold text-foreground">{orgTasks.length}</p>
-                  <p className="text-xs text-muted-foreground">Топшириқлар</p>
+                  <p className="text-xs text-muted-foreground">Topshiriqlar</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-center">
@@ -216,9 +297,9 @@ export default function OrganizationDetailPage() {
                           : "text-destructive",
                     )}
                   >
-                    {organization.rating}%
+                    {organization.rating || 0}%
                   </p>
-                  <p className="text-xs text-muted-foreground">Рейтинг</p>
+                  <p className="text-xs text-muted-foreground">Reyting</p>
                 </div>
               </div>
 
@@ -226,7 +307,7 @@ export default function OrganizationDetailPage() {
               <div className="mt-6 space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Ижро даражаси</span>
+                    <span className="text-muted-foreground">Ijro darajasi</span>
                     <span className="font-medium text-foreground">
                       {completedTasks}/{orgTasks.length}
                     </span>
@@ -237,15 +318,15 @@ export default function OrganizationDetailPage() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-accent/10 p-2">
                     <p className="text-lg font-bold text-accent">{completedTasks}</p>
-                    <p className="text-xs text-muted-foreground">Бажарилган</p>
+                    <p className="text-xs text-muted-foreground">Bajarilgan</p>
                   </div>
                   <div className="rounded-lg bg-yellow-500/10 p-2">
                     <p className="text-lg font-bold text-yellow-500">{pendingTasks}</p>
-                    <p className="text-xs text-muted-foreground">Жарайонда</p>
+                    <p className="text-xs text-muted-foreground">Jarayonda</p>
                   </div>
                   <div className="rounded-lg bg-destructive/10 p-2">
                     <p className="text-lg font-bold text-destructive">{overdueTasks}</p>
-                    <p className="text-xs text-muted-foreground">Кечиккан</p>
+                    <p className="text-xs text-muted-foreground">Kechikkan</p>
                   </div>
                 </div>
               </div>
@@ -260,11 +341,11 @@ export default function OrganizationDetailPage() {
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="users" className="gap-2">
                       <Users className="h-4 w-4" />
-                      Ходимлар ({orgUsers.length})
+                      Xodimlar ({orgUsers.length})
                     </TabsTrigger>
                     <TabsTrigger value="tasks" className="gap-2">
                       <ClipboardList className="h-4 w-4" />
-                      Топшириқлар ({orgTasks.length})
+                      Topshiriqlar ({orgTasks.length})
                     </TabsTrigger>
                   </TabsList>
                 </CardHeader>
@@ -273,11 +354,11 @@ export default function OrganizationDetailPage() {
                     {orgUsers.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                         <Users className="h-12 w-12 mb-4 opacity-20" />
-                        <p>Ходимлар йўқ</p>
+                        <p>Xodimlar yo'q</p>
                         <Link href="/dashboard/users">
                           <Button variant="outline" className="mt-4 bg-transparent">
                             <UserPlus className="mr-2 h-4 w-4" />
-                            Ходим қўшиш
+                            Xodim qo'shish
                           </Button>
                         </Link>
                       </div>
@@ -292,22 +373,28 @@ export default function OrganizationDetailPage() {
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
                                 <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                                  {user.firstName[0]}
-                                  {user.lastName[0]}
+                                  {(user.first_name || user.firstName || '?')[0]}
+                                  {(user.last_name || user.lastName || '?')[0]}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
                                 <p className="font-medium text-foreground">
-                                  {user.lastName} {user.firstName}
+                                  {user.last_name || user.lastName} {user.first_name || user.firstName}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{user.position}</p>
+                                <p className="text-sm text-muted-foreground">{user.position || '-'}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="font-normal">
-                                {roleLabels[user.role]}
+                                {(roleLabels as Record<string, string>)[user.role] || user.role || '-'}
                               </Badge>
-                              <UserStatusBadge status={user.status} />
+                              {user.is_active !== undefined ? (
+                                <Badge variant="outline" className={user.is_active ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}>
+                                  {user.is_active ? "Faol" : "Nofaol"}
+                                </Badge>
+                              ) : (
+                                <UserStatusBadge status={user.status} />
+                              )}
                             </div>
                           </Link>
                         ))}
@@ -321,7 +408,7 @@ export default function OrganizationDetailPage() {
                     {orgTasks.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                         <ClipboardList className="h-12 w-12 mb-4 opacity-20" />
-                        <p>Топшириқлар йўқ</p>
+                        <p>Topshiriqlar yo'q</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-border">

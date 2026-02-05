@@ -1,9 +1,14 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Organization, User } from "@/types"
+import { createUser } from "@/lib/api"
+import { Loader2 } from "lucide-react"
 
 interface CreateUserFormData {
   firstName: string
@@ -34,43 +39,106 @@ export function UserCreateDialog({
   onChange,
   onSubmit,
 }: UserCreateDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const organizationItems = Array.isArray(organizations)
+    ? organizations
+    : (organizations as { results?: Organization[] } | null | undefined)?.results || []
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.firstName.trim()) newErrors.firstName = "Ism majburiy"
+    if (!formData.lastName.trim()) newErrors.lastName = "Familiya majburiy"
+    if (!formData.phone.trim()) newErrors.phone = "Telefon majburiy"
+    if (formData.pnfl && formData.pnfl.length !== 14) newErrors.pnfl = "PNFL 14 ta raqamdan iborat bo'lishi kerak"
+    if (!formData.organizationId) newErrors.organizationId = "Tashkilot tanlang"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async () => {
+    if (!validate()) return
+    
+    setIsSubmitting(true)
+    try {
+      await createUser({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        middle_name: formData.middleName,
+        email: formData.email || undefined,
+        phone: formData.phone,
+        pnfl: formData.pnfl || undefined,
+        position: formData.position || undefined,
+        role: formData.role,
+        organization: parseInt(formData.organizationId),
+      })
+      onSubmit()
+    } catch (error: any) {
+      console.error("Create user error:", error)
+      setErrors({ submit: error.message || "Yaratishda xatolik yuz berdi" })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Янги фойдаланувчи қўшиш</DialogTitle>
+          <DialogTitle>Yangi foydalanuvchi qo'shish</DialogTitle>
           <DialogDescription>
-            Тизимга янги фойдаланувчи қўшиш учун маълумотларни киритинг
+            Tizimga yangi foydalanuvchi qo'shish uchun ma'lumotlarni kiriting
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 py-2">
+          {errors.submit && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+              {errors.submit}
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="firstName">Исм</Label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => onChange("firstName", e.target.value)}
-                placeholder="Исмни киритинг"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Фамилия</Label>
+              <Label htmlFor="lastName">Familiya <span className="text-red-500">*</span></Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => onChange("lastName", e.target.value)}
-                placeholder="Фамилияни киритинг"
+                placeholder="Familiyani kiriting"
+                className={errors.lastName ? "border-red-500" : ""}
               />
+              {errors.lastName && <p className="text-xs text-red-500">{errors.lastName}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="middleName">Шарифи</Label>
+              <Label htmlFor="firstName">Ism <span className="text-red-500">*</span></Label>
+              <Input
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => onChange("firstName", e.target.value)}
+                placeholder="Ismni kiriting"
+                className={errors.firstName ? "border-red-500" : ""}
+              />
+              {errors.firstName && <p className="text-xs text-red-500">{errors.firstName}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="middleName">Sharifi</Label>
               <Input
                 id="middleName"
                 value={formData.middleName}
                 onChange={(e) => onChange("middleName", e.target.value)}
-                placeholder="Шарифни киритинг"
+                placeholder="Sharifni kiriting"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefon <span className="text-red-500">*</span></Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => onChange("phone", e.target.value)}
+                placeholder="+998 XX XXX XX XX"
+                className={errors.phone ? "border-red-500" : ""}
+              />
+              {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -83,69 +151,66 @@ export function UserCreateDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => onChange("phone", e.target.value)}
-                placeholder="+998 XX XXX XX XX"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pnfl">ПНФЛ</Label>
+              <Label htmlFor="pnfl">PNFL</Label>
               <Input
                 id="pnfl"
                 value={formData.pnfl}
-                onChange={(e) => onChange("pnfl", e.target.value)}
-                placeholder="14 таракамли ракам"
+                onChange={(e) => onChange("pnfl", e.target.value.replace(/\D/g, ''))}
+                placeholder="14 ta raqam"
                 maxLength={14}
+                className={errors.pnfl ? "border-red-500" : ""}
               />
+              {errors.pnfl && <p className="text-xs text-red-500">{errors.pnfl}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="position">Лавозим</Label>
+              <Label htmlFor="position">Lavozim</Label>
               <Input
                 id="position"
                 value={formData.position}
                 onChange={(e) => onChange("position", e.target.value)}
-                placeholder="Лавозимни киритинг"
+                placeholder="Lavozimni kiriting"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Роль</Label>
+              <Label htmlFor="role">Rol <span className="text-red-500">*</span></Label>
               <Select value={formData.role} onValueChange={(value) => onChange("role", value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="HOKIM">Ҳоким</SelectItem>
-                  <SelectItem value="HOKIMLIK_MASUL">Ҳокимлик масъули</SelectItem>
-                  <SelectItem value="TASHKILOT_RAHBAR">Ташкилот раҳбари</SelectItem>
-                  <SelectItem value="TASHKILOT_MASUL">Ташкилот масъули</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="organizationId">Ташкилот</Label>
-              <Select value={formData.organizationId} onValueChange={(value) => onChange("organizationId", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ташкилотни танланг" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={String(org.id)}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="HOKIM">Hokim</SelectItem>
+                  <SelectItem value="HOKIMLIK_MASUL">Hokimlik mas'uli</SelectItem>
+                  <SelectItem value="TASHKILOT_RAHBARI">Tashkilot rahbari</SelectItem>
+                  <SelectItem value="TASHKILOT_MASUL">Tashkilot mas'uli</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="organizationId">Tashkilot <span className="text-red-500">*</span></Label>
+            <Select value={formData.organizationId} onValueChange={(value) => onChange("organizationId", value)}>
+              <SelectTrigger className={errors.organizationId ? "border-red-500" : ""}>
+                <SelectValue placeholder="Tashkilotni tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                {organizationItems.map((org) => (
+                  <SelectItem key={org.id} value={String(org.id)}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.organizationId && <p className="text-xs text-red-500">{errors.organizationId}</p>}
+          </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Бекор қилиш
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            Bekor qilish
           </Button>
-          <Button onClick={onSubmit}>Қўшиш</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Qo'shish
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

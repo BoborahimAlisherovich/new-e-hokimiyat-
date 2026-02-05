@@ -229,7 +229,7 @@ export default function SettingsPage() {
                     <h3 className="text-lg font-medium text-gray-900">Abdulla Karimov</h3>
                     <p className="text-sm text-gray-600">admin@ehokimiyat.uz</p>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-white animate-bounce-subtle" />
+                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white animate-bounce-subtle" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-emerald-600 bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">

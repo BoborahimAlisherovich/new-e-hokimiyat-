@@ -1,114 +1,229 @@
 """
 Task views for E-Hokimiyat API.
+
+Bu modul topshiriqlar (tasks) bilan ishlash uchun API endpointlarni
+o'z ichiga oladi.
+
+Endpointlar:
+    - GET/POST /api/tasks/ - Topshiriqlar ro'yxati va yaratish
+    - GET/PUT/DELETE /api/tasks/{id}/ - Topshiriq detallari
+    - POST /api/tasks/{id}/accept/ - Topshiriqni qabul qilish
+    - POST /api/tasks/{id}/report/ - Hisobot topshirish
+    - POST /api/tasks/{id}/close/ - Topshiriqni yopish
+    - POST /api/tasks/{id}/reassign/ - Qayta ijroga yuborish
+    - GET/POST /api/tasks/{id}/timeline/ - Timeline xabarlari
 """
 
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q
-from django.utils import timezone
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from __future__ import annotations
 
-from .models import (
-    Task, TaskOrganization, TaskExecution,
-    TaskAttachment, TaskMessage, DeadlineExtensionRequest
-)
-from .serializers import (
-    TaskSerializer, TaskCreateSerializer, TaskDetailSerializer,
-    TaskMinimalSerializer, TaskOrganizationSerializer,
-    TaskExecutionSerializer, TaskMessageSerializer,
-    TaskAttachmentSerializer, DeadlineExtensionRequestSerializer,
-    TaskReportSerializer, TaskAcceptSerializer,
-    ExtensionRequestCreateSerializer, ExtensionReviewSerializer,
-    TaskTimelineSerializer
-)
-from core.permissions import CanCreateTasks, CanExecuteTasks, CanCloseTask
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models.query import QuerySet
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import Serializer
+
 from audit.models import AuditLog
+from core.constants import FileType, Messages, TaskStatus, UserRole
+from core.permissions import CanCloseTask, CanCreateTasks, CanExecuteTasks
 from notifications.models import Notification
 
+from .models import (
+    DeadlineExtensionRequest,
+    Task,
+    TaskAttachment,
+    TaskExecution,
+    TaskMessage,
+    TaskOrganization,
+)
+from .serializers import (
+    DeadlineExtensionRequestSerializer,
+    ExtensionRequestCreateSerializer,
+    ExtensionReviewSerializer,
+    TaskAcceptSerializer,
+    TaskAttachmentSerializer,
+    TaskCreateSerializer,
+    TaskDetailSerializer,
+    TaskMessageSerializer,
+    TaskMinimalSerializer,
+    TaskOrganizationSerializer,
+    TaskReportSerializer,
+    TaskSerializer,
+    TaskTimelineSerializer,
+)
 
-def _guess_message_type(file_obj):
+if TYPE_CHECKING:
+    from django.core.files.uploadedfile import UploadedFile
+
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def _guess_message_type(file_obj: 'UploadedFile') -> str:
+    """Fayl turidan xabar turini aniqlash.
+    
+    Args:
+        file_obj: Django yuklangan fayl obyekti
+        
+    Returns:
+        Xabar turi (AUDIO, FILE)
+    """
     content_type = getattr(file_obj, 'content_type', '') or ''
     name = getattr(file_obj, 'name', '') or ''
-    lower = name.lower()
-    if content_type.startswith('audio/') or lower.endswith(('.mp3', '.wav', '.ogg', '.m4a', '.aac')):
+    
+    if content_type.startswith('audio/') or name.lower().endswith(FileType.AUDIO_EXTENSIONS):
         return 'AUDIO'
     return 'FILE'
 
 
-def _guess_attachment_type(file_obj):
+def _guess_attachment_type(file_obj: 'UploadedFile') -> str:
+    """Fayl turidan attachment turini aniqlash.
+    
+    Args:
+        file_obj: Django yuklangan fayl obyekti
+        
+    Returns:
+        Attachment turi (IMAGE, VIDEO, AUDIO, DOCUMENT, OTHER)
+    """
     content_type = getattr(file_obj, 'content_type', '') or ''
     name = getattr(file_obj, 'name', '') or ''
-    lower = name.lower()
-    if content_type.startswith('image/') or lower.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg')):
-        return 'IMAGE'
-    if content_type.startswith('video/') or lower.endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
-        return 'VIDEO'
-    if content_type.startswith('audio/') or lower.endswith(('.mp3', '.wav', '.ogg', '.m4a', '.aac')):
-        return 'AUDIO'
-    if content_type.startswith('application/') or lower.endswith(('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx')):
-        return 'DOCUMENT'
-    return 'OTHER'
+    
+    return FileType.get_type_from_content_type(content_type, name)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
+    """Topshiriqlar bilan ishlash uchun ViewSet.
+    
+    Bu ViewSet quyidagi amallarni qo'llab-quvvatlaydi:
+        - list: Topshiriqlar ro'yxatini olish
+        - create: Yangi topshiriq yaratish
+        - retrieve: Topshiriq tafsilotlarini olish
+        - update/partial_update: Topshiriqni yangilash
+        - destroy: Topshiriqni o'chirish
+        
+    Qo'shimcha action'lar:
+        - accept: Topshiriqni qabul qilish
+        - report: Hisobot topshirish
+        - close: Topshiriqni yopish
+        - reassign: Qayta ijroga yuborish
+        - timeline: Xabarlar va amallar tarixi
+        - extend_request: Muddat uzaytirish so'rovi
+    
+    Attributes:
+        queryset: Barcha topshiriqlar
+        permission_classes: Faqat autentifikatsiya qilingan foydalanuvchilar
+        parser_classes: JSON, multipart va form data qabul qilish
     """
-    Task management endpoints.
-    """
+    
     queryset = Task.objects.all()
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'priority', 'category']
     search_fields = ['title', 'description']
-    ordering_fields = ['deadline', 'created_at', 'priority']
-    ordering = ['-created_at']
+    ordering_fields = ['deadline', 'created_at', 'priority', 'status']
+    ordering = ['status', 'deadline', '-created_at']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request: Request) -> Response:
+        """Topshiriqlar statistikasi (filtrlar bilan)."""
+        queryset = self.filter_queryset(self.get_queryset())
+
+        total = queryset.count()
+        pending = queryset.filter(status='YANGI').count()
+        in_progress = queryset.filter(status='IJRODA').count()
+        completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
+        overdue = queryset.filter(status='MUDDATI_KECH').count()
+        active_sectors = queryset.exclude(category='').values('category').distinct().count()
+
+        return Response({
+            'total': total,
+            'pending': pending,
+            'in_progress': in_progress,
+            'completed': completed,
+            'overdue': overdue,
+            'active_sectors': active_sectors,
+        })
     
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return TaskCreateSerializer
-        elif self.action == 'retrieve':
-            return TaskDetailSerializer
-        elif self.action == 'list':
-            return TaskMinimalSerializer
-        return TaskSerializer
+    def get_serializer_class(self) -> Type[Serializer]:
+        """So'rov turiga qarab serializer tanlash.
+        
+        Returns:
+            Tegishli Serializer class
+        """
+        serializer_map = {
+            'create': TaskCreateSerializer,
+            'retrieve': TaskDetailSerializer,
+            'list': TaskMinimalSerializer,
+        }
+        return serializer_map.get(self.action, TaskSerializer)
     
-    def get_permissions(self):
+    def get_permissions(self) -> List:
+        """Action turiga qarab permission'larni tanlash.
+        
+        Returns:
+            Permission class'lar ro'yxati
+        """
         if self.action == 'create':
             return [IsAuthenticated(), CanCreateTasks()]
         return [IsAuthenticated()]
     
-    def create(self, request, *args, **kwargs):
-        """Override create to log validation errors."""
-        print(f"TaskViewSet.create: request.data = {request.data}")
+    def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Yangi topshiriq yaratish.
         
+        Args:
+            request: HTTP so'rov
+            
+        Returns:
+            Yaratilgan topshiriq ma'lumotlari
+        """
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(f"TaskViewSet.create: Validation errors = {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
-    def get_queryset(self):
-        """Filter tasks based on user role."""
+    def get_queryset(self) -> QuerySet[Task]:
+        """Foydalanuvchi roliga qarab topshiriqlarni filtrlash.
+        
+        Bajarilgan topshiriqlar ro'yxat oxirida ko'rsatiladi.
+        
+        Returns:
+            Filtrlangan topshiriqlar queryset'i
+        """
         user = self.request.user
         queryset = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
             'assigned_organizations__organization'
         )
         
-        # Hokim and Hokimlik mas'uli can see all tasks
-        if user.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+        # Faol topshiriqlar birinchi (0), bajarilganlar oxirda (1)
+        queryset = queryset.annotate(
+            status_order=Case(
+                When(status__in=TaskStatus.CLOSED_STATUSES, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).order_by('status_order', 'deadline', '-created_at')
+        
+        # Hokim va Hokimlik mas'uli barcha topshiriqlarni ko'radi
+        if user.role in UserRole.ADMIN_ROLES:
             return queryset
         
-        # Tashkilot rahbari and mas'uli can only see tasks assigned to their organization
-        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+        # Tashkilot xodimlari faqat o'z tashkilotiga berilgan topshiriqlarni ko'radi
+        if user.role in UserRole.ORGANIZATION_ROLES:
             if user.organization:
                 return queryset.filter(
                     assigned_organizations__organization=user.organization

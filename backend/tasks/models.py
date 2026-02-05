@@ -94,6 +94,30 @@ class Task(BaseModel):
         verbose_name='Yopgan'
     )
     
+    # Manba (qayerdan yaratilgan)
+    SOURCE_CHOICES = [
+        ('MANUAL', 'Qo\'lda yaratilgan'),
+        ('RECURRING', 'Takrorlanuvchi'),
+        ('AI', 'AI tomonidan'),
+        ('TELEGRAM', 'Telegram bot'),
+    ]
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default='MANUAL',
+        verbose_name='Manba'
+    )
+    
+    # Takrorlanuvchi topshiriq bog'lanishi
+    recurring_task = models.ForeignKey(
+        'tasks.RecurringTask',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_tasks',
+        verbose_name='Takrorlanuvchi topshiriq'
+    )
+    
     class Meta:
         verbose_name = 'Topshiriq'
         verbose_name_plural = 'Topshiriqlar'
@@ -468,3 +492,218 @@ class DeadlineExtensionRequest(BaseModel):
         self.reviewed_at = timezone.now()
         self.review_comment = comment
         self.save()
+
+
+# ==============================================================================
+# TAKRORLANUVCHI TOPSHIRIQLAR
+# ==============================================================================
+
+class RecurringTask(BaseModel):
+    """
+    Takrorlanuvchi topshiriq shabloni.
+    
+    Bu model asosida belgilangan vaqtda avtomatik topshiriqlar yaratiladi.
+    """
+    
+    FREQUENCY_CHOICES = [
+        ('DAILY', 'Har kuni'),
+        ('WEEKLY', 'Har hafta'),
+        ('BIWEEKLY', 'Ikki haftada bir'),
+        ('MONTHLY', 'Har oy'),
+        ('QUARTERLY', 'Har chorakda'),
+        ('YEARLY', 'Har yili'),
+        ('CUSTOM', 'Maxsus (cron)'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Faol'),
+        ('PAUSED', "To'xtatilgan"),
+        ('COMPLETED', 'Yakunlangan'),
+        ('CANCELLED', 'Bekor qilingan'),
+    ]
+    
+    # Asosiy ma'lumotlar
+    title = models.CharField(max_length=500, verbose_name='Topshiriq sarlavhasi')
+    description = models.TextField(verbose_name='Topshiriq tavsifi')
+    
+    # Takrorlanish sozlamalari
+    frequency = models.CharField(
+        max_length=20,
+        choices=FREQUENCY_CHOICES,
+        default='MONTHLY',
+        verbose_name='Takrorlanish chastotasi'
+    )
+    cron_expression = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Cron ifodasi',
+        help_text="Maxsus takrorlanish uchun cron formati"
+    )
+    cron_description = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Cron tavsifi'
+    )
+    
+    # Vaqt sozlamalari
+    start_date = models.DateField(verbose_name='Boshlanish sanasi')
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Tugash sanasi'
+    )
+    next_run_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Keyingi ishga tushish'
+    )
+    last_run_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Oxirgi ishga tushish'
+    )
+    
+    # Topshiriq sozlamalari
+    priority = models.CharField(
+        max_length=20,
+        choices=Task.PRIORITY_CHOICES,
+        default='ODDIY',
+        verbose_name='Muhimlik darajasi'
+    )
+    deadline_days = models.PositiveIntegerField(
+        default=7,
+        verbose_name='Muddat (kun)'
+    )
+    
+    # Tashkilotlar
+    organizations = models.ManyToManyField(
+        'organizations.Organization',
+        related_name='recurring_tasks',
+        verbose_name='Tayinlangan tashkilotlar',
+        blank=True
+    )
+    
+    # Yaratuvchi va holat
+    created_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_recurring_tasks',
+        verbose_name='Yaratuvchi'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ACTIVE',
+        verbose_name='Holat'
+    )
+    
+    # Statistika
+    total_created = models.PositiveIntegerField(default=0, verbose_name='Jami yaratilgan')
+    
+    class Meta:
+        verbose_name = "Takrorlanuvchi topshiriq"
+        verbose_name_plural = "Takrorlanuvchi topshiriqlar"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"[{self.get_frequency_display()}] {self.title[:50]}"
+    
+    def calculate_next_run(self):
+        """Keyingi ishga tushish vaqtini hisoblash"""
+        from datetime import timedelta
+        
+        now = timezone.now()
+        
+        if self.frequency == 'CUSTOM' and self.cron_expression:
+            try:
+                from croniter import croniter
+                cron = croniter(self.cron_expression, now)
+                self.next_run_date = cron.get_next(timezone.datetime)
+            except Exception:
+                self.next_run_date = now + timedelta(days=1)
+        else:
+            base_date = self.last_run_date or now
+            
+            intervals = {
+                'DAILY': timedelta(days=1),
+                'WEEKLY': timedelta(weeks=1),
+                'BIWEEKLY': timedelta(weeks=2),
+                'MONTHLY': timedelta(days=30),
+                'QUARTERLY': timedelta(days=90),
+                'YEARLY': timedelta(days=365),
+            }
+            self.next_run_date = base_date + intervals.get(self.frequency, timedelta(days=1))
+        
+        self.save()
+    
+    def create_task_instance(self):
+        """Yangi topshiriq nusxasini yaratish"""
+        from datetime import timedelta
+        
+        if self.status != 'ACTIVE':
+            return None
+        
+        # Tugash sanasini tekshirish
+        if self.end_date and timezone.now().date() > self.end_date:
+            self.status = 'COMPLETED'
+            self.save()
+            return None
+        
+        # Yangi topshiriq yaratish
+        task = Task.objects.create(
+            title=f"{self.title} - {timezone.now().strftime('%d.%m.%Y')}",
+            description=self.description,
+            priority=self.priority,
+            deadline=timezone.now() + timedelta(days=self.deadline_days),
+            created_by=self.created_by,
+            source='RECURRING',
+            recurring_task=self,
+        )
+        
+        # Tashkilotlarni qo'shish
+        for org in self.organizations.all():
+            TaskOrganization.objects.create(task=task, organization=org)
+        
+        # Tarix yozish
+        RecurringTaskHistory.objects.create(
+            recurring_task=self,
+            created_task=task,
+            scheduled_date=timezone.now()
+        )
+        
+        # Statistikani yangilash
+        self.last_run_date = timezone.now()
+        self.total_created += 1
+        self.save()
+        self.calculate_next_run()
+        
+        return task
+
+
+class RecurringTaskHistory(BaseModel):
+    """Takrorlanuvchi topshiriq tarixi"""
+    
+    recurring_task = models.ForeignKey(
+        RecurringTask,
+        on_delete=models.CASCADE,
+        related_name='history',
+        verbose_name='Takrorlanuvchi topshiriq'
+    )
+    created_task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='recurring_source',
+        verbose_name='Yaratilgan topshiriq'
+    )
+    scheduled_date = models.DateTimeField(verbose_name='Rejalashtirilgan sana')
+    
+    class Meta:
+        verbose_name = "Takrorlanuvchi topshiriq tarixi"
+        verbose_name_plural = "Takrorlanuvchi topshiriq tarixlari"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.recurring_task.title[:30]} -> #{self.created_task.id}"

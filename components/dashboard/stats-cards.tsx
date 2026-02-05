@@ -4,18 +4,25 @@
 import { Card, CardContent } from "@/components/ui/card"
 import React from "react"
 import { ListTodo, CheckCircle, AlertCircle, Clock, TrendingUp, ArrowUp } from "lucide-react"
-import { getTasks } from "@/lib/api"
+import { getTaskStats } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { StatsCardSkeleton } from "@/components/ui/loading-skeleton"
+import { motion } from "framer-motion"
 
-const computeStats = (tasks: any[]) => {
-  const totalTasks = tasks.length
-  const completedTasks = tasks.filter((t) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
-  const overdueTasks = tasks.filter((t) => t.status === "MUDDATI_KECH").length
-  const inProgressTasks = tasks.filter((t) => t.status === "IJRODA").length
-  const sectors = Array.from(new Set(tasks.map((t) => t.sector)))
-  const activeSectors = sectors.length
-  return { totalTasks, completedTasks, overdueTasks, inProgressTasks, activeSectors }
+const computeStats = (stats: {
+  total: number
+  completed: number
+  overdue: number
+  in_progress: number
+  active_sectors: number
+}) => {
+  return {
+    totalTasks: stats.total,
+    completedTasks: stats.completed,
+    overdueTasks: stats.overdue,
+    inProgressTasks: stats.in_progress,
+    activeSectors: stats.active_sectors,
+  }
 }
 
 export function StatsCards() {
@@ -31,10 +38,10 @@ export function StatsCards() {
   React.useEffect(() => {
     let mounted = true
     setIsLoading(true)
-    getTasks()
-      .then((tasks) => {
+    getTaskStats()
+      .then((stats) => {
         if (!mounted) return
-        setStatsData(computeStats(tasks))
+        setStatsData(computeStats(stats))
       })
       .catch(() => {})
       .finally(() => {
@@ -49,52 +56,56 @@ export function StatsCards() {
 
   const stats = [
     {
-      label: "Жами топшириқлар",
+      label: "Jami topshiriqlar",
       value: totalTasks.toString(),
       change: `${activeSectors}`,
-      changeLabel: "та соҳада",
+      changeLabel: "ta sohada",
       icon: ListTodo,
-      bgColor: "bg-emerald-100",
-      iconColor: "text-emerald-600",
+      gradient: "from-blue-500 to-cyan-500",
+      bgColor: "bg-gradient-to-br from-blue-500/10 to-cyan-500/10",
+      iconColor: "text-blue-600",
       trend: "up",
       trendValue: "+12%",
-      description: "Барча топшириқлар",
+      description: "Barcha topshiriqlar",
     },
     {
-      label: "Бажарилган",
+      label: "Bajarilgan",
       value: completedTasks.toString(),
       change: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%",
-      changeLabel: "ўриндаги",
+      changeLabel: "to'liqlik",
       icon: CheckCircle,
-      bgColor: "bg-emerald-100",
+      gradient: "from-emerald-500 to-teal-500",
+      bgColor: "bg-gradient-to-br from-emerald-500/10 to-teal-500/10",
       iconColor: "text-emerald-600",
       trend: "up",
       trendValue: "+8%",
-      description: "Муваффақиятли бажарилган",
+      description: "Muvaffaqiyatli bajarilgan",
     },
     {
-      label: "Муддат кечиккан",
+      label: "Muddat kechikkan",
       value: overdueTasks.toString(),
-      change: "Ҳавфли",
-      changeLabel: "ҳолат",
+      change: "Xavfli",
+      changeLabel: "holat",
       icon: AlertCircle,
-      bgColor: "bg-red-100",
+      gradient: "from-red-500 to-pink-500",
+      bgColor: "bg-gradient-to-br from-red-500/10 to-pink-500/10",
       iconColor: "text-red-600",
       trend: "down",
       trendValue: "-3%",
-      description: "Эътибор берилган топшириқлар",
+      description: "E'tibor berilgan topshiriqlar",
     },
     {
-      label: "Ижрода",
+      label: "Ijroda",
       value: inProgressTasks.toString(),
-      change: "фаол",
-      changeLabel: "ҳолат",
+      change: "faol",
+      changeLabel: "holat",
       icon: Clock,
-      bgColor: "bg-amber-100",
+      gradient: "from-amber-500 to-orange-500",
+      bgColor: "bg-gradient-to-br from-amber-500/10 to-orange-500/10",
       iconColor: "text-amber-600",
       trend: "up",
       trendValue: "+5%",
-      description: "Ҳозирда ижро бўлган",
+      description: "Hozirda ijro bo'layotgan",
     },
   ]
 
@@ -106,78 +117,101 @@ export function StatsCards() {
         ))
       ) : (
         stats.map((stat, index) => (
-          <Card
+          <motion.div
             key={stat.label}
-            className="group relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:border-primary/30 hover:bg-card hover:scale-102 interactive-card"
-            style={{ animationDelay: `${index * 100}ms` }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              delay: index * 0.1,
+              type: "spring",
+              stiffness: 300,
+              damping: 24
+            }}
+            whileHover={{ scale: 1.02, y: -4 }}
           >
+            <Card
+              className="group relative overflow-hidden bg-white/95 backdrop-blur-xl border-slate-200 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
+            >
+              {/* Gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
           
-          <CardContent className="relative z-10 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <div className="flex items-baseline gap-3">
-                  <h3 className="text-3xl font-bold text-gray-900">{stat.value}</h3>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className={cn(
-                      "h-4 w-4 transition-colors duration-250",
-                      stat.trend === "up" ? "text-emerald-600" : "text-red-600"
-                    )} />
-                    <span className={cn(
-                      "text-sm font-semibold transition-colors duration-250",
-                      stat.trend === "up" ? "text-emerald-600" : "text-red-600"
-                    )}>
-                      {stat.trendValue}
-                    </span>
+              <CardContent className="relative z-10 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-600">{stat.label}</p>
+                    <div className="flex items-baseline gap-3">
+                      <h3 className="text-3xl font-bold text-slate-900">{stat.value}</h3>
+                      <motion.div 
+                        className="flex items-center gap-2"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
+                      >
+                        <TrendingUp className={cn(
+                          "h-4 w-4 transition-colors duration-250",
+                          stat.trend === "up" ? "text-emerald-600" : "text-red-600"
+                        )} />
+                        <span className={cn(
+                          "text-sm font-semibold transition-colors duration-250",
+                          stat.trend === "up" ? "text-emerald-600" : "text-red-600"
+                        )}>
+                          {stat.trendValue}
+                        </span>
+                      </motion.div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-600">{stat.change}</span>
+                      <span className="text-xs text-slate-500">{stat.changeLabel}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">{stat.change}</span>
-                  <span className="text-xs text-gray-400">{stat.changeLabel}</span>
+            
+                {/* Icon container */}
+                <div className="relative">
+                  <motion.div 
+                    className={cn(
+                      "relative w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-md",
+                      stat.bgColor
+                    )}
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <stat.icon className={cn(
+                      "h-7 w-7 transition-colors duration-250",
+                      stat.iconColor
+                    )} />
+                  </motion.div>
                 </div>
-              </div>
-            </div>
             
-            {/* Icon container */}
-            <div className="relative">
-              <div className={cn(
-                "relative w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm animate-float",
-                stat.bgColor
-              )}>
-                <stat.icon className={cn(
-                  "h-7 w-7 transition-colors duration-250",
-                  stat.iconColor
-                )} />
-              </div>
-            </div>
+                {/* Progress indicator */}
+                <div className="mt-6 space-y-3">
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Тўлиқлик</span>
+                    <span>{stat.change}</span>
+                  </div>
+                  <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      className={`h-full rounded-full bg-gradient-to-r ${stat.gradient}`}
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: `${Math.min(100, (parseInt(stat.value) / Math.max(1, totalTasks)) * 100)}%`
+                      }}
+                      transition={{ 
+                        delay: index * 0.1 + 0.5,
+                        duration: 1,
+                        ease: "easeOut"
+                      }}
+                    />
+                  </div>
+                </div>
             
-            {/* Progress indicator */}
-            <div className="mt-6 space-y-3">
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Тўлиқлик</span>
-                <span>{stat.change}</span>
-              </div>
-              <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={cn(
-                    "h-full rounded-full transition-all duration-1000 ease-out animate-shimmer",
-                    stat.iconColor === "text-emerald-600" ? "bg-emerald-600" : 
-                    stat.iconColor === "text-red-600" ? "bg-red-600" : "bg-amber-600"
-                  )}
-                  style={{ 
-                    width: `${Math.min(100, (parseInt(stat.value) / Math.max(1, totalTasks)) * 100)}%`,
-                    animationDelay: `${index * 200 + 500}ms`
-                  }}
-                />
-              </div>
-            </div>
-            
-            {/* Description */}
-            <p className="text-xs text-gray-500 mt-3">
-              {stat.description}
-            </p>
-          </CardContent>
-        </Card>
+                {/* Description */}
+                <p className="text-xs text-slate-500 mt-3">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))
       )}
     </div>

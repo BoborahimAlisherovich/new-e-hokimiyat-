@@ -13,7 +13,7 @@ export function AppealStats({ stats }: AppealStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Жами мурожаатлар</p>
+              <p className="text-sm font-medium text-muted-foreground">Jami murojaatlar</p>
               <p className="text-2xl font-bold">{stats.total}</p>
             </div>
             <MessageSquare className="h-8 w-8 text-muted-foreground" />
@@ -25,7 +25,7 @@ export function AppealStats({ stats }: AppealStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Кутилмоқда</p>
+              <p className="text-sm font-medium text-muted-foreground">Kutilmoqda</p>
               <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
             </div>
             <Calendar className="h-8 w-8 text-blue-600" />
@@ -37,7 +37,7 @@ export function AppealStats({ stats }: AppealStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Бажарилмоқда</p>
+              <p className="text-sm font-medium text-muted-foreground">Bajarilmoqda</p>
               <p className="text-2xl font-bold text-orange-600">{stats.inProgress}</p>
             </div>
             <Search className="h-8 w-8 text-orange-600" />
@@ -49,7 +49,7 @@ export function AppealStats({ stats }: AppealStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Ҳал этилган</p>
+              <p className="text-sm font-medium text-muted-foreground">Hal etilgan</p>
               <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
             </div>
             <Archive className="h-8 w-8 text-green-600" />

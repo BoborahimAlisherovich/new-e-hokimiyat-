@@ -42,7 +42,7 @@ const PRIORITY_COLORS = {
 const STATUS_COLORS = {
   PENDING: "bg-blue-100 text-blue-800 border-blue-200",
   IN_PROGRESS: "bg-orange-100 text-orange-800 border-orange-200",
-  RESOLVED: "bg-green-100 text-green-800 border-green-200",
+  RESOLVED: "bg-emerald-100 text-emerald-800 border-emerald-200",
   REJECTED: "bg-red-100 text-red-800 border-red-200"
 }
 
@@ -248,9 +248,9 @@ export default function AppealsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Ҳал этилган</p>
-                    <p className="text-2xl font-bold text-green-600">{calculatedStats.resolved}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{calculatedStats.resolved}</p>
                   </div>
-                  <Archive className="h-8 w-8 text-green-600" />
+                  <Archive className="h-8 w-8 text-emerald-600" />
                 </div>
               </CardContent>
             </Card>

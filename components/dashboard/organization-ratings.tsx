@@ -7,6 +7,7 @@ import { getAnalyticsOrganizations } from "@/lib/api"
 import { Progress } from "@/components/ui/progress"
 import { Trophy, Star, TrendingUp, Building } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 export function OrganizationRatings() {
   const [orgs, setOrgs] = React.useState<any[]>([])
@@ -73,9 +74,9 @@ export function OrganizationRatings() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md hover:shadow-xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
 
-      <CardHeader className="relative z-10 border-b border-border bg-card/60 backdrop-blur-sm rounded-t-2xl">
+      <CardHeader className="relative z-10 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
@@ -95,13 +96,15 @@ export function OrganizationRatings() {
       
       <CardContent className="relative z-10 space-y-4 p-6">
         {sortedOrgs && sortedOrgs.length > 0 ? sortedOrgs.map((org, index) => (
-          <div
+          <motion.div
             key={`org-${org.id || index}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
+            whileHover={{ scale: 1.02, y: -2 }}
             className={cn(
-              "group/org relative space-y-3 rounded-xl border border-gray-200/50 bg-white/60 backdrop-blur-sm p-4 transition-all duration-300 hover:scale-102 hover:shadow-lg hover:border-emerald-300/50 hover:bg-white/80 animate-slide-up",
-              "hover:bg-emerald-50/50"
+              "group/org relative space-y-3 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:shadow-lg hover:border-blue-300"
             )}
-            style={{ animationDelay: `${index * 100}ms` }}
           >
             
             {/* Rank and Name */}
@@ -125,12 +128,12 @@ export function OrganizationRatings() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-gray-500 group-hover/org:text-emerald-600 transition-colors duration-250" />
+                  <Building className="w-4 h-4 text-slate-500 group-hover/org:text-blue-600 transition-colors duration-250" />
                   <div>
-                    <h3 className="font-semibold text-foreground group-hover/org:text-emerald-600 transition-colors duration-250">
+                    <h3 className="font-semibold text-slate-900 group-hover/org:text-blue-600 transition-colors duration-250">
                       {org.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground group-hover/org:text-gray-600 transition-colors duration-250">
+                    <p className="text-xs text-slate-600 group-hover/org:text-slate-700 transition-colors duration-250">
                       Жами: {org.totalTasks} та, бажарилган: {org.completedTasks} та
                     </p>
                   </div>
@@ -164,24 +167,24 @@ export function OrganizationRatings() {
             
             {/* Progress Bar */}
             <div className="relative z-10 space-y-2">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Тўлиқлик</span>
-                <span className="font-medium">{org.completedTasks}/{org.totalTasks} топшириқ</span>
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>To'liqlik</span>
+                <span className="font-medium">{org.completedTasks}/{org.totalTasks} topshiriq</span>
               </div>
               <div className="relative">
                 <Progress value={org.completionRate} className="h-2" />
               </div>
             </div>
             
-          </div>
+          </motion.div>
         )) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <Building className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <Building className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Ташкилотлар топилмади</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Ҳозирча ҳеч қандай ташкилотлар мавжуд эмас. Ташкилотларни қўшиш учун ташкилотлар бўлимига ўтинг.
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Tashkilotlar topilmadi</h3>
+            <p className="text-sm text-slate-600 max-w-md">
+              Hozircha hech qanday tashkilotlar mavjud emas. Tashkilotlarni qo'shish uchun tashkilotlar bo'limiga o'ting.
             </p>
           </div>
         )}

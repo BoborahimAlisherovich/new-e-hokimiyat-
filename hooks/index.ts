@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+// Re-export audio recorder hook
+export { useAudioRecorder, formatTime } from './use-audio-recorder'
+
 // Generic debounce hook
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T {
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   
   return useCallback((...args: Parameters<T>) => {
     clearTimeout(timeoutRef.current)
@@ -19,7 +22,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
   delay: number
 ): T {
   const lastRun = useRef(Date.now())
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   
   return useCallback((...args: Parameters<T>) => {
     if (Date.now() - lastRun.current < delay) {

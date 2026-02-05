@@ -6,7 +6,7 @@
 import { API_BASE, setAccessToken, setRefreshToken } from './api'
 
 const DEV_CREDENTIALS = {
-  pnfl: '12345678901234',
+  pnfl: '00000000000001',
   password: 'admin123'
 }
 

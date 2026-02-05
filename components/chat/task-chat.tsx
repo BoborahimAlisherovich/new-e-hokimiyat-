@@ -38,7 +38,8 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
       .then((response) => {
         if (!mounted) return
         const map: Record<string, any> = {}
-        response.results.forEach((u: any) => (map[u.id] = u))
+        const users = Array.isArray(response) ? response : (response as any).results || []
+        users.forEach((u: any) => (map[u.id] = u))
         setUsersMap(map)
       })
       .catch(() => {})
@@ -74,7 +75,7 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
   // Group messages by date
   const groupedMessages = messages.reduce(
     (groups, message) => {
-      const date = new Date(message.createdAt).toLocaleDateString("uz-UZ")
+      const date = new Date(message.created_at).toLocaleDateString("uz-UZ")
       if (!groups[date]) {
         groups[date] = []
       }
@@ -99,9 +100,10 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
 
               {/* Messages */}
               {dayMessages.map((msg) => {
-                const sender = usersMap[msg.senderId]
-                const isSystem = msg.type === "system"
-                const isCurrentUser = msg.senderId === currentUserId
+                const senderId = typeof msg.sender === 'object' ? msg.sender.id : (msg as any).senderId
+                const sender = usersMap[senderId]
+                const isSystem = (msg as any).type === "system"
+                const isCurrentUser = senderId === currentUserId
 
                 if (isSystem) {
                   return (
@@ -127,7 +129,7 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
                           {sender?.lastName} {sender?.firstName}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(msg.createdAt).toLocaleTimeString("uz-UZ", {
+                          {new Date(msg.created_at).toLocaleTimeString("uz-UZ", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -163,20 +165,17 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
                         )}
                       >
                         <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        {msg.attachments && msg.attachments.length > 0 && (
+                        {msg.attachment && (
                           <div className="mt-2 space-y-1">
-                            {msg.attachments.map((file, i) => (
-                              <div
-                                key={i}
-                                className={cn(
-                                  "flex items-center gap-2 text-xs p-2 rounded-lg",
-                                  isCurrentUser ? "bg-primary-foreground/10" : "bg-background",
-                                )}
-                              >
-                                <File className="h-4 w-4" />
-                                <span className="truncate">{file}</span>
-                              </div>
-                            ))}
+                            <div
+                              className={cn(
+                                "flex items-center gap-2 text-xs p-2 rounded-lg",
+                                isCurrentUser ? "bg-primary-foreground/10" : "bg-background",
+                              )}
+                            >
+                              <File className="h-4 w-4" />
+                              <span className="truncate">{msg.attachment}</span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -195,7 +194,7 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Reply className="h-4 w-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Javob: {usersMap[replyTo.senderId]?.firstName}</span>
+              <span className="text-sm text-muted-foreground">Javob: {usersMap[typeof replyTo.sender === 'object' ? replyTo.sender.id : (replyTo as any).senderId]?.firstName}</span>
             </div>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}>
               <X className="h-4 w-4" />

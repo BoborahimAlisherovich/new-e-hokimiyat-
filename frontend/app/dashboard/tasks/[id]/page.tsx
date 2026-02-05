@@ -20,8 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/mock-data"
-import { getTaskById, getTaskChat, getUsers, getOrganizations } from "@/lib/api"
+import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/constants"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, getCurrentUser } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import {
   ArrowLeft,
@@ -58,14 +58,16 @@ export default function TaskDetailPage() {
   const [taskExecutions, setTaskExecutions] = useState<any[]>([])
   const [usersMap, setUsersMap] = useState<Record<string, any>>({})
   const [orgsMap, setOrgsMap] = useState<Record<string, any>>({})
+  const [currentUser, setCurrentUser] = useState<any | null>(null)
 
   useEffect(() => {
     let mounted = true
-    Promise.all([getTaskById(id), getTaskChat(id), getUsers(), getOrganizations()])
-      .then(([t, chat, users, orgs]) => {
+    Promise.all([getTaskById(id), getTaskChat(id), getUsers(), getOrganizations(), getCurrentUser()])
+      .then(([t, chat, users, orgs, user]) => {
         if (!mounted) return
         setTask(t)
         setChatMessages(chat)
+        setCurrentUser(user)
         // getTaskExecutions(t.id).then((execs) => setTaskExecutions(execs)).catch(() => setTaskExecutions([]))
         const uMap: Record<string, any> = {}
         users.forEach((u: any) => (uMap[u.id] = u))
@@ -81,8 +83,22 @@ export default function TaskDetailPage() {
   }, [id])
 
   const creator = task ? usersMap[task.createdBy] : undefined
-
-  if (!task) {
+  const userRole = currentUser?.role || 'TASHKILOT_MASUL'
+  
+  // Only Hokim can close tasks (Nazoratdan yechish)
+  const canCloseTask = userRole === 'HOKIM' && task?.status === "BAJARILDI"
+  
+  // Hokim, Hokim yordamchisi, Hokimlik mas'uli can edit
+  const canEdit = ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'].includes(userRole) && 
+                  task?.status !== "NAZORATDAN_YECHILDI" && task?.status !== "BAJARILMADI"
+  
+  // Hokim, Hokim yordamchisi, Hokimlik mas'uli can reassign
+  const canReassign = ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'].includes(userRole) && 
+                      task?.status === "BAJARILDI"
+  
+  // Anyone can request deadline extension when task is in progress
+  const canExtend = task?.status === "IJRODA" || task?.status === "MUDDATI_KECH"
+  if (!task || !currentUser) {
     return (
       <>
         <Header title="Topshiriq tafsilotlari" />
@@ -90,12 +106,6 @@ export default function TaskDetailPage() {
       </>
     )
   }
-
-  const canEdit = task.status !== "NAZORATDAN_YECHILDI" && task.status !== "BAJARILMADI"
-  const canClose = task.status === "BAJARILDI"
-  const canReassign = task.status === "BAJARILDI"
-  const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
-
   const sendMessage = () => {
     if (!newMessage.trim()) return
     setNewMessage("")
@@ -239,7 +249,7 @@ export default function TaskDetailPage() {
               </Button>
             )}
 
-            {canClose && (
+            {canCloseTask && (
               <Button className="bg-accent hover:bg-accent/90">
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Nazoratdan yechish

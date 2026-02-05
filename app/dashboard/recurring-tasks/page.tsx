@@ -1,0 +1,814 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Header } from "@/components/layout/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Plus,
+  MoreHorizontal,
+  Play,
+  Pause,
+  History,
+  RefreshCw,
+  Calendar,
+  Clock,
+  Repeat,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Edit,
+  Trash2,
+  Eye,
+  Building2,
+} from "lucide-react";
+import { api } from "@/lib/api";
+import { format, formatDistanceToNow } from "date-fns";
+import { uz } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+
+interface RecurringTask {
+  id: string;
+  title: string;
+  description: string;
+  frequency: string;
+  frequency_display: string;
+  cron_expression: string;
+  start_date: string;
+  end_date: string | null;
+  next_run_date: string | null;
+  last_run_date: string | null;
+  priority: string;
+  deadline_days: number;
+  organizations: string[];
+  organizations_count: number;
+  status: string;
+  status_display: string;
+  total_created: number;
+  created_at: string;
+}
+
+interface Statistics {
+  total: number;
+  active: number;
+  paused: number;
+  by_frequency: Record<string, number>;
+  total_tasks_created: number;
+}
+
+const FREQUENCY_OPTIONS = [
+  { value: "DAILY", label: "Har kuni" },
+  { value: "WEEKLY", label: "Har hafta" },
+  { value: "BIWEEKLY", label: "Ikki haftada bir" },
+  { value: "MONTHLY", label: "Har oy" },
+  { value: "QUARTERLY", label: "Har chorakda" },
+  { value: "YEARLY", label: "Har yili" },
+  { value: "CUSTOM", label: "Maxsus (cron)" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "PAST", label: "Past" },
+  { value: "ODDIY", label: "Oddiy" },
+  { value: "YUQORI", label: "Yuqori" },
+  { value: "FAVQULODDA", label: "Favqulodda" },
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "bg-emerald-500",
+  PAUSED: "bg-yellow-500",
+  COMPLETED: "bg-blue-500",
+  CANCELLED: "bg-red-500",
+};
+
+export default function RecurringTasksPage() {
+  const [tasks, setTasks] = useState<RecurringTask[]>([]);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [editingTask, setEditingTask] = useState<RecurringTask | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const { toast } = useToast();
+
+  // Form state
+  const initialFormState = {
+    title: "",
+    description: "",
+    frequency: "MONTHLY",
+    cron_expression: "",
+    start_date: format(new Date(), "yyyy-MM-dd"),
+    end_date: "",
+    priority: "ODDIY",
+    deadline_days: 7,
+  };
+  const [formData, setFormData] = useState(initialFormState);
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params = statusFilter !== "all" ? `?status=${statusFilter}` : "";
+      const response = await api.get<RecurringTask[] | { results: RecurringTask[] }>(
+        `/tasks/recurring/${params}`
+      );
+      const data = response.data;
+      const items = Array.isArray(data) ? data : data?.results || [];
+      setTasks(items);
+    } catch (error) {
+      console.error("Error loading recurring tasks:", error);
+      toast({
+        title: "Xatolik",
+        description: "Takrorlanuvchi topshiriqlarni yuklashda xatolik",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [statusFilter, toast]);
+
+  const loadStatistics = useCallback(async () => {
+    try {
+      const response = await api.get<Statistics>("/tasks/recurring/statistics/");
+      setStatistics(response.data);
+    } catch (error) {
+      console.error("Error loading statistics:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTasks();
+    loadStatistics();
+  }, [loadTasks, loadStatistics]);
+
+  const createRecurringTask = async () => {
+    if (!formData.title || !formData.description) {
+      toast({
+        title: "Xatolik",
+        description: "Sarlavha va tavsif to'ldirilishi shart",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.post("/tasks/recurring/", formData);
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Takrorlanuvchi topshiriq yaratildi",
+      });
+      setIsDialogOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        frequency: "MONTHLY",
+        cron_expression: "",
+        start_date: format(new Date(), "yyyy-MM-dd"),
+        end_date: "",
+        priority: "ODDIY",
+        deadline_days: 7,
+      });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      console.error("Error creating recurring task:", error);
+      toast({
+        title: "Xatolik",
+        description: "Yaratishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (task: RecurringTask) => {
+    setEditingTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description,
+      frequency: task.frequency,
+      cron_expression: task.cron_expression || "",
+      start_date: task.start_date ? task.start_date.split("T")[0] : "",
+      end_date: task.end_date ? task.end_date.split("T")[0] : "",
+      priority: task.priority,
+      deadline_days: task.deadline_days,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const updateRecurringTask = async () => {
+    if (!editingTask) return;
+    if (!formData.title || !formData.description) {
+      toast({
+        title: "Xatolik",
+        description: "Sarlavha va tavsif to'ldirilishi shart",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.patch(`/tasks/recurring/${editingTask.id}/`, formData);
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Takrorlanuvchi topshiriq yangilandi",
+      });
+      closeDialog();
+      loadTasks();
+    } catch (error) {
+      console.error("Error updating recurring task:", error);
+      toast({
+        title: "Xatolik",
+        description: "Yangilashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteRecurringTask = async (id: string) => {
+    if (!confirm("Haqiqatan ham bu takrorlanuvchi topshiriqni o'chirmoqchimisiz?")) return;
+    
+    try {
+      await api.delete(`/tasks/recurring/${id}/`);
+      toast({
+        title: "O'chirildi",
+        description: "Takrorlanuvchi topshiriq o'chirildi",
+      });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      console.error("Error deleting recurring task:", error);
+      toast({
+        title: "Xatolik",
+        description: "O'chirishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const viewHistory = async (task: RecurringTask) => {
+    setEditingTask(task);
+    setHistoryLoading(true);
+    setIsHistoryOpen(true);
+    try {
+      const response = await api.get<any[]>(`/tasks/recurring/${task.id}/history/`);
+      setHistoryData(response.data || []);
+    } catch (error) {
+      console.error("Error loading history:", error);
+      toast({
+        title: "Xatolik",
+        description: "Tarixni yuklashda xatolik",
+        variant: "destructive",
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingTask(null);
+    setFormData(initialFormState);
+  };
+
+  const pauseTask = async (id: string) => {
+    try {
+      await api.post(`/tasks/recurring/${id}/pause/`);
+      toast({ title: "To'xtatildi" });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      toast({ title: "Xatolik", variant: "destructive" });
+    }
+  };
+
+  const resumeTask = async (id: string) => {
+    try {
+      await api.post(`/tasks/recurring/${id}/resume/`);
+      toast({ title: "Davom ettirildi" });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      toast({ title: "Xatolik", variant: "destructive" });
+    }
+  };
+
+  const runNow = async (id: string) => {
+    try {
+      const response = await api.post<{ task_id: number }>(`/tasks/recurring/${id}/run_now/`);
+      toast({
+        title: "Topshiriq yaratildi",
+        description: `Topshiriq #${response.data.task_id} yaratildi`,
+      });
+      loadTasks();
+      loadStatistics();
+    } catch (error) {
+      toast({ title: "Xatolik", variant: "destructive" });
+    }
+  };
+
+  return (
+    <>
+      <Header 
+        title="Takrorlanuvchi topshiriqlar" 
+        description="Avtomatik ravishda yaratiluvchi muntazam topshiriqlar" 
+      />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-200/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-200/15 to-transparent rounded-full blur-2xl" />
+        </div>
+        
+        <div className="relative z-10 p-6 space-y-6">
+          {/* Header Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Repeat className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Boshqaruv</h2>
+                <p className="text-sm text-muted-foreground">
+                  Takrorlanuvchi topshiriqlarni yarating va boshqaring
+                </p>
+              </div>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); else setIsDialogOpen(true); }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditingTask(null); setFormData(initialFormState); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Yangi yaratish
+                </Button>
+              </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {editingTask ? "Takrorlanuvchi topshiriqni tahrirlash" : "Yangi takrorlanuvchi topshiriq"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingTask 
+                  ? "Takrorlanuvchi topshiriq sozlamalarini yangilang" 
+                  : "Avtomatik ravishda yaratiluvchi topshiriq shabloni"
+                }
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="title">Sarlavha</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder="Topshiriq sarlavhasi"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Tavsif</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Topshiriq tavsifi"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Takrorlanish</Label>
+                  <Select
+                    value={formData.frequency}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, frequency: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Muhimlik</Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, priority: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIORITY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {formData.frequency === "CUSTOM" && (
+                <div>
+                  <Label htmlFor="cron">Cron ifodasi</Label>
+                  <Input
+                    id="cron"
+                    value={formData.cron_expression}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cron_expression: e.target.value })
+                    }
+                    placeholder="0 9 * * 1 (har dushanba 9:00)"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start_date">Boshlanish sanasi</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end_date">Tugash sanasi (ixtiyoriy)</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="deadline_days">Muddat (kun)</Label>
+                <Input
+                  id="deadline_days"
+                  type="number"
+                  min={1}
+                  value={formData.deadline_days}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      deadline_days: parseInt(e.target.value) || 7,
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={closeDialog}
+                disabled={isSubmitting}
+              >
+                Bekor qilish
+              </Button>
+              <Button 
+                onClick={editingTask ? updateRecurringTask : createRecurringTask} 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {editingTask ? "Saqlash" : "Yaratish"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Statistics */}
+      {statistics && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100">
+                  <Repeat className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{statistics.total}</p>
+                  <p className="text-sm text-muted-foreground">Jami</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-100">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{statistics.active}</p>
+                  <p className="text-sm text-muted-foreground">Faol</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-yellow-100">
+                  <Pause className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{statistics.paused}</p>
+                  <p className="text-sm text-muted-foreground">To&apos;xtatilgan</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100">
+                  <History className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {statistics.total_tasks_created}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Yaratilgan</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filter */}
+      <div className="flex items-center gap-4">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Holat bo'yicha" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Barchasi</SelectItem>
+            <SelectItem value="ACTIVE">Faol</SelectItem>
+            <SelectItem value="PAUSED">To&apos;xtatilgan</SelectItem>
+            <SelectItem value="COMPLETED">Yakunlangan</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" onClick={loadTasks}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Yangilash
+        </Button>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-12">
+              <Repeat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                Takrorlanuvchi topshiriqlar yo&apos;q
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Yangi takrorlanuvchi topshiriq yarating
+              </p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Yaratish
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sarlavha</TableHead>
+                  <TableHead>Takrorlanish</TableHead>
+                  <TableHead>Holat</TableHead>
+                  <TableHead>Keyingi ishga tushish</TableHead>
+                  <TableHead>Yaratilgan</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{task.title}</p>
+                        <p className="text-sm text-muted-foreground truncate max-w-xs">
+                          {task.description}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {task.frequency_display}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`${STATUS_COLORS[task.status]} text-white`}
+                      >
+                        {task.status_display}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {task.next_run_date ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          {formatDistanceToNow(new Date(task.next_run_date), {
+                            addSuffix: true,
+                            locale: uz,
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {task.total_created} ta topshiriq
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => runNow(task.id)}>
+                            <Play className="h-4 w-4 mr-2" />
+                            Hozir ishga tushirish
+                          </DropdownMenuItem>
+                          {task.status === "ACTIVE" ? (
+                            <DropdownMenuItem onClick={() => pauseTask(task.id)}>
+                              <Pause className="h-4 w-4 mr-2" />
+                              To&apos;xtatib turish
+                            </DropdownMenuItem>
+                          ) : task.status === "PAUSED" ? (
+                            <DropdownMenuItem onClick={() => resumeTask(task.id)}>
+                              <Play className="h-4 w-4 mr-2" />
+                              Davom ettirish
+                            </DropdownMenuItem>
+                          ) : null}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => openEditDialog(task)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Tahrirlash
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => viewHistory(task)}>
+                            <History className="h-4 w-4 mr-2" />
+                            Tarixni ko&apos;rish
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => deleteRecurringTask(task.id)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            O&apos;chirish
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* History Dialog */}
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Yaratilgan topshiriqlar tarixi
+            </DialogTitle>
+            <DialogDescription>
+              {editingTask?.title} - oxirgi 20 ta topshiriq
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {historyLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : historyData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Hali topshiriq yaratilmagan</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {historyData.map((item: any, index: number) => (
+                    <div 
+                      key={item.id || index} 
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            Topshiriq #{item.created_task?.id || item.task_id}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.created_at 
+                              ? format(new Date(item.created_at), "dd.MM.yyyy HH:mm", { locale: uz })
+                              : "—"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => window.open(`/dashboard/tasks/${item.created_task?.id || item.task_id}`, '_blank')}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ko&apos;rish
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHistoryOpen(false)}>
+              Yopish
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+        </div>
+      </div>
+    </>
+  );
+}

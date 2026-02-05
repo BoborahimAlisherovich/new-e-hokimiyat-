@@ -7,6 +7,7 @@ import { getTasks, getOrganizations } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { ArrowRight, Calendar, Building, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { motion } from "framer-motion"
 
 /**
  * Lists tasks ordered by urgency: overdue first, then nearest deadline.
@@ -63,30 +64,37 @@ export default function DeadlineCriticalTasks() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold text-foreground">Муддатга яқин топшириқлар</CardTitle>
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-red-50 to-orange-50">
+        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Muddatga yaqin topshiriqlar</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/tasks" className="flex items-center gap-1">
-            Барчаси <ArrowRight className="h-4 w-4" />
+            Barchasi <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {tasks.map((task) => {
+        {tasks.map((task, index) => {
           const d = daysUntil(task.deadline)
           return (
-            <div key={task.id} className="flex items-start justify-between gap-4 rounded-lg border border-gray-200/50 bg-white/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-white/80 hover:border-emerald-300/50 hover:shadow-md">
+            <motion.div
+              key={task.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
+              whileHover={{ scale: 1.02, x: 4 }}
+              className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 transition-all duration-300 hover:border-red-300 hover:shadow-lg"
+            >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-medium text-foreground">{task.title}</h4>
+                  <h4 className="font-medium text-slate-900">{task.title}</h4>
                   <PriorityBadge priority={task.priority} />
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <p className="text-sm text-slate-600 line-clamp-2">{task.description}</p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                   <span className={`flex items-center gap-1 ${badgeColor(d)}`}>
                     {badgeIcon(d)}
-                    {d < 0 ? `${Math.abs(d)} кун кечикган` : d === 0 ? "Бугун" : `${d} кун қолди`}
+                    {d < 0 ? `${Math.abs(d)} kun kechikkan` : d === 0 ? "Bugun" : `${d} kun qoldi`}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
@@ -102,15 +110,15 @@ export default function DeadlineCriticalTasks() {
               </div>
               <TaskStatusBadge status={task.status} />
               {/* Removed extra action buttons (Close Task, Reassign Task, Remove Control) and redundant info for a cleaner UI. */}
-            </div>
+            </motion.div>
           )
         })}
         {tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <Clock className="w-8 h-8 text-muted-foreground mb-2" />
-            <h3 className="text-base font-semibold text-foreground mb-1">Топшириқлар топилмади</h3>
-            <p className="text-xs text-muted-foreground max-w-md">
-              Ҳозирча муддатга яқин топшириқлар мавжуд эмас.
+            <Clock className="w-8 h-8 text-slate-400 mb-2" />
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Topshiriqlar topilmadi</h3>
+            <p className="text-xs text-slate-600 max-w-md">
+              Hozircha muddatga yaqin topshiriqlar mavjud emas.
             </p>
           </div>
         )}

@@ -2,7 +2,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Bell, Search, User, Settings, Zap, Menu, X, Globe } from "lucide-react"
+import { Bell, Search, User, Settings, Zap, Menu, X, Globe, Sparkles } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -69,58 +70,70 @@ export function Header({ title, description }: HeaderProps) {
   }
 
     return (
-      <header className="sticky top-0 z-50 flex min-h-20 items-center justify-between border-b border-border/60 bg-white/75 backdrop-blur-2xl transition-all duration-300 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.4)] backdrop-saturate-150 px-4 md:px-6 py-3" role="banner">
+      <motion.header 
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-sm px-6 shadow-sm" 
+        role="banner"
+      >
 
       {/* Left section - Title */}
-      <div className="flex min-w-0 items-center gap-4 md:gap-6 animate-slide-up flex-1">
-        <div className="relative">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg ring-1 ring-primary/20">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
-        </div>
+      <motion.div 
+        initial={{ x: -10, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="flex min-w-0 items-center gap-4 flex-1"
+      >
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground break-words">{title}</h1>
+          <h1 className="text-lg font-semibold text-slate-900 truncate">{title}</h1>
           {description && (
-            <p className="text-sm text-muted-foreground break-words hidden sm:block">
+            <p className="text-xs text-slate-500 truncate hidden sm:block mt-0.5">
               {description}
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Center section - Search */}
-      <div className="relative hidden md:block flex-1 max-w-lg mx-6">
-        <div className={cn(
-          "relative group transition-all duration-300",
-          isSearchFocused ? "scale-105" : ""
-        )}>
+      <motion.div 
+        initial={{ y: -5, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="relative hidden lg:block flex-1 max-w-md mx-6"
+      >
+        <div className="relative group">
           <Search className={cn(
-            "absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-all duration-250",
-            isSearchFocused ? "text-emerald-600 scale-110" : "group-hover:text-gray-600"
+            "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200",
+            isSearchFocused ? "text-blue-600" : "group-hover:text-slate-600"
           )} />
           <Input 
-            placeholder="Қидируш..." 
+            placeholder="Qidiruv..." 
             className={cn(
-              "w-full h-12 bg-white/60 backdrop-blur-sm border-2 border-emerald-200/50 rounded-xl px-12 pr-4 text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:border-emerald-500 transition-all duration-250"
+              "w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
             )}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
-            aria-label="Қидируш"
+            aria-label="Qidiruv"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Right section - Notifications and User */}
-      <div className="flex items-center gap-4 flex-1 justify-end">
+      <motion.div 
+        initial={{ x: 10, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center gap-2 flex-1 justify-end"
+      >
         {/* Mobile menu toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden relative z-20 h-10 w-10 transition-all duration-250 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg"
+          className="lg:hidden h-9 w-9 rounded-lg hover:bg-slate-100"
         >
-          <Menu className="h-5 w-5 text-gray-600" />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl opacity-0 hover:opacity-100 transition-opacity duration-300" />
+          <Menu className="h-5 w-5 text-slate-600" />
         </Button>
 
         {/* Language Selector */}
@@ -130,33 +143,33 @@ export function Header({ title, description }: HeaderProps) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative z-20 h-10 w-10 transition-all duration-250 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg"
+                className="h-10 w-10 rounded-xl hover:bg-slate-100"
               >
-                <Globe className="h-5 w-5 text-gray-600 transition-all duration-250" />
+                <Globe className="h-[22px] w-[22px] text-slate-600" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40 bg-white/90 backdrop-blur-xl border border-gray-200/50 shadow-xl">
-              <DropdownMenuLabel className="text-sm font-semibold text-gray-700">Тил танлаш</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+            <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg rounded-xl">
+              <DropdownMenuLabel className="text-xs font-semibold text-slate-700 px-3 py-2">Til tanlash</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-200" />
               <DropdownMenuItem 
                 onClick={() => setCurrentLang('uz')}
-                className={cn("flex items-center gap-2 p-2 cursor-pointer", currentLang === 'uz' && "bg-emerald-50 text-emerald-600")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'uz' && "bg-blue-50 text-blue-700")}
               >
-                <span className="text-lg">🇺🇿</span>
+                <span className="mr-2">🇺🇿</span>
                 <span>O'zbekcha</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setCurrentLang('ru')}
-                className={cn("flex items-center gap-2 p-2 cursor-pointer", currentLang === 'ru' && "bg-emerald-50 text-emerald-600")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'ru' && "bg-blue-50 text-blue-700")}
               >
-                <span className="text-lg">🇷🇺</span>
+                <span className="mr-2">🇷🇺</span>
                 <span>Русский</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setCurrentLang('en')}
-                className={cn("flex items-center gap-2 p-2 cursor-pointer", currentLang === 'en' && "bg-emerald-50 text-emerald-600")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'en' && "bg-blue-50 text-blue-700")}
               >
-                <span className="text-lg">🇬🇧</span>
+                <span className="mr-2">🇬🇧</span>
                 <span>English</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -171,68 +184,67 @@ export function Header({ title, description }: HeaderProps) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative z-20 h-10 w-10 transition-all duration-250 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg hidden md:flex"
+                className="relative h-9 w-9 rounded-lg hover:bg-slate-100 hidden md:flex"
               >
                 <Bell className={cn(
-                  "h-5 w-5 text-gray-600 transition-all duration-250",
+                  "h-5 w-5 text-slate-600",
                   unreadCount > 0 ? "animate-pulse" : ""
                 )} />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -right-1 -top-1 h-6 w-6 rounded-full p-0 text-[10px] flex items-center justify-center bg-emerald-600 text-white shadow-sm">
+                  <Badge className="absolute -right-1 -top-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-[9px] font-semibold border-2 border-white rounded-full">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-96 bg-white/90 backdrop-blur-xl border border-gray-200/50 shadow-xl">
-            <DropdownMenuLabel className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-emerald-600" />
-                <span className="font-semibold text-gray-900">Билдиришномалар</span>
+          <DropdownMenuContent align="end" className="w-80 bg-white border border-slate-200 shadow-lg rounded-xl">
+            <DropdownMenuLabel className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-blue-600" />
+                <span className="font-semibold text-sm text-slate-900">Bildirishnomalar</span>
               </div>
               <Link href="/dashboard/notifications">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-auto p-0 text-xs text-emerald-600 hover:text-emerald-700 transition-all duration-250"
+                  className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 >
-                  Барчасини кўриш
+                  Hammasi
                 </Button>
               </Link>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <div className="max-h-64 overflow-y-auto">
-              {recentNotifications.map((notification, index) => (
+              {recentNotifications.map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id} 
-                  className="flex flex-col items-start gap-3 p-3 transition-all duration-250 hover:bg-emerald-50"
+                  className="flex flex-col items-start gap-1.5 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0"
                 >
                   <div className="flex items-center gap-2 w-full">
                     <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      notification.type === "task_overdue" ? "bg-red-500" : "bg-emerald-600"
+                      "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                      notification.type === "task_overdue" ? "bg-red-500" : "bg-blue-600"
                     )} />
                     <span className={cn(
-                      "font-medium text-sm",
-                      notification.type === "task_overdue" ? "text-red-600" : "text-gray-900"
+                      "font-medium text-xs flex-1",
+                      notification.type === "task_overdue" ? "text-red-600" : "text-slate-900"
                     )}>
                       {notification.title}
                     </span>
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-emerald-600 rounded-full ml-auto animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500">{notification.description}</span>
+                  <span className="text-xs text-slate-600 line-clamp-2">{notification.description}</span>
                 </DropdownMenuItem>
               ))}
             </div>
             
             {recentNotifications.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Bell className="w-12 h-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Янги билдиришномалар йўқ</h3>
-                <p className="text-sm text-gray-500 max-w-md">
-                  Ҳозирча ҳеч қандай билдиришномалар мавжуд эмас.
+              <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                <Bell className="w-10 h-10 text-slate-300 mb-2" />
+                <p className="text-sm font-medium text-slate-900 mb-1">Yangi bildirishnomalar yo'q</p>
+                <p className="text-xs text-slate-500">
+                  Hozircha bildirishnomalar mavjud emas
                 </p>
               </div>
             )}
@@ -246,48 +258,56 @@ export function Header({ title, description }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                size="icon" 
-                className="relative z-20 h-10 w-10 transition-all duration-250 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg"
+                className="h-10 w-10 rounded-xl hover:bg-slate-100 p-0"
               >
-                <Avatar className="h-8 w-8 ring-2 ring-emerald-500/50 ring-offset-2 ring-offset-transparent">
-                  <AvatarFallback className="bg-emerald-600 text-white text-sm font-semibold">
-                    {currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : "АК"}
+                <Avatar className="h-9 w-9 ring-2 ring-blue-100">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-700 text-white text-xs font-semibold">
+                    {currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : "AK"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72 bg-white/90 backdrop-blur-xl border border-gray-200/50 shadow-xl">
-            <DropdownMenuLabel className="flex items-center gap-3 p-4">
-              <User className="w-5 h-5 text-emerald-600" />
-              <span className="font-semibold text-gray-900">{currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Фойдаланувчи"}</span>
+          <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl">
+            <DropdownMenuLabel className="px-3 py-2">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-slate-900 truncate">
+                    {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Foydalanuvchi"}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {currentUser?.email || ""}
+                  </p>
+                </div>
+              </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-slate-100" />
             <Link href="/dashboard/settings?tab=profile">
-              <DropdownMenuItem className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50 cursor-pointer">
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700">Профил</span>
+              <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
+                <User className="w-4 h-4 text-slate-500 mr-2" />
+                <span className="text-sm text-slate-700">Profil</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/dashboard/settings">
-              <DropdownMenuItem className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-emerald-50 cursor-pointer">
-                <Settings className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700">Созламалар</span>
+              <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
+                <Settings className="w-4 h-4 text-slate-500 mr-2" />
+                <span className="text-sm text-slate-700">Sozlamalar</span>
               </DropdownMenuItem>
             </Link>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-slate-100" />
             <DropdownMenuItem 
               onClick={handleLogout}
-              className="flex items-center gap-3 p-3 transition-all duration-250 hover:bg-red-50 cursor-pointer"
+              className="px-3 py-2 cursor-pointer hover:bg-red-50 rounded-lg mx-1"
             >
-              <X className="w-4 h-4 text-red-500" />
-              <span className="text-red-600">Чиқиш</span>
+              <X className="w-4 h-4 text-red-500 mr-2" />
+              <span className="text-sm text-red-600 font-medium">Chiqish</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         )}
-      </div>
+      </motion.div>
 
       {/* User Chat Dialog */}
-    </header>
+    </motion.header>
   )
 }

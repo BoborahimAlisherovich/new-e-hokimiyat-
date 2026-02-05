@@ -20,8 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { priorityLabels, sectorLabels, type TaskPriority, type Sector } from "@/lib/mock-data"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage } from "@/lib/api"
+import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import {
@@ -42,10 +42,21 @@ import {
   History,
   MessageSquare,
   Layers,
+  Lock,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
+
+const CATEGORY_LABELS: Record<string, string> = {
+  IJTIMOIY: "Ijtimoiy",
+  IQTISODIY: "Iqtisodiy",
+  HUQUQIY: "Huquqiy",
+  INFRASTRUKTURA: "Infrastruktura",
+  TA_LIM: "Ta'lim",
+  SOG_LIQNI_SAQLASH: "Sog'liqni saqlash",
+  BOSHQA: "Boshqa",
+}
 
 export default function TaskDetailPage() {
   const params = useParams()
@@ -53,7 +64,6 @@ export default function TaskDetailPage() {
   const [newMessage, setNewMessage] = useState("")
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isExtendOpen, setIsExtendOpen] = useState(false)
-  const [selectedSector, setSelectedSector] = useState<string>("")
   const [task, setTask] = useState<any | null>(null)
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [taskExecutions, setTaskExecutions] = useState<any[]>([])
@@ -66,6 +76,18 @@ export default function TaskDetailPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [isLocationLoading, setIsLocationLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  // Edit form state
+  const [editTitle, setEditTitle] = useState("")
+  const [editDescription, setEditDescription] = useState("")
+  const [editPriority, setEditPriority] = useState("")
+  const [editDeadline, setEditDeadline] = useState("")
+  const [editCategory, setEditCategory] = useState("")
+  
+  // Extend form state
+  const [extendDeadline, setExtendDeadline] = useState("")
+  const [extendReason, setExtendReason] = useState("")
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -90,9 +112,9 @@ export default function TaskDetailPage() {
   const normalizeChatMessages = (list: any[]) => {
     const normalized = (list || []).map(normalizeChatMessage).filter(Boolean)
     // Deduplicate by message ID
-    const seen = new Set()
+    const seen = new Set<number | string>()
     return normalized.filter((msg) => {
-      if (seen.has(msg.id)) return false
+      if (!msg || seen.has(msg.id)) return false
       seen.add(msg.id)
       return true
     })
@@ -139,8 +161,21 @@ export default function TaskDetailPage() {
       if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
     }
   }, [id])
+  
+  // Initialize edit form when task loads
+  useEffect(() => {
+    if (task) {
+      setEditTitle(task.title || "")
+      setEditDescription(task.description || "")
+      setEditPriority(task.priority || "")
+      setEditDeadline(task.deadline || "")
+      setEditCategory(task.category || "")
+      setExtendDeadline(task.deadline || "")
+    }
+  }, [task])
 
-  const creator = task ? usersMap[task.createdBy] : undefined
+  // Backend created_by ni ob'ekt sifatida yuboradi
+  const creator = task?.created_by || (task?.createdBy ? usersMap[task.createdBy] : undefined)
 
   if (!task) {
     return (
@@ -151,10 +186,96 @@ export default function TaskDetailPage() {
     )
   }
 
-  const canEdit = task.status !== "NAZORATDAN_YECHILDI" && task.status !== "BAJARILMADI"
+  const CLOSED_STATUSES = ["BAJARILDI", "NAZORATDAN_YECHILDI", "BAJARILMADI"]
+  const isClosed = CLOSED_STATUSES.includes(task.status)
+  const canEdit = !isClosed
+  const canChat = !isClosed
   const canClose = task.status === "BAJARILDI"
   const canReassign = task.status === "BAJARILDI"
   const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
+  
+  // Handle save task edits
+  const handleSaveTask = async () => {
+    if (!editTitle.trim()) {
+      alert("Sarlavha majburiy")
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await updateTask(id, {
+        title: editTitle,
+        description: editDescription,
+        priority: editPriority as any,
+        due_date: editDeadline,
+        category: editCategory as any,
+      })
+      setTask(updatedTask)
+      setIsEditOpen(false)
+    } catch (error) {
+      console.error("Task update error:", error)
+      alert("Topshiriqni yangilashda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle extend deadline
+  const handleExtendDeadline = async () => {
+    if (!extendDeadline || !extendReason.trim()) {
+      alert("Yangi muddat va sabab majburiy")
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await requestDeadlineExtension(id, {
+        requested_deadline: extendDeadline,
+        reason: extendReason,
+      })
+      setTask(updatedTask)
+      setExtendReason("")
+      setIsExtendOpen(false)
+    } catch (error) {
+      console.error("Deadline extend error:", error)
+      alert("Muddatni uzaytirishda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle approve/close task
+  const handleApproveTask = async () => {
+    if (!confirm("Topshiriqni nazoratdan yechmoqchimisiz?")) return
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await approveTask(id, { comment: "Topshiriq nazoratdan yechildi" })
+      setTask(updatedTask)
+    } catch (error) {
+      console.error("Approve task error:", error)
+      alert("Topshiriqni tasdiqlashda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle reject (reassign) task
+  const handleRejectTask = async () => {
+    const reason = prompt("Qayta ijroga yuborish sababini kiriting:")
+    if (!reason?.trim()) return
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await rejectTask(id, { comment: reason })
+      setTask(updatedTask)
+    } catch (error) {
+      console.error("Reject task error:", error)
+      alert("Topshiriqni qayta ijroga yuborishda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const refreshChat = () => {
     getTaskChat(id)
@@ -340,18 +461,31 @@ export default function TaskDetailPage() {
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Yangi muddat</Label>
-                      <Input type="date" defaultValue={task.deadline} className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Input 
+                        type="date" 
+                        value={extendDeadline ? extendDeadline.split('T')[0] : ''} 
+                        onChange={(e) => setExtendDeadline(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Sabab</Label>
-                      <Textarea placeholder="Sababni kiriting..." className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Textarea 
+                        placeholder="Sababni kiriting..." 
+                        value={extendReason}
+                        onChange={(e) => setExtendReason(e.target.value)}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="border-border/50 bg-background/50">
                       Bekor qilish
                     </Button>
-                    <Button onClick={() => setIsExtendOpen(false)}>So'rov yuborish</Button>
+                    <Button onClick={handleExtendDeadline} disabled={isSaving}>
+                      {isSaving ? "Saqlanmoqda..." : "So'rov yuborish"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -371,16 +505,24 @@ export default function TaskDetailPage() {
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Sarlavha</Label>
-                      <Input defaultValue={task.title} className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" />
+                      <Input 
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Tavsif</Label>
-                      <Textarea defaultValue={task.description} rows={3} />
+                      <Textarea 
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        rows={3} 
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Ustuvorlik</Label>
-                        <Select defaultValue={task.priority}>
+                        <Select value={editPriority} onValueChange={setEditPriority}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -395,19 +537,23 @@ export default function TaskDetailPage() {
                       </div>
                       <div className="space-y-2">
                         <Label>Muddat</Label>
-                        <Input type="date" defaultValue={task.deadline} />
+                        <Input 
+                          type="date" 
+                          value={editDeadline ? editDeadline.split('T')[0] : ''} 
+                          onChange={(e) => setEditDeadline(e.target.value)}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Soha</Label>
-                      <Select defaultValue={task.sector} onValueChange={setSelectedSector}>
+                      <Select value={editCategory} onValueChange={setEditCategory}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {(Object.keys(sectorLabels) as Sector[]).map((sector) => (
-                            <SelectItem key={sector} value={sector}>
-                              {sectorLabels[sector]}
+                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -418,7 +564,9 @@ export default function TaskDetailPage() {
                     <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                       Bekor qilish
                     </Button>
-                    <Button onClick={() => setIsEditOpen(false)}>Saqlash</Button>
+                    <Button onClick={handleSaveTask} disabled={isSaving}>
+                      {isSaving ? "Saqlanmoqda..." : "Saqlash"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -428,16 +576,22 @@ export default function TaskDetailPage() {
               <Button
                 variant="outline"
                 className="text-orange-500 border-orange-500/30 hover:bg-orange-500/10 bg-transparent"
+                onClick={handleRejectTask}
+                disabled={isSaving}
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
-                Qayta ijroga
+                {isSaving ? "Yuborilmoqda..." : "Qayta ijroga"}
               </Button>
             )}
 
             {canClose && (
-              <Button className="bg-accent hover:bg-accent/90">
+              <Button 
+                className="bg-accent hover:bg-accent/90"
+                onClick={handleApproveTask}
+                disabled={isSaving}
+              >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Nazoratdan yechish
+                {isSaving ? "Yopilmoqda..." : "Nazoratdan yechish"}
               </Button>
             )}
           </div>
@@ -455,9 +609,11 @@ export default function TaskDetailPage() {
                     <p className="text-sm text-muted-foreground">{task.description}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="font-normal">
-                      {sectorLabels[task.sector]}
-                    </Badge>
+                    {task.category && (
+                      <Badge variant="outline" className="font-normal">
+                        {CATEGORY_LABELS[task.category] || task.category}
+                      </Badge>
+                    )}
                     <PriorityBadge priority={task.priority} />
                     <TaskStatusBadge status={task.status} />
                   </div>
@@ -485,7 +641,7 @@ export default function TaskDetailPage() {
                     <div>
                       <p className="text-muted-foreground">Yaratuvchi</p>
                       <p className="font-medium">
-                        {creator?.lastName} {creator?.firstName}
+                        {creator?.full_name || `${creator?.last_name || creator?.lastName || ''} ${creator?.first_name || creator?.firstName || ''}`.trim() || '—'}
                       </p>
                     </div>
                   </div>
@@ -496,7 +652,7 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Soha</p>
-                      <p className="font-medium">{sectorLabels[task.sector]}</p>
+                      <p className="font-medium">{CATEGORY_LABELS[task.category] || task.category || '—'}</p>
                     </div>
                   </div>
 
@@ -506,7 +662,11 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Tashkilotlar</p>
-                      <p className="font-medium">{(task.organizations || []).map((orgId: string) => orgsMap[orgId]?.name).filter(Boolean).join(", ")}</p>
+                      <p className="font-medium">
+                        {(task.assigned_organizations || task.organizations || []).map((org: any) => 
+                          typeof org === 'object' ? org.organization?.name || org.name : orgsMap[org]?.name
+                        ).filter(Boolean).join(", ") || '-'}
+                      </p>
                     </div>
                   </div>
 
@@ -516,7 +676,7 @@ export default function TaskDetailPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Yaratilgan</p>
-                      <p className="font-medium">{new Date(task.createdAt).toLocaleDateString('en-GB')}</p>
+                      <p className="font-medium">{(task.createdAt || task.created_at) ? new Date(task.createdAt || task.created_at).toLocaleDateString('uz-UZ') : '-'}</p>
                     </div>
                   </div>
 
@@ -657,6 +817,12 @@ export default function TaskDetailPage() {
                     </div>
                   </ScrollArea>
                   <div className="border-t border-border p-4">
+                    {!canChat ? (
+                      <div className="text-center py-3 text-muted-foreground bg-muted rounded-lg">
+                        <Lock className="h-4 w-4 inline-block mr-2" />
+                        Bu topshiriq yopilgan, xabar yuborish mumkin emas
+                      </div>
+                    ) : (
                     <div className="flex flex-col gap-2">
                       {/* Audio Recording UI */}
                       {isRecording && (
@@ -664,7 +830,7 @@ export default function TaskDetailPage() {
                           <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
                           <span className="text-sm text-red-600 font-medium">Yozib olinmoqda...</span>
                           <div className="flex-1" />
-                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-green-600 border-green-300">
+                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
                             Tugatish
                           </Button>
                           <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
@@ -768,6 +934,7 @@ export default function TaskDetailPage() {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </TabsContent>
 
@@ -815,7 +982,7 @@ export default function TaskDetailPage() {
                 <CardTitle className="text-base">Tashkilotlar holati</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(task.organizations || []).map((orgId) => {
+                {(task.organizations || []).map((orgId: string) => {
                   const org = orgsMap[orgId]
                   return (
                     <div key={orgId} className="flex items-center justify-between rounded-lg border border-border p-3">
@@ -825,7 +992,7 @@ export default function TaskDetailPage() {
                         </div>
                         <div>
                           <span className="text-sm font-medium">{org?.name}</span>
-                          {org && <p className="text-xs text-muted-foreground">{sectorLabels[org.sector]}</p>}
+                          {org && <p className="text-xs text-muted-foreground">{(sectorLabels as Record<string, string>)[org.sector] || org.sector}</p>}
                         </div>
                       </div>
                       <TaskStatusBadge status={task.status} />
@@ -842,7 +1009,7 @@ export default function TaskDetailPage() {
                   <CardTitle className="text-base">Fayllar</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {task.attachments.map((file, i) => (
+                  {task.attachments.map((file: string, i: number) => (
                     <div
                       key={i}
                       className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer"

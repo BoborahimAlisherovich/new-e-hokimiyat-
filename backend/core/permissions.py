@@ -24,6 +24,14 @@ class IsHokim(RolePermission):
     allowed_roles = ['HOKIM']
 
 
+class IsHokimOrAssistant(RolePermission):
+    """
+    Permission for Hokim or Hokim Yordamchisi roles.
+    Includes AI Assistant access.
+    """
+    allowed_roles = ['HOKIM', 'HOKIM_YORDAMCHISI']
+
+
 class IsHokimOrHokimlikMasul(RolePermission):
     """
     Permission for Hokim or Hokimlik Mas'uli roles.
@@ -57,11 +65,12 @@ class CanManageUsers(permissions.BasePermission):
     """
     
     ROLE_HIERARCHY = {
-        'HOKIM': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'HOKIM': ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'HOKIM_YORDAMCHISI': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
         'HOKIMLIK_MASUL': ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
         'TASHKILOT_RAHBARI': ['TASHKILOT_MASUL'],
         'TASHKILOT_MASUL': [],
-        'ADMIN': ['HOKIM', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'ADMIN': ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
     }
 
     def has_permission(self, request, view):
@@ -103,9 +112,9 @@ class CanManageOrganizations(permissions.BasePermission):
 class CanCreateTasks(permissions.BasePermission):
     """
     Permission to create tasks.
-    Only Hokim and Hokimlik mas'uli can create tasks.
+    Only Hokim, Hokim yordamchisi, and Hokimlik mas'uli can create tasks.
     """
-    allowed_roles = ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']
+    allowed_roles = ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'ADMIN']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
