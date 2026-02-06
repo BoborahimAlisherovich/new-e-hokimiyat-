@@ -8,8 +8,10 @@ import { Progress } from "@/components/ui/progress"
 import { Trophy, Star, TrendingUp, Building } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export function OrganizationRatings() {
+  const t = useTranslation()
   const [orgs, setOrgs] = React.useState<any[]>([])
 
   React.useEffect(() => {
@@ -82,12 +84,12 @@ export function OrganizationRatings() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
               <Trophy className="w-4 h-4 text-primary-foreground" />
             </div>
-            <CardTitle className="text-lg font-semibold text-foreground">Ташкилотлар рейтиги</CardTitle>
+            <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.organizationRatings}</CardTitle>
           </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/30">
                 <TrendingUp className="w-3 h-3 text-emerald-600" />
-                <span className="text-xs font-medium text-emerald-700">Самарадорлик</span>
+                <span className="text-xs font-medium text-emerald-700">{t.dashboard.performanceLabel}</span>
               </div>
               <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse" />
             </div>
@@ -134,7 +136,7 @@ export function OrganizationRatings() {
                       {org.name}
                     </h3>
                     <p className="text-xs text-slate-600 group-hover/org:text-slate-700 transition-colors duration-250">
-                      Жами: {org.totalTasks} та, бажарилган: {org.completedTasks} та
+                      {t.dashboard.total}: {org.totalTasks} {t.common.itemsShort}, {t.dashboard.completed}: {org.completedTasks} {t.common.itemsShort}
                     </p>
                   </div>
                 </div>
@@ -168,8 +170,8 @@ export function OrganizationRatings() {
             {/* Progress Bar */}
             <div className="relative z-10 space-y-2">
               <div className="flex justify-between text-xs text-slate-600">
-                <span>To'liqlik</span>
-                <span className="font-medium">{org.completedTasks}/{org.totalTasks} topshiriq</span>
+                <span>{t.dashboard.completionLabel}</span>
+                <span className="font-medium">{org.completedTasks}/{org.totalTasks} {t.dashboard.taskUnit}</span>
               </div>
               <div className="relative">
                 <Progress value={org.completionRate} className="h-2" />
@@ -182,9 +184,9 @@ export function OrganizationRatings() {
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
               <Building className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Tashkilotlar topilmadi</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.organizationsEmptyTitle}</h3>
             <p className="text-sm text-slate-600 max-w-md">
-              Hozircha hech qanday tashkilotlar mavjud emas. Tashkilotlarni qo'shish uchun tashkilotlar bo'limiga o'ting.
+              {t.dashboard.organizationsEmptyDescription}
             </p>
           </div>
         )}

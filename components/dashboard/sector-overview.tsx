@@ -10,8 +10,10 @@ import { Grid3X3, TrendingUp, BarChart4, PieChart } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export function SectorOverview() {
+  const t = useTranslation()
   const [sectorStats, setSectorStats] = React.useState<any[]>([])
 
   React.useEffect(() => {
@@ -27,7 +29,7 @@ export function SectorOverview() {
             const late = sTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
             return {
               sector,
-              label: sector || "Номаълум",
+              label: sector || t.common.unknown,
               total: sTasks.length,
               completed,
               late,
@@ -65,7 +67,7 @@ export function SectorOverview() {
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
               <Grid3X3 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Sohalar bo'yicha statistikasi</CardTitle>
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{t.dashboard.sectorStatsTitle}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/dashboard/analytics">
@@ -74,7 +76,7 @@ export function SectorOverview() {
                 size="sm" 
                 className="h-auto p-0 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-250"
               >
-                Barchasini ko'rish
+                {t.common.viewAll}
               </Button>
             </Link>
             <div className="w-2 h-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full animate-pulse-modern" />
@@ -140,26 +142,26 @@ export function SectorOverview() {
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <BarChart4 className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.total}</div>
-                    <div className="text-xs text-slate-600">Jami</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.total}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <PieChart className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.completed}</div>
-                    <div className="text-xs text-slate-600">Bajarilgan</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.completed}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 transition-all duration-300 hover:scale-105 hover:bg-amber-100 hover:shadow-md">
                     <TrendingUp className="w-4 h-4 text-amber-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-amber-600">{sector.inProgress}</div>
-                    <div className="text-xs text-slate-600">Ijroda</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.inProgress}</div>
                   </div>
                 </div>
                 
                 {sector.late > 0 && (
                   <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border border-red-200 transition-all duration-300 hover:bg-red-100 hover:shadow-md">
-                    <span className="text-sm font-medium text-red-600">Kechikkan: {sector.late}</span>
-                    <span className="text-xs text-slate-600">Topshiriq</span>
+                    <span className="text-sm font-medium text-red-600">{t.dashboard.overdue}: {sector.late}</span>
+                    <span className="text-xs text-slate-600">{t.dashboard.taskUnit}</span>
                   </div>
                 )}
               </div>
@@ -173,9 +175,9 @@ export function SectorOverview() {
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
               <Grid3X3 className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Sohalar topilmadi</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.sectorsEmptyTitle}</h3>
             <p className="text-sm text-slate-600 max-w-md">
-              Hozircha hech qanday sohalar mavjud emas. Topshiriqlar yaratish uchun sohalarni qo'shish kerak.
+              {t.dashboard.sectorsEmptyDescription}
             </p>
           </div>
         )}

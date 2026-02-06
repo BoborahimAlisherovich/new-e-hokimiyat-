@@ -1,7 +1,9 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import type { TaskStatus, UserStatus, TaskPriority } from "@/lib/constants"
-import { taskStatusLabels, statusLabels, priorityLabels } from "@/lib/constants"
+import { useTranslation } from "@/lib/i18n/context"
 
 const taskStatusStyles: Record<TaskStatus, string> = {
   YANGI: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -28,41 +30,59 @@ const priorityStyles: Record<string, string> = {
   PAST: "bg-gray-500/20 text-gray-400 border-gray-500/30",
 }
 
-const priorityLabelsMap: Record<string, string> = {
-  FAVQULODDA: "Favqulodda",
-  YUQORI: "Yuqori",
-  ODDIY: "Oddiy",
-  PAST: "Past",
-}
-
 export function TaskStatusBadge({ status }: { status: TaskStatus }) {
+  const t = useTranslation()
+  const statusLabelsMap: Record<TaskStatus, string> = {
+    YANGI: t.task.statuses.NEW,
+    IJRODA: t.task.statuses.IN_PROGRESS,
+    BAJARILDI: t.task.statuses.COMPLETED,
+    MUDDATI_KECH: t.task.statuses.OVERDUE,
+    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
+    BAJARILMADI: t.task.statuses.FAILED,
+    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
+  }
   return (
     <Badge variant="outline" className={cn("font-medium", taskStatusStyles[status])}>
-      {taskStatusLabels[status]}
+      {statusLabelsMap[status]}
     </Badge>
   )
 }
 
 export function UserStatusBadge({ status }: { status: UserStatus }) {
+  const t = useTranslation()
+  const statusLabelsMap: Record<UserStatus, string> = {
+    DRAFT: t.user.statuses.DRAFT,
+    KUTILMOQDA: t.user.statuses.PENDING,
+    FAOL: t.user.statuses.ACTIVE,
+    BLOKLANGAN: t.user.statuses.BLOCKED,
+    ARXIV: t.user.statuses.ARCHIVED,
+  }
   if (!status || !userStatusStyles[status]) {
     return (
       <Badge variant="outline" className="font-medium bg-gray-500/20 text-gray-400 border-gray-500/30">
-        Noma'lum
+        {t.common.unknown}
       </Badge>
     )
   }
   return (
     <Badge variant="outline" className={cn("font-medium", userStatusStyles[status])}>
-      {statusLabels[status]}
+      {statusLabelsMap[status]}
     </Badge>
   )
 }
 
 export function PriorityBadge({ priority }: { priority: string }) {
+  const t = useTranslation()
+  const priorityLabelsMap: Record<string, string> = {
+    FAVQULODDA: t.task.priorities.FAVQULODDA,
+    YUQORI: t.task.priorities.YUQORI,
+    ODDIY: t.task.priorities.ODDIY,
+    PAST: t.task.priorities.PAST,
+  }
   if (!priority || !priorityStyles[priority]) {
     return (
       <Badge variant="outline" className="font-medium bg-gray-500/20 text-gray-400 border-gray-500/30">
-        {priority || "Noma'lum"}
+        {priority || t.common.unknown}
       </Badge>
     )
   }

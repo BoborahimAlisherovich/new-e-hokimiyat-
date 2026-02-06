@@ -8,12 +8,14 @@ import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { ArrowRight, Calendar, Building, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 /**
  * Lists tasks ordered by urgency: overdue first, then nearest deadline.
  * Shows title, deadline, status, priority, and remaining/overdue days.
  */
 export default function DeadlineCriticalTasks() {
+  const t = useTranslation()
   const [tasks, setTasks] = React.useState<any[]>([])
   const [orgsMap, setOrgsMap] = React.useState<Record<string, string>>({})
 
@@ -66,10 +68,10 @@ export default function DeadlineCriticalTasks() {
   return (
     <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-red-50 to-orange-50">
-        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Muddatga yaqin topshiriqlar</CardTitle>
+        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/tasks" className="flex items-center gap-1">
-            Barchasi <ArrowRight className="h-4 w-4" />
+            {t.common.all} <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
       </CardHeader>
@@ -94,7 +96,7 @@ export default function DeadlineCriticalTasks() {
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                   <span className={`flex items-center gap-1 ${badgeColor(d)}`}>
                     {badgeIcon(d)}
-                    {d < 0 ? `${Math.abs(d)} kun kechikkan` : d === 0 ? "Bugun" : `${d} kun qoldi`}
+                    {d < 0 ? `${Math.abs(d)} ${t.common.daysOverdue}` : d === 0 ? t.common.today : `${d} ${t.common.daysRemaining}`}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
@@ -116,9 +118,9 @@ export default function DeadlineCriticalTasks() {
         {tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <Clock className="w-8 h-8 text-slate-400 mb-2" />
-            <h3 className="text-base font-semibold text-slate-900 mb-1">Topshiriqlar topilmadi</h3>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">{t.dashboard.deadlineEmptyTitle}</h3>
             <p className="text-xs text-slate-600 max-w-md">
-              Hozircha muddatga yaqin topshiriqlar mavjud emas.
+              {t.dashboard.deadlineEmptyDescription}
             </p>
           </div>
         )}

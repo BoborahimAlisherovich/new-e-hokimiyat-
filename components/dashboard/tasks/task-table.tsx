@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import type { Task } from "@/types"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/components/dashboard/tasks/task-constants"
 import { FileX } from "lucide-react"
+import { useTranslation } from "@/lib/i18n/context"
 
 const CATEGORY_LABELS: Record<string, string> = {
   IJTIMOIY: "Ijtimoiy",
@@ -27,6 +28,37 @@ type TaskTableProps = {
 
 export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
   const router = useRouter()
+  const t = useTranslation()
+
+  const statusLabels: Record<string, string> = {
+    YANGI: t.task.statuses.NEW,
+    IJRODA: t.task.statuses.IN_PROGRESS,
+    BAJARILDI: t.task.statuses.COMPLETED,
+    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
+    MUDDATI_KECH: t.task.statuses.OVERDUE,
+    BAJARILMADI: t.task.statuses.FAILED,
+    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
+  }
+
+  const priorityLabels: Record<string, string> = {
+    PAST: t.task.priorities.PAST,
+    ODDIY: t.task.priorities.ODDIY,
+    YUQORI: t.task.priorities.YUQORI,
+    FAVQULODDA: t.task.priorities.FAVQULODDA,
+    MUHIM: t.task.priorities.MUHIM,
+    SHOSHILINCH: t.task.priorities.SHOSHILINCH,
+    MUHIM_SHOSHILINCH: t.task.priorities.MUHIM_SHOSHILINCH,
+  }
+
+  const categoryLabels: Record<string, string> = {
+    IJTIMOIY: t.task.categories.IJTIMOIY,
+    IQTISODIY: t.task.categories.IQTISODIY,
+    HUQUQIY: t.task.categories.HUQUQIY,
+    INFRASTRUKTURA: t.task.categories.INFRASTRUKTURA,
+    TA_LIM: t.task.categories.TA_LIM,
+    SOG_LIQNI_SAQLASH: t.task.categories.SOG_LIQNI_SAQLASH,
+    BOSHQA: t.task.categories.BOSHQA,
+  }
   
   if (tasks.length === 0) {
     return (
@@ -34,10 +66,8 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
         <div className="rounded-full bg-muted p-4 mb-4">
           <FileX className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium text-foreground mb-1">Topshiriqlar topilmadi</h3>
-        <p className="text-sm text-muted-foreground max-w-sm">
-          Hozircha bu filtrlar bo'yicha topshiriqlar mavjud emas. Yangi topshiriq qo'shing yoki filtrlarni o'zgartiring.
-        </p>
+        <h3 className="text-lg font-medium text-foreground mb-1">{t.tasks.emptyTitle}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">{t.tasks.emptyDescription}</p>
       </div>
     )
   }
@@ -46,12 +76,12 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Sarlavha</TableHead>
-          <TableHead>Soha</TableHead>
-          <TableHead>Muhimlik</TableHead>
-          <TableHead>Tashkilotlar</TableHead>
-          <TableHead>Muddat</TableHead>
-          <TableHead>Holat</TableHead>
+          <TableHead>{t.tasks.titleLabel}</TableHead>
+          <TableHead>{t.tasks.categoryLabel}</TableHead>
+          <TableHead>{t.tasks.priorityLabel}</TableHead>
+          <TableHead>{t.tasks.organizationsLabel}</TableHead>
+          <TableHead>{t.tasks.deadlineLabel}</TableHead>
+          <TableHead>{t.tasks.statusLabel}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -74,11 +104,11 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 </div>
               </TableCell>
               <TableCell>
-                {CATEGORY_LABELS[task.category] || task.category || '—'}
+                {categoryLabels[task.category] || task.category || '—'}
               </TableCell>
               <TableCell>
                 <Badge className={cn("px-2 py-1 text-xs font-medium", PRIORITY_COLORS[task.priority])}>
-                  {PRIORITY_LABELS[task.priority] || task.priority}
+                  {priorityLabels[task.priority] || task.priority}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -96,7 +126,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
               </TableCell>
               <TableCell>
                 <Badge className={cn("px-2 py-1 text-xs font-medium", (STATUS_COLORS as any)[task.status])}>
-                  {(STATUS_LABELS as any)[task.status] || task.status}
+                  {statusLabels[task.status] || task.status}
                 </Badge>
               </TableCell>
             </TableRow>

@@ -21,6 +21,7 @@ import { getNotifications, getUnreadNotificationsCount, logout, getCurrentUser }
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { User as UserType } from "@/types"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
 
 interface HeaderProps {
   title: string
@@ -35,7 +36,8 @@ export function Header({ title, description }: HeaderProps) {
   const [recentNotifications, setRecentNotifications] = useState<any[]>([])
   const [mounted, setMounted] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
-  const [currentLang, setCurrentLang] = useState<'uz' | 'ru' | 'en'>('uz')
+  const { language, setLanguage } = useI18n()
+  const t = useTranslation()
 
   useEffect(() => {
     setMounted(true)
@@ -108,13 +110,13 @@ export function Header({ title, description }: HeaderProps) {
             isSearchFocused ? "text-blue-600" : "group-hover:text-slate-600"
           )} />
           <Input 
-            placeholder="Qidiruv..." 
+            placeholder={t.common.search}
             className={cn(
               "w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
             )}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
-            aria-label="Qidiruv"
+            aria-label={t.common.search}
           />
         </div>
       </motion.div>
@@ -149,28 +151,35 @@ export function Header({ title, description }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg rounded-xl">
-              <DropdownMenuLabel className="text-xs font-semibold text-slate-700 px-3 py-2">Til tanlash</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs font-semibold text-slate-700 px-3 py-2">{t.common.selectLanguage}</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-slate-200" />
               <DropdownMenuItem 
-                onClick={() => setCurrentLang('uz')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'uz' && "bg-blue-50 text-blue-700")}
+                onClick={() => setLanguage('uz')}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz' && "bg-blue-50 text-blue-700")}
               >
                 <span className="mr-2">🇺🇿</span>
-                <span>O'zbekcha</span>
+                <span>{t.settings.languageUzLatin}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setCurrentLang('ru')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'ru' && "bg-blue-50 text-blue-700")}
+                onClick={() => setLanguage('uz-cyrl')}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz-cyrl' && "bg-blue-50 text-blue-700")}
+              >
+                <span className="mr-2">🇺🇿</span>
+                <span>{t.settings.languageUzCyrl}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setLanguage('ru')}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'ru' && "bg-blue-50 text-blue-700")}
               >
                 <span className="mr-2">🇷🇺</span>
-                <span>Русский</span>
+                <span>{t.settings.languageRu}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setCurrentLang('en')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", currentLang === 'en' && "bg-blue-50 text-blue-700")}
+                onClick={() => setLanguage('en')}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'en' && "bg-blue-50 text-blue-700")}
               >
                 <span className="mr-2">🇬🇧</span>
-                <span>English</span>
+                <span>{t.settings.languageEn}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -201,7 +210,7 @@ export function Header({ title, description }: HeaderProps) {
             <DropdownMenuLabel className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-blue-600" />
-                <span className="font-semibold text-sm text-slate-900">Bildirishnomalar</span>
+                <span className="font-semibold text-sm text-slate-900">{t.navigation.notifications}</span>
               </div>
               <Link href="/dashboard/notifications">
                 <Button 
@@ -209,7 +218,7 @@ export function Header({ title, description }: HeaderProps) {
                   size="sm" 
                   className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 >
-                  Hammasi
+                  {t.common.all}
                 </Button>
               </Link>
             </DropdownMenuLabel>
@@ -242,10 +251,8 @@ export function Header({ title, description }: HeaderProps) {
             {recentNotifications.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
                 <Bell className="w-10 h-10 text-slate-300 mb-2" />
-                <p className="text-sm font-medium text-slate-900 mb-1">Yangi bildirishnomalar yo'q</p>
-                <p className="text-xs text-slate-500">
-                  Hozircha bildirishnomalar mavjud emas
-                </p>
+                <p className="text-sm font-medium text-slate-900 mb-1">{t.notifications.emptyTitle}</p>
+                <p className="text-xs text-slate-500">{t.notifications.emptyDescription}</p>
               </div>
             )}
           </DropdownMenuContent>
@@ -273,7 +280,7 @@ export function Header({ title, description }: HeaderProps) {
                 <User className="w-4 h-4 text-blue-600" />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-slate-900 truncate">
-                    {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Foydalanuvchi"}
+                    {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : t.common.user}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
                     {currentUser?.email || ""}
@@ -285,13 +292,13 @@ export function Header({ title, description }: HeaderProps) {
             <Link href="/dashboard/settings?tab=profile">
               <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
                 <User className="w-4 h-4 text-slate-500 mr-2" />
-                <span className="text-sm text-slate-700">Profil</span>
+                <span className="text-sm text-slate-700">{t.settings.profile}</span>
               </DropdownMenuItem>
             </Link>
             <Link href="/dashboard/settings">
               <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
                 <Settings className="w-4 h-4 text-slate-500 mr-2" />
-                <span className="text-sm text-slate-700">Sozlamalar</span>
+                <span className="text-sm text-slate-700">{t.navigation.settings}</span>
               </DropdownMenuItem>
             </Link>
             <DropdownMenuSeparator className="bg-slate-100" />
@@ -300,7 +307,7 @@ export function Header({ title, description }: HeaderProps) {
               className="px-3 py-2 cursor-pointer hover:bg-red-50 rounded-lg mx-1"
             >
               <X className="w-4 h-4 text-red-500 mr-2" />
-              <span className="text-sm text-red-600 font-medium">Chiqish</span>
+              <span className="text-sm text-red-600 font-medium">{t.common.logout}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

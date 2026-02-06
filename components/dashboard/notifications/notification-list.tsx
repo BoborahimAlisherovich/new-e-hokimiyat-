@@ -7,6 +7,7 @@ import Link from "next/link"
 import { type Notification } from "@/types"
 import { notificationColors, notificationIcons } from "./notification-constants"
 import { formatNotificationDate } from "./notification-helpers"
+import { useTranslation } from "@/lib/i18n/context"
 
 interface NotificationListProps {
   notifications: Notification[]
@@ -15,13 +16,14 @@ interface NotificationListProps {
 }
 
 export function NotificationList({ notifications, onMarkAsRead, onDelete }: NotificationListProps) {
+  const t = useTranslation()
   if (notifications.length === 0) {
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-0 divide-y divide-border">
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Bell className="h-12 w-12 mb-4 opacity-20" />
-            <p>Bildirishnomalar yo'q</p>
+            <p>{t.notifications.emptyTitle}</p>
           </div>
         </CardContent>
       </Card>
@@ -72,7 +74,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                 {notification.related_task_id && (
                   <Link href={`/dashboard/tasks/${notification.related_task_id}`}>
                     <Button variant="ghost" size="sm">
-                      Ko'rish
+                      {t.notifications.view}
                     </Button>
                   </Link>
                 )}

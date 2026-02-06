@@ -10,12 +10,97 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import Organization, Sector
+from tasks.models import TaskOrganization
+from django.utils.text import slugify
 from .serializers import (
     OrganizationSerializer, OrganizationCreateSerializer,
     OrganizationMinimalSerializer, SectorSerializer
 )
 from core.permissions import CanManageOrganizations
 from audit.models import AuditLog
+
+DEFAULT_SECTORS = [
+    {
+        'name': "Sog'liqni saqlash",
+        'description': "Sog'liqni saqlash tizimi tashkilotlari",
+    },
+    {
+        'name': "Bandlik va mehnat",
+        'description': "Bandlik va mehnat bozori tashkilotlari",
+    },
+    {
+        'name': "Ta'lim",
+        'description': "Ta'lim tizimi tashkilotlari",
+    },
+    {
+        'name': "Ijtimoiy himoya",
+        'description': "Ijtimoiy himoya tashkilotlari",
+    },
+    {
+        'name': "Adliya",
+        'description': "Adliya tizimi tashkilotlari",
+    },
+    {
+        'name': "Ekologiya",
+        'description': "Ekologiya va atrof-muhit tashkilotlari",
+    },
+    {
+        'name': "Subsidiya",
+        'description': "Subsidiya va davlat qo'llab-quvvatlash tashkilotlari",
+    },
+    {
+        'name': "Oila va bolalar",
+        'description': "Oila va bolalar huquqlarini himoya qilish tashkilotlari",
+    },
+    {
+        'name': "Ko'chmas mulk",
+        'description': "Ko'chmas mulk va yer boshqaruvi tashkilotlari",
+    },
+    {
+        'name': "Fuqarolik",
+        'description': "Fuqarolik va pasport ishlari tashkilotlari",
+    },
+    {
+        'name': "Davlat aktivlari",
+        'description': "Davlat mulki va aktivlarini boshqarish tashkilotlari",
+    },
+    {
+        'name': "Iqtisodiyot va biznes",
+        'description': "Iqtisodiyot, biznes va tadbirkorlik tashkilotlari",
+    },
+    {
+        'name': "Yoshlar",
+        'description': "Yoshlar siyosati va sport tashkilotlari",
+    },
+    {
+        'name': "Transport",
+        'description': "Transport va yo'l xo'jaligi tashkilotlari",
+    },
+    {
+        'name': "Axborot va aloqa",
+        'description': "Axborot texnologiyalari va aloqa tashkilotlari",
+    },
+    {
+        'name': "Geologiya",
+        'description': "Geologiya va mineral resurslar tashkilotlari",
+    },
+    {
+        'name': "Pensiya",
+        'description': "Pensiya ta'minoti tashkilotlari",
+    },
+    {
+        'name': "Madaniyat, turizm va sport",
+        'description': "Madaniyat, turizm va sport tashkilotlari",
+    },
+    {
+        'name': "Kommunal soha",
+        'description': "Kommunal xizmat va shahar xo'jaligi tashkilotlari",
+    },
+    {
+        'name': "Soliqlar",
+        'description': "Soliq va bojxona tashkilotlari",
+    },
+]
 
 
 class SectorViewSet(viewsets.ModelViewSet):
@@ -28,6 +113,38 @@ class SectorViewSet(viewsets.ModelViewSet):
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'description']
     ordering = ['name']
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated, CanManageOrganizations])
+    def populate_defaults(self, request):
+        """
+        Populate default sectors.
+
+        POST /api/organizations/sectors/populate_defaults/
+        """
+        created_count = 0
+        updated_count = 0
+
+        for sector_data in DEFAULT_SECTORS:
+            sector, created = Sector.objects.update_or_create(
+                name=sector_data['name'],
+                defaults={
+                    'description': sector_data.get('description', ''),
+                    'is_active': True,
+                }
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+
+        return Response(
+            {
+                'created': created_count,
+                'updated': updated_count,
+                'total': Sector.objects.count(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -101,6 +218,124 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             new_values={'name': org.name, 'is_active': org.is_active},
             ip_address=getattr(self.request, 'client_ip', None)
         )
+
+    @action(detail=False, methods=['get'])
+    def regions(self, request):
+        """
+        Get distinct regions.
+
+        GET /api/organizations/regions/
+        """
+        regions = (
+            self.get_queryset()
+            .exclude(region='')
+            .values_list('region', flat=True)
+            .distinct()
+            .order_by('region')
+        )
+        data = [
+            {
+                'id': index + 1,
+                'name': name,
+                'code': slugify(name),
+            }
+            for index, name in enumerate(regions)
+        ]
+        return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def districts(self, request):
+        """
+        Get distinct districts, optionally filtered by region.
+
+        GET /api/organizations/districts/?region=<region>
+        """
+        queryset = self.get_queryset().exclude(district='')
+        region = request.query_params.get('region')
+        if region:
+            queryset = queryset.filter(region=region)
+
+        districts = queryset.values_list('district', flat=True).distinct().order_by('district')
+        data = [
+            {
+                'id': index + 1,
+                'name': name,
+                'code': slugify(name),
+                'region': region or '',
+            }
+            for index, name in enumerate(districts)
+        ]
+        return Response(data)
+
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """
+        Get organization statistics.
+
+        GET /api/organizations/{id}/statistics/
+        """
+        org = self.get_object()
+        task_orgs = TaskOrganization.objects.filter(organization=org)
+
+        total_tasks = task_orgs.count()
+        completed_tasks = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
+        pending_tasks = task_orgs.filter(status__in=['YANGI', 'IJRODA', 'MUDDATI_KECH']).count()
+        overdue_tasks = task_orgs.filter(status='MUDDATI_KECH').count()
+        completion_rate = (completed_tasks / total_tasks * 100) if total_tasks else 0
+        employees_count = org.employees.filter(status='FAOL').count()
+
+        return Response({
+            'totalTasks': total_tasks,
+            'completedTasks': completed_tasks,
+            'pendingTasks': pending_tasks,
+            'overdueTasks': overdue_tasks,
+            'completionRate': completion_rate,
+            'employeesCount': employees_count,
+        })
+
+    @action(detail=False, methods=['get'])
+    def tree(self, request):
+        """
+        Get organization hierarchy tree.
+
+        GET /api/organizations/tree/
+        """
+        queryset = self.get_queryset().select_related('parent')
+
+        nodes = {}
+        for org in queryset:
+            nodes[org.id] = {
+                'id': org.id,
+                'name': org.name,
+                'short_name': org.short_name,
+                'parent_id': org.parent_id,
+                'region': org.region,
+                'district': org.district,
+                'address': org.address,
+                'phone': org.phone,
+                'email': org.email,
+                'website': org.website,
+                'director_name': org.director_name,
+                'is_active': org.is_active,
+                'children': [],
+                'level': 0,
+            }
+
+        roots = []
+        for org in queryset:
+            node = nodes[org.id]
+            if org.parent_id and org.parent_id in nodes:
+                nodes[org.parent_id]['children'].append(node)
+            else:
+                roots.append(node)
+
+        def set_levels(items, level=0):
+            for item in items:
+                item['level'] = level
+                set_levels(item['children'], level + 1)
+
+        set_levels(roots)
+        return Response(roots)
     
     @action(detail=False, methods=['get'])
     def list_minimal(self, request):

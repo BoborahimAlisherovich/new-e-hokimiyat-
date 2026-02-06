@@ -57,15 +57,15 @@ export function SettingsAdminTab({
             <CardDescription>{t.settings.telegramBotDesc}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Alert className="border-emerald-200 bg-emerald-50">
-              <AlertCircle className="h-4 w-4 text-emerald-600" />
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-sm">{t.settings.createBot}</AlertDescription>
             </Alert>
 
             {tokenSaved && (
-              <Alert className="border-emerald-200 bg-emerald-50">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="text-sm text-emerald-600">{t.settings.settingsSaved}!</AlertDescription>
+              <Alert className="border-blue-200 bg-blue-50">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-600">{t.settings.settingsSaved}!</AlertDescription>
               </Alert>
             )}
 
@@ -154,7 +154,7 @@ export function SettingsAdminTab({
             </div>
 
             <div className="flex justify-end">
-              <Button>
+              <Button onClick={onSaveBotSettings}>
                 <Save className="mr-2 h-4 w-4" />
                 {t.common.save}
               </Button>

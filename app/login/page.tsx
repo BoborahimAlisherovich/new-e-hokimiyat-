@@ -90,11 +90,11 @@ export default function LoginPage() {
   const termsHtml = t.auth.agreeToTerms
     .replace(
       "{terms}",
-      `<a href="#" class="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">${t.auth.termsOfService}</a>`
+      `<a href="#" class="text-blue-600 hover:text-blue-700 underline underline-offset-2">${t.auth.termsOfService}</a>`
     )
     .replace(
       "{policy}",
-      `<a href="#" class="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">${t.auth.privacyPolicy}</a>`
+      `<a href="#" class="text-blue-600 hover:text-blue-700 underline underline-offset-2">${t.auth.privacyPolicy}</a>`
     )
 
   return (
@@ -115,28 +115,28 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 relative">
+      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative">
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-100/40 to-blue-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-100/30 to-emerald-100/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100/40 to-indigo-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-100/30 to-indigo-100/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         
         <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <Building2 className="h-7 w-7 text-white" />
               </div>
               <div className="text-left">
                 <h2 className="text-xl font-bold text-gray-900">E-Hokimiyat</h2>
-                <p className="text-sm text-emerald-600 font-medium">Xatirchi tumani</p>
+                <p className="text-sm text-blue-600 font-medium">Xatirchi tumani</p>
               </div>
             </div>
           </div>
 
           {/* Form Header */}
           <div className="text-center lg:text-left mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold mb-4">
               <Shield className="h-3.5 w-3.5" />
               Xavfsiz kirish
             </div>
@@ -154,7 +154,7 @@ export default function LoginPage() {
               <div className="space-y-6">
                 <div className="space-y-3">
                   <Label htmlFor="pnfl" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                    <Fingerprint className="h-4 w-4 text-emerald-600" />
+                    <Fingerprint className="h-4 w-4 text-blue-600" />
                     PNFL (Shaxsiy raqam)
                   </Label>
                   <div className="relative">
@@ -166,11 +166,11 @@ export default function LoginPage() {
                       }
                       maxLength={14}
                       placeholder="• • • • • • • • • • • • • •"
-                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-gray-50/50 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
+                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-gray-50/50 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
                     />
                     {pnfl.length === 14 && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in duration-200" />
+                        <CheckCircle2 className="h-5 w-5 text-blue-500 animate-in zoom-in duration-200" />
                       </div>
                     )}
                   </div>
@@ -186,14 +186,14 @@ export default function LoginPage() {
                   {/* Progress bar */}
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-300 ease-out"
+                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-300 ease-out"
                       style={{ width: `${(pnfl.length / 14) * 100}%` }}
                     />
                   </div>
                 </div>
 
                 <Button
-                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all duration-300 group"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all duration-300 group"
                   onClick={handlePnflCheck}
                   disabled={pnfl.length !== 14}
                 >
@@ -231,8 +231,8 @@ export default function LoginPage() {
             {step === "checking" && (
               <div className="flex flex-col items-center py-14">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-white" />
                   </div>
                 </div>
@@ -247,13 +247,13 @@ export default function LoginPage() {
 
             {step === "oneid_redirect" && (
               <div className="space-y-6">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-emerald-800 font-medium text-sm">PNFL tasdiqlandi</p>
-                    <p className="text-emerald-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
+                    <p className="text-blue-800 font-medium text-sm">PNFL tasdiqlandi</p>
+                    <p className="text-blue-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
                   </div>
                 </div>
 
@@ -302,8 +302,8 @@ export default function LoginPage() {
             {step === "success" && (
               <div className="flex flex-col items-center py-14">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
-                  <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+                  <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                     <CheckCircle2 className="h-10 w-10 text-white" />
                   </div>
                 </div>

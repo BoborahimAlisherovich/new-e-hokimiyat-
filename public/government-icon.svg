@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Government">
+  <rect width="64" height="64" rx="12" fill="#1d4ed8"/>
+  <path d="M12 28L32 16l20 12v4H12v-4zm6 6h4v16h-4V34zm10 0h4v16h-4V34zm10 0h4v16h-4V34zm10 0h4v16h-4V34zM12 54h40v4H12v-4z" fill="#ffffff"/>
+</svg>

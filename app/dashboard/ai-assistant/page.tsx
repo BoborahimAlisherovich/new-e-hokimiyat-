@@ -34,6 +34,7 @@ import {
   Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { API_BASE, getAccessToken } from "@/lib/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { uz } from "date-fns/locale";
 import { useAudioRecorder, formatTime } from "@/hooks/use-audio-recorder";
@@ -493,6 +494,61 @@ export default function AIAssistantPage() {
     );
   };
 
+  const extractPdfUrl = (content?: string) => {
+    if (!content) return null;
+    const match = content.match(/https?:\/\/[^\s]+\/download\/?/i);
+    return match ? match[0] : null;
+  };
+
+  const extractReportId = (content?: string) => {
+    if (!content) return null;
+    const match = content.match(/\[REPORT_ID:([0-9a-f-]+)\]/i);
+    return match ? match[1] : null;
+  };
+
+  const sanitizeReportContent = (content?: string) => {
+    if (!content) return "";
+    return content
+      .replace(/\[REPORT_ID:[0-9a-f-]+\]\s*/gi, "")
+      .replace(/^.*PDF yuklab olish:.*$/gim, "")
+      .replace(/^.*Hisobot ID:.*$/gim, "")
+      .trim();
+  };
+
+  const downloadReportPdf = async (url: string) => {
+    try {
+      const token = getAccessToken();
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      const objectUrl = URL.createObjectURL(blob);
+      link.href = objectUrl;
+
+      const idMatch = url.match(/reports\/([^/]+)\/download/);
+      const reportId = idMatch?.[1] ?? "report";
+      link.download = `report-${reportId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("PDF download error:", err);
+    }
+  };
+
+  const downloadReportPdfById = async (reportId: string) => {
+    const url = `${API_BASE}/ai/reports/${reportId}/download/`;
+    return downloadReportPdf(url);
+  };
+
   return (
     <motion.div 
       initial="hidden"
@@ -782,9 +838,26 @@ export default function AIAssistantPage() {
                                 : "text-slate-800 [&>*]:text-slate-800"
                             }`}>
                               <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                                {message.content}
+                                {sanitizeReportContent(message.content)}
                               </ReactMarkdown>
                             </div>
+                            {message.role === "assistant" && (extractReportId(message.content) || extractPdfUrl(message.content)) && (
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const reportId = extractReportId(message.content);
+                                    if (reportId) return downloadReportPdfById(reportId);
+                                    const url = extractPdfUrl(message.content);
+                                    if (url) return downloadReportPdf(url);
+                                  }}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 border border-blue-200 hover:bg-blue-100"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  PDF faylni yuklab olish
+                                </button>
+                              </div>
+                            )}
                             {message.is_audio_message && (
                               <motion.div
                                 initial={{ scale: 0 }}
@@ -1001,28 +1074,24 @@ export default function AIAssistantPage() {
       {/* O'ng panel - Statistika */}
       <motion.div 
         variants={itemVariants}
-        className="w-full lg:w-72 flex flex-col gap-4 lg:max-h-full overflow-y-auto"
+        className="w-full lg:w-72 flex flex-col gap-3 lg:max-h-none"
       >
         <Card className="backdrop-blur-xl bg-white/95 border-slate-200 shadow-2xl">
           <CardHeader className="pb-3 border-b border-slate-200">
             <CardTitle className="flex items-center gap-2 text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              Holat
+              AI Faoliyat
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-3 pt-3">
             {stats ? (
               <motion.div initial="hidden" animate="visible" variants={containerVariants}>
                 {/* AI Faoliyat - asosiy statistika */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                    AI Faoliyat
-                  </h4>
                   
                   {/* Bugungi suhbatlar */}
                   <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }}>
-                    <div className="rounded-xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 border border-blue-200 p-4 shadow-md">
+                    <div className="rounded-xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 border border-blue-200 p-3 shadow-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-lg bg-blue-500/20">
@@ -1040,7 +1109,7 @@ export default function AIAssistantPage() {
                   {/* Harakatlar va Hisobotlar */}
                   <div className="grid grid-cols-2 gap-3">
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-200 p-3 shadow-md">
+                      <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-200 p-2 shadow-md">
                         <div className="flex items-center gap-2 mb-1">
                           <Zap className="h-4 w-4 text-purple-600" />
                           <span className="text-xs text-purple-700 font-medium">Harakatlar</span>
@@ -1049,7 +1118,7 @@ export default function AIAssistantPage() {
                       </div>
                     </motion.div>
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }}>
-                      <div className="rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-200 p-3 shadow-md">
+                      <div className="rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-200 p-2 shadow-md">
                         <div className="flex items-center gap-2 mb-1">
                           <FileText className="h-4 w-4 text-indigo-600" />
                           <span className="text-xs text-indigo-700 font-medium">Hisobotlar</span>
@@ -1060,7 +1129,7 @@ export default function AIAssistantPage() {
                   </div>
                 </div>
 
-                <Separator className="my-4" />
+                <Separator className="my-3" />
 
                 {/* AI imkoniyatlari */}
                 <div className="space-y-3">
@@ -1069,23 +1138,23 @@ export default function AIAssistantPage() {
                     AI imkoniyatlari
                   </h4>
                   <div className="space-y-2">
-                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-100">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-1.5 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-100">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                       <span className="text-xs text-slate-700">Topshiriqlar analitikasi</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-100">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-1.5 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-100">
                       <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
                       <span className="text-xs text-slate-700">Hisobot yaratish (PDF/XLSX)</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-100">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-100">
                       <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0" />
                       <span className="text-xs text-slate-700">Tashkilotlar holati</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-100">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-1.5 rounded-lg bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-100">
                       <CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0" />
                       <span className="text-xs text-slate-700">Murojaatlar statistikasi</span>
                     </motion.div>
-                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-100">
+                    <motion.div variants={itemVariants} className="flex items-center gap-2 p-1.5 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-100">
                       <CheckCircle2 className="h-4 w-4 text-cyan-600 shrink-0" />
                       <span className="text-xs text-slate-700">Ovozli buyruqlar</span>
                     </motion.div>
@@ -1094,7 +1163,7 @@ export default function AIAssistantPage() {
 
                 {stats.alerts.high_risk_tasks > 0 && (
                   <>
-                    <Separator className="my-4" />
+                    <Separator className="my-3" />
                     <motion.div 
                       variants={itemVariants}
                       animate={{ scale: [1, 1.02, 1] }}

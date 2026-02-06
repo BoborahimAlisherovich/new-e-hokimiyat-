@@ -72,3 +72,20 @@ backend/staticfiles/
 *.swp
 *.swo
 .DS_Store
+Thumbs.db
+
+# Redis
+dump.rdb
+
+# Temp files
+*.tmp
+*.temp
+*.bak
+
+# Frontend build cache
+.next/
+frontend/.next/
+
+# Package locks (optional - uncomment if needed)
+# pnpm-lock.yaml
+# package-lock.json

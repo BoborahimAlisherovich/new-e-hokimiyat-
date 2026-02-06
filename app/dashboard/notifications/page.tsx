@@ -13,8 +13,10 @@ import { NotificationActions } from "@/components/dashboard/notifications/notifi
 import { NotificationList } from "@/components/dashboard/notifications/notification-list"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export default function NotificationsPage() {
+  const t = useTranslation()
   const { toast } = useToast()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<"all" | "unread">("all")
@@ -31,7 +33,7 @@ export default function NotificationsPage() {
         setError(null)
       } catch (err) {
         console.error("Bildirishnomalarni yuklashda xatolik:", err)
-        setError("Bildirishnomalarni yuklashda xatolik yuz berdi")
+        setError(t.pages.notifications.loadError)
       } finally {
         if (mounted) setLoading(false)
       }
@@ -54,8 +56,8 @@ export default function NotificationsPage() {
       console.error("Bildirishnomani o'qilgan deb belgilashda xatolik:", err)
       setNotifications(previous)
       toast({
-        title: "Xatolik",
-        description: "Bildirishnomani o'qilgan deb belgilab bo'lmadi",
+        title: t.common.error,
+        description: t.pages.notifications.markReadError,
         variant: "destructive",
       })
     }
@@ -70,8 +72,8 @@ export default function NotificationsPage() {
       console.error("Barcha bildirishnomalarni o'qilgan deb belgilashda xatolik:", err)
       setNotifications(previous)
       toast({
-        title: "Xatolik",
-        description: "Barcha bildirishnomalarni o'qilgan deb belgilab bo'lmadi",
+        title: t.common.error,
+        description: t.pages.notifications.markAllReadError,
         variant: "destructive",
       })
     }
@@ -86,8 +88,8 @@ export default function NotificationsPage() {
       console.error("Bildirishnomani o'chirishda xatolik:", err)
       setNotifications(previous)
       toast({
-        title: "Xatolik",
-        description: "Bildirishnomani o'chirib bo'lmadi",
+        title: t.common.error,
+        description: t.pages.notifications.deleteError,
         variant: "destructive",
       })
     }
@@ -97,7 +99,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <Header title="Bildirishnomalar" description="Barcha xabarlar va ogohlantirishlar" />
+      <Header title={t.pages.notifications.title} description={t.pages.notifications.description} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

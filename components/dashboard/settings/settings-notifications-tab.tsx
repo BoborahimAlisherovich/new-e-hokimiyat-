@@ -41,11 +41,11 @@ export function SettingsNotificationsTab({
 }: SettingsNotificationsTabProps) {
   return (
     <TabsContent value="notifications" className="animate-fade-in">
-      <Card className="bg-white border border-gray-200 shadow-sm hover:border-emerald-300 transition-all duration-250">
+      <Card className="bg-white border border-gray-200 shadow-sm hover:border-blue-300 transition-all duration-250">
         <CardHeader className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-emerald-600/3 to-emerald-700/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-blue-600/3 to-blue-700/5" />
           <CardTitle className="relative flex items-center gap-3 text-2xl">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
               <Bell className="h-4 w-4 text-white" />
             </div>
             {t.settings.notificationSettings}
@@ -54,13 +54,13 @@ export function SettingsNotificationsTab({
         </CardHeader>
         <CardContent className="space-y-8 p-8">
           <div className="space-y-6">
-            <h4 className="text-xl font-semibold text-emerald-600 bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+            <h4 className="text-xl font-semibold text-blue-600 bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
               {t.settings.notificationChannels}
             </h4>
 
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-emerald-50 hover:bg-emerald-100 transition-all duration-250">
+            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
                   <Mail className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -71,9 +71,9 @@ export function SettingsNotificationsTab({
               <Switch checked={emailNotifications} onCheckedChange={onEmailChange} className="scale-125" />
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-emerald-50 hover:bg-emerald-100 transition-all duration-250">
+            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
                   <MessageSquare className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -101,10 +101,10 @@ export function SettingsNotificationsTab({
           <Separator className="my-8" />
 
           <div className="space-y-6">
-            <h4 className="font-medium text-emerald-600">{t.settings.notificationTypes}</h4>
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-emerald-50 hover:bg-emerald-100 transition-all duration-250">
+            <h4 className="font-medium text-blue-600">{t.settings.notificationTypes}</h4>
+            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
                   <AlertCircle className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -115,9 +115,9 @@ export function SettingsNotificationsTab({
               <Switch checked={newTaskNotification} onCheckedChange={onNewTaskChange} className="scale-125" />
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-emerald-50 hover:bg-emerald-100 transition-all duration-250">
+            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
                   <AlertCircle className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -133,7 +133,7 @@ export function SettingsNotificationsTab({
             <Button
               onClick={onSave}
               disabled={saving}
-              className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-250 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-250 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />

@@ -9,8 +9,10 @@ import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
 import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export default function AppealsPage() {
+  const t = useTranslation()
   // State management
   const [appeals, setAppeals] = useState<Appeal[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, inProgress: 0, resolved: 0 })
@@ -126,7 +128,7 @@ export default function AppealsPage() {
 
   return (
     <>
-      <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
+      <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
