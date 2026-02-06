@@ -8,6 +8,7 @@ import { getTaskStats } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { StatsCardSkeleton } from "@/components/ui/loading-skeleton"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 const computeStats = (stats: {
   total: number
@@ -26,6 +27,7 @@ const computeStats = (stats: {
 }
 
 export function StatsCards() {
+  const t = useTranslation()
   const [statsData, setStatsData] = React.useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -56,56 +58,56 @@ export function StatsCards() {
 
   const stats = [
     {
-      label: "Jami topshiriqlar",
+      label: t.dashboard.totalTasks,
       value: totalTasks.toString(),
       change: `${activeSectors}`,
-      changeLabel: "ta sohada",
+      changeLabel: t.dashboard.inSectors,
       icon: ListTodo,
       gradient: "from-blue-500 to-cyan-500",
       bgColor: "bg-gradient-to-br from-blue-500/10 to-cyan-500/10",
       iconColor: "text-blue-600",
       trend: "up",
       trendValue: "+12%",
-      description: "Barcha topshiriqlar",
+      description: t.dashboard.allTasksDescription,
     },
     {
-      label: "Bajarilgan",
+      label: t.dashboard.completed,
       value: completedTasks.toString(),
       change: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%",
-      changeLabel: "to'liqlik",
+      changeLabel: t.dashboard.completionLabel,
       icon: CheckCircle,
       gradient: "from-emerald-500 to-teal-500",
       bgColor: "bg-gradient-to-br from-emerald-500/10 to-teal-500/10",
       iconColor: "text-emerald-600",
       trend: "up",
       trendValue: "+8%",
-      description: "Muvaffaqiyatli bajarilgan",
+      description: t.dashboard.completedDescription,
     },
     {
-      label: "Muddat kechikkan",
+      label: t.dashboard.overdue,
       value: overdueTasks.toString(),
-      change: "Xavfli",
-      changeLabel: "holat",
+      change: t.dashboard.overdueStatus,
+      changeLabel: t.dashboard.statusLabel,
       icon: AlertCircle,
       gradient: "from-red-500 to-pink-500",
       bgColor: "bg-gradient-to-br from-red-500/10 to-pink-500/10",
       iconColor: "text-red-600",
       trend: "down",
       trendValue: "-3%",
-      description: "E'tibor berilgan topshiriqlar",
+      description: t.dashboard.overdueDescription,
     },
     {
-      label: "Ijroda",
+      label: t.dashboard.inProgress,
       value: inProgressTasks.toString(),
-      change: "faol",
-      changeLabel: "holat",
+      change: t.dashboard.active,
+      changeLabel: t.dashboard.statusLabel,
       icon: Clock,
       gradient: "from-amber-500 to-orange-500",
       bgColor: "bg-gradient-to-br from-amber-500/10 to-orange-500/10",
       iconColor: "text-amber-600",
       trend: "up",
       trendValue: "+5%",
-      description: "Hozirda ijro bo'layotgan",
+      description: t.dashboard.inProgressDescription,
     },
   ]
 
@@ -186,7 +188,7 @@ export function StatsCards() {
                 {/* Progress indicator */}
                 <div className="mt-6 space-y-3">
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Тўлиқлик</span>
+                    <span>{t.dashboard.completionLabel}</span>
                     <span>{stat.change}</span>
                   </div>
                   <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">

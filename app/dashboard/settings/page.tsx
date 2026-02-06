@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header"
 import { Tabs } from "@/components/ui/tabs"
 import { useState, useEffect, useCallback } from "react"
-import { useTranslation } from "@/lib/i18n/context"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
 import { getCurrentUser } from "@/lib/api"
 import { User } from "@/types"
 import { SettingsTabs } from "@/components/dashboard/settings/settings-tabs"
@@ -12,12 +12,14 @@ import { SettingsNotificationsTab } from "@/components/dashboard/settings/settin
 import { SettingsSecurityTab } from "@/components/dashboard/settings/settings-security-tab"
 import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-appearance-tab"
 import { SettingsSectorsTab } from "@/components/dashboard/settings/settings-sectors-tab"
-import { SettingsBotTab } from "@/components/dashboard/settings/settings-bot-tab"
+import { SettingsAdminTab } from "@/components/dashboard/settings/settings-admin-tab"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
+import { api } from "@/lib/api"
 
 export default function SettingsPage() {
   const t = useTranslation()
+  const { language, setLanguage } = useI18n()
   const { toast } = useToast()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,18 +31,36 @@ export default function SettingsPage() {
   const [pushNotifications, setPushNotifications] = useState(false)
   const [taskDeadlineReminder, setTaskDeadlineReminder] = useState(true)
   const [newTaskNotification, setNewTaskNotification] = useState(true)
-  const [language, setLanguage] = useState("uz")
+
+  const [botToken, setBotToken] = useState("")
+  const [botUsername, setBotUsername] = useState("")
+  const [showToken, setShowToken] = useState(false)
+  const [tokenSaved, setTokenSaved] = useState(false)
+  const [smtpHost, setSmtpHost] = useState("")
+  const [smtpPort, setSmtpPort] = useState("")
+  const [senderEmail, setSenderEmail] = useState("")
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const user = await getCurrentUser()
       setCurrentUser(user)
+
+      try {
+        const botSettingsRes = await api.get<{ bot_token?: string; bot_username?: string }>(
+          "/telegram-bot/settings/"
+        )
+        if (typeof botSettingsRes.data?.bot_token === "string") {
+          setBotToken(botSettingsRes.data.bot_token)
+        }
+        if (typeof botSettingsRes.data?.bot_username === "string") {
+          setBotUsername(botSettingsRes.data.bot_username)
+        }
+      } catch (error) {
+        // ignore bot settings load errors for now
+      }
       
       // Load settings from localStorage
-      const savedLang = localStorage.getItem("language")
-      if (savedLang) setLanguage(savedLang)
-      
       const savedNotifications = localStorage.getItem("notifications")
       if (savedNotifications) {
         try {
@@ -65,7 +85,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     document.documentElement.lang = language || "uz"
-    localStorage.setItem("language", language)
   }, [language])
 
   const isAdmin = currentUser?.role === "ADMIN"
@@ -73,6 +92,23 @@ export default function SettingsPage() {
   const isHokimlikMasul = currentUser?.role === "HOKIMLIK_MASUL"
   const isTashkilotRahbar = currentUser?.role === "TASHKILOT_RAHBAR"
   const showAdminTabs = isAdmin || isHokim
+
+  const saveAdminSettings = async () => {
+    try {
+      await api.put("/telegram-bot/settings/1/", {
+        bot_token: botToken,
+        bot_username: botUsername,
+      })
+      setTokenSaved(true)
+      setTimeout(() => setTokenSaved(false), 3000)
+    } catch (error) {
+      toast({
+        title: t.common.error,
+        description: t.settings.adminSaveError,
+        variant: "destructive",
+      })
+    }
+  }
 
   const saveSettings = async () => {
     setSaving(true)
@@ -92,13 +128,13 @@ export default function SettingsPage() {
       await new Promise(resolve => setTimeout(resolve, 500))
       
       toast({
-        title: "Muvaffaqiyatli saqlandi",
-        description: "Sozlamalar muvaffaqiyatli saqlandi",
+        title: t.common.success,
+        description: t.settings.settingsSaved,
       })
     } catch (error) {
       toast({
-        title: "Xatolik",
-        description: "Sozlamalarni saqlashda xatolik yuz berdi",
+        title: t.common.error,
+        description: t.settings.saveError,
         variant: "destructive",
       })
     } finally {
@@ -135,7 +171,7 @@ export default function SettingsPage() {
               className="text-center"
             >
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-slate-700">Юкланмоқда...</p>
+              <p className="mt-4 text-slate-700">{t.common.loading}</p>
             </motion.div>
           </div>
         </div>
@@ -159,7 +195,7 @@ export default function SettingsPage() {
           className="max-w-4xl mx-auto relative z-10"
         >
           <Tabs defaultValue="profile" className="space-y-6">
-            <SettingsTabs t={t} isAdmin={showAdminTabs} userRole={currentUser?.role} />
+            <SettingsTabs t={t} isAdmin={isAdmin} userRole={currentUser?.role} />
             <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
             <SettingsNotificationsTab
               t={t}
@@ -182,11 +218,30 @@ export default function SettingsPage() {
             {/* Admin-only tabs */}
             {showAdminTabs && (
               <>
-                {currentUser?.role === "ADMIN" && <SettingsBotTab t={t} />}
                 {(currentUser?.role === "ADMIN" || currentUser?.role === "HOKIM" || currentUser?.role === "HOKIM_YORDAMCHISI" || currentUser?.role === "HOKIMLIK_MASUL") && (
                   <SettingsSectorsTab t={t} />
                 )}
               </>
+            )}
+
+            {isAdmin && (
+              <SettingsAdminTab
+                t={t}
+                botToken={botToken}
+                botUsername={botUsername}
+                showToken={showToken}
+                tokenSaved={tokenSaved}
+                smtpHost={smtpHost}
+                smtpPort={smtpPort}
+                senderEmail={senderEmail}
+                onBotTokenChange={setBotToken}
+                onBotUsernameChange={setBotUsername}
+                onShowTokenToggle={() => setShowToken((prev) => !prev)}
+                onSaveBotSettings={saveAdminSettings}
+                onSmtpHostChange={setSmtpHost}
+                onSmtpPortChange={setSmtpPort}
+                onSenderEmailChange={setSenderEmail}
+              />
             )}
           </Tabs>
         </motion.div>

@@ -32,6 +32,12 @@ class BotSettingsSerializer(serializers.ModelSerializer):
     
     def get_has_ai_key(self, obj):
         return bool(obj.ai_api_key)
+    
+    def update(self, instance, validated_data):
+        # Token o'zgarganda bot_username tozalansin
+        if 'bot_token' in validated_data and validated_data['bot_token'] != instance.bot_token:
+            validated_data['bot_username'] = ''
+        return super().update(instance, validated_data)
 
 
 class BotAdminSerializer(serializers.ModelSerializer):

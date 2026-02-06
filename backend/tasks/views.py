@@ -36,6 +36,7 @@ from rest_framework.serializers import Serializer
 from audit.models import AuditLog
 from core.constants import FileType, Messages, TaskStatus, UserRole
 from core.permissions import CanCloseTask, CanCreateTasks, CanExecuteTasks
+from core.ai_service import AIService
 from notifications.models import Notification
 
 from .models import (
@@ -138,13 +139,30 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request: Request) -> Response:
         """Topshiriqlar statistikasi (filtrlar bilan)."""
+        user = request.user
         queryset = self.filter_queryset(self.get_queryset())
 
         total = queryset.count()
-        pending = queryset.filter(status='YANGI').count()
-        in_progress = queryset.filter(status='IJRODA').count()
-        completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-        overdue = queryset.filter(status='MUDDATI_KECH').count()
+        
+        # Tashkilot xodimlari uchun TaskOrganization statusini hisoblash
+        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and user.organization:
+            from tasks.models import TaskOrganization
+            task_ids = queryset.values_list('id', flat=True)
+            task_orgs = TaskOrganization.objects.filter(
+                task_id__in=task_ids,
+                organization=user.organization
+            )
+            pending = task_orgs.filter(status='YANGI').count()
+            in_progress = task_orgs.filter(status='IJRODA').count()
+            completed = task_orgs.filter(status='BAJARILDI').count()
+            overdue = task_orgs.filter(status='MUDDATI_KECH').count()
+        else:
+            # Admin rollar uchun umumiy Task statusini hisoblash
+            pending = queryset.filter(status='YANGI').count()
+            in_progress = queryset.filter(status='IJRODA').count()
+            completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
+            overdue = queryset.filter(status='MUDDATI_KECH').count()
+        
         active_sectors = queryset.exclude(category='').values('category').distinct().count()
 
         return Response({
@@ -177,7 +195,49 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             return [IsAuthenticated(), CanCreateTasks()]
+        # Topshiriqni tahrirlash faqat yaratuvchilar uchun
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), CanCreateTasks()]
         return [IsAuthenticated()]
+    
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni yangilash.
+        
+        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni qisman yangilash.
+        
+        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni o'chirish.
+        
+        Faqat HOKIM va ADMIN o'chirishi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni o'chirish huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
     
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Yangi topshiriq yaratish.
@@ -516,6 +576,106 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         return Response(TaskDetailSerializer(task).data)
     
+    @action(detail=True, methods=['post'], url_path='mark-complete')
+    def mark_complete(self, request, pk=None):
+        """
+        Tashkilot rahbari yoki mas'uli topshiriqni bajarildi deb belgilaydi.
+        
+        POST /api/tasks/{id}/mark-complete/
+        """
+        task = self.get_object()
+        user = request.user
+        comment = request.data.get('comment', '')
+        
+        # Faqat tashkilot rahbari yoki mas'uli
+        if user.role not in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            return Response(
+                {'detail': "Faqat tashkilot rahbari yoki mas'uli topshiriqni bajarildi deb belgilashi mumkin"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Foydalanuvchi tashkilotini topish
+        user_org = user.organization
+        if not user_org:
+            return Response(
+                {'detail': "Foydalanuvchi tashkilotga biriktirilmagan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Topshiriqda tashkilotni topish
+        task_org = task.assigned_organizations.filter(organization=user_org).first()
+        if not task_org:
+            return Response(
+                {'detail': "Bu topshiriq sizning tashkilotingizga tayinlanmagan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if task_org.status == 'BAJARILDI':
+            return Response(
+                {'detail': "Topshiriq allaqachon bajarildi deb belgilangan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Statusni yangilash
+        old_status = task_org.status
+        task_org.status = 'BAJARILDI'
+        task_org.completed_at = timezone.now()
+        task_org.save()
+        
+        # Execution log
+        TaskExecution.objects.create(
+            task=task,
+            task_organization=task_org,
+            executed_by=user,
+            action_type='BAJARILDI',
+            comment=comment or f"{user_org.name} topshiriqni bajardi",
+            old_status=old_status,
+            new_status='BAJARILDI'
+        )
+        
+        # Audit log
+        AuditLog.objects.create(
+            user=user,
+            action='TASK_COMPLETED',
+            entity_type='TASK_ORGANIZATION',
+            entity_id=str(task_org.id),
+            description=f'Tashkilot topshiriqni bajardi: {user_org.name}',
+            extra_data={
+                'task_id': str(task.id),
+                'organization': user_org.name,
+                'old_status': old_status,
+                'new_status': task_org.status
+            }
+        )
+        
+        # Barcha tashkilotlar bajarilganligini tekshirish
+        all_completed = all(
+            to.status == 'BAJARILDI' 
+            for to in task.assigned_organizations.all()
+        )
+        
+        if all_completed:
+            task.status = 'BAJARILDI'
+            task.save()
+        
+        # HOKIM va HOKIMLIK_MASUL larga bildirishnoma yuborish
+        from users.models import User as UserModel
+        hokimlik_users = UserModel.objects.filter(
+            role__in=['HOKIM', 'HOKIMLIK_MASUL'],
+            status='FAOL'
+        )
+        for huser in hokimlik_users:
+            Notification.objects.create(
+                user=huser,
+                title='Topshiriq bajarildi',
+                message=f"{user_org.name} topshiriqni bajardi: {task.title}",
+                notification_type='TASK',
+                related_task=task,
+                link=f'/dashboard/tasks/{task.id}'
+            )
+        
+        return Response(TaskDetailSerializer(task).data)
+    
     @action(detail=True, methods=['get', 'post'])
     def timeline(self, request, pk=None):
         """
@@ -600,7 +760,168 @@ class TaskViewSet(viewsets.ModelViewSet):
                     {"type": "chat_message", "message": TaskMessageSerializer(message).data}
                 )
 
-            return Response(TaskMessageSerializer(message).data, status=status.HTTP_201_CREATED)
+            # AI tahlil va action bajarish
+            ai_response = self._process_chat_with_ai(task, message, request.user, channel_layer)
+
+            return Response({
+                **TaskMessageSerializer(message).data,
+                'ai_response': ai_response
+            }, status=status.HTTP_201_CREATED)
+    
+    def _process_chat_with_ai(self, task, message, user, channel_layer):
+        """
+        Chat xabarini AI bilan tahlil qilish va kerak bo'lsa action bajarish.
+        
+        AI quyidagilarni aniqlaydi:
+        - Hokim "nazoratdan yechilsin" desa → topshiriqni yopish
+        - Tashkilot rahbari "bajarildi" desa → statusni yangilash
+        - Dalil/fayl bilan tasdiqlash → statusni yangilash
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            ai_service = AIService()
+            content = message.content.lower()
+            user_role = user.role
+            
+            # AI tahlil uchun kontekst
+            task_context = f"""
+Topshiriq: {task.title}
+Status: {task.status}
+Yaratilgan: {task.created_at}
+Muddat: {task.deadline}
+Xabar yuboruvchi: {user.full_name} ({user_role})
+Xabar matni: {message.content}
+"""
+            
+            # Hokim buyruqlarini tekshirish
+            close_keywords = ['nazoratdan yechilsin', 'nazoratdan yech', 'yakunla', 'tugat', 'yopilsin', 'tasdiqlandi']
+            complete_keywords = ['bajarildi', 'tugallandi', 'yakunlandi', 'topshiriq bajarildi', 'ish tugadi']
+            
+            ai_action = None
+            ai_message = None
+            
+            # Hokim nazoratdan yechish buyrug'i
+            if user_role == 'HOKIM':
+                for keyword in close_keywords:
+                    if keyword in content:
+                        # Barcha tashkilotlar bajarilganligini tekshirish
+                        all_completed = all(
+                            to.status == 'BAJARILDI' 
+                            for to in task.assigned_organizations.all()
+                        )
+                        
+                        # Hokim buyrug'i bilan - tashkilotlar bajarilmagan bo'lsa ham yopish mumkin
+                        # Avval barcha tashkilotlarni "BAJARILDI" ga o'zgartirish
+                        if not all_completed and task.status != 'BAJARILDI':
+                            for task_org in task.assigned_organizations.all():
+                                if task_org.status != 'BAJARILDI':
+                                    task_org.status = 'BAJARILDI'
+                                    task_org.completed_at = timezone.now()
+                                    task_org.save()
+                            task.status = 'BAJARILDI'
+                            task.save()
+                        
+                        try:
+                            old_status = task.status
+                            task.close(user)
+                            ai_action = 'TASK_CLOSED'
+                            ai_message = f"✅ Topshiriq muvaffaqiyatli nazoratdan yechildi. Hokim {user.full_name} tomonidan tasdiqlandi."
+                            
+                            # Audit log
+                            AuditLog.objects.create(
+                                user=user,
+                                action='TASK_CLOSED',
+                                entity_type='TASK',
+                                entity_id=str(task.id),
+                                description=f'Topshiriq AI orqali nazoratdan yechildi: {task.title}',
+                                extra_data={
+                                    'old_status': old_status,
+                                    'new_status': task.status,
+                                    'ai_triggered': True,
+                                    'message_id': str(message.id)
+                                }
+                            )
+                        except Exception as e:
+                            ai_message = f"⚠️ Topshiriqni yopishda xatolik: {str(e)}"
+                        break
+            
+            # Tashkilot rahbari bajarildi deyishi
+            elif user_role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+                for keyword in complete_keywords:
+                    if keyword in content:
+                        # Foydalanuvchi tashkilotini topish
+                        user_org = user.organization
+                        if user_org:
+                            task_org = task.assigned_organizations.filter(organization=user_org).first()
+                            if task_org and task_org.status != 'BAJARILDI':
+                                # Tashkilot statusini yangilash
+                                old_status = task_org.status
+                                task_org.status = 'BAJARILDI'
+                                task_org.completed_at = timezone.now()
+                                task_org.save()
+                                
+                                ai_action = 'ORG_COMPLETED'
+                                ai_message = f"✅ {user_org.name} tomonidan topshiriq bajarildi deb belgilandi."
+                                
+                                # Barcha tashkilotlar bajarilganligini tekshirish
+                                all_completed = all(
+                                    to.status == 'BAJARILDI' 
+                                    for to in task.assigned_organizations.all()
+                                )
+                                
+                                if all_completed:
+                                    task.status = 'BAJARILDI'
+                                    task.save()
+                                    ai_message += " 🎉 Barcha tashkilotlar topshiriqni bajardi. Hokim nazoratdan yechishi mumkin."
+                                
+                                # Audit log
+                                AuditLog.objects.create(
+                                    user=user,
+                                    action='TASK_COMPLETED',
+                                    entity_type='TASK_ORGANIZATION',
+                                    entity_id=str(task_org.id),
+                                    description=f'Tashkilot topshiriqni bajardi: {user_org.name}',
+                                    extra_data={
+                                        'task_id': str(task.id),
+                                        'organization': user_org.name,
+                                        'old_status': old_status,
+                                        'new_status': task_org.status,
+                                        'ai_triggered': True,
+                                        'message_id': str(message.id)
+                                    }
+                                )
+                        break
+            
+            # Agar AI action bajarilgan bo'lsa, xabar yuborish
+            if ai_message:
+                # AI xabarini yaratish
+                ai_msg = TaskMessage.objects.create(
+                    task=task,
+                    sender=None,  # Tizim xabari
+                    message_type='SYSTEM',
+                    content=ai_message
+                )
+                
+                # WS orqali broadcast
+                if channel_layer:
+                    async_to_sync(channel_layer.group_send)(
+                        f"task_chat_{task.id}",
+                        {"type": "chat_message", "message": TaskMessageSerializer(ai_msg).data}
+                    )
+                
+                return {
+                    'action': ai_action,
+                    'message': ai_message,
+                    'success': ai_action is not None
+                }
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"AI chat processing error: {str(e)}")
+            return None
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='messages/(?P<message_id>[^/.]+)')
     def update_message(self, request, pk=None, message_id=None):

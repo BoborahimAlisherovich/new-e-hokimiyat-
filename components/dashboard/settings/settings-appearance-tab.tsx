@@ -28,14 +28,14 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
           <div className="space-y-2">
             <Label>{t.settings.language}</Label>
             <Select value={language} onValueChange={onLanguageChange}>
-              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                 <Globe className="mr-2 h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="uz">O'zbek tili (lotin)</SelectItem>
-                <SelectItem value="uz-cyrl">Ўзбек тили (кирилл)</SelectItem>
-                <SelectItem value="ru">Русский</SelectItem>
+                <SelectItem value="uz">{t.settings.languageUzLatin}</SelectItem>
+                <SelectItem value="uz-cyrl">{t.settings.languageUzCyrl}</SelectItem>
+                <SelectItem value="ru">{t.settings.languageRu}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -44,14 +44,14 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
             <Button 
               onClick={onSave} 
               disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              {saving ? "Saqlanmoqda..." : t.common.save}
+              {saving ? t.common.saving : t.common.save}
             </Button>
           </div>
         </CardContent>

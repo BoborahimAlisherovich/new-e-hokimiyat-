@@ -28,6 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
     cabinet_type = serializers.CharField(read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
+    is_online = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = User
@@ -35,9 +36,9 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'pnfl', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
             'position', 'status', 'oneid_connected', 'cabinet_type',
-            'created_by', 'created_by_name', 'created_at', 'activated_at'
+            'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen'
         ]
-        read_only_fields = ['id', 'oneid_connected', 'created_at', 'activated_at', 'created_by']
+        read_only_fields = ['id', 'oneid_connected', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
         extra_kwargs = {
             'pnfl': {'write_only': True}  # Don't expose PNFL in responses
         }

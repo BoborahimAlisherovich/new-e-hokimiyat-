@@ -9,8 +9,10 @@ import { OrganizationTable } from "@/components/dashboard/organizations/organiza
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export default function OrganizationsPage() {
+  const t = useTranslation()
   const { toast } = useToast()
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -44,7 +46,7 @@ export default function OrganizationsPage() {
       setError(null)
     } catch (err) {
       console.error("Tashkilotlarni yuklashda xatolik:", err)
-      setError("Tashkilotlarni yuklashda xatolik yuz berdi")
+      setError(t.pages.organizations.loadError)
     }
   }, [])
 
@@ -56,7 +58,7 @@ export default function OrganizationsPage() {
         await loadOrganizations()
       } catch (err) {
         console.error("Tashkilotlarni yuklashda xatolik:", err)
-        if (mounted) setError("Tashkilotlarni yuklashda xatolik yuz berdi")
+        if (mounted) setError(t.pages.organizations.loadError)
       } finally {
         if (mounted) setLoading(false)
       }
@@ -74,8 +76,8 @@ export default function OrganizationsPage() {
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Xato",
-        description: "Tashkilot nomini kiriting",
+        title: t.common.error,
+        description: t.pages.organizations.createRequiredName,
         variant: "destructive"
       })
       return
@@ -90,8 +92,8 @@ export default function OrganizationsPage() {
       })
       
       toast({
-        title: "Muvaffaqiyat",
-        description: "Tashkilot muvaffaqiyatli qo'shildi"
+        title: t.common.success,
+        description: t.pages.organizations.createSuccess
       })
       
       setIsCreateOpen(false)
@@ -99,8 +101,8 @@ export default function OrganizationsPage() {
       await loadOrganizations()
     } catch (err: any) {
       toast({
-        title: "Xato",
-        description: err?.message || "Tashkilot qo'shishda xatolik yuz berdi",
+        title: t.common.error,
+        description: err?.message || t.pages.organizations.createError,
         variant: "destructive"
       })
     } finally {
@@ -121,29 +123,32 @@ export default function OrganizationsPage() {
   }, [organizations, statusFilter, typeFilter, searchQuery])
 
   const handleDeleteOrganization = useCallback(async (id: number) => {
-    if (!confirm("Tashkilotni o'chirishni tasdiqlaysizmi?")) return
+    if (!confirm(t.pages.organizations.deleteConfirm)) return
     try {
       await deleteOrganization(id)
-      toast({ title: "Muvaffaqiyat", description: "Tashkilot o'chirildi" })
+      toast({ title: t.common.success, description: t.pages.organizations.deleteSuccess })
       await loadOrganizations()
     } catch (err: any) {
-      toast({ title: "Xato", description: err?.message || "O'chirishda xatolik", variant: "destructive" })
+      toast({ title: t.common.error, description: err?.message || t.pages.organizations.deleteError, variant: "destructive" })
     }
   }, [loadOrganizations, toast])
 
   const handleToggleStatus = useCallback(async (id: number, currentStatus: boolean) => {
     try {
       await updateOrganization(id, { is_active: !currentStatus })
-      toast({ title: "Muvaffaqiyat", description: currentStatus ? "Tashkilot nofaollashtirildi" : "Tashkilot faollashtirildi" })
+      toast({
+        title: t.common.success,
+        description: currentStatus ? t.pages.organizations.toggleDeactivated : t.pages.organizations.toggleActivated,
+      })
       await loadOrganizations()
     } catch (err: any) {
-      toast({ title: "Xato", description: err?.message || "Holatni o'zgartirishda xatolik", variant: "destructive" })
+      toast({ title: t.common.error, description: err?.message || t.pages.organizations.toggleError, variant: "destructive" })
     }
   }, [loadOrganizations, toast])
 
   return (
     <>
-      <Header title="Tashkilotlar boshqaruvi" description="Tizimdagi barcha tashkilotlarning ro'yxati, ma'lumotlari va boshqaruvi" />
+      <Header title={t.pages.organizations.title} description={t.pages.organizations.description} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -192,7 +197,7 @@ export default function OrganizationsPage() {
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">Yuklanmoqda...</span>
+                  <span className="ml-3 text-gray-600">{t.pages.organizations.loading}</span>
                 </div>
               ) : error ? (
                 <div className="text-center py-16">
@@ -201,7 +206,7 @@ export default function OrganizationsPage() {
                     onClick={() => window.location.reload()} 
                     className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
-                    Qayta urinish
+                    {t.pages.organizations.retry}
                   </button>
                 </div>
               ) : (

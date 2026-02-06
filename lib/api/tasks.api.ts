@@ -54,10 +54,11 @@ export async function getTasks(
 export async function getTasksPage(
   filters?: TaskFilters,
   page = 1,
-  pageSize = 100
+  pageSize = 100,
+  ordering = 'deadline'
 ): Promise<PaginatedResponse<Task>> {
   const offset = Math.max(0, (page - 1) * pageSize)
-  const params = { ...filters, limit: pageSize, offset }
+  const params = { ...filters, limit: pageSize, offset, ordering }
   const queryString = buildQueryString(params)
   return fetchApi<PaginatedResponse<Task>>(`/tasks${queryString}`)
 }
@@ -171,7 +172,7 @@ export async function submitTaskForReview(
 }
 
 /**
- * Topshiriqni tasdiqlaydi
+ * Topshiriqni tasdiqlaydi (nazoratdan yechish)
  * 
  * Holat: BAJARILDI → NAZORATDAN_YECHILDI
  * 
@@ -183,7 +184,7 @@ export async function approveTask(
   id: number | string, 
   data: { comment?: string } = {}
 ): Promise<Task> {
-  return fetchApi<Task>(`/tasks/${id}/approve/`, {
+  return fetchApi<Task>(`/tasks/${id}/close/`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -239,6 +240,23 @@ export async function requestDeadlineExtension(
   return fetchApi<Task>(`/tasks/${id}/extend_request/`, {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+}
+
+/**
+ * Topshiriqni bajarildi deb belgilaydi (tashkilot rahbari/mas'uli uchun)
+ * 
+ * @param id - Topshiriq ID
+ * @param comment - Izoh (ixtiyoriy)
+ * @returns Yangilangan topshiriq
+ */
+export async function markTaskComplete(
+  id: number | string, 
+  comment?: string
+): Promise<Task> {
+  return fetchApi<Task>(`/tasks/${id}/mark-complete/`, {
+    method: 'POST',
+    body: JSON.stringify({ comment: comment || '' }),
   })
 }
 

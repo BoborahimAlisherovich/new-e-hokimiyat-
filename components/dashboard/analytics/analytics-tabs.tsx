@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Trash2, Save, X, Building2, BarChart3, TrendingUp } from "lucide-react"
-import { getSectors, createSector, updateSector, deleteSector, getOrganizations, getTasks } from "@/lib/api"
+import { getSectors, createSector, updateSector, deleteSector, getOrganizations, getTasks, getTaskStats } from "@/lib/api"
 import type { Sector } from "@/lib/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -19,6 +19,15 @@ interface AnalyticsTabsProps {
   organizations?: any[]
 }
 
+interface TaskStatsData {
+  total: number
+  pending: number
+  in_progress: number
+  completed: number
+  overdue: number
+  active_sectors: number
+}
+
 export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsProps) {
   const [activeTab, setActiveTab] = useState("status")
   const [sectors, setSectors] = useState<Sector[]>([])
@@ -26,17 +35,42 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
   const [editingSector, setEditingSector] = useState<Sector | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [formData, setFormData] = useState({ name: "", description: "" })
+  const [taskStats, setTaskStats] = useState<TaskStatsData | null>(null)
+
+  useEffect(() => {
+    console.log('📊 AnalyticsTabs Props:', {
+      tasksCount: tasks?.length || 0,
+      organizationsCount: organizations?.length || 0,
+      tasks: tasks?.slice(0, 2), // First 2 tasks for debugging
+      organizations: organizations?.slice(0, 2) // First 2 orgs for debugging
+    })
+  }, [tasks, organizations])
 
   useEffect(() => {
     loadSectors()
+    loadTaskStats()
   }, [])
 
   const loadSectors = async () => {
     try {
       const data = await getSectors()
+      console.log('🔵 Sectors loaded from API:', {
+        count: data?.length || 0,
+        sectors: data
+      })
       setSectors(data)
     } catch (error) {
       console.error("Sohalarni yuklashda xato:", error)
+    }
+  }
+
+  const loadTaskStats = async () => {
+    try {
+      const stats = await getTaskStats()
+      console.log('📊 Task stats loaded from API:', stats)
+      setTaskStats(stats)
+    } catch (error) {
+      console.error("Task statistikasini yuklashda xato:", error)
     }
   }
 
@@ -72,7 +106,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
     }
   }
 
-  const handleDeleteSector = async (id: number) => {
+  const handleDeleteSector = async (id: string) => {
     if (!confirm("Sohani o'chirishni tasdiqlaysizmi?")) return
     
     setLoading(true)
@@ -98,27 +132,57 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
     setFormData({ name: "", description: "" })
   }
 
-  // Calculate statistics by status
-  const statusStats = {
-    completed: tasks.filter(t => t.status === 'BAJARILDI').length,
-    in_progress: tasks.filter(t => t.status === 'IJRODA').length,
-    new: tasks.filter(t => t.status === 'YANGI').length,
-    overdue: tasks.filter(t => t.status === 'MUDDATI_KECH').length,
+  // Calculate statistics by status - API dan olingan ma'lumotlar ustun
+  const statusStats = taskStats ? {
+    completed: taskStats.completed,
+    in_progress: taskStats.in_progress,
+    new: taskStats.pending,
+    overdue: taskStats.overdue,
+  } : {
+    // Fallback: props'dan hisoblash
+    completed: tasks.filter(t => t.status === 'BAJARILDI' || t.status === 'COMPLETED').length,
+    in_progress: tasks.filter(t => t.status === 'IJRODA' || t.status === 'IN_PROGRESS').length,
+    new: tasks.filter(t => t.status === 'YANGI' || t.status === 'NEW' || t.status === 'PENDING').length,
+    overdue: tasks.filter(t => t.status === 'MUDDATI_KECH' || t.status === 'OVERDUE').length,
   }
 
   // Calculate statistics by sector
   const sectorStats = Array.isArray(sectors) ? sectors.map(sector => {
-    const sectorOrgs = Array.isArray(organizations) ? organizations.filter(org => org.sector === sector.id) : []
+    // Find organizations belonging to this sector
+    const sectorOrgs = Array.isArray(organizations) ? organizations.filter(org => {
+      // Check both sector field and sector_id field
+      return org.sector === sector.id || org.sector_id === sector.id || 
+             org.sector === sector.name || org.sector_id === sector.name
+    }) : []
+    
     const sectorOrgIds = sectorOrgs.map(org => org.id)
-    const sectorTasks = tasks.filter(task => 
-      task.assigned_organizations?.some((ao: any) => sectorOrgIds.includes(ao.organization))
-    )
+    
+    // Find tasks assigned to organizations in this sector
+    const sectorTasks = tasks.filter(task => {
+      // Check different possible task structures
+      if (Array.isArray(task.assigned_organizations)) {
+        return task.assigned_organizations.some((ao: any) => 
+          sectorOrgIds.includes(ao.organization) || sectorOrgIds.includes(ao.organization_id) || sectorOrgIds.includes(ao.id)
+        )
+      }
+      if (Array.isArray(task.organizations)) {
+        return task.organizations.some((orgId: any) => sectorOrgIds.includes(orgId))
+      }
+      if (task.organization) {
+        return sectorOrgIds.includes(task.organization) || sectorOrgIds.includes(task.organization_id)
+      }
+      // Check if task has sector field directly
+      if (task.sector === sector.id || task.sector === sector.name || task.sector_id === sector.id) {
+        return true
+      }
+      return false
+    })
     
     return {
       sector: sector.name,
       organizations: sectorOrgs.length,
       tasks: sectorTasks.length,
-      completed: sectorTasks.filter(t => t.status === 'BAJARILDI').length,
+      completed: sectorTasks.filter(t => t.status === 'BAJARILDI' || t.status === 'COMPLETED').length,
     }
   }) : []
 
@@ -369,7 +433,9 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-900">{Array.isArray(organizations) ? organizations.length : 0}</p>
+                      <p className="text-3xl font-bold text-blue-900">
+                        {Array.isArray(organizations) ? organizations.length : 0}
+                      </p>
                       <p className="text-sm text-blue-700 mt-1">Jami tashkilotlar</p>
                     </div>
                   </CardContent>
@@ -378,7 +444,9 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-green-900">
-                        {Array.isArray(organizations) ? organizations.filter(o => o.is_active).length : 0}
+                        {Array.isArray(organizations) 
+                          ? organizations.filter(o => o.is_active || o.isActive || o.status === 'active').length 
+                          : 0}
                       </p>
                       <p className="text-sm text-green-700 mt-1">Faol tashkilotlar</p>
                     </div>
@@ -387,12 +455,64 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-purple-900">{sectors.length}</p>
+                      <p className="text-3xl font-bold text-purple-900">
+                        {Array.isArray(sectors) ? sectors.length : 0}
+                      </p>
                       <p className="text-sm text-purple-700 mt-1">Sohalar soni</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Tashkilotlar ro'yxati */}
+              {Array.isArray(organizations) && organizations.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Tashkilotlar ro'yxati</h3>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {organizations.map((org, index) => (
+                      <motion.div
+                        key={org.id || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Building2 className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-slate-900">{org.name || 'Noma\'lum'}</h4>
+                            <p className="text-sm text-slate-600">
+                              {org.sector_name || org.sector || 'Soha ko\'rsatilmagan'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {(org.is_active || org.isActive || org.status === 'active') && (
+                            <Badge className="bg-green-100 text-green-700 border-green-200">
+                              Faol
+                            </Badge>
+                          )}
+                          {(!org.is_active && !org.isActive && org.status !== 'active') && (
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                              Nofaol
+                            </Badge>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!Array.isArray(organizations) || organizations.length === 0) && (
+                <div className="mt-6 text-center py-8 text-slate-500">
+                  <Building2 className="h-16 w-16 mx-auto mb-3 text-slate-300" />
+                  <p className="text-lg font-medium">Tashkilotlar topilmadi</p>
+                  <p className="text-sm">Hozircha tizimda tashkilotlar mavjud emas</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

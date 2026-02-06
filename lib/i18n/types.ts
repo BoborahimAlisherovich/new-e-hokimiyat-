@@ -3,6 +3,7 @@ export type Language = 'uz' | 'uz-cyrl' | 'ru' | 'en'
 export interface Translations {
   common: {
     loading: string
+    saving: string
     back: string
     save: string
     cancel: string
@@ -23,6 +24,16 @@ export interface Translations {
     demo: string
     check: string
     retry: string
+    user: string
+    logout: string
+    selectLanguage: string
+    viewAll: string
+    noData: string
+    unknown: string
+    itemsShort: string
+    today: string
+    daysRemaining: string
+    daysOverdue: string
   }
   auth: {
     systemName: string
@@ -52,11 +63,33 @@ export interface Translations {
   navigation: {
     dashboard: string
     tasks: string
+    recurringTasks: string
     users: string
     organizations: string
     notifications: string
+    appeals: string
+    chat: string
+    aiAssistant: string
     analytics: string
+    telegramBot: string
+    settings: string
     auditLog: string
+    mainSection: string
+    communicationSection: string
+    analyticsSection: string
+    mainMenu: string
+  }
+  sidebar: {
+    appName: string
+    appDescription: string
+  }
+  roles: {
+    HOKIM: string
+    HOKIM_YORDAMCHISI: string
+    HOKIMLIK_MASUL: string
+    TASHKILOT_RAHBAR: string
+    TASHKILOT_MASUL: string
+    ADMIN: string
   }
   dashboard: {
     totalTasks: string
@@ -74,6 +107,27 @@ export interface Translations {
     total: string
     completedTasks: string
     lateTasks: string
+    allTasksDescription: string
+    completionLabel: string
+    completedDescription: string
+    overdueStatus: string
+    statusLabel: string
+    overdueDescription: string
+    inProgressDescription: string
+    taskUnit: string
+    sectorStatsTitle: string
+    sectorsEmptyTitle: string
+    sectorsEmptyDescription: string
+    organizationsEmptyTitle: string
+    organizationsEmptyDescription: string
+    deadlineTitle: string
+    deadlineEmptyTitle: string
+    deadlineEmptyDescription: string
+    monthlyCompleted: string
+    monthlyCreated: string
+    monthlyTotal: string
+    createdTasks: string
+    performanceLabel: string
   }
   organization: {
     title: string
@@ -108,7 +162,98 @@ export interface Translations {
       REASSIGNED: string
       RESOLVED: string
     }
+    priorities: {
+      PAST: string
+      ODDIY: string
+      YUQORI: string
+      FAVQULODDA: string
+      MUHIM: string
+      SHOSHILINCH: string
+      MUHIM_SHOSHILINCH: string
+    }
+    categories: {
+      IJTIMOIY: string
+      IQTISODIY: string
+      HUQUQIY: string
+      INFRASTRUKTURA: string
+      TA_LIM: string
+      SOG_LIQNI_SAQLASH: string
+      BOSHQA: string
+    }
     deadline: string
+  }
+  tasks: {
+    emptyTitle: string
+    emptyDescription: string
+    titleLabel: string
+    categoryLabel: string
+    priorityLabel: string
+    organizationsLabel: string
+    deadlineLabel: string
+    statusLabel: string
+    searchPlaceholder: string
+    newTask: string
+    statusFilterLabel: string
+    priorityFilterLabel: string
+    categoryFilterLabel: string
+    allOption: string
+    priorityOptionCritical: string
+    priorityOptionHigh: string
+    priorityOptionMedium: string
+    priorityOptionLow: string
+  }
+  pages: {
+    dashboard: {
+      title: string
+      description: string
+    }
+    tasks: {
+      title: string
+      description: string
+      filtersTitle: string
+      totalLabel: string
+      filteredLabel: string
+      previous: string
+      next: string
+      deleteConfirm: string
+      deleteError: string
+    }
+    analytics: {
+      title: string
+      description: string
+    }
+    users: {
+      title: string
+      description: string
+    }
+    appeals: {
+      title: string
+      description: string
+    }
+    notifications: {
+      title: string
+      description: string
+      loadError: string
+      markReadError: string
+      markAllReadError: string
+      deleteError: string
+    }
+    organizations: {
+      title: string
+      description: string
+      loadError: string
+      createRequiredName: string
+      createSuccess: string
+      createError: string
+      deleteConfirm: string
+      deleteSuccess: string
+      deleteError: string
+      toggleActivated: string
+      toggleDeactivated: string
+      toggleError: string
+      loading: string
+      retry: string
+    }
   }
   user: {
     statuses: {
@@ -175,6 +320,10 @@ export interface Translations {
     darkMode: string
     darkModeDesc: string
     language: string
+    languageUzLatin: string
+    languageUzCyrl: string
+    languageRu: string
+    languageEn: string
     telegramBotSettings: string
     telegramBotDesc: string
     botToken: string
@@ -187,7 +336,17 @@ export interface Translations {
     port: string
     senderEmail: string
     settingsSaved: string
+    saveError: string
+    adminSaveError: string
     createBot: string
     createBotDesc: string
+  }
+  notifications: {
+    tabsAll: string
+    tabsUnread: string
+    markAllRead: string
+    view: string
+    emptyTitle: string
+    emptyDescription: string
   }
 }

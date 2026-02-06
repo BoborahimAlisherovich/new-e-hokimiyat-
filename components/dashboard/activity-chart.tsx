@@ -7,6 +7,7 @@ import { BarChart4 } from "lucide-react"
 import React from "react"
 import { getAnalyticsTrends } from "@/lib/api"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 type ChartPoint = {
   period: string
@@ -16,6 +17,7 @@ type ChartPoint = {
 }
 
 export function ActivityChart() {
+  const t = useTranslation()
   const [data, setData] = React.useState<ChartPoint[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
@@ -23,15 +25,57 @@ export function ActivityChart() {
     let mounted = true
     setIsLoading(true)
     getAnalyticsTrends()
-      .then((trends) => {
+      .then((response: any) => {
         if (!mounted) return
-        const mapped = trends.map((t: any) => ({
-          period: t.period,
-          yaratildi: t.created ?? 0,
-          bajarildi: t.completed ?? 0,
-          jami: (t.created ?? 0) + (t.completed ?? 0),
-        }))
-        setData(mapped)
+        // API { created_trend: [{date, count}], completed_trend: [{date, count}], status_distribution: [...] } formatida qaytaradi
+        const createdTrend = response?.created_trend || []
+        const completedTrend = response?.completed_trend || []
+        const statusDist = response?.status_distribution || []
+        
+        // Barcha sanalarni yig'ish
+        const dateMap = new Map<string, { yaratildi: number; bajarildi: number; jami: number }>()
+        
+        // Created trend ni qo'shish
+        createdTrend.forEach((item: any) => {
+          const dateKey = item.date || ''
+          if (!dateKey) return
+          const existing = dateMap.get(dateKey) || { yaratildi: 0, bajarildi: 0, jami: 0 }
+          existing.yaratildi = item.count ?? 0
+          existing.jami += item.count ?? 0
+          dateMap.set(dateKey, existing)
+        })
+        
+        // Completed trend ni qo'shish
+        completedTrend.forEach((item: any) => {
+          const dateKey = item.date || ''
+          if (!dateKey) return
+          const existing = dateMap.get(dateKey) || { yaratildi: 0, bajarildi: 0, jami: 0 }
+          existing.bajarildi = item.count ?? 0
+          dateMap.set(dateKey, existing)
+        })
+        
+        // Map dan array yaratish va saralash
+        const mapped = Array.from(dateMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, counts]) => ({
+            period: new Date(date).toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' }),
+            yaratildi: counts.yaratildi,
+            bajarildi: counts.bajarildi,
+            jami: counts.yaratildi, // Jami = yaratilgan
+          }))
+        
+        // Agar kunlik ma'lumot kam bo'lsa, status distribution dan umumiy ko'rsatamiz
+        if (mapped.length === 0 && statusDist.length > 0) {
+          const statusMapped = statusDist.map((s: any) => ({
+            period: s.status,
+            yaratildi: s.count ?? 0,
+            bajarildi: (s.status === 'BAJARILDI' || s.status === 'NAZORATDAN_YECHILDI') ? s.count : 0,
+            jami: s.count ?? 0,
+          }))
+          setData(statusMapped)
+        } else {
+          setData(mapped)
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -56,7 +100,7 @@ export function ActivityChart() {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
               <BarChart4 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Topshiriqlar dinamikasi</CardTitle>
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{t.dashboard.taskDynamics}</CardTitle>
           </div>
         </CardHeader>
       
@@ -120,7 +164,7 @@ export function ActivityChart() {
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#jami)"
-                name="Jami"
+                name={t.dashboard.total}
                 strokeOpacity={0.6}
               />
               
@@ -131,7 +175,7 @@ export function ActivityChart() {
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#bajarildi)"
-                name="Bajarilgan"
+                name={t.dashboard.completed}
               />
               
               <Area
@@ -141,7 +185,7 @@ export function ActivityChart() {
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#yaratildi)"
-                name="Яратилган"
+                name={t.dashboard.createdTasks}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -151,19 +195,19 @@ export function ActivityChart() {
         <div className="mt-6 flex flex-wrap justify-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-sm text-foreground">Bajarilgan</span>
+            <span className="text-sm text-foreground">{t.dashboard.completed}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.bajarildi, 0)})</span>
           </div>
           
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-sm text-foreground">Яратилган</span>
+            <span className="text-sm text-foreground">{t.dashboard.createdTasks}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.yaratildi, 0)})</span>
           </div>
           
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span className="text-sm text-foreground">Jami</span>
+            <span className="text-sm text-foreground">{t.dashboard.total}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.jami, 0)})</span>
           </div>
         </div>
@@ -171,18 +215,18 @@ export function ActivityChart() {
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="text-center p-3 rounded-lg bg-green-50 backdrop-blur-sm border border-green-200 hover:bg-green-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : (last?.bajarildi ?? 0)}</div>
-            <div className="text-xs text-slate-600">Oylik bajarilgan</div>
+            <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
+            <div className="text-xs text-slate-600">{t.dashboard.monthlyCompleted}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-blue-50 backdrop-blur-sm border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : (last?.yaratildi ?? 0)}</div>
-            <div className="text-xs text-slate-600">Oylik yaratilgan</div>
+            <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
+            <div className="text-xs text-slate-600">{t.dashboard.monthlyCreated}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-amber-50 backdrop-blur-sm border border-amber-200 hover:bg-amber-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : (last?.jami ?? 0)}</div>
-            <div className="text-xs text-slate-600">Oylik jami</div>
+            <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
+            <div className="text-xs text-slate-600">{t.dashboard.monthlyTotal}</div>
           </div>
         </div>
       </CardContent>

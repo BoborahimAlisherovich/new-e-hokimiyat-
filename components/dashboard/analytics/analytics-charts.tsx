@@ -127,11 +127,15 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set('male', Math.floor(safeAppeals.length * 0.55) || 45)
       map.set('female', Math.floor(safeAppeals.length * 0.45) || 35)
     }
-    return Array.from(map.entries()).map(([key, value]) => ({
+    // Erkakni chap tomonda (180°), Ayolni o'ng tomonda (0°) ko'rsatish uchun tartibni to'g'rilash
+    const data = Array.from(map.entries()).map(([key, value]) => ({
       name: GENDER_LABELS[key] || key,
       value,
-      fill: key === 'male' ? GENDER_COLORS[0] : GENDER_COLORS[1]
+      fill: key === 'male' ? GENDER_COLORS[0] : GENDER_COLORS[1],
+      startAngle: key === 'male' ? 90 : -90,
+      endAngle: key === 'male' ? 270 : 90,
     }))
+    return data
   }, [appeals])
 
   const trendData = useMemo(() => {
@@ -194,13 +198,27 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       approved: 'Tasdiqlandi',
       responded: 'Javob berildi',
     }
+    const statusColors: Record<string, string> = {
+      'Kutilmoqda': '#f59e0b',
+      'AI tahlilida': '#8b5cf6',
+      "Ko'rib chiqilmoqda": '#3b82f6',
+      'Jarayonda': '#06b6d4',
+      'Hal etildi': '#10b981',
+      'Rad etildi': '#ef4444',
+      'Tasdiqlandi': '#10b981',
+      'Javob berildi': '#10b981',
+    }
     const map = new Map<string, number>()
     appeals.forEach((appeal: any) => {
       const key = appeal.status || 'PENDING'
       const label = statusMap[key] || key
       map.set(label, (map.get(label) || 0) + 1)
     })
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
+    return Array.from(map.entries()).map(([name, value]) => ({ 
+      name, 
+      value, 
+      fill: statusColors[name] || '#8b5cf6' 
+    }))
   }, [appeals])
 
   return (
@@ -330,26 +348,24 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   nameKey="name" 
                   cx="50%" 
                   cy="50%" 
+                  startAngle={180}
+                  endAngle={-180}
                   outerRadius={100} 
                   innerRadius={60}
-                  paddingAngle={5}
-                  label={({ cx, cy, midAngle, outerRadius, name, percent, fill }) => {
-                    const RADIAN = Math.PI / 180
-                    const radius = outerRadius + 35
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN)
-                    
-                    // Force horizontal alignment - left for left side, right for right side
-                    const isRightSide = x > cx
+                  paddingAngle={0}
+                  label={({ cx, cy, index, name, percent, fill }) => {
+                    // Erkak (index 0) chap tomonda, Ayol (index 1) o'ng tomonda
+                    const x = index === 0 ? cx - 140 : cx + 140
+                    const y = cy
                     
                     return (
                       <text 
                         x={x} 
-                        y={cy} 
+                        y={y} 
                         fill={fill}
-                        textAnchor={isRightSide ? 'start' : 'end'} 
+                        textAnchor={index === 0 ? 'end' : 'start'} 
                         dominantBaseline="middle"
-                        style={{ fontSize: '14px', fontWeight: 600 }}
+                        style={{ fontSize: '15px', fontWeight: 700 }}
                       >
                         {`${name} ${(percent * 100).toFixed(0)}%`}
                       </text>
@@ -362,7 +378,6 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   ))}
                 </Pie>
                 <Tooltip formatter={(value: number) => [`${value} ta`, 'Soni']} />
-                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -380,7 +395,11 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                 <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} interval={0} angle={-10} height={50} />
                 <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                 <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {appealStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

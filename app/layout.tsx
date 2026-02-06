@@ -5,14 +5,15 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PerformanceGuard } from "@/components/performance-guard"
 
 export const metadata: Metadata = {
   title: "Топшириқлар Бошқарув Тизими",
   description: "Туман ҳокимлиги топшириқлар бошқарув тизими - вазифалар, ижро назорати, аналитика",
   generator: "v0.app",
   icons: {
-    icon: "/h.png",
-    apple: "/h.png",
+    icon: "/government-icon.svg",
+    apple: "/government-icon.svg",
   },
 }
 
@@ -23,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uz" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <a
             href="#main-content"
@@ -32,9 +33,17 @@ export default function RootLayout({
             Асосий контентга ўтиш
           </a>
           <I18nProvider>
+            <PerformanceGuard />
             {children}
             <Analytics />
           </I18nProvider>
+          <a
+            href="https://www.flaticon.com/free-icons/government"
+            title="government icons"
+            className="sr-only"
+          >
+            Government icons created by Freepik - Flaticon
+          </a>
         </ThemeProvider>
       </body>
     </html>

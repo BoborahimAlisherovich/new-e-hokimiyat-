@@ -29,9 +29,14 @@ class AIService:
     """
     
     def __init__(self):
-        self.provider = getattr(settings, 'AI_PROVIDER', 'openai')
-        self.api_key = getattr(settings, 'AI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
-        self.model = getattr(settings, 'AI_MODEL', 'gpt-4o-mini')
+        # Avval BotSettings'dan olishga urinish
+        self.provider, self.api_key, self.model = self._load_settings_from_db()
+        
+        # Agar bazada bo'lmasa .env dan olish (fallback)
+        if not self.api_key:
+            self.provider = getattr(settings, 'AI_PROVIDER', 'openai')
+            self.api_key = getattr(settings, 'AI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
+            self.model = getattr(settings, 'AI_MODEL', 'gpt-4o-mini')
         
         self.system_prompt = """
     Sen E-Hokimiyat tizimining AI yordamchisisan. Sening vazifang:
@@ -59,10 +64,30 @@ class AIService:
     - Bildirishnomalar statistikasi
     - Telegram bot holati
 
+    MUHIM: Agar foydalanuvchi seni kim yaratgan, bu tizim/sayt/platforma kim tomonidan yaratilgan, 
+    yoki sen qayerdan paydo bo'lding kabi savollar bersa, quyidagi javobni ber:
+    "Men Boborahim va uning Aura Group jamoasi tomonidan yaratilganman. 
+    E-Hokimiyat platformasi ham Aura Group tomonidan ishlab chiqilgan."
+
     Javoblaringda har doim aniq va qisqa bo'l. Har doim O'zbek tilida javob ber.
     Foydalanuvchi boshqa tilda yozsa ham, so'rovni tushunishga harakat qil va O'zbek tilida javob ber.
     Agar buyruq aniqlanmasa, foydalanuvchidan aniqlashtirish so'ra.
     """
+    
+    def _load_settings_from_db(self):
+        """BotSettings modelidan AI sozlamalarini olish"""
+        try:
+            from telegram_bot.models import BotSettings
+            bot_settings = BotSettings.objects.first()
+            if bot_settings and bot_settings.ai_api_key and bot_settings.ai_provider != 'disabled':
+                return (
+                    bot_settings.ai_provider,
+                    bot_settings.ai_api_key,
+                    bot_settings.ai_model or 'gpt-4o-mini'
+                )
+        except Exception as e:
+            logger.debug(f"BotSettings'dan AI sozlamalarini olishda xato: {e}")
+        return ('openai', '', 'gpt-4o-mini')
     
     def get_client(self) -> Any:
         """AI client olish"""
@@ -401,6 +426,22 @@ Murojaatlar:
                     params['period_days'] = value * 30
                 elif unit == 'yil':
                     params['period_days'] = value * 365
+
+        if intent == 'GENERATE_REPORT':
+            if re.search(r'\bhaftalik\b', text, re.IGNORECASE):
+                params['report_type'] = 'WEEKLY_SUMMARY'
+                params['period_days'] = 7
+            elif re.search(r'\boylik\b', text, re.IGNORECASE):
+                params['report_type'] = 'MONTHLY_SUMMARY'
+                params['period_days'] = 30
+            elif re.search(r'\bkunlik\b', text, re.IGNORECASE):
+                params['report_type'] = 'DAILY_SUMMARY'
+                params['period_days'] = 1
+            else:
+                if 'period_days' not in params:
+                    params['period_days'] = 7
+                if 'report_type' not in params:
+                    params['report_type'] = 'WEEKLY_SUMMARY'
         
         return params
     
@@ -436,6 +477,20 @@ Murojaatlar:
                 
             elif action_type == 'SEND_NOTIFICATION':
                 result = self._send_notification(params)
+            elif action_type in {
+                'STATUS_CHECK',
+                'ORGANIZATION_STATUS',
+                'USERS_STATUS',
+                'APPEALS_STATUS',
+                'TASKS_STATUS',
+                'NOTIFICATIONS_STATUS',
+                'TELEGRAM_STATUS',
+                'LIST_ORGANIZATIONS',
+                'LIST_USERS',
+                'ANALYTICS_QUERY',
+            }:
+                message = self.handle_query(action_type, params, action.initiated_by)
+                result = {'success': True, 'message': message}
                 
         except Exception as e:
             logger.error(f"Action execution error: {e}")
@@ -703,13 +758,24 @@ Murojaatlar:
         return self._close_task(params, user)
     
     def _generate_report(self, params: Dict, user, conversation) -> Dict:
-        """Hisobot yaratish"""
+        """Hisobot yaratish - Professional va Creative"""
         from core.models import AIReport
         from tasks.models import Task
         from telegram_bot.models import TelegramAppeal
+        from organizations.models import Organization
+        from django.db.models import Avg, F, ExpressionWrapper, DurationField
+        from django.db.models.functions import TruncDate
         
         report_type = params.get('report_type', 'DAILY_SUMMARY')
         period_days = params.get('period_days', 7)
+        
+        # Davr bo'yicha period_days ni sozlash
+        if report_type == 'DAILY_SUMMARY':
+            period_days = 1
+        elif report_type == 'WEEKLY_SUMMARY':
+            period_days = 7
+        elif report_type == 'MONTHLY_SUMMARY':
+            period_days = 30
         
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=period_days)
@@ -718,25 +784,143 @@ Murojaatlar:
         tasks = Task.objects.filter(created_at__date__gte=start_date)
         appeals = TelegramAppeal.objects.filter(created_at__date__gte=start_date)
         
+        # Oldingi davr bilan taqqoslash uchun
+        prev_start = start_date - timedelta(days=period_days)
+        prev_end = start_date - timedelta(days=1)
+        prev_tasks = Task.objects.filter(created_at__date__gte=prev_start, created_at__date__lte=prev_end)
+        prev_appeals = TelegramAppeal.objects.filter(created_at__date__gte=prev_start, created_at__date__lte=prev_end)
+
+        task_status_labels = {
+            'YANGI': 'Yangi',
+            'IJRODA': 'Ijroda',
+            'BAJARILDI': 'Bajarildi',
+            'MUDDATI_KECH': "Muddati o'tgan",
+            'NAZORATDAN_YECHILDI': 'Nazoratdan yechildi',
+            'QAYTA_IJROGA_YUBORILDI': 'Qayta ijroga yuborildi',
+            'BAJARILMADI': 'Bajarilmadi',
+        }
+        task_priority_labels = {
+            'FAVQULODDA': 'Favqulodda',
+            'YUQORI': 'Yuqori',
+            'ODDIY': 'Oddiy',
+            'PAST': 'Past',
+        }
+        appeal_status_labels = {
+            'pending_ai': "Ko'rib chiqilmagan (AI)",
+            'pending_review': "Ko'rib chiqilmagan",
+            'resolved': 'Hal etilgan',
+            'rejected': 'Rad etilgan',
+        }
+
+        task_status_counts = tasks.values('status').annotate(count=Count('id'))
+        task_priority_counts = tasks.values('priority').annotate(count=Count('id'))
+        appeal_status_counts = appeals.values('status').annotate(count=Count('id'))
+        
+        # Tashkilotlar bo'yicha statistika
+        org_stats = tasks.values('assigned_organization__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]
+        
+        # Kunlik trend (oxirgi 7 kun)
+        daily_trend = tasks.annotate(
+            date=TruncDate('created_at')
+        ).values('date').annotate(count=Count('id')).order_by('date')
+        
+        # Bajarilgan topshiriqlar
+        completed_tasks = tasks.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI'])
+        overdue_tasks = tasks.filter(status='MUDDATI_KECH')
+        in_progress_tasks = tasks.filter(status='IJRODA')
+        
+        # Murojaatlar statistikasi
+        resolved_appeals = appeals.filter(status='resolved')
+        rejected_appeals = appeals.filter(status='rejected')
+        
+        # Samaradorlik hisoblash
+        total_tasks = tasks.count()
+        completed_count = completed_tasks.count()
+        completion_rate = round((completed_count / total_tasks * 100) if total_tasks > 0 else 0, 1)
+        
+        total_appeals_count = appeals.count()
+        resolved_count = resolved_appeals.count()
+        resolution_rate = round((resolved_count / total_appeals_count * 100) if total_appeals_count > 0 else 0, 1)
+        
+        # O'sish/pasayish foizi
+        prev_tasks_count = prev_tasks.count()
+        prev_appeals_count = prev_appeals.count()
+        
+        task_growth = round(((total_tasks - prev_tasks_count) / prev_tasks_count * 100) if prev_tasks_count > 0 else 0, 1)
+        appeal_growth = round(((total_appeals_count - prev_appeals_count) / prev_appeals_count * 100) if prev_appeals_count > 0 else 0, 1)
+
         content = {
             'tasks': {
-                'total': tasks.count(),
-                'by_status': dict(tasks.values_list('status').annotate(count=Count('id'))),
-                'by_priority': dict(tasks.values_list('priority').annotate(count=Count('id'))),
+                'total': total_tasks,
+                'by_status': {
+                    task_status_labels.get(item['status'], item['status']): item['count']
+                    for item in task_status_counts
+                },
+                'by_priority': {
+                    task_priority_labels.get(item['priority'], item['priority']): item['count']
+                    for item in task_priority_counts
+                },
+                'completed': completed_count,
+                'overdue': overdue_tasks.count(),
+                'in_progress': in_progress_tasks.count(),
+                'completion_rate': completion_rate,
+                'growth_percent': task_growth,
             },
             'appeals': {
-                'total': appeals.count(),
-                'by_status': dict(appeals.values_list('status').annotate(count=Count('id'))),
+                'total': total_appeals_count,
+                'by_status': {
+                    appeal_status_labels.get(item['status'], item['status']): item['count']
+                    for item in appeal_status_counts
+                },
+                'resolved': resolved_count,
+                'rejected': rejected_appeals.count(),
+                'resolution_rate': resolution_rate,
+                'growth_percent': appeal_growth,
+            },
+            'organizations': {
+                'top_performers': [
+                    {'name': item['assigned_organization__name'] or 'Belgilanmagan', 'count': item['count']}
+                    for item in org_stats if item['assigned_organization__name']
+                ][:5],
+            },
+            'trends': {
+                'daily': [
+                    {'date': item['date'].strftime('%d.%m') if item['date'] else '', 'count': item['count']}
+                    for item in daily_trend
+                ][-7:],
+            },
+            'period': {
+                'start': start_date.strftime('%d.%m.%Y'),
+                'end': end_date.strftime('%d.%m.%Y'),
+                'days': period_days,
+            },
+            'comparison': {
+                'prev_tasks': prev_tasks_count,
+                'prev_appeals': prev_appeals_count,
+                'task_change': task_growth,
+                'appeal_change': appeal_growth,
             }
         }
         
         # AI bilan summary yaratish
         summary = self._generate_summary(content, report_type)
         
+        # Professional sarlavhalar
+        TITLE_TEMPLATES = {
+            'DAILY_SUMMARY': f"Kunlik Hisobot - {end_date.strftime('%d.%m.%Y')}",
+            'WEEKLY_SUMMARY': f"Haftalik Hisobot - {start_date.strftime('%d.%m')} — {end_date.strftime('%d.%m.%Y')}",
+            'MONTHLY_SUMMARY': f"Oylik Hisobot - {end_date.strftime('%B %Y')}",
+            'TASK_ANALYSIS': f"Topshiriqlar Tahlili - {end_date.strftime('%d.%m.%Y')}",
+            'CUSTOM': f"Maxsus Hisobot - {end_date.strftime('%d.%m.%Y')}"
+        }
+        title = TITLE_TEMPLATES.get(report_type, f"Hisobot - {end_date}")
+        
         # Hisobotni saqlash
         report = AIReport.objects.create(
             report_type=report_type,
-            title=f"{report_type} - {end_date}",
+            title=title,
             summary=summary,
             content=content,
             period_start=start_date,
@@ -747,9 +931,10 @@ Murojaatlar:
         
         return {
             'success': True,
-            'report_id': report.id,
+            'report_id': str(report.id),
             'summary': summary,
-            'message': 'Hisobot yaratildi'
+            'message': 'Hisobot yaratildi',
+            'download_url': f"/api/ai/reports/{report.id}/download/"
         }
     
     def _generate_summary(self, content: Dict, report_type: str) -> str:

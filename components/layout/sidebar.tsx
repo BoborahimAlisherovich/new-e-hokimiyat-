@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   LayoutGrid,
@@ -31,10 +32,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
 import type { User, UserRole } from "@/types"
+import { useTranslation } from "@/lib/i18n/context"
 
 // Role-based menu configuration based on texnik topshiriq.txt
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  // Hokim - full access to everything
+  // Hokim - full access to everything except telegram-bot (admin only)
   HOKIM: [
     '/dashboard',
     '/dashboard/tasks',
@@ -46,7 +48,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/analytics',
     '/dashboard/chat',
     '/dashboard/ai-assistant',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Hokim yordamchisi - similar to Hokim but cannot close tasks
@@ -61,10 +62,9 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/analytics',
     '/dashboard/chat',
     '/dashboard/ai-assistant',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
-  // Hokimlik mas'uli - can add users, orgs, create tasks (NO AI Assistant) (NO AI Assistant)
+  // Hokimlik mas'uli - can add users, orgs, create tasks (NO AI Assistant)
   HOKIMLIK_MASUL: [
     '/dashboard',
     '/dashboard/tasks',
@@ -75,7 +75,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
-    '/dashboard/telegram-bot',
     '/dashboard/settings',
   ],
   // Tashkilot rahbari - can add tashkilot mas'uli, view tasks, upload reports
@@ -96,7 +95,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/chat',
     '/dashboard/settings',
   ],
-  // Admin - technical admin, full access
+  // Admin - technical admin, full access including telegram-bot
   ADMIN: [
     '/dashboard',
     '/dashboard/tasks',
@@ -113,17 +112,8 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   ],
 }
 
-// Role labels for display
-const ROLE_LABELS: Record<UserRole, string> = {
-  HOKIM: 'Hokim',
-  HOKIM_YORDAMCHISI: 'Hokim yordamchisi',
-  HOKIMLIK_MASUL: 'Hokimlik mas\'uli',
-  TASHKILOT_RAHBAR: 'Tashkilot rahbari',
-  TASHKILOT_MASUL: 'Tashkilot mas\'uli',
-  ADMIN: 'Texnik admin',
-}
-
 export function Sidebar() {
+  const t = useTranslation()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -193,80 +183,89 @@ export function Sidebar() {
   const userRole = currentUser?.role || 'TASHKILOT_MASUL'
   const allowedPaths = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.TASHKILOT_MASUL
 
+  const roleLabels: Record<UserRole, string> = {
+    HOKIM: t.roles.HOKIM,
+    HOKIM_YORDAMCHISI: t.roles.HOKIM_YORDAMCHISI,
+    HOKIMLIK_MASUL: t.roles.HOKIMLIK_MASUL,
+    TASHKILOT_RAHBAR: t.roles.TASHKILOT_RAHBAR,
+    TASHKILOT_MASUL: t.roles.TASHKILOT_MASUL,
+    ADMIN: t.roles.ADMIN,
+  }
+
   // Check if user can access a path
   const canAccess = (path: string) => allowedPaths.includes(path)
 
   // All navigation items
   const allNavItems = [
     {
-      title: "Bosh sahifa",
+      title: t.navigation.dashboard,
       href: "/dashboard",
       icon: LayoutGrid,
       section: "main"
     },
     {
-      title: "Topshiriqlar",
+      title: t.navigation.tasks,
       href: "/dashboard/tasks",
       icon: CheckSquare2,
       section: "main"
     },
     {
-      title: "Takrorlanuvchi",
+      title: t.navigation.recurringTasks,
       href: "/dashboard/recurring-tasks",
       icon: Repeat,
       adminOnly: true,
       section: "main"
     },
     {
-      title: "Foydalanuvchilar",
+      title: t.navigation.users,
       href: "/dashboard/users",
       icon: Users2,
       adminOnly: true,
       section: "main"
     },
     {
-      title: "Tashkilotlar",
+      title: t.navigation.organizations,
       href: "/dashboard/organizations",
       icon: Building,
       adminOnly: true,
       section: "main"
     },
     {
-      title: "Bildirishnomalar",
+      title: t.navigation.notifications,
       href: "/dashboard/notifications",
       icon: Bell,
       badge: unreadNotificationsCount,
       section: "communication"
     },
     {
-      title: "Murojaatlar",
+      title: t.navigation.appeals,
       href: "/dashboard/appeals",
       icon: MessageCircle,
       section: "communication"
     },
     {
-      title: "Chat",
+      title: t.navigation.chat,
       href: "/dashboard/chat",
       icon: MessageSquare,
       badge: unreadChatCount,
       section: "communication"
     },
     {
-      title: "AI Yordamchi",
+      title: t.navigation.aiAssistant,
       href: "/dashboard/ai-assistant",
       icon: Sparkles,
       section: "analytics",
       requiresRole: ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'] // Only for Hokim, Hokim yordamchisi, and Admin
     },
     {
-      title: "Analitika",
+      title: t.navigation.analytics,
       href: "/dashboard/analytics",
       icon: BarChart4,
       adminOnly: true,
       section: "analytics"
     },
     {
-      title: "Telegram Bot",
+      title: t.navigation.telegramBot,
       href: "/dashboard/telegram-bot",
       icon: Bot,
       adminOnly: true,
@@ -329,16 +328,10 @@ export function Sidebar() {
       <div className="relative z-10 flex h-20 items-center justify-between px-5 border-b border-slate-200/60 bg-white/50">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <motion.div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <span className="font-bold text-base">EH</span>
-            </motion.div>
+            <Image src="/government-icon.svg" alt="Logo" width={44} height={44} className="w-11 h-11" />
             <div>
-              <h1 className="text-base font-semibold tracking-tight text-slate-900">e-Hokimiyat</h1>
-              <p className="text-[11px] text-slate-500 leading-tight">Gov Management System</p>
+              <h1 className="text-base font-semibold tracking-tight text-slate-900">{t.sidebar.appName}</h1>
+              <p className="text-[11px] text-slate-500 leading-tight">{t.sidebar.appDescription}</p>
             </div>
           </Link>
         )}
@@ -364,13 +357,7 @@ export function Sidebar() {
           className="flex justify-center py-5"
         >
           <Link href="/dashboard">
-            <motion.div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <span className="font-bold text-base">EH</span>
-            </motion.div>
+            <Image src="/government-icon.svg" alt="Logo" width={44} height={44} className="w-11 h-11 hover:scale-105 transition-transform" />
           </Link>
         </motion.div>
       )}
@@ -379,13 +366,13 @@ export function Sidebar() {
       <nav
         className="relative z-10 flex-1 px-4 py-5 overflow-y-auto"
         role="navigation"
-        aria-label="Asosiy menyu"
+        aria-label={t.navigation.mainMenu}
       >
         {/* Main Section */}
         {!collapsed && mainItems.length > 0 && (
           <div className="mb-7">
             <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
-              Asosiy
+              {t.navigation.mainSection}
             </p>
             <div className="space-y-3">
               {mainItems.map((item, index) => (
@@ -407,7 +394,7 @@ export function Sidebar() {
         {!collapsed && communicationItems.length > 0 && (
           <div className="mb-7">
             <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
-              Aloqa
+              {t.navigation.communicationSection}
             </p>
             <div className="space-y-3">
               {communicationItems.map((item, index) => (
@@ -432,7 +419,7 @@ export function Sidebar() {
         {!collapsed && analyticsItems.length > 0 && (
           <div>
             <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
-              Tahlil
+              {t.navigation.analyticsSection}
             </p>
             <div className="space-y-3">
               {analyticsItems.map((item, index) => (
@@ -475,10 +462,10 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-slate-900">
-                {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Foydalanuvchi"}
+                {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : t.common.user}
               </p>
               <p className="truncate text-xs text-slate-500">
-                {currentUser?.role ? ROLE_LABELS[currentUser.role] : ""}
+                {currentUser?.role ? roleLabels[currentUser.role] : ""}
               </p>
             </div>
           )}
@@ -498,7 +485,7 @@ export function Sidebar() {
             
             {!collapsed && (
               <span className="transition-colors duration-200">
-                Sozlamalar
+                {t.navigation.settings}
               </span>
             )}
           </motion.div>

@@ -374,7 +374,7 @@ def create_users(orgs):
                 "first_name": first_name,
                 "last_name": last_name,
                 "middle_name": middle_name,
-                "role": "TASHKILOT_RAHBAR",
+                "role": "TASHKILOT_RAHBARI",
                 "organization": org,
                 "position": "Rahbar",
                 "phone": generate_phone(),

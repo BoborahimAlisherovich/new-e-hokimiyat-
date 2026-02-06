@@ -10,8 +10,10 @@ import { Grid3X3, TrendingUp, BarChart4, PieChart } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 export function SectorOverview() {
+  const t = useTranslation()
   const [sectorStats, setSectorStats] = React.useState<any[]>([])
 
   React.useEffect(() => {
@@ -19,23 +21,25 @@ export function SectorOverview() {
     getTasks()
       .then((tasks) => {
         if (!mounted) return
-        const sectors = Array.from(new Set(tasks.map((t: any) => t.sector))).filter((s) => s !== undefined && s !== null)
-        const stats = sectors
-          .map((sector) => {
-            const sTasks = tasks.filter((t: any) => t.sector === sector)
-            const completed = sTasks.filter((t: any) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
-            const late = sTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
+        // category field dan foydalanish (sector o'rniga)
+        const categories = Array.from(new Set(tasks.map((t: any) => t.category))).filter((c) => c !== undefined && c !== null && c !== '')
+        const stats = categories
+          .map((category) => {
+            const cTasks = tasks.filter((t: any) => t.category === category)
+            const completed = cTasks.filter((t: any) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
+            const late = cTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
             return {
-              sector,
-              label: sector || "Номаълум",
-              total: sTasks.length,
+              sector: category,
+              label: getCategoryLabel(category as string, t),
+              total: cTasks.length,
               completed,
               late,
-              inProgress: sTasks.length - completed - late,
-              completionRate: sTasks.length > 0 ? Math.round((completed / sTasks.length) * 100) : 0,
+              inProgress: cTasks.length - completed - late,
+              completionRate: cTasks.length > 0 ? Math.round((completed / cTasks.length) * 100) : 0,
             }
           })
           .filter((s) => s.total > 0)
+          .sort((a, b) => b.total - a.total)
         setSectorStats(stats.slice(0, 6))
       })
       .catch(() => {})
@@ -43,6 +47,23 @@ export function SectorOverview() {
       mounted = false
     }
   }, [])
+
+  // Kategoriya labellarini olish
+  function getCategoryLabel(category: string, t: any): string {
+    const labels: Record<string, string> = {
+      'IJTIMOIY': 'Ijtimoiy',
+      'IQTISODIY': 'Iqtisodiy',
+      'INFRASTRUKTURA': 'Infrastruktura',
+      'MADANIYAT': 'Madaniyat',
+      'SPORT': 'Sport',
+      'TALIM': "Ta'lim",
+      'HUQUQIY': 'Huquqiy',
+      'SOG_LIQNI_SAQLASH': "Sog'liqni saqlash",
+      'QISHLOQ_XOJALIGI': "Qishloq xo'jaligi",
+      'BOSHQA': 'Boshqa',
+    }
+    return labels[category] || category || t.common.unknown
+  }
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 80) return "from-emerald-500 to-emerald-600"
@@ -65,7 +86,7 @@ export function SectorOverview() {
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
               <Grid3X3 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Sohalar bo'yicha statistikasi</CardTitle>
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{t.dashboard.sectorStatsTitle}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/dashboard/analytics">
@@ -74,7 +95,7 @@ export function SectorOverview() {
                 size="sm" 
                 className="h-auto p-0 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-250"
               >
-                Barchasini ko'rish
+                {t.common.viewAll}
               </Button>
             </Link>
             <div className="w-2 h-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full animate-pulse-modern" />
@@ -124,14 +145,20 @@ export function SectorOverview() {
               
               {/* Progress Bar */}
               <div className="relative z-10 mb-4">
-                <Progress 
-                  value={sector.completionRate} 
-                  className={cn(
-                    "h-3 transition-all duration-1000 ease-out",
-                    sector.completionRate >= 80 ? "bg-emerald-600" : 
-                    sector.completionRate >= 50 ? "bg-amber-600" : "bg-red-600"
-                  )}
-                />
+                <div className={cn(
+                  "relative h-3 w-full overflow-hidden rounded-full transition-all duration-1000 ease-out",
+                  sector.completionRate >= 80 ? "bg-emerald-100" : 
+                  sector.completionRate >= 50 ? "bg-amber-100" : "bg-red-100"
+                )}>
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all duration-1000 ease-out",
+                      sector.completionRate >= 80 ? "bg-emerald-500" : 
+                      sector.completionRate >= 50 ? "bg-amber-500" : "bg-red-500"
+                    )}
+                    style={{ width: `${sector.completionRate}%` }}
+                  />
+                </div>
               </div>
               
               {/* Stats */}
@@ -140,26 +167,26 @@ export function SectorOverview() {
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <BarChart4 className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.total}</div>
-                    <div className="text-xs text-slate-600">Jami</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.total}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <PieChart className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.completed}</div>
-                    <div className="text-xs text-slate-600">Bajarilgan</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.completed}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 transition-all duration-300 hover:scale-105 hover:bg-amber-100 hover:shadow-md">
                     <TrendingUp className="w-4 h-4 text-amber-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-amber-600">{sector.inProgress}</div>
-                    <div className="text-xs text-slate-600">Ijroda</div>
+                    <div className="text-xs text-slate-600">{t.dashboard.inProgress}</div>
                   </div>
                 </div>
                 
                 {sector.late > 0 && (
                   <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border border-red-200 transition-all duration-300 hover:bg-red-100 hover:shadow-md">
-                    <span className="text-sm font-medium text-red-600">Kechikkan: {sector.late}</span>
-                    <span className="text-xs text-slate-600">Topshiriq</span>
+                    <span className="text-sm font-medium text-red-600">{t.dashboard.overdue}: {sector.late}</span>
+                    <span className="text-xs text-slate-600">{t.dashboard.taskUnit}</span>
                   </div>
                 )}
               </div>
@@ -173,9 +200,9 @@ export function SectorOverview() {
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
               <Grid3X3 className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Sohalar topilmadi</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.sectorsEmptyTitle}</h3>
             <p className="text-sm text-slate-600 max-w-md">
-              Hozircha hech qanday sohalar mavjud emas. Topshiriqlar yaratish uchun sohalarni qo'shish kerak.
+              {t.dashboard.sectorsEmptyDescription}
             </p>
           </div>
         )}

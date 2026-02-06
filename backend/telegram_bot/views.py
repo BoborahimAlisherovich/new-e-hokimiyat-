@@ -266,6 +266,69 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             'use_webhook': settings.use_webhook,
             'pid': pid if is_running else None
         })
+    
+    @action(detail=False, methods=['post'])
+    def test_ai_connection(self, request):
+        """AI ulanishini tekshirish"""
+        settings = self.get_object()
+        
+        if not settings.ai_api_key:
+            return Response(
+                {'success': False, 'error': 'AI API kalit kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if settings.ai_provider == 'disabled':
+            return Response(
+                {'success': False, 'error': 'AI provayder tanlanmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            if settings.ai_provider == 'openai':
+                from openai import OpenAI
+                client = OpenAI(api_key=settings.ai_api_key)
+                # Oddiy test so'rov
+                response = client.chat.completions.create(
+                    model=settings.ai_model or 'gpt-4o-mini',
+                    messages=[{"role": "user", "content": "Salom, 1+1 nechaga teng?"}],
+                    max_tokens=50
+                )
+                return Response({
+                    'success': True,
+                    'provider': 'OpenAI',
+                    'model': settings.ai_model,
+                    'message': 'AI muvaffaqiyatli ulandi!'
+                })
+            elif settings.ai_provider == 'anthropic':
+                from anthropic import Anthropic
+                client = Anthropic(api_key=settings.ai_api_key)
+                response = client.messages.create(
+                    model=settings.ai_model or 'claude-3-haiku-20240307',
+                    max_tokens=50,
+                    messages=[{"role": "user", "content": "Salom, 1+1 nechaga teng?"}]
+                )
+                return Response({
+                    'success': True,
+                    'provider': 'Anthropic',
+                    'model': settings.ai_model,
+                    'message': 'AI muvaffaqiyatli ulandi!'
+                })
+            else:
+                return Response(
+                    {'success': False, 'error': 'Noto\'g\'ri AI provayder'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            error_msg = str(e)
+            if 'invalid_api_key' in error_msg.lower() or 'incorrect api key' in error_msg.lower():
+                error_msg = "Noto'g'ri API kalit. Iltimos tekshirib qaytadan kiriting."
+            elif 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                error_msg = "API limitga yetdi. Iltimos keyinroq urinib ko'ring."
+            return Response({
+                'success': False,
+                'error': error_msg
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class BotAdminViewSet(viewsets.ModelViewSet):
     """Bot adminlari API"""

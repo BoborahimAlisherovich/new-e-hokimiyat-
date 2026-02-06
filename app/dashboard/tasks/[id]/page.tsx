@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension } from "@/lib/api"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension, markTaskComplete } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import {
@@ -188,11 +188,21 @@ export default function TaskDetailPage() {
 
   const CLOSED_STATUSES = ["BAJARILDI", "NAZORATDAN_YECHILDI", "BAJARILMADI"]
   const isClosed = CLOSED_STATUSES.includes(task.status)
-  const canEdit = !isClosed
+  
+  // Rolga qarab tahrirlash imkoniyatlarini cheklash
+  const isAdmin = currentUser?.role && ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'].includes(currentUser.role)
+  const isOrgUser = currentUser?.role && ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'].includes(currentUser.role)
+  
+  // Faqat HOKIM, HOKIMLIK_MASUL, ADMIN tahrirlashi mumkin
+  const canEdit = !isClosed && isAdmin
   const canChat = !isClosed
-  const canClose = task.status === "BAJARILDI"
-  const canReassign = task.status === "BAJARILDI"
-  const canExtend = task.status === "IJRODA" || task.status === "MUDDATI_KECH"
+  // Faqat HOKIM tasdiqlashi/qayta ijroga yuborishi mumkin
+  const canClose = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
+  const canReassign = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
+  // Tashkilot xodimlari "Bajarildi" deb belgilashi mumkin, lekin muddatni uzaytira olmaydi
+  const canMarkComplete = task.status === "IJRODA" && isOrgUser
+  // Muddat uzaytirish faqat adminlar uchun
+  const canExtend = (task.status === "IJRODA" || task.status === "MUDDATI_KECH") && isAdmin
   
   // Handle save task edits
   const handleSaveTask = async () => {
@@ -239,6 +249,23 @@ export default function TaskDetailPage() {
     } catch (error) {
       console.error("Deadline extend error:", error)
       alert("Muddatni uzaytirishda xatolik yuz berdi")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  // Handle mark complete (tashkilot uchun)
+  const handleMarkComplete = async () => {
+    if (!confirm("Topshiriqni bajarildi deb belgilamoqchimisiz?")) return
+    
+    setIsSaving(true)
+    try {
+      const updatedTask = await markTaskComplete(id)
+      setTask(updatedTask)
+      alert("Topshiriq bajarildi deb belgilandi!")
+    } catch (error) {
+      console.error("Mark complete error:", error)
+      alert("Topshiriqni bajarildi deb belgilashda xatolik yuz berdi")
     } finally {
       setIsSaving(false)
     }
@@ -445,6 +472,17 @@ export default function TaskDetailPage() {
                   Orqaga
                 </Button>
               </Link>
+              {canMarkComplete && (
+                <Button 
+                  variant="default" 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleMarkComplete}
+                  disabled={isSaving}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {isSaving ? "Saqlanmoqda..." : "Bajarildi"}
+                </Button>
+              )}
               {canExtend && (
                 <Dialog open={isExtendOpen} onOpenChange={setIsExtendOpen}>
                   <DialogTrigger asChild>

@@ -140,6 +140,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan vaqt')
     activated_at = models.DateTimeField(null=True, blank=True, verbose_name='Faollashtirilgan vaqt')
     first_login_at = models.DateTimeField(null=True, blank=True, verbose_name='Birinchi kirish vaqti')
+    last_seen = models.DateTimeField(null=True, blank=True, verbose_name='Oxirgi ko\'rinish')
     
     # Django auth fields
     is_active = models.BooleanField(default=True)
@@ -165,6 +166,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.middle_name:
             parts.append(self.middle_name)
         return ' '.join(parts)
+    
+    @property
+    def is_online(self):
+        """Check if user is online (active in last 5 minutes)."""
+        if not self.last_seen:
+            return False
+        from django.utils import timezone
+        return (timezone.now() - self.last_seen).total_seconds() < 300  # 5 minutes
     
     @property
     def masked_pnfl(self):

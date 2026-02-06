@@ -18,10 +18,11 @@ interface SettingsSectorsTabProps {
 
 interface Sector {
   id: number
-  name_uz: string
-  name_ru: string
-  name_en: string
+  name: string
+  description?: string
+  is_active?: boolean
 }
+
 
 export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   const [sectors, setSectors] = useState<Sector[]>([])
@@ -29,9 +30,8 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [formData, setFormData] = useState({
-    name_uz: "",
-    name_ru: "",
-    name_en: "",
+    name: "",
+    description: "",
   })
 
   useEffect(() => {
@@ -41,8 +41,10 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   const loadSectors = async () => {
     try {
       setIsLoading(true)
-      const response = await api.get<Sector[]>("/api/sectors/")
-      setSectors(response.data)
+      const response = await api.get<unknown>("/organizations/sectors/")
+      const data = response.data as { results?: Sector[] } | Sector[]
+      const normalized = Array.isArray(data) ? data : (data?.results ?? [])
+      setSectors(normalized)
     } catch (error) {
       console.error("Error loading sectors:", error)
     } finally {
@@ -54,11 +56,11 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
     e.preventDefault()
     try {
       if (editingId) {
-        await api.put(`/api/sectors/${editingId}/`, formData)
+        await api.put(`/organizations/sectors/${editingId}/`, formData)
       } else {
-        await api.post("/api/sectors/", formData)
+        await api.post("/organizations/sectors/", formData)
       }
-      setFormData({ name_uz: "", name_ru: "", name_en: "" })
+      setFormData({ name: "", description: "" })
       setIsAdding(false)
       setEditingId(null)
       loadSectors()
@@ -69,9 +71,8 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
 
   const handleEdit = (sector: Sector) => {
     setFormData({
-      name_uz: sector.name_uz,
-      name_ru: sector.name_ru,
-      name_en: sector.name_en,
+      name: sector.name,
+      description: sector.description || "",
     })
     setEditingId(sector.id)
     setIsAdding(true)
@@ -80,7 +81,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   const handleDelete = async (id: number) => {
     if (!confirm("Ushbu sohani o'chirmoqchimisiz?")) return
     try {
-      await api.delete(`/api/sectors/${id}/`)
+      await api.delete(`/organizations/sectors/${id}/`)
       loadSectors()
     } catch (error) {
       console.error("Error deleting sector:", error)
@@ -88,9 +89,18 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   }
 
   const handleCancel = () => {
-    setFormData({ name_uz: "", name_ru: "", name_en: "" })
+    setFormData({ name: "", description: "" })
     setIsAdding(false)
     setEditingId(null)
+  }
+
+  const handleAddDefaults = async () => {
+    try {
+      await api.post("/organizations/sectors/populate_defaults/")
+      loadSectors()
+    } catch (error) {
+      console.error("Error adding default sectors:", error)
+    }
   }
 
   return (
@@ -100,10 +110,15 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
           <CardTitle className="flex items-center justify-between">
             <span>Sohalar boshqaruvi</span>
             {!isAdding && (
-              <Button onClick={() => setIsAdding(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Soha qo'shish
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleAddDefaults} variant="outline" size="sm">
+                  Standart sohalarni qo'shish
+                </Button>
+                <Button onClick={() => setIsAdding(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Soha qo'shish
+                </Button>
+              </div>
             )}
           </CardTitle>
           <CardDescription>
@@ -115,33 +130,22 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
             <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-slate-50">
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name_uz">Nomi (O'zbekcha)</Label>
+                  <Label htmlFor="name">Nomi</Label>
                   <Input
-                    id="name_uz"
-                    value={formData.name_uz}
-                    onChange={(e) => setFormData({ ...formData, name_uz: e.target.value })}
-                    placeholder="Soha nomi o'zbek tilida"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Soha nomi"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name_ru">Nomi (Ruscha)</Label>
+                  <Label htmlFor="description">Tavsif (ixtiyoriy)</Label>
                   <Input
-                    id="name_ru"
-                    value={formData.name_ru}
-                    onChange={(e) => setFormData({ ...formData, name_ru: e.target.value })}
-                    placeholder="Название сектора на русском"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name_en">Nomi (Inglizcha)</Label>
-                  <Input
-                    id="name_en"
-                    value={formData.name_en}
-                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                    placeholder="Sector name in English"
-                    required
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Sohaga qisqa tavsif"
                   />
                 </div>
               </div>
@@ -170,10 +174,10 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="font-medium">{sector.name_uz}</div>
-                    <div className="text-sm text-slate-500">
-                      {sector.name_ru} • {sector.name_en}
-                    </div>
+                    <div className="font-medium">{sector.name}</div>
+                    {sector.description && (
+                      <div className="text-sm text-slate-500">{sector.description}</div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button

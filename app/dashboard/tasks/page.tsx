@@ -10,12 +10,14 @@ import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
 import type { Task } from "@/types"
-import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask } from "@/lib/api"
+import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/lib/i18n/context"
 
 
 export default function TasksPage() {
+  const t = useTranslation()
   const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
@@ -35,6 +37,10 @@ export default function TasksPage() {
     inProgress: 0,
     completed: 0,
   })
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  
+  // Rolga qarab topshiriq yaratish imkoniyati
+  const canCreateTask = currentUser?.role && ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'].includes(currentUser.role)
 
   // Build filters object - memoized to avoid recreation
   const buildTaskFilters = useCallback(() => {
@@ -49,16 +55,18 @@ export default function TasksPage() {
     try {
       setLoading(true)
       const filters = buildTaskFilters()
-      const [usersData, orgsData, tasksPage, statsData] = await Promise.all([
+      const [usersData, orgsData, tasksPage, statsData, me] = await Promise.all([
         getUsers(),
         getOrganizations(),
         getTasksPage(filters, page, pageSize),
         getTaskStats(filters),
+        getCurrentUser(),
       ])
       setUsers(usersData || [])
       setOrganizations(orgsData || [])
       setTasks(tasksPage?.results || [])
       setTotalCount(tasksPage?.count ?? 0)
+      setCurrentUser(me)
       setStats({
         total: statsData.total ?? 0,
         pending: statsData.pending ?? 0,
@@ -118,13 +126,13 @@ export default function TasksPage() {
   }
 
   const handleDeleteTask = async (taskId: number) => {
-    if (!confirm("Haqiqatan ham bu topshiriqni o'chirmoqchimisiz?")) return
+    if (!confirm(t.pages.tasks.deleteConfirm)) return
     try {
       await deleteTask(taskId)
       setTasks(prev => prev.filter(task => task.id !== taskId))
     } catch (error) {
       console.error("Delete task error:", error)
-      alert("Topshiriqni o'chirishda xatolik yuz berdi")
+      alert(t.pages.tasks.deleteError)
     }
   }
 
@@ -133,12 +141,12 @@ export default function TasksPage() {
   if (loading) {
     return (
       <>
-        <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
+        <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
+              <p className="mt-4 text-muted-foreground">{t.common.loading}</p>
             </div>
           </div>
         </div>
@@ -148,7 +156,7 @@ export default function TasksPage() {
 
   return (
     <>
-      <Header title="Topshiriqlar boshqaruvi" description="Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi" />
+      <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -173,7 +181,7 @@ export default function TasksPage() {
           >
             <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Filtrlash va qidiruv</CardTitle>
+                <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{t.pages.tasks.filtersTitle}</CardTitle>
               </CardHeader>
             <CardContent>
               <TaskFilters
@@ -186,6 +194,7 @@ export default function TasksPage() {
                 onPriorityChange={(value) => setPriorityFilter(value as any)}
                 onCategoryChange={setCategoryFilter}
                 onCreate={handleCreateTask}
+                showCreateButton={canCreateTask}
                 onClear={() => {
                   setSearchQuery("")
                   setStatusFilter("all")
@@ -222,8 +231,8 @@ export default function TasksPage() {
             transition={{ delay: 0.3 }}
           >
             <div className="text-slate-700">
-              Jami: <span className="font-semibold text-slate-900">{totalCount}</span>
-              {searchQuery && <span className="text-slate-600"> (filtrlangan: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
+              {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-900">{totalCount}</span>
+              {searchQuery && <span className="text-slate-600"> ({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -233,7 +242,7 @@ export default function TasksPage() {
                 disabled={page === 1}
                 className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Oldingi
+                {t.pages.tasks.previous}
               </Button>
               <span className="font-semibold text-slate-900 bg-slate-100 px-4 py-1.5 rounded-lg">
                 {page} / {totalPages}
@@ -245,7 +254,7 @@ export default function TasksPage() {
                 disabled={page >= totalPages}
                 className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Keyingi
+                {t.pages.tasks.next}
               </Button>
             </div>
           </motion.div>

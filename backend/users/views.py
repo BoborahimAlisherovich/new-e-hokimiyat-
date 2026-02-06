@@ -370,6 +370,41 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return Response(UserSerializer(user).data)
 
+    @action(detail=False, methods=['get'])
+    def chat_users(self, request):
+        """
+        Chat uchun foydalanuvchilar ro'yxati.
+        
+        Rolga qarab quyidagi foydalanuvchilarni ko'rsatadi:
+        - HOKIM, HOKIMLIK_MASUL, ADMIN: Barcha foydalanuvchilar
+        - TASHKILOT_RAHBARI: O'z tashkiloti + HOKIM/HOKIMLIK_MASUL
+        - TASHKILOT_MASUL: O'z tashkiloti + HOKIM/HOKIMLIK_MASUL
+        
+        GET /api/users/chat_users/
+        """
+        user = request.user
+        queryset = User.objects.select_related('organization').filter(
+            status='FAOL'
+        ).exclude(id=user.id)
+        
+        # Hokim va admin barcha foydalanuvchilarni ko'radi
+        if user.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+            pass  # Hech qanday filter qo'shilmaydi
+        
+        # Tashkilot xodimlari
+        elif user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            from django.db.models import Q
+            # O'z tashkiloti + Hokimlik xodimlari
+            queryset = queryset.filter(
+                Q(organization=user.organization) |  # O'z tashkiloti
+                Q(role__in=['HOKIM', 'HOKIMLIK_MASUL'])  # Hokimlik xodimlari
+            )
+        else:
+            queryset = queryset.none()
+        
+        serializer = UserSerializer(queryset.order_by('first_name', 'last_name'), many=True)
+        return Response(serializer.data)
+
 
 class UserAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
     """

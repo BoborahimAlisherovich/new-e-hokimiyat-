@@ -45,7 +45,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
   const loadSettings = async () => {
     try {
       setIsLoading(true)
-      const response = await api.get<BotSettings>("/api/telegram-bot/settings/")
+      const response = await api.get<BotSettings>("/telegram-bot/settings/")
       setSettings(response.data)
     } catch (error) {
       console.error("Error loading bot settings:", error)
@@ -56,8 +56,13 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
 
   const checkBotStatus = async () => {
     try {
-      const response = await api.get<{ is_running: boolean; last_check: string | null }>("/api/telegram-bot/status/")
-      setBotStatus(response.data)
+      const response = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>(
+        "/telegram-bot/settings/bot_status/"
+      )
+      setBotStatus({
+        is_running: response.data.is_running,
+        last_check: response.data.pid ? new Date().toISOString() : null,
+      })
     } catch (error) {
       console.error("Error checking bot status:", error)
     }
@@ -66,7 +71,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      await api.put("/api/telegram-bot/settings/", settings)
+      await api.put("/telegram-bot/settings/1/", settings)
       alert("Sozlamalar saqlandi")
     } catch (error) {
       console.error("Error saving bot settings:", error)
@@ -78,7 +83,12 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
 
   const handleRestartBot = async () => {
     try {
-      await api.post("/api/telegram-bot/restart/")
+      try {
+        await api.post("/telegram-bot/settings/stop_bot/")
+      } catch (_) {
+        // ignore stop errors
+      }
+      await api.post("/telegram-bot/settings/start_bot/")
       alert("Bot qayta ishga tushirildi")
       setTimeout(checkBotStatus, 2000)
     } catch (error) {

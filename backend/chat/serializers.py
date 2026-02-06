@@ -20,6 +20,7 @@ class DirectMessageSerializer(serializers.ModelSerializer):
     recipient_name = serializers.CharField(source='recipient.get_full_name', read_only=True)
     sender = UserBriefSerializer(read_only=True)
     recipient = UserBriefSerializer(read_only=True)
+    attachment = serializers.SerializerMethodField()
 
     class Meta:
         model = DirectMessage
@@ -28,6 +29,15 @@ class DirectMessageSerializer(serializers.ModelSerializer):
             'content', 'attachment', 'created_at', 'updated_at', 'is_read'
         ]
         read_only_fields = ['id', 'sender', 'sender_name', 'recipient', 'recipient_name', 'created_at', 'updated_at']
+
+    def get_attachment(self, obj):
+        """Attachment uchun to'liq URL qaytarish."""
+        if obj.attachment:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachment.url)
+            return obj.attachment.url
+        return None
 
 
 class DirectMessageCreateSerializer(serializers.ModelSerializer):

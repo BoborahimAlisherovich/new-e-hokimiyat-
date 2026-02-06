@@ -43,7 +43,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, getCurrentUser } from "@/lib/api";
+import { Header } from "@/components/layout/header";
+import { ShieldAlert } from "lucide-react";
 
 interface Region {
   id: number;

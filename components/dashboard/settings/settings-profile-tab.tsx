@@ -118,7 +118,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-emerald-600 text-white text-lg font-medium">
+              <AvatarFallback className="bg-blue-600 text-white text-lg font-medium">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
@@ -127,7 +127,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                 {lastName} {firstName} {middleName}
               </h3>
               <p className="text-sm text-gray-600">{getRoleLabel(currentUser.role)}</p>
-              <Badge variant="outline" className="mt-2 bg-emerald-50 text-emerald-600 border-emerald-200">
+              <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-600 border-blue-200">
                 <UserCheck className="mr-1 h-3 w-3" />
                 {t.settings.oneIDConnected}
               </Badge>
@@ -142,7 +142,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
@@ -150,7 +150,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
@@ -158,7 +158,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={middleName}
                 onChange={(e) => setMiddleName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
@@ -167,7 +167,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+998 XX XXX XX XX"
-                className="h-11 border border-gray-300 rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
@@ -192,7 +192,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-medium disabled:opacity-50"
+              className="h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

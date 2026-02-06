@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,10 +20,38 @@ import {
   MapPin,
   Check,
   CheckCheck,
+  Image as ImageIcon,
+  Video,
+  Music,
+  X,
+  Download,
+  Loader2,
+  AlertCircle,
 } from "lucide-react"
-import { getChatConversations, getChatMessages, getCurrentUser, getUsers, sendChatMessage } from "@/lib/api"
+import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
+
+// Maksimal fayl hajmi (50MB)
+const MAX_FILE_SIZE = 50 * 1024 * 1024
+
+// Ruxsat etilgan fayl turlari
+const ALLOWED_FILE_TYPES = [
+  // Images
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
+  // Videos
+  'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+  // Audio
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/x-m4a',
+  // Documents
+  'application/pdf', 
+  'application/msword', 
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+]
 
 // Role labels
 const ROLE_LABELS: Record<string, string> = {
@@ -80,14 +108,132 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [chatFile, setChatFile] = useState<File | null>(null)
+  const [filePreview, setFilePreview] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [isLocationLoading, setIsLocationLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [showUserList, setShowUserList] = useState(true)
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+
+  // Faylni sozlash (umumiy funksiya)
+  const setFileWithPreview = useCallback((file: File) => {
+    // Fayl hajmi tekshiruvi
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`Fayl hajmi 50MB dan oshmasligi kerak. Hozirgi: ${(file.size / (1024*1024)).toFixed(1)}MB`)
+      return false
+    }
+    
+    // Fayl turi tekshiruvi
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast.error(`Ruxsat etilmagan fayl turi: ${file.type || "noma'lum"}`)
+      return false
+    }
+    
+    // Oldingi preview ni tozalash
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview)
+    }
+    
+    setChatFile(file)
+    
+    // Preview yaratish (rasm/video uchun)
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      const url = URL.createObjectURL(file)
+      setFilePreview(url)
+    } else {
+      setFilePreview(null)
+    }
+    
+    return true
+  }, [filePreview])
+
+  // Fayl tanlanganda preview yaratish
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFileWithPreview(file)
+  }, [setFileWithPreview])
+
+  // Clipboard dan paste qilish (Telegram singari)
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      
+      // Rasm yoki fayl tekshirish
+      if (item.type.startsWith('image/') || item.type.startsWith('video/') || item.type.startsWith('audio/')) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          // Fayl nomini yaratish
+          const extension = item.type.split('/')[1] || 'png'
+          const timestamp = Date.now()
+          const newFile = new File([file], `pasted_${timestamp}.${extension}`, { type: item.type })
+          
+          if (setFileWithPreview(newFile)) {
+            toast.success("Rasm clipboard dan qo'shildi")
+          }
+        }
+        return
+      }
+    }
+  }, [setFileWithPreview])
+
+  // Fayl olib tashlanganda preview ni tozalash
+  const clearFile = useCallback(() => {
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview)
+    }
+    setChatFile(null)
+    setFilePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [filePreview])
+
+  // Drag & Drop state
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Drag & Drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      const file = files[0]
+      if (setFileWithPreview(file)) {
+        toast.success(`Fayl qo'shildi: ${file.name}`)
+      }
+    }
+  }, [setFileWithPreview])
 
   useEffect(() => {
     loadData()
@@ -126,7 +272,7 @@ export default function ChatPage() {
       setLoading(true)
       const [meResult, usersResult, convsResult] = await Promise.allSettled([
         getCurrentUser(),
-        getUsers(),
+        getChatUsers(),
         getChatConversations(),
       ])
 
@@ -138,10 +284,7 @@ export default function ChatPage() {
 
       const processedUsers = (usersData || [])
         .filter((u: any) => u.id !== me?.id)
-        .map((user: any, index: number) => ({
-          ...mapUserToChatUser(user),
-          is_online: index % 3 === 0,
-        }))
+        .map((user: any) => mapUserToChatUser(user))
 
       setUsers(processedUsers)
 
@@ -150,10 +293,7 @@ export default function ChatPage() {
         const other = conv.other_participant
         if (!other?.id) return
         const otherId = String(other.id)
-        const user = processedUsers.find((u: ChatUser) => u.id === otherId) || {
-          ...mapUserToChatUser(other),
-          is_online: false,
-        }
+        const user = processedUsers.find((u: ChatUser) => u.id === otherId) || mapUserToChatUser(other)
         const lastMsg = conv.last_message ? mapApiMessage(conv.last_message) : null
         convMap.set(otherId, {
           user,
@@ -234,9 +374,10 @@ export default function ChatPage() {
 
       mediaRecorder.start()
       setIsRecording(true)
+      toast.info("Ovozli xabar yozilmoqda...")
     } catch (error) {
       console.error('Mikrofondan foydalanish uchun ruxsat berilmagan:', error)
-      alert('Mikrofondan foydalanish uchun ruxsat berilmagan')
+      toast.error('Mikrofondan foydalanish uchun ruxsat berilmagan')
     }
   }
 
@@ -256,19 +397,28 @@ export default function ChatPage() {
   }
 
   const sendAudio = async () => {
-    if (!audioBlob || !selectedUserId || !currentUser) return
+    if (!audioBlob || !selectedUserId || !currentUser || isSending) return
 
-    const file = new File([audioBlob], `audio_${Date.now()}.webm`, {
-      type: audioBlob.type || "audio/webm",
-    })
+    setIsSending(true)
+    try {
+      const file = new File([audioBlob], `audio_${Date.now()}.webm`, {
+        type: audioBlob.type || "audio/webm",
+      })
 
-    const saved = await sendChatMessage(selectedUserId, {
-      content: "🎤 Ovozli xabar",
-      attachment: file,
-    })
+      const saved = await sendChatMessage(selectedUserId, {
+        content: "🎤 Ovozli xabar",
+        attachment: file,
+      })
 
-    addMessageToConversation(mapApiMessage(saved), selectedUserId)
-    setAudioBlob(null)
+      addMessageToConversation(mapApiMessage(saved), selectedUserId)
+      setAudioBlob(null)
+      toast.success("Ovozli xabar yuborildi")
+    } catch (error: any) {
+      console.error("Audio yuborishda xatolik:", error)
+      toast.error(error?.message || "Ovozli xabar yuborishda xatolik")
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const sendLocation = async () => {
@@ -292,9 +442,10 @@ export default function ChatPage() {
       })
 
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
+      toast.success("Joylashuv yuborildi")
     } catch (error) {
       console.error('Location error:', error)
-      alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
+      toast.error('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
     } finally {
       setIsLocationLoading(false)
     }
@@ -335,16 +486,25 @@ export default function ChatPage() {
     const hasContent = newMessage && newMessage.trim()
     const hasFile = chatFile instanceof File
     
-    if ((!hasContent && !hasFile) || !selectedUserId || !currentUser) return
+    if ((!hasContent && !hasFile) || !selectedUserId || !currentUser || isSending) return
 
-    const saved = await sendChatMessage(selectedUserId, {
-      content: hasContent ? newMessage.trim() : "",
-      attachment: hasFile ? chatFile : null,
-    })
+    setIsSending(true)
+    try {
+      const saved = await sendChatMessage(selectedUserId, {
+        content: hasContent ? newMessage.trim() : (hasFile ? "📎 Fayl" : ""),
+        attachment: hasFile ? chatFile : null,
+      })
 
-    addMessageToConversation(mapApiMessage(saved), selectedUserId)
-    setNewMessage("")
-    setChatFile(null)
+      addMessageToConversation(mapApiMessage(saved), selectedUserId)
+      setNewMessage("")
+      clearFile()
+      toast.success("Xabar yuborildi")
+    } catch (error: any) {
+      console.error("Xabar yuborishda xatolik:", error)
+      toast.error(error?.message || "Xabar yuborishda xatolik yuz berdi")
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -367,12 +527,55 @@ export default function ChatPage() {
     return new Date(dateStr).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })
   }
 
+  // Parse location from message content
+  const parseLocation = (content: string): { lat: number; lng: number } | null => {
+    const match = content.match(/maps\.google\.com\/maps\?q=([\d.-]+),([\d.-]+)/)
+    if (match) {
+      return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) }
+    }
+    return null
+  }
+
+  // Render message content with location preview or clean text
+  const renderMessageContent = (content: string, isCurrentUser: boolean) => {
+    const location = parseLocation(content)
+    if (location) {
+      const mapUrl = `https://maps.google.com/maps?q=${location.lat},${location.lng}`
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${location.lat},${location.lng}&zoom=15&size=300x150&maptype=roadmap&markers=color:red%7C${location.lat},${location.lng}&key=`
+      return (
+        <a href={mapUrl} target="_blank" rel="noreferrer" className="block">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-4 w-4" />
+            <span className="text-sm font-medium">📍 Joylashuv</span>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-border/40">
+            <iframe
+              width="250"
+              height="120"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng - 0.005}%2C${location.lat - 0.003}%2C${location.lng + 0.005}%2C${location.lat + 0.003}&layer=mapnik&marker=${location.lat}%2C${location.lng}`}
+            />
+          </div>
+          <p className={cn(
+            "text-xs mt-1",
+            isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
+          )}>
+            Xaritada ochish uchun bosing
+          </p>
+        </a>
+      )
+    }
+    return <p className="text-sm leading-relaxed">{content}</p>
+  }
+
   const getLastMessage = (userId: string): { text: string; time: string } | null => {
     const conv = conversations.get(userId)
     if (!conv || conv.messages.length === 0) return null
     const lastMsg = conv.messages[conv.messages.length - 1]
     return {
-      text: lastMsg.attachment ? "📎 Файл" : lastMsg.content.substring(0, 30),
+      text: lastMsg.attachment ? `📎 ${lastMsg.attachment.name?.split('/').pop() || 'Fayl'}` : (parseLocation(lastMsg.content) ? "📍 Joylashuv" : lastMsg.content.substring(0, 30)),
       time: formatTime(lastMsg.timestamp),
     }
   }
@@ -627,14 +830,15 @@ export default function ChatPage() {
                                 isCurrentUser ? "bg-primary text-primary-foreground border-primary/20" : "bg-white/80 border-border/60",
                               )}
                             >
-                              {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
+                              {msg.content && renderMessageContent(msg.content, isCurrentUser)}
                               {msg.attachment && (
                                 <div className="mt-2 space-y-2">
                                   {msg.attachment.type === 'IMAGE' && (
                                     <img
                                       src={msg.attachment.url}
                                       alt={msg.attachment.name}
-                                      className="max-h-48 rounded-md border"
+                                      className="max-h-48 rounded-md border cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={() => setLightboxImage(msg.attachment!.url)}
                                     />
                                   )}
                                   {msg.attachment.type === 'VIDEO' && (
@@ -649,12 +853,39 @@ export default function ChatPage() {
                                       target="_blank"
                                       rel="noreferrer"
                                       className={cn(
-                                        "flex items-center gap-2 text-xs underline",
-                                        isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground",
+                                        "flex items-center gap-3 p-3 rounded-lg transition-all hover:scale-[1.02]",
+                                        isCurrentUser 
+                                          ? "bg-primary-foreground/10 hover:bg-primary-foreground/20" 
+                                          : "bg-muted/60 hover:bg-muted",
                                       )}
                                     >
-                                      <FileText className="h-3 w-3" />
-                                      {msg.attachment.name} {msg.attachment.size && `(${msg.attachment.size})`}
+                                      <div className={cn(
+                                        "p-2 rounded-lg",
+                                        isCurrentUser ? "bg-primary-foreground/20" : "bg-primary/10"
+                                      )}>
+                                        <FileText className={cn(
+                                          "h-5 w-5",
+                                          isCurrentUser ? "text-primary-foreground" : "text-primary"
+                                        )} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn(
+                                          "text-sm font-medium truncate",
+                                          isCurrentUser ? "text-primary-foreground" : "text-foreground"
+                                        )}>
+                                          {msg.attachment.name}
+                                        </p>
+                                        <p className={cn(
+                                          "text-xs",
+                                          isCurrentUser ? "text-primary-foreground/60" : "text-muted-foreground"
+                                        )}>
+                                          {msg.attachment.size || "Fayl"}
+                                        </p>
+                                      </div>
+                                      <Download className={cn(
+                                        "h-4 w-4 shrink-0",
+                                        isCurrentUser ? "text-primary-foreground/60" : "text-muted-foreground"
+                                      )} />
                                     </a>
                                   )}
                                 </div>
@@ -669,7 +900,25 @@ export default function ChatPage() {
                 </ScrollArea>
 
                 {/* Message Input */}
-                <div className="border-t border-border p-4 flex-shrink-0 bg-muted/20">
+                <div 
+                  className={cn(
+                    "border-t border-border p-4 flex-shrink-0 bg-muted/20 relative transition-colors duration-200",
+                    isDragging && "bg-primary/10 border-primary border-2 border-dashed"
+                  )}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  {/* Drag & Drop Overlay */}
+                  {isDragging && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/10 backdrop-blur-sm pointer-events-none">
+                      <div className="text-center">
+                        <ImageIcon className="h-10 w-10 mx-auto text-primary mb-2" />
+                        <p className="text-sm font-medium text-primary">Faylni shu yerga tashlang</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     {/* Audio Recording UI */}
                     {isRecording && (
@@ -691,8 +940,18 @@ export default function ChatPage() {
                       <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950 rounded-xl border border-blue-200 dark:border-blue-800">
                         <Mic className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
-                        <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700">
-                          <Send className="h-3 w-3 mr-1" /> Yuborish
+                        <Button 
+                          size="sm" 
+                          onClick={sendAudio} 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={isSending}
+                        >
+                          {isSending ? (
+                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ) : (
+                            <Send className="h-3 w-3 mr-1" />
+                          )}
+                          Yuborish
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
                           <Trash2 className="h-3 w-3" />
@@ -701,29 +960,76 @@ export default function ChatPage() {
                     )}
                     
                     {/* File Preview */}
-                    {chatFile && (
-                      <div className="flex items-center gap-2 p-2 bg-muted/60 rounded-xl border border-border/60">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm flex-1 truncate">{chatFile.name}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setChatFile(null)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {chatFile && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="p-3 bg-muted/60 rounded-xl border border-border/60"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Preview rasm yoki video */}
+                            {filePreview && chatFile.type.startsWith('image/') && (
+                              <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
+                                <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            {filePreview && chatFile.type.startsWith('video/') && (
+                              <div className="relative w-32 h-20 rounded-lg overflow-hidden border">
+                                <video src={filePreview} className="w-full h-full object-cover" muted />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <Video className="h-6 w-6 text-white" />
+                                </div>
+                              </div>
+                            )}
+                            {chatFile.type.startsWith('audio/') && (
+                              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900">
+                                <Music className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                              </div>
+                            )}
+                            {!chatFile.type.startsWith('image/') && !chatFile.type.startsWith('video/') && !chatFile.type.startsWith('audio/') && (
+                              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800">
+                                <FileText className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                              </div>
+                            )}
+                            
+                            {/* Fayl ma'lumotlari */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{chatFile.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatFileSize(chatFile.size)} • {chatFile.type.split('/')[0]}
+                              </p>
+                            </div>
+                            
+                            {/* O'chirish tugmasi */}
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={clearFile}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     
                     <div className="flex gap-2 items-end">
                       {/* File attach */}
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                          onChange={(e) => setChatFile(e.target.files?.[0] || null)}
-                        />
-                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Fayl biriktirish">
-                          <Paperclip className="h-4 w-4" />
-                        </Button>
-                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={handleFileSelect}
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="shrink-0" 
+                        type="button" 
+                        title="Fayl biriktirish"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
                       
                       {/* Audio record */}
                       <Button 
@@ -732,6 +1038,7 @@ export default function ChatPage() {
                         className={cn("shrink-0", isRecording && "text-red-500")}
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
+                        disabled={isSending}
                         title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
                       >
                         <Mic className="h-4 w-4" />
@@ -744,21 +1051,32 @@ export default function ChatPage() {
                         className="shrink-0" 
                         type="button"
                         onClick={sendLocation}
-                        disabled={isLocationLoading}
+                        disabled={isLocationLoading || isSending}
                         title="Joylashuvni yuborish"
                       >
                         <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                       </Button>
                       
                       <Input
-                        placeholder="Xabar yozing..."
+                        ref={inputRef}
+                        placeholder="Xabar yozing yoki rasm joylashtiring (Ctrl+V)..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
+                        onPaste={handlePaste}
+                        disabled={isSending}
                         className="bg-white/70"
                       />
-                      <Button onClick={sendMessage} className="shrink-0">
-                        <Send className="h-4 w-4" />
+                      <Button 
+                        onClick={sendMessage} 
+                        className="shrink-0"
+                        disabled={isSending || (!newMessage.trim() && !chatFile)}
+                      >
+                        {isSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -778,6 +1096,52 @@ export default function ChatPage() {
           </Card>
         </div>
         </div>
+
+        {/* Image Lightbox Modal */}
+        <AnimatePresence>
+          {lightboxImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+              onClick={() => setLightboxImage(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", damping: 25 }}
+                className="relative max-w-[90vw] max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={lightboxImage}
+                  alt="Katta rasm"
+                  className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                />
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <a
+                    href={lightboxImage}
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download className="h-5 w-5 text-white" />
+                  </a>
+                  <button
+                    onClick={() => setLightboxImage(null)}
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                  >
+                    <X className="h-5 w-5 text-white" />
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   )

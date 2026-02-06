@@ -101,7 +101,7 @@ export async function sendChatMessage(
   if (attachment) {
     const formData = new FormData()
     formData.append('recipient_id', String(receiverId))
-    formData.append('content', content)
+    formData.append('content', content || '')
     formData.append('attachment', attachment)
     
     return fetchApi<ChatMessage>(`/chat/messages/message/${receiverId}/`, {

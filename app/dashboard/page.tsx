@@ -1,3 +1,4 @@
+"use client"
 // @ts-nocheck
 import { Header } from "@/components/layout/header"
 import { StatsCards } from "@/components/dashboard/stats-cards" // TaskSummary (KPI)
@@ -7,11 +8,13 @@ import { SectorOverview } from "@/components/dashboard/sector-overview"
 import AnalyticsSection from "@/components/dashboard/analytics-section"
 import DeadlineCriticalTasks from "@/components/dashboard/deadline-critical-tasks"
 import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics-charts"
+import { useTranslation } from "@/lib/i18n/context"
 
 export default function DashboardPage() {
+  const t = useTranslation()
   return (
     <>
-      <Header title="Bosh sahifa" description="Tuman hokimligi topshiriqlar boshqaruv tizimi" />
+      <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-12 py-8">

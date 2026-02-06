@@ -3,15 +3,41 @@ from typing import Any, Dict, cast
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.contrib.auth import get_user_model
 from .models import DirectMessage, ChatConversation
 from .serializers import (
     DirectMessageSerializer,
     DirectMessageCreateSerializer,
     ChatConversationSerializer,
 )
+
+User = get_user_model()
+
+# Maksimal fayl hajmi (50MB)
+MAX_FILE_SIZE = 50 * 1024 * 1024
+
+# Ruxsat etilgan fayl turlari
+ALLOWED_FILE_TYPES = {
+    # Images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
+    # Videos
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+    # Audio
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/x-m4a',
+    # Documents
+    'application/pdf', 
+    'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+}
 
 
 class DirectMessageViewSet(viewsets.ModelViewSet):
@@ -25,12 +51,29 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
     serializer_class = DirectMessageSerializer
     queryset = DirectMessage.objects.all()
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self) -> QuerySet[DirectMessage]:  # type: ignore[reportIncompatibleMethodOverride]
         """Get messages for the current user."""
         return DirectMessage.objects.filter(
             Q(sender=self.request.user) | Q(recipient=self.request.user)
         ).order_by('-created_at')
+
+    def validate_attachment(self, file):
+        """Fayl hajmi va turini tekshirish."""
+        if not file:
+            return None
+        
+        # Hajm tekshiruvi
+        if file.size > MAX_FILE_SIZE:
+            raise ValueError(f"Fayl hajmi 50MB dan oshmasligi kerak. Hozirgi: {file.size / (1024*1024):.1f}MB")
+        
+        # Tur tekshiruvi
+        content_type = file.content_type
+        if content_type not in ALLOWED_FILE_TYPES:
+            raise ValueError(f"Ruxsat etilmagan fayl turi: {content_type}")
+        
+        return file
 
     def create(self, request, *args, **kwargs):
         """Send a message to a user."""
@@ -43,15 +86,27 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
 
         recipient = get_object_or_404(User, id=recipient_id)
         
-        serializer = DirectMessageCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        data = cast(Dict[str, Any], serializer.validated_data or {})
+        # Fayl validatsiyasi
+        attachment = request.FILES.get('attachment')
+        try:
+            attachment = self.validate_attachment(attachment)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        content = request.data.get('content', '')
+        
+        # Agar content va attachment ikkalasi ham bo'sh bo'lsa
+        if not content.strip() and not attachment:
+            return Response(
+                {'detail': 'content yoki attachment talab qilinadi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         message = DirectMessage.objects.create(
             sender=request.user,
             recipient=recipient,
-            content=data.get('content', ''),
-            attachment=data.get('attachment'),
+            content=content,
+            attachment=attachment,
         )
 
         # Update conversation
@@ -105,15 +160,27 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         """Send a message to a specific user."""
         recipient = get_object_or_404(User, id=user_id)
         
-        serializer = DirectMessageCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        data = cast(Dict[str, Any], serializer.validated_data or {})
+        # Fayl validatsiyasi
+        attachment = request.FILES.get('attachment')
+        try:
+            attachment = self.validate_attachment(attachment)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        content = request.data.get('content', '')
+        
+        # Agar content va attachment ikkalasi ham bo'sh bo'lsa
+        if not content.strip() and not attachment:
+            return Response(
+                {'detail': 'content yoki attachment talab qilinadi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         message = DirectMessage.objects.create(
             sender=request.user,
             recipient=recipient,
-            content=data.get('content', ''),
-            attachment=data.get('attachment'),
+            content=content,
+            attachment=attachment,
         )
 
         # Update conversation
@@ -152,8 +219,3 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
             is_read=False
         ).count()
         return Response({'unread_count': count})
-
-
-# Import User model at the end to avoid circular imports
-from django.contrib.auth import get_user_model
-User = get_user_model()

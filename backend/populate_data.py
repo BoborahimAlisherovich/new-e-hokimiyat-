@@ -91,7 +91,7 @@ def populate_database():
             "pnfl": "12345678901236",
             "first_name": "Sardor",
             "last_name": "Akramov",
-            "role": "TASHKILOT_RAHBAR",
+            "role": "TASHKILOT_RAHBARI",
             "organization": 2,
             "phone": "+998903456789",
             "email": "rahbar@example.com",

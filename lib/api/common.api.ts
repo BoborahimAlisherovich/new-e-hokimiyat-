@@ -277,7 +277,7 @@ export async function getAnalyticsExport(format: ExportFormat = 'xlsx'): Promise
  * Barcha hududlarni oladi
  */
 export async function getRegions(): Promise<Region[]> {
-  return fetchApi<Region[]>('/regions/')
+  return fetchApi<Region[]>('/organizations/regions/')
 }
 
 /**
@@ -287,7 +287,7 @@ export async function getRegions(): Promise<Region[]> {
  */
 export async function getDistricts(regionId?: number): Promise<District[]> {
   const query = regionId ? `?region=${regionId}` : ''
-  return fetchApi<District[]>(`/districts/${query}`)
+  return fetchApi<District[]>(`/organizations/districts/${query}`)
 }
 
 // ============================================================================

@@ -19,7 +19,8 @@ import {
   Play,
   Square,
   Circle,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
+import { Header } from "@/components/layout/header";
+import { AdminOnly } from "@/components/auth/admin-only";
 
 interface BotSettings {
   id: number;
@@ -75,6 +78,7 @@ export default function TelegramBotPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testingAI, setTestingAI] = useState(false);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,6 +225,34 @@ export default function TelegramBotPage() {
     }
   }, [toast]);
 
+  const testAIConnection = useCallback(async () => {
+    try {
+      setTestingAI(true);
+      const response = await api.post<{ success: boolean; error?: string; provider?: string; model?: string; message?: string }>("/telegram-bot/settings/test_ai_connection/");
+      
+      if (response.data.success) {
+        toast({
+          title: "AI muvaffaqiyatli ulandi!",
+          description: `${response.data.provider} - ${response.data.model}`
+        });
+      } else {
+        toast({
+          title: "AI ulanish xatosi",
+          description: response.data.error || "Noma'lum xato",
+          variant: "destructive"
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Xato",
+        description: err?.response?.data?.error || "AI ulanishni tekshirishda xato yuz berdi",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingAI(false);
+    }
+  }, [toast]);
+
   const setWebhook = useCallback(async () => {
     if (!settings?.webhook_url) {
       toast({
@@ -280,20 +312,20 @@ export default function TelegramBotPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      <AdminOnly title="Telegram Bot">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
             <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
           </div>
         </div>
-      </div>
+      </AdminOnly>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      <AdminOnly title="Telegram Bot">
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <AlertCircle className="h-12 w-12 text-red-600" />
           <p className="text-slate-700">{error}</p>
@@ -302,20 +334,13 @@ export default function TelegramBotPage() {
             Qayta urinish
           </Button>
         </div>
-      </div>
+      </AdminOnly>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-      {/* Modern geometric background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-        <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-      </div>
-      
-      <div className="relative z-10 p-6 space-y-6">
+    <AdminOnly title="Telegram Bot">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <motion.div 
         className="flex items-center justify-between"
@@ -490,17 +515,21 @@ export default function TelegramBotPage() {
         <TabsContent value="connection">
           <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>Bot ulanish sozlamalari</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Link className="h-5 w-5 text-blue-500" />
+                Bot ulanish sozlamalari
+              </CardTitle>
               <CardDescription className="text-slate-600">
-                Telegram Bot API ulanish parametrlari
+                Telegram Bot API ulanish parametrlari va bot boshqaruvi
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
+              {/* Bot Status Switch */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                 <div className="space-y-0.5">
-                  <Label>Bot holati</Label>
-                  <p className="text-sm text-slate-600">
-                    Botni yoqish yoki o'chirish
+                  <Label className="text-base font-medium">Bot holati</Label>
+                  <p className="text-sm text-slate-500">
+                    Botni yoqish yoki o'chirish (xabarlarni qabul qilish)
                   </p>
                 </div>
                 <Switch 
@@ -511,8 +540,12 @@ export default function TelegramBotPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bot_token">Bot Token</Label>
+              {/* Bot Token */}
+              <div className="space-y-3">
+                <Label htmlFor="bot_token" className="text-base font-medium">Bot Token</Label>
+                <p className="text-sm text-slate-500">
+                  @BotFather dan olingan maxfiy token. Telegram'da /newbot buyrug'i orqali oling.
+                </p>
                 <div className="flex gap-2">
                   <Input 
                     id="bot_token"
@@ -520,37 +553,86 @@ export default function TelegramBotPage() {
                     placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                     value={settings?.bot_token || ""}
                     onChange={(e) => 
-                      setSettings(prev => prev ? { ...prev, bot_token: e.target.value } : null)
+                      setSettings(prev => prev ? { 
+                        ...prev, 
+                        bot_token: e.target.value,
+                        // Token o'zgarganda bot_username tozalansin
+                        bot_username: ''
+                      } : null)
                     }
-                    className="flex-1"
+                    className="flex-1 font-mono"
                   />
                   <Button 
                     variant="outline" 
                     onClick={testConnection}
-                    disabled={testing}
+                    disabled={testing || !settings?.bot_token}
+                    className="min-w-[120px]"
                   >
                     {testing ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Tekshirilmoqda...
+                      </>
                     ) : (
                       "Tekshirish"
                     )}
                   </Button>
                 </div>
-                <p className="text-sm text-slate-600">
-                  @BotFather dan olingan token
-                </p>
               </div>
 
-              {settings?.bot_username && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <p className="text-blue-600 dark:text-blue-400">
-                    ✅ Bot ulangan: @{settings.bot_username}
+              {/* Bot Status Info */}
+              {settings?.bot_token && settings?.bot_username && botStatus?.is_running ? (
+                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-emerald-700 flex items-center gap-2">
+                    <span>✅</span>
+                    <span className="font-medium">Bot ulangan va ishlayapti:</span>
+                    <a 
+                      href={`https://t.me/${settings.bot_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 hover:underline"
+                    >
+                      @{settings.bot_username}
+                    </a>
+                  </p>
+                </div>
+              ) : settings?.bot_token && settings?.bot_username ? (
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-amber-700 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span className="font-medium">Bot to'xtatilgan:</span>
+                    <span>@{settings.bot_username}</span>
+                    <span className="text-sm text-amber-600">(Ishga tushirish tugmasini bosing)</span>
+                  </p>
+                </div>
+              ) : settings?.bot_token ? (
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-amber-700 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span className="font-medium">Token kiritilgan, lekin tekshirilmagan.</span>
+                    <span className="text-sm">"Tekshirish" tugmasini bosing.</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
+                  <p className="text-slate-600 flex items-center gap-2">
+                    <span>ℹ️</span>
+                    <span>Bot ulanmagan. @BotFather dan token oling va yuqoriga kiriting.</span>
                   </p>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="webhook_url">Webhook URL</Label>
+              {/* Divider */}
+              <div className="border-t border-slate-200 pt-4">
+                <h4 className="font-medium text-slate-900 mb-4">Xabar qabul qilish usuli</h4>
+              </div>
+
+              {/* Webhook Settings */}
+              <div className="space-y-3">
+                <Label htmlFor="webhook_url" className="text-base font-medium">Webhook URL</Label>
+                <p className="text-sm text-slate-500">
+                  Production uchun webhook tavsiya etiladi. Lokal ishlab chiqish uchun polling ishlatiladi.
+                </p>
                 <div className="flex gap-2">
                   <Input 
                     id="webhook_url"
@@ -560,25 +642,53 @@ export default function TelegramBotPage() {
                       setSettings(prev => prev ? { ...prev, webhook_url: e.target.value } : null)
                     }
                     className="flex-1"
+                    disabled={settings?.use_webhook}
                   />
                   {settings?.use_webhook ? (
-                    <Button variant="destructive" onClick={deleteWebhook}>
+                    <Button variant="destructive" onClick={deleteWebhook} className="min-w-[120px]">
                       <Unlink className="h-4 w-4 mr-2" />
                       O'chirish
                     </Button>
                   ) : (
-                    <Button variant="outline" onClick={setWebhook}>
+                    <Button 
+                      variant="outline" 
+                      onClick={setWebhook}
+                      disabled={!settings?.webhook_url}
+                      className="min-w-[120px]"
+                    >
                       <Link className="h-4 w-4 mr-2" />
                       O'rnatish
                     </Button>
                   )}
                 </div>
-                <p className="text-sm text-slate-600">
-                  {settings?.use_webhook 
-                    ? "✅ Webhook faol" 
-                    : "Webhook o'rnatilmagan, polling rejimida ishlaydi"
-                  }
-                </p>
+                
+                {/* Webhook/Polling status */}
+                <div className={`p-3 rounded-lg ${
+                  settings?.use_webhook 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {settings?.use_webhook ? (
+                    <p className="text-sm flex items-center gap-2">
+                      <span>🌐</span>
+                      <strong>Webhook rejimi faol.</strong> Telegram serverlaridan xabarlar avtomatik qabul qilinadi.
+                    </p>
+                  ) : (
+                    <p className="text-sm flex items-center gap-2">
+                      <span>🔄</span>
+                      <strong>Polling rejimi.</strong> Bot serverda ishga tushirilishi kerak.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Help box */}
+              <div className="p-4 bg-slate-100 rounded-lg">
+                <h5 className="font-medium text-slate-900 mb-2">💡 Qaysi usulni tanlash kerak?</h5>
+                <div className="text-sm text-slate-600 space-y-2">
+                  <p><strong>Webhook:</strong> Production server uchun (HTTPS talab qilinadi). Tez va samarali.</p>
+                  <p><strong>Polling:</strong> Lokal ishlab chiqish yoki HTTPS bo'lmagan serverlar uchun. "Botni ishga tushirish" tugmasini bosing.</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -588,82 +698,235 @@ export default function TelegramBotPage() {
         <TabsContent value="ai">
           <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>AI tahlil sozlamalari</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-500" />
+                AI tahlil sozlamalari
+              </CardTitle>
               <CardDescription className="text-slate-600">
-                Murojaatlarni sun'iy intellekt orqali tahlil qilish
+                AI Yordamchi va Telegram Bot uchun sun'iy intellekt sozlamalari
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>AI Provayder</Label>
+              {/* AI Status Alert */}
+              {settings?.ai_provider === 'disabled' || !settings?.has_ai_key ? (
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-amber-700 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>
+                      <strong>AI sozlanmagan.</strong> AI Yordamchi va Telegram bot AI tahlili uchun 
+                      quyida provayder tanlab API kalitni kiriting.
+                    </span>
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-emerald-700 flex items-center gap-2">
+                    <span>✅</span>
+                    <span>
+                      <strong>AI faol.</strong> AI Yordamchi ({settings.ai_provider === 'openai' ? 'OpenAI' : 'Anthropic'} - {settings.ai_model}) 
+                      va Telegram bot AI tahlili ishlaydi.
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* AI Provider Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">AI Provayder</Label>
+                <p className="text-sm text-slate-500">
+                  AI xizmatini taqdim etuvchi kompaniyani tanlang
+                </p>
                 <Select 
                   value={settings?.ai_provider || 'disabled'}
                   onValueChange={(value) => 
-                    setSettings(prev => prev ? { ...prev, ai_provider: value } : null)
+                    setSettings(prev => prev ? { 
+                      ...prev, 
+                      ai_provider: value,
+                      // Provider o'zgarganda default modelni o'rnatish
+                      ai_model: value === 'openai' ? 'gpt-4o-mini' : 
+                               value === 'anthropic' ? 'claude-3-haiku-20240307' : ''
+                    } : null)
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Provayderni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="disabled">O'chirilgan</SelectItem>
-                    <SelectItem value="openai">OpenAI (GPT-4)</SelectItem>
-                    <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                    <SelectItem value="disabled">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400">⏸️</span>
+                        <span>O'chirilgan</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="openai">
+                      <div className="flex items-center gap-2">
+                        <span>🤖</span>
+                        <span>OpenAI (GPT modellari)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="anthropic">
+                      <div className="flex items-center gap-2">
+                        <span>🧠</span>
+                        <span>Anthropic (Claude modellari)</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-slate-600">
-                  {settings?.ai_provider === 'disabled' 
-                    ? "AI tahlil o'chirilgan" 
-                    : "Murojaatlar avtomatik tahlil qilinadi"
-                  }
-                </p>
+                
+                {/* Provider status */}
+                <div className={`p-3 rounded-lg ${
+                  settings?.ai_provider === 'disabled' 
+                    ? 'bg-slate-100 text-slate-600' 
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  {settings?.ai_provider === 'disabled' ? (
+                    <p className="text-sm flex items-center gap-2">
+                      <span>ℹ️</span>
+                      AI tahlil o'chirilgan. Murojaatlar qo'lda ko'rib chiqiladi.
+                    </p>
+                  ) : (
+                    <p className="text-sm flex items-center gap-2">
+                      <span>✅</span>
+                      Murojaatlar avtomatik tahlil qilinadi va kategoriyalanadi.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {settings?.ai_provider && settings.ai_provider !== 'disabled' && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="ai_api_key">API Kalit</Label>
-                    <Input 
-                      id="ai_api_key"
-                      type="password"
-                      placeholder={settings.ai_provider === 'openai' ? "sk-..." : "sk-ant-..."}
-                      value={settings?.ai_api_key || ""}
-                      onChange={(e) => 
-                        setSettings(prev => prev ? { ...prev, ai_api_key: e.target.value } : null)
-                      }
-                    />
-                    {settings?.has_ai_key && (
-                      <p className="text-sm text-emerald-600">✅ API kalit saqlangan</p>
-                    )}
+                  {/* Divider */}
+                  <div className="border-t border-slate-200 pt-4">
+                    <h4 className="font-medium text-slate-900 mb-4">API sozlamalari</h4>
                   </div>
 
+                  {/* API Key */}
                   <div className="space-y-2">
-                    <Label>AI Model</Label>
+                    <Label htmlFor="ai_api_key" className="text-base font-medium">
+                      API Kalit
+                    </Label>
+                    <p className="text-sm text-slate-500">
+                      {settings.ai_provider === 'openai' 
+                        ? "OpenAI platformasidan olingan API kalit (platform.openai.com)"
+                        : "Anthropic Console'dan olingan API kalit (console.anthropic.com)"
+                      }
+                    </p>
+                    <div className="flex gap-2">
+                      <Input 
+                        id="ai_api_key"
+                        type="password"
+                        placeholder={settings.ai_provider === 'openai' ? "sk-..." : "sk-ant-api03-..."}
+                        value={settings?.ai_api_key || ""}
+                        onChange={(e) => 
+                          setSettings(prev => prev ? { ...prev, ai_api_key: e.target.value } : null)
+                        }
+                        className="font-mono flex-1"
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={testAIConnection}
+                        disabled={testingAI || !settings?.ai_api_key}
+                        className="min-w-[120px]"
+                      >
+                        {testingAI ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Tekshirilmoqda...
+                          </>
+                        ) : (
+                          "Tekshirish"
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      💡 API kalitni kiritib "Tekshirish" tugmasini bosing. Muvaffaqiyatli bo'lsa, "Saqlash" tugmasini bosing.
+                    </p>
+                  </div>
+
+                  {/* AI Model Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">AI Model</Label>
+                    <p className="text-sm text-slate-500">
+                      Ishlatilayotgan aniq AI modelini tanlang
+                    </p>
                     <Select 
                       value={settings?.ai_model || 'gpt-4o-mini'}
                       onValueChange={(value) => 
                         setSettings(prev => prev ? { ...prev, ai_model: value } : null)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Modelni tanlang" />
                       </SelectTrigger>
                       <SelectContent>
                         {settings.ai_provider === 'openai' ? (
                           <>
-                            <SelectItem value="gpt-4o-mini">GPT-4o Mini (Tez, arzon)</SelectItem>
-                            <SelectItem value="gpt-4o">GPT-4o (Kuchli)</SelectItem>
-                            <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                            <SelectItem value="gpt-4o-mini">
+                              <div className="flex flex-col">
+                                <span className="font-medium">GPT-4o Mini</span>
+                                <span className="text-xs text-slate-500">Tez va arzon - kundalik ishlar uchun ideal</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="gpt-4o">
+                              <div className="flex flex-col">
+                                <span className="font-medium">GPT-4o</span>
+                                <span className="text-xs text-slate-500">Eng kuchli - murakkab tahlillar uchun</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="gpt-4-turbo">
+                              <div className="flex flex-col">
+                                <span className="font-medium">GPT-4 Turbo</span>
+                                <span className="text-xs text-slate-500">Tez va kuchli</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="gpt-3.5-turbo">
+                              <div className="flex flex-col">
+                                <span className="font-medium">GPT-3.5 Turbo</span>
+                                <span className="text-xs text-slate-500">Eng arzon - oddiy vazifalar uchun</span>
+                              </div>
+                            </SelectItem>
                           </>
                         ) : (
                           <>
-                            <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku (Tez, arzon)</SelectItem>
-                            <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
-                            <SelectItem value="claude-3-opus-20240229">Claude 3 Opus (Kuchli)</SelectItem>
+                            <SelectItem value="claude-3-haiku-20240307">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Claude 3 Haiku</span>
+                                <span className="text-xs text-slate-500">Tez va arzon - kundalik ishlar uchun</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="claude-3-sonnet-20240229">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Claude 3 Sonnet</span>
+                                <span className="text-xs text-slate-500">Muvozanat - tezlik va sifat</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="claude-3-opus-20240229">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Claude 3 Opus</span>
+                                <span className="text-xs text-slate-500">Eng kuchli - murakkab tahlillar uchun</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="claude-3-5-sonnet-20241022">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Claude 3.5 Sonnet</span>
+                                <span className="text-xs text-slate-500">Yangi avlod - yuqori sifat</span>
+                              </div>
+                            </SelectItem>
                           </>
                         )}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Info box */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h5 className="font-medium text-blue-900 mb-2">💡 AI tahlil qanday ishlaydi?</h5>
+                    <ul className="text-sm text-blue-700 space-y-1">
+                      <li>• Foydalanuvchi murojaatini avtomatik kategoriyalaydi</li>
+                      <li>• Muhimlik darajasini aniqlaydi</li>
+                      <li>• Tegishli tashkilotni taklif qiladi</li>
+                      <li>• Spam va noto'g'ri murojaatlarni filtrlaydi</li>
+                    </ul>
                   </div>
                 </>
               )}
@@ -675,34 +938,59 @@ export default function TelegramBotPage() {
         <TabsContent value="messages">
           <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>Xabar shablonlari</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-green-500" />
+                Xabar shablonlari
+              </CardTitle>
               <CardDescription className="text-slate-600">
-                Bot xabarlarini sozlash
+                Foydalanuvchilarga yuboriladigan xabarlarni sozlash
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="welcome_uz">Xush kelibsiz xabari (O'zbekcha)</Label>
+              {/* O'zbekcha */}
+              <div className="space-y-3">
+                <Label htmlFor="welcome_uz" className="text-base font-medium flex items-center gap-2">
+                  🇺🇿 Xush kelibsiz xabari (O'zbekcha)
+                </Label>
                 <Textarea 
                   id="welcome_uz"
-                  rows={4}
+                  rows={5}
+                  placeholder="Assalomu alaykum! Hatirchi tuman hokimligining rasmiy botiga xush kelibsiz..."
                   value={settings?.welcome_message_uz || ""}
                   onChange={(e) => 
                     setSettings(prev => prev ? { ...prev, welcome_message_uz: e.target.value } : null)
                   }
+                  className="resize-none"
                 />
+                <p className="text-xs text-slate-500">
+                  Foydalanuvchi birinchi marta /start bosganida ko'rsatiladi
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="welcome_ru">Xush kelibsiz xabari (Ruscha)</Label>
+              {/* Ruscha */}
+              <div className="space-y-3">
+                <Label htmlFor="welcome_ru" className="text-base font-medium flex items-center gap-2">
+                  🇷🇺 Xush kelibsiz xabari (Ruscha)
+                </Label>
                 <Textarea 
                   id="welcome_ru"
-                  rows={4}
+                  rows={5}
+                  placeholder="Добро пожаловать! Это официальный бот хокимията Хатырчинского района..."
                   value={settings?.welcome_message_ru || ""}
                   onChange={(e) => 
                     setSettings(prev => prev ? { ...prev, welcome_message_ru: e.target.value } : null)
                   }
+                  className="resize-none"
                 />
+              </div>
+
+              {/* Info */}
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <h5 className="font-medium text-amber-900 mb-2">💡 Qo'llaniladigan o'zgaruvchilar</h5>
+                <div className="text-sm text-amber-700 space-y-1">
+                  <p><code className="bg-amber-100 px-1 rounded">{'{name}'}</code> - Foydalanuvchi ismi</p>
+                  <p><code className="bg-amber-100 px-1 rounded">{'{bot_name}'}</code> - Bot nomi</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -769,6 +1057,6 @@ export default function TelegramBotPage() {
         </Card>
       </motion.div>
       </div>
-    </div>
+    </AdminOnly>
   );
 }
