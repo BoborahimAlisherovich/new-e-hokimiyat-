@@ -16,8 +16,9 @@ type TaskFiltersProps = {
   onStatusChange: (value: string) => void
   onPriorityChange: (value: string) => void
   onCategoryChange: (value: string) => void
-  onCreate: () => void
+  onCreate?: () => void
   onClear: () => void
+  showCreateButton?: boolean
 }
 
 export function TaskFilters({
@@ -31,6 +32,7 @@ export function TaskFilters({
   onCategoryChange,
   onCreate,
   onClear,
+  showCreateButton = true,
 }: TaskFiltersProps) {
   const t = useTranslation()
   return (
@@ -44,10 +46,12 @@ export function TaskFilters({
             className="w-full"
           />
         </div>
-        <Button onClick={onCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          {t.tasks.newTask}
-        </Button>
+        {showCreateButton && onCreate && (
+          <Button onClick={onCreate} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {t.tasks.newTask}
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

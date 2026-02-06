@@ -21,23 +21,25 @@ export function SectorOverview() {
     getTasks()
       .then((tasks) => {
         if (!mounted) return
-        const sectors = Array.from(new Set(tasks.map((t: any) => t.sector))).filter((s) => s !== undefined && s !== null)
-        const stats = sectors
-          .map((sector) => {
-            const sTasks = tasks.filter((t: any) => t.sector === sector)
-            const completed = sTasks.filter((t: any) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
-            const late = sTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
+        // category field dan foydalanish (sector o'rniga)
+        const categories = Array.from(new Set(tasks.map((t: any) => t.category))).filter((c) => c !== undefined && c !== null && c !== '')
+        const stats = categories
+          .map((category) => {
+            const cTasks = tasks.filter((t: any) => t.category === category)
+            const completed = cTasks.filter((t: any) => t.status === "BAJARILDI" || t.status === "NAZORATDAN_YECHILDI").length
+            const late = cTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
             return {
-              sector,
-              label: sector || t.common.unknown,
-              total: sTasks.length,
+              sector: category,
+              label: getCategoryLabel(category as string, t),
+              total: cTasks.length,
               completed,
               late,
-              inProgress: sTasks.length - completed - late,
-              completionRate: sTasks.length > 0 ? Math.round((completed / sTasks.length) * 100) : 0,
+              inProgress: cTasks.length - completed - late,
+              completionRate: cTasks.length > 0 ? Math.round((completed / cTasks.length) * 100) : 0,
             }
           })
           .filter((s) => s.total > 0)
+          .sort((a, b) => b.total - a.total)
         setSectorStats(stats.slice(0, 6))
       })
       .catch(() => {})
@@ -45,6 +47,23 @@ export function SectorOverview() {
       mounted = false
     }
   }, [])
+
+  // Kategoriya labellarini olish
+  function getCategoryLabel(category: string, t: any): string {
+    const labels: Record<string, string> = {
+      'IJTIMOIY': 'Ijtimoiy',
+      'IQTISODIY': 'Iqtisodiy',
+      'INFRASTRUKTURA': 'Infrastruktura',
+      'MADANIYAT': 'Madaniyat',
+      'SPORT': 'Sport',
+      'TALIM': "Ta'lim",
+      'HUQUQIY': 'Huquqiy',
+      'SOG_LIQNI_SAQLASH': "Sog'liqni saqlash",
+      'QISHLOQ_XOJALIGI': "Qishloq xo'jaligi",
+      'BOSHQA': 'Boshqa',
+    }
+    return labels[category] || category || t.common.unknown
+  }
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 80) return "from-emerald-500 to-emerald-600"
@@ -126,14 +145,20 @@ export function SectorOverview() {
               
               {/* Progress Bar */}
               <div className="relative z-10 mb-4">
-                <Progress 
-                  value={sector.completionRate} 
-                  className={cn(
-                    "h-3 transition-all duration-1000 ease-out",
-                    sector.completionRate >= 80 ? "bg-emerald-600" : 
-                    sector.completionRate >= 50 ? "bg-amber-600" : "bg-red-600"
-                  )}
-                />
+                <div className={cn(
+                  "relative h-3 w-full overflow-hidden rounded-full transition-all duration-1000 ease-out",
+                  sector.completionRate >= 80 ? "bg-emerald-100" : 
+                  sector.completionRate >= 50 ? "bg-amber-100" : "bg-red-100"
+                )}>
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all duration-1000 ease-out",
+                      sector.completionRate >= 80 ? "bg-emerald-500" : 
+                      sector.completionRate >= 50 ? "bg-amber-500" : "bg-red-500"
+                    )}
+                    style={{ width: `${sector.completionRate}%` }}
+                  />
+                </div>
               </div>
               
               {/* Stats */}

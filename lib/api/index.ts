@@ -107,6 +107,7 @@ export {
   archiveUser,
   getUserStatistics,
   updateCurrentUserProfile,
+  getChatUsers,
 } from './users.api'
 
 export type {
@@ -173,6 +174,7 @@ export {
   rejectTask,
   cancelTask,
   requestDeadlineExtension,
+  markTaskComplete,
   
   // Executions
   getTaskExecutions,

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Trash2, Save, X, Building2, BarChart3, TrendingUp } from "lucide-react"
-import { getSectors, createSector, updateSector, deleteSector, getOrganizations, getTasks } from "@/lib/api"
+import { getSectors, createSector, updateSector, deleteSector, getOrganizations, getTasks, getTaskStats } from "@/lib/api"
 import type { Sector } from "@/lib/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -19,6 +19,15 @@ interface AnalyticsTabsProps {
   organizations?: any[]
 }
 
+interface TaskStatsData {
+  total: number
+  pending: number
+  in_progress: number
+  completed: number
+  overdue: number
+  active_sectors: number
+}
+
 export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsProps) {
   const [activeTab, setActiveTab] = useState("status")
   const [sectors, setSectors] = useState<Sector[]>([])
@@ -26,6 +35,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
   const [editingSector, setEditingSector] = useState<Sector | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [formData, setFormData] = useState({ name: "", description: "" })
+  const [taskStats, setTaskStats] = useState<TaskStatsData | null>(null)
 
   useEffect(() => {
     console.log('📊 AnalyticsTabs Props:', {
@@ -38,6 +48,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
   useEffect(() => {
     loadSectors()
+    loadTaskStats()
   }, [])
 
   const loadSectors = async () => {
@@ -50,6 +61,16 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
       setSectors(data)
     } catch (error) {
       console.error("Sohalarni yuklashda xato:", error)
+    }
+  }
+
+  const loadTaskStats = async () => {
+    try {
+      const stats = await getTaskStats()
+      console.log('📊 Task stats loaded from API:', stats)
+      setTaskStats(stats)
+    } catch (error) {
+      console.error("Task statistikasini yuklashda xato:", error)
     }
   }
 
@@ -85,7 +106,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
     }
   }
 
-  const handleDeleteSector = async (id: number) => {
+  const handleDeleteSector = async (id: string) => {
     if (!confirm("Sohani o'chirishni tasdiqlaysizmi?")) return
     
     setLoading(true)
@@ -111,8 +132,14 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
     setFormData({ name: "", description: "" })
   }
 
-  // Calculate statistics by status
-  const statusStats = {
+  // Calculate statistics by status - API dan olingan ma'lumotlar ustun
+  const statusStats = taskStats ? {
+    completed: taskStats.completed,
+    in_progress: taskStats.in_progress,
+    new: taskStats.pending,
+    overdue: taskStats.overdue,
+  } : {
+    // Fallback: props'dan hisoblash
     completed: tasks.filter(t => t.status === 'BAJARILDI' || t.status === 'COMPLETED').length,
     in_progress: tasks.filter(t => t.status === 'IJRODA' || t.status === 'IN_PROGRESS').length,
     new: tasks.filter(t => t.status === 'YANGI' || t.status === 'NEW' || t.status === 'PENDING').length,

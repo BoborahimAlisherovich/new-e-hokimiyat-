@@ -139,13 +139,30 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request: Request) -> Response:
         """Topshiriqlar statistikasi (filtrlar bilan)."""
+        user = request.user
         queryset = self.filter_queryset(self.get_queryset())
 
         total = queryset.count()
-        pending = queryset.filter(status='YANGI').count()
-        in_progress = queryset.filter(status='IJRODA').count()
-        completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-        overdue = queryset.filter(status='MUDDATI_KECH').count()
+        
+        # Tashkilot xodimlari uchun TaskOrganization statusini hisoblash
+        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and user.organization:
+            from tasks.models import TaskOrganization
+            task_ids = queryset.values_list('id', flat=True)
+            task_orgs = TaskOrganization.objects.filter(
+                task_id__in=task_ids,
+                organization=user.organization
+            )
+            pending = task_orgs.filter(status='YANGI').count()
+            in_progress = task_orgs.filter(status='IJRODA').count()
+            completed = task_orgs.filter(status='BAJARILDI').count()
+            overdue = task_orgs.filter(status='MUDDATI_KECH').count()
+        else:
+            # Admin rollar uchun umumiy Task statusini hisoblash
+            pending = queryset.filter(status='YANGI').count()
+            in_progress = queryset.filter(status='IJRODA').count()
+            completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
+            overdue = queryset.filter(status='MUDDATI_KECH').count()
+        
         active_sectors = queryset.exclude(category='').values('category').distinct().count()
 
         return Response({
@@ -178,7 +195,49 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             return [IsAuthenticated(), CanCreateTasks()]
+        # Topshiriqni tahrirlash faqat yaratuvchilar uchun
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), CanCreateTasks()]
         return [IsAuthenticated()]
+    
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni yangilash.
+        
+        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni qisman yangilash.
+        
+        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni o'chirish.
+        
+        Faqat HOKIM va ADMIN o'chirishi mumkin.
+        """
+        user = request.user
+        if user.role not in ['HOKIM', 'ADMIN']:
+            return Response(
+                {'detail': "Topshiriqni o'chirish huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
     
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Yangi topshiriq yaratish.
@@ -510,6 +569,106 @@ class TaskViewSet(viewsets.ModelViewSet):
                 user=user,
                 title='Topshiriq qayta yuborildi',
                 message=f"Topshiriq qayta ijroga yuborildi: {task.title}",
+                notification_type='TASK',
+                related_task=task,
+                link=f'/dashboard/tasks/{task.id}'
+            )
+        
+        return Response(TaskDetailSerializer(task).data)
+    
+    @action(detail=True, methods=['post'], url_path='mark-complete')
+    def mark_complete(self, request, pk=None):
+        """
+        Tashkilot rahbari yoki mas'uli topshiriqni bajarildi deb belgilaydi.
+        
+        POST /api/tasks/{id}/mark-complete/
+        """
+        task = self.get_object()
+        user = request.user
+        comment = request.data.get('comment', '')
+        
+        # Faqat tashkilot rahbari yoki mas'uli
+        if user.role not in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            return Response(
+                {'detail': "Faqat tashkilot rahbari yoki mas'uli topshiriqni bajarildi deb belgilashi mumkin"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Foydalanuvchi tashkilotini topish
+        user_org = user.organization
+        if not user_org:
+            return Response(
+                {'detail': "Foydalanuvchi tashkilotga biriktirilmagan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Topshiriqda tashkilotni topish
+        task_org = task.assigned_organizations.filter(organization=user_org).first()
+        if not task_org:
+            return Response(
+                {'detail': "Bu topshiriq sizning tashkilotingizga tayinlanmagan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if task_org.status == 'BAJARILDI':
+            return Response(
+                {'detail': "Topshiriq allaqachon bajarildi deb belgilangan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Statusni yangilash
+        old_status = task_org.status
+        task_org.status = 'BAJARILDI'
+        task_org.completed_at = timezone.now()
+        task_org.save()
+        
+        # Execution log
+        TaskExecution.objects.create(
+            task=task,
+            task_organization=task_org,
+            executed_by=user,
+            action_type='BAJARILDI',
+            comment=comment or f"{user_org.name} topshiriqni bajardi",
+            old_status=old_status,
+            new_status='BAJARILDI'
+        )
+        
+        # Audit log
+        AuditLog.objects.create(
+            user=user,
+            action='TASK_COMPLETED',
+            entity_type='TASK_ORGANIZATION',
+            entity_id=str(task_org.id),
+            description=f'Tashkilot topshiriqni bajardi: {user_org.name}',
+            extra_data={
+                'task_id': str(task.id),
+                'organization': user_org.name,
+                'old_status': old_status,
+                'new_status': task_org.status
+            }
+        )
+        
+        # Barcha tashkilotlar bajarilganligini tekshirish
+        all_completed = all(
+            to.status == 'BAJARILDI' 
+            for to in task.assigned_organizations.all()
+        )
+        
+        if all_completed:
+            task.status = 'BAJARILDI'
+            task.save()
+        
+        # HOKIM va HOKIMLIK_MASUL larga bildirishnoma yuborish
+        from users.models import User as UserModel
+        hokimlik_users = UserModel.objects.filter(
+            role__in=['HOKIM', 'HOKIMLIK_MASUL'],
+            status='FAOL'
+        )
+        for huser in hokimlik_users:
+            Notification.objects.create(
+                user=huser,
+                title='Topshiriq bajarildi',
+                message=f"{user_org.name} topshiriqni bajardi: {task.title}",
                 notification_type='TASK',
                 related_task=task,
                 link=f'/dashboard/tasks/{task.id}'

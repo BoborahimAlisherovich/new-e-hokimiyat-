@@ -306,9 +306,8 @@ export function VillageAnalytics() {
         if (!mounted) return
         const rawItems = Array.isArray(payload?.data) ? (payload.data as MapPathItem[]) : []
         setRawData(rawItems)
-        if (rawItems.length > 0) {
-          setSelectedId(rawItems[0].id || rawItems[0].name)
-        }
+        // Birinchi kirganda hech qaysi qishloq tanlanmagan bo'lsin
+        // setSelectedId(rawItems[0].id || rawItems[0].name)
       })
       .catch(() => {})
     return () => {
@@ -625,9 +624,9 @@ export function VillageAnalytics() {
               )}
             </AnimatePresence>
 
-            {/* Village List */}
+            {/* Village List - 2 ustunli */}
             <ScrollArea className="h-[380px] pr-2">
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
                 {filteredVillages.length > 0 ? (
                   filteredVillages.map((village) => (
                     <VillageListItem
@@ -639,7 +638,7 @@ export function VillageAnalytics() {
                     />
                   ))
                 ) : (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="col-span-2 text-center py-8 text-slate-500">
                     <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>{t.villageNotFound}</p>
                   </div>

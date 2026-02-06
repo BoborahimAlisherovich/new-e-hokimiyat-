@@ -197,3 +197,16 @@ export async function updateCurrentUserProfile(
     body: JSON.stringify(data),
   })
 }
+
+/**
+ * Chat uchun foydalanuvchilar ro'yxatini oladi
+ * 
+ * Rolga qarab filtrlangan foydalanuvchilar:
+ * - HOKIM, HOKIMLIK_MASUL, ADMIN: Barcha foydalanuvchilar
+ * - TASHKILOT_RAHBARI/MASUL: O'z tashkiloti + Hokimlik xodimlari
+ * 
+ * @returns Chat uchun foydalanuvchilar ro'yxati
+ */
+export async function getChatUsers(): Promise<User[]> {
+  return fetchApi<User[]>('/users/chat_users/')
+}

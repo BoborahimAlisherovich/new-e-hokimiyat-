@@ -25,15 +25,57 @@ export function ActivityChart() {
     let mounted = true
     setIsLoading(true)
     getAnalyticsTrends()
-      .then((trends) => {
+      .then((response: any) => {
         if (!mounted) return
-        const mapped = trends.map((t: any) => ({
-          period: t.period,
-          yaratildi: t.created ?? 0,
-          bajarildi: t.completed ?? 0,
-          jami: (t.created ?? 0) + (t.completed ?? 0),
-        }))
-        setData(mapped)
+        // API { created_trend: [{date, count}], completed_trend: [{date, count}], status_distribution: [...] } formatida qaytaradi
+        const createdTrend = response?.created_trend || []
+        const completedTrend = response?.completed_trend || []
+        const statusDist = response?.status_distribution || []
+        
+        // Barcha sanalarni yig'ish
+        const dateMap = new Map<string, { yaratildi: number; bajarildi: number; jami: number }>()
+        
+        // Created trend ni qo'shish
+        createdTrend.forEach((item: any) => {
+          const dateKey = item.date || ''
+          if (!dateKey) return
+          const existing = dateMap.get(dateKey) || { yaratildi: 0, bajarildi: 0, jami: 0 }
+          existing.yaratildi = item.count ?? 0
+          existing.jami += item.count ?? 0
+          dateMap.set(dateKey, existing)
+        })
+        
+        // Completed trend ni qo'shish
+        completedTrend.forEach((item: any) => {
+          const dateKey = item.date || ''
+          if (!dateKey) return
+          const existing = dateMap.get(dateKey) || { yaratildi: 0, bajarildi: 0, jami: 0 }
+          existing.bajarildi = item.count ?? 0
+          dateMap.set(dateKey, existing)
+        })
+        
+        // Map dan array yaratish va saralash
+        const mapped = Array.from(dateMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, counts]) => ({
+            period: new Date(date).toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' }),
+            yaratildi: counts.yaratildi,
+            bajarildi: counts.bajarildi,
+            jami: counts.yaratildi, // Jami = yaratilgan
+          }))
+        
+        // Agar kunlik ma'lumot kam bo'lsa, status distribution dan umumiy ko'rsatamiz
+        if (mapped.length === 0 && statusDist.length > 0) {
+          const statusMapped = statusDist.map((s: any) => ({
+            period: s.status,
+            yaratildi: s.count ?? 0,
+            bajarildi: (s.status === 'BAJARILDI' || s.status === 'NAZORATDAN_YECHILDI') ? s.count : 0,
+            jami: s.count ?? 0,
+          }))
+          setData(statusMapped)
+        } else {
+          setData(mapped)
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -173,17 +215,17 @@ export function ActivityChart() {
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="text-center p-3 rounded-lg bg-green-50 backdrop-blur-sm border border-green-200 hover:bg-green-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : (last?.bajarildi ?? 0)}</div>
+            <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
             <div className="text-xs text-slate-600">{t.dashboard.monthlyCompleted}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-blue-50 backdrop-blur-sm border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : (last?.yaratildi ?? 0)}</div>
+            <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
             <div className="text-xs text-slate-600">{t.dashboard.monthlyCreated}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-amber-50 backdrop-blur-sm border border-amber-200 hover:bg-amber-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : (last?.jami ?? 0)}</div>
+            <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
             <div className="text-xs text-slate-600">{t.dashboard.monthlyTotal}</div>
           </div>
         </div>

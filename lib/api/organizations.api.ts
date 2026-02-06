@@ -46,7 +46,12 @@ export interface OrganizationTreeNode extends Organization {
  * const organizations = await getOrganizations()
  */
 export async function getOrganizations(): Promise<Organization[]> {
-  return fetchApi<Organization[]>('/organizations/')
+  const response = await fetchApi<{ count: number; results: Organization[] } | Organization[]>('/organizations/')
+  // Paginated yoki oddiy array bo'lishi mumkin
+  if (Array.isArray(response)) {
+    return response
+  }
+  return response.results || []
 }
 
 /**

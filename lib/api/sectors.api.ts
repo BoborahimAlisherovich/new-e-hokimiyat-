@@ -17,7 +17,7 @@ import { fetchApi } from './client'
 
 /** Soha interface */
 export interface Sector {
-  id: number
+  id: string  // UUID format
   name: string
   description: string
   is_active: boolean
@@ -51,7 +51,12 @@ export interface SectorUpdateInput {
  * const sectors = await getSectors()
  */
 export async function getSectors(): Promise<Sector[]> {
-  return fetchApi<Sector[]>('/organizations/sectors/')
+  const response = await fetchApi<{ count: number; results: Sector[] } | Sector[]>('/organizations/sectors/')
+  // Paginated yoki oddiy array bo'lishi mumkin
+  if (Array.isArray(response)) {
+    return response
+  }
+  return response.results || []
 }
 
 /**

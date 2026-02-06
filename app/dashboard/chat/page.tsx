@@ -28,7 +28,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react"
-import { getChatConversations, getChatMessages, getCurrentUser, getUsers, sendChatMessage } from "@/lib/api"
+import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -272,7 +272,7 @@ export default function ChatPage() {
       setLoading(true)
       const [meResult, usersResult, convsResult] = await Promise.allSettled([
         getCurrentUser(),
-        getUsers(),
+        getChatUsers(),
         getChatConversations(),
       ])
 
@@ -527,12 +527,55 @@ export default function ChatPage() {
     return new Date(dateStr).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })
   }
 
+  // Parse location from message content
+  const parseLocation = (content: string): { lat: number; lng: number } | null => {
+    const match = content.match(/maps\.google\.com\/maps\?q=([\d.-]+),([\d.-]+)/)
+    if (match) {
+      return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) }
+    }
+    return null
+  }
+
+  // Render message content with location preview or clean text
+  const renderMessageContent = (content: string, isCurrentUser: boolean) => {
+    const location = parseLocation(content)
+    if (location) {
+      const mapUrl = `https://maps.google.com/maps?q=${location.lat},${location.lng}`
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${location.lat},${location.lng}&zoom=15&size=300x150&maptype=roadmap&markers=color:red%7C${location.lat},${location.lng}&key=`
+      return (
+        <a href={mapUrl} target="_blank" rel="noreferrer" className="block">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-4 w-4" />
+            <span className="text-sm font-medium">📍 Joylashuv</span>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-border/40">
+            <iframe
+              width="250"
+              height="120"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng - 0.005}%2C${location.lat - 0.003}%2C${location.lng + 0.005}%2C${location.lat + 0.003}&layer=mapnik&marker=${location.lat}%2C${location.lng}`}
+            />
+          </div>
+          <p className={cn(
+            "text-xs mt-1",
+            isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
+          )}>
+            Xaritada ochish uchun bosing
+          </p>
+        </a>
+      )
+    }
+    return <p className="text-sm leading-relaxed">{content}</p>
+  }
+
   const getLastMessage = (userId: string): { text: string; time: string } | null => {
     const conv = conversations.get(userId)
     if (!conv || conv.messages.length === 0) return null
     const lastMsg = conv.messages[conv.messages.length - 1]
     return {
-      text: lastMsg.attachment ? "📎 Файл" : lastMsg.content.substring(0, 30),
+      text: lastMsg.attachment ? `📎 ${lastMsg.attachment.name?.split('/').pop() || 'Fayl'}` : (parseLocation(lastMsg.content) ? "📍 Joylashuv" : lastMsg.content.substring(0, 30)),
       time: formatTime(lastMsg.timestamp),
     }
   }
@@ -787,7 +830,7 @@ export default function ChatPage() {
                                 isCurrentUser ? "bg-primary text-primary-foreground border-primary/20" : "bg-white/80 border-border/60",
                               )}
                             >
-                              {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
+                              {msg.content && renderMessageContent(msg.content, isCurrentUser)}
                               {msg.attachment && (
                                 <div className="mt-2 space-y-2">
                                   {msg.attachment.type === 'IMAGE' && (
@@ -810,12 +853,39 @@ export default function ChatPage() {
                                       target="_blank"
                                       rel="noreferrer"
                                       className={cn(
-                                        "flex items-center gap-2 text-xs underline",
-                                        isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground",
+                                        "flex items-center gap-3 p-3 rounded-lg transition-all hover:scale-[1.02]",
+                                        isCurrentUser 
+                                          ? "bg-primary-foreground/10 hover:bg-primary-foreground/20" 
+                                          : "bg-muted/60 hover:bg-muted",
                                       )}
                                     >
-                                      <FileText className="h-3 w-3" />
-                                      {msg.attachment.name} {msg.attachment.size && `(${msg.attachment.size})`}
+                                      <div className={cn(
+                                        "p-2 rounded-lg",
+                                        isCurrentUser ? "bg-primary-foreground/20" : "bg-primary/10"
+                                      )}>
+                                        <FileText className={cn(
+                                          "h-5 w-5",
+                                          isCurrentUser ? "text-primary-foreground" : "text-primary"
+                                        )} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn(
+                                          "text-sm font-medium truncate",
+                                          isCurrentUser ? "text-primary-foreground" : "text-foreground"
+                                        )}>
+                                          {msg.attachment.name}
+                                        </p>
+                                        <p className={cn(
+                                          "text-xs",
+                                          isCurrentUser ? "text-primary-foreground/60" : "text-muted-foreground"
+                                        )}>
+                                          {msg.attachment.size || "Fayl"}
+                                        </p>
+                                      </div>
+                                      <Download className={cn(
+                                        "h-4 w-4 shrink-0",
+                                        isCurrentUser ? "text-primary-foreground/60" : "text-muted-foreground"
+                                      )} />
                                     </a>
                                   )}
                                 </div>
@@ -943,18 +1013,23 @@ export default function ChatPage() {
                     
                     <div className="flex gap-2 items-end">
                       {/* File attach */}
-                      <label className="cursor-pointer">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                          onChange={handleFileSelect}
-                        />
-                        <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Fayl biriktirish">
-                          <Paperclip className="h-4 w-4" />
-                        </Button>
-                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={handleFileSelect}
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="shrink-0" 
+                        type="button" 
+                        title="Fayl biriktirish"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
                       
                       {/* Audio record */}
                       <Button 

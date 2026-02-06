@@ -243,6 +243,23 @@ export async function requestDeadlineExtension(
   })
 }
 
+/**
+ * Topshiriqni bajarildi deb belgilaydi (tashkilot rahbari/mas'uli uchun)
+ * 
+ * @param id - Topshiriq ID
+ * @param comment - Izoh (ixtiyoriy)
+ * @returns Yangilangan topshiriq
+ */
+export async function markTaskComplete(
+  id: number | string, 
+  comment?: string
+): Promise<Task> {
+  return fetchApi<Task>(`/tasks/${id}/mark-complete/`, {
+    method: 'POST',
+    body: JSON.stringify({ comment: comment || '' }),
+  })
+}
+
 // ============================================================================
 // Task Executions
 // ============================================================================

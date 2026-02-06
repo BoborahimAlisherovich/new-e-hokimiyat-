@@ -25,7 +25,11 @@ from users.models import User
 class IsHokimOrHokimlikMasul:
     """Permission for viewing analytics."""
     def has_permission(self, request, view):
-        return request.user.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']
+        # Barcha autentifikatsiya qilingan foydalanuvchilar dashboard analytics ko'ra oladi
+        if not request.user or not request.user.is_authenticated:
+            return False
+        # Lekin to'liq ma'lumot faqat yuqori rollarga
+        return request.user.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN', 'SUPERADMIN', 'SECTOR_LEADER', 'ORGANIZATION_HEAD', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
 
 
 class DashboardAnalyticsView(views.APIView):
@@ -205,18 +209,57 @@ class TaskTrendsView(views.APIView):
     def get(self, request):
         days = int(request.query_params.get('days', 30))
         start_date = timezone.now().date() - timedelta(days=days)
+        user = request.user
         
-        # Tasks created per day
-        created_trend = Task.objects.filter(
-            created_at__date__gte=start_date
-        ).annotate(
-            date=TruncDate('created_at')
-        ).values('date').annotate(
-            count=Count('id')
-        ).order_by('date')
-        
-        # Tasks by status over time
-        status_distribution = Task.objects.values('status').annotate(count=Count('id'))
+        # Tashkilot xodimlari uchun TaskOrganization dan hisoblash
+        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and user.organization:
+            from tasks.models import TaskOrganization
+            task_orgs = TaskOrganization.objects.filter(organization=user.organization)
+            
+            # Tasks created per day (tayinlangan sana bo'yicha)
+            created_trend = task_orgs.filter(
+                assigned_at__date__gte=start_date
+            ).annotate(
+                date=TruncDate('assigned_at')
+            ).values('date').annotate(
+                count=Count('id')
+            ).order_by('date')
+            
+            # Tasks completed per day
+            completed_trend = task_orgs.filter(
+                status='BAJARILDI',
+                completed_at__date__gte=start_date
+            ).annotate(
+                date=TruncDate('completed_at')
+            ).values('date').annotate(
+                count=Count('id')
+            ).order_by('date')
+            
+            # Status distribution
+            status_distribution = task_orgs.values('status').annotate(count=Count('id'))
+        else:
+            # Admin rollar uchun Task dan hisoblash
+            # Tasks created per day
+            created_trend = Task.objects.filter(
+                created_at__date__gte=start_date
+            ).annotate(
+                date=TruncDate('created_at')
+            ).values('date').annotate(
+                count=Count('id')
+            ).order_by('date')
+            
+            # Tasks completed per day
+            completed_trend = Task.objects.filter(
+                status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI'],
+                updated_at__date__gte=start_date
+            ).annotate(
+                date=TruncDate('updated_at')
+            ).values('date').annotate(
+                count=Count('id')
+            ).order_by('date')
+            
+            # Tasks by status over time
+            status_distribution = Task.objects.values('status').annotate(count=Count('id'))
         
         # Average completion time
         completed_tasks = Task.objects.filter(
@@ -236,6 +279,7 @@ class TaskTrendsView(views.APIView):
         
         return Response({
             'created_trend': list(created_trend),
+            'completed_trend': list(completed_trend),
             'status_distribution': list(status_distribution),
             'average_completion_days': round(avg_completion_days, 1),
         })

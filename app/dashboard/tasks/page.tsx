@@ -10,7 +10,7 @@ import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
 import type { Task } from "@/types"
-import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask } from "@/lib/api"
+import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
@@ -37,6 +37,10 @@ export default function TasksPage() {
     inProgress: 0,
     completed: 0,
   })
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  
+  // Rolga qarab topshiriq yaratish imkoniyati
+  const canCreateTask = currentUser?.role && ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'].includes(currentUser.role)
 
   // Build filters object - memoized to avoid recreation
   const buildTaskFilters = useCallback(() => {
@@ -51,16 +55,18 @@ export default function TasksPage() {
     try {
       setLoading(true)
       const filters = buildTaskFilters()
-      const [usersData, orgsData, tasksPage, statsData] = await Promise.all([
+      const [usersData, orgsData, tasksPage, statsData, me] = await Promise.all([
         getUsers(),
         getOrganizations(),
         getTasksPage(filters, page, pageSize),
         getTaskStats(filters),
+        getCurrentUser(),
       ])
       setUsers(usersData || [])
       setOrganizations(orgsData || [])
       setTasks(tasksPage?.results || [])
       setTotalCount(tasksPage?.count ?? 0)
+      setCurrentUser(me)
       setStats({
         total: statsData.total ?? 0,
         pending: statsData.pending ?? 0,
@@ -188,6 +194,7 @@ export default function TasksPage() {
                 onPriorityChange={(value) => setPriorityFilter(value as any)}
                 onCategoryChange={setCategoryFilter}
                 onCreate={handleCreateTask}
+                showCreateButton={canCreateTask}
                 onClear={() => {
                   setSearchQuery("")
                   setStatusFilter("all")
