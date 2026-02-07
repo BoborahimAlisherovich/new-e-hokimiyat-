@@ -1,0 +1,18 @@
+[Unit]
+Description=Daphne ASGI Server for pytech.uz
+After=network.target postgresql.service redis.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/pytech/backend
+Environment="PATH=/var/www/pytech/backend/env/bin"
+EnvironmentFile=/var/www/pytech/backend/.env
+ExecStart=/var/www/pytech/backend/env/bin/daphne \
+    -u /var/www/pytech/backend/daphne.sock \
+    ehokimiyat.asgi:application
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
