@@ -50,15 +50,15 @@ export function UserTable({ users }: UserTableProps) {
       
       <Table>
         <TableHeader>
-          <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">FIO</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">PNFL</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">Lavozim</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">Tashkilot</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">Rol</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">Holat</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide">Sana</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 text-xs uppercase tracking-wide w-8"></TableHead>
+          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">FIO</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">PNFL</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Lavozim</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Tashkilot</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Rol</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Holat</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Sana</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm w-8"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,42 +69,42 @@ export function UserTable({ users }: UserTableProps) {
               onClick={() => handleRowClick(user)}
               style={{ animationDelay: `${index * 30}ms` }}
             >
-              <TableCell className="py-3.5">
+              <TableCell className="py-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9 ring-2 ring-white shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-semibold">
+                  <Avatar className="h-10 w-10 ring-2 ring-white shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm font-bold">
                       {user.first_name?.charAt(0)}
                       {user.last_name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium text-slate-800">
+                    <div className="font-semibold text-slate-900 text-base">
                       {user.last_name} {user.first_name} {user.middle_name}
                     </div>
-                    <div className="text-xs text-slate-500">{user.email || user.phone}</div>
+                    <div className="text-sm text-slate-500">{user.email || user.phone}</div>
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="py-3.5">
-                <code className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600">
+              <TableCell className="py-4">
+                <code className="rounded-lg bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 px-3 py-1.5 text-sm font-mono font-medium text-slate-700">
                   {(user as any).masked_pnfl || maskPnfl(user.pnfl || '')}
                 </code>
               </TableCell>
-              <TableCell className="py-3.5 text-slate-600 text-sm">{user.position || "—"}</TableCell>
-              <TableCell className="py-3.5 text-slate-600 text-sm max-w-[200px] truncate">{user.organization?.name || user.organization_name || "Belgilanmagan"}</TableCell>
-              <TableCell className="py-3.5">
-                <Badge variant="outline" className={cn("px-2.5 py-1 text-xs font-medium border rounded-lg", ROLE_COLORS[user.role] || "bg-gray-50 text-gray-700 border-gray-200")}>
+              <TableCell className="py-4 text-slate-700 text-sm font-medium">{user.position || "—"}</TableCell>
+              <TableCell className="py-4 text-slate-700 text-sm font-medium max-w-[200px] truncate">{user.organization?.name || user.organization_name || "Belgilanmagan"}</TableCell>
+              <TableCell className="py-4">
+                <Badge variant="outline" className={cn("px-3 py-1.5 text-xs font-semibold border rounded-lg shadow-sm", ROLE_COLORS[user.role] || "bg-gray-50 text-gray-700 border-gray-200")}>
                   {ROLE_LABELS[user.role] || user.role || "Noma'lum"}
                 </Badge>
               </TableCell>
-              <TableCell className="py-3.5">
-                <Badge variant="outline" className={cn("px-2.5 py-1 text-xs font-medium border rounded-lg", STATUS_COLORS[getUserStatusKey(user)] || "bg-gray-50 text-gray-700 border-gray-200")}>
+              <TableCell className="py-4">
+                <Badge variant="outline" className={cn("px-3 py-1.5 text-xs font-semibold border rounded-lg shadow-sm", STATUS_COLORS[getUserStatusKey(user)] || "bg-gray-50 text-gray-700 border-gray-200")}>
                   {STATUS_LABELS[getUserStatusKey(user)] || "Noma'lum"}
                 </Badge>
               </TableCell>
-              <TableCell className="py-3.5 text-slate-500 text-sm">{new Date(user.created_at).toLocaleDateString("uz-UZ")}</TableCell>
-              <TableCell className="py-3.5">
-                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
+              <TableCell className="py-4 text-slate-600 text-sm font-medium">{new Date(user.created_at).toLocaleDateString("uz-UZ")}</TableCell>
+              <TableCell className="py-4">
+                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all duration-200" />
               </TableCell>
             </TableRow>
           ))}

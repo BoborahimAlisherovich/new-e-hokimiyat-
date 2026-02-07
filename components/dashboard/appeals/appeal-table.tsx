@@ -40,37 +40,39 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-white border-b border-slate-200 hover:bg-white">
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">ID</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Murojaatchi</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Mahalla</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Turi</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Sana</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Holati</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6 w-[50px]"></TableHead>
+          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">ID</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Murojaatchi</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Mahalla</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Turi</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Sana</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Holati</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {appeals.map((appeal, index) => (
             <TableRow 
               key={appeal.id} 
-              className="cursor-pointer transition-colors border-b border-slate-100 hover:bg-slate-50/80"
+              className="cursor-pointer transition-all duration-200 border-b border-slate-100 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-600 font-medium">{appeal.id}</span>
+                <code className="rounded-lg bg-gradient-to-r from-teal-100 to-cyan-100 border border-teal-200 px-3 py-1.5 text-sm font-mono font-bold text-teal-700 shadow-sm">
+                  {appeal.id}
+                </code>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-700">{appeal.citizenName}</span>
+                <span className="text-sm font-semibold text-slate-900">{appeal.citizenName}</span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-600">{appeal.district || "—"}</span>
+                <span className="text-sm text-slate-700 font-medium">{appeal.district || "—"}</span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-600">{appeal.category || "—"}</span>
+                <span className="text-sm text-slate-700 font-medium">{appeal.category || "—"}</span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-600 font-medium">
                   {new Date(appeal.createdAt).toLocaleDateString("uz-UZ", {
                     day: "2-digit",
                     month: "2-digit", 
@@ -80,12 +82,12 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               </TableCell>
               <TableCell className="py-4 px-6">
                 <span className={cn(
-                  "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium min-w-[90px]",
-                  appeal.status === "PENDING" && "bg-blue-50 text-blue-600",
-                  appeal.status === "IN_PROGRESS" && "bg-emerald-50 text-emerald-600",
-                  appeal.status === "RESOLVED" && "bg-teal-50 text-teal-600",
-                  appeal.status === "REJECTED" && "bg-rose-50 text-rose-600",
-                  (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-red-50 text-red-600"
+                  "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold min-w-[90px] shadow-sm",
+                  appeal.status === "PENDING" && "bg-blue-100 text-blue-700",
+                  appeal.status === "IN_PROGRESS" && "bg-emerald-100 text-emerald-700",
+                  appeal.status === "RESOLVED" && "bg-teal-100 text-teal-700",
+                  appeal.status === "REJECTED" && "bg-rose-100 text-rose-700",
+                  (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-red-100 text-red-700"
                 )}>
                   {STATUS_LABELS[appeal.status] || appeal.status}
                 </span>
