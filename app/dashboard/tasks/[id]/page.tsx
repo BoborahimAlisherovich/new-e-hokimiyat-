@@ -43,6 +43,9 @@ import {
   MessageSquare,
   Layers,
   Lock,
+  Download,
+  File,
+  Image,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
@@ -734,6 +737,74 @@ export default function TaskDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Task Content - Full Description */}
+            {task.description && (
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Topshiriq mazmuni
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                      {task.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Attachments */}
+            {task.attachments && task.attachments.length > 0 && (
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Paperclip className="h-5 w-5 text-primary" />
+                    Biriktirilgan fayllar ({task.attachments.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {task.attachments.map((attachment: any) => {
+                      const fileName = attachment.file_name || attachment.fileName || attachment.file?.split('/').pop() || 'Fayl'
+                      const fileUrl = attachment.file || attachment.url
+                      const fileSize = attachment.file_size || attachment.fileSize
+                      const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+                      
+                      return (
+                        <a
+                          key={attachment.id}
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors group"
+                        >
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                            {isImage ? (
+                              <Image className="h-5 w-5 text-primary" />
+                            ) : (
+                              <File className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{fileName}</p>
+                            {fileSize && (
+                              <p className="text-xs text-muted-foreground">
+                                {(fileSize / 1024).toFixed(1)} KB
+                              </p>
+                            )}
+                          </div>
+                          <Download className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Chat / Timeline */}
             <Card className="bg-card border-border">
