@@ -29,6 +29,7 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<Task["status"] | "all">("all")
   const [priorityFilter, setPriorityFilter] = useState<Task["priority"] | "all">("all")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [organizationFilter, setOrganizationFilter] = useState<string>("all")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [stats, setStats] = useState({
@@ -48,8 +49,9 @@ export default function TasksPage() {
     if (statusFilter && statusFilter !== "all") filters.status = statusFilter
     if (priorityFilter && priorityFilter !== "all") filters.priority = priorityFilter
     if (categoryFilter && categoryFilter !== "all") filters.category = categoryFilter
+    if (organizationFilter && organizationFilter !== "all") filters.organization = organizationFilter
     return filters
-  }, [statusFilter, priorityFilter, categoryFilter])
+  }, [statusFilter, priorityFilter, categoryFilter, organizationFilter])
 
   const loadData = useCallback(async () => {
     try {
@@ -189,10 +191,13 @@ export default function TasksPage() {
                 statusFilter={statusFilter}
                 priorityFilter={priorityFilter}
                 categoryFilter={categoryFilter}
+                organizationFilter={organizationFilter}
+                organizations={organizations}
                 onSearchChange={setSearchQuery}
                 onStatusChange={(value) => setStatusFilter(value as any)}
                 onPriorityChange={(value) => setPriorityFilter(value as any)}
                 onCategoryChange={setCategoryFilter}
+                onOrganizationChange={setOrganizationFilter}
                 onCreate={handleCreateTask}
                 showCreateButton={canCreateTask}
                 onClear={() => {
@@ -200,6 +205,7 @@ export default function TasksPage() {
                   setStatusFilter("all")
                   setPriorityFilter("all")
                   setCategoryFilter("all")
+                  setOrganizationFilter("all")
                 }}
               />
             </CardContent>
@@ -212,7 +218,7 @@ export default function TasksPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
             <CardContent className="p-0">
               <TaskTable
                 tasks={filteredTasks}

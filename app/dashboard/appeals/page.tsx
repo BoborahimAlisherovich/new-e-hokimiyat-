@@ -8,6 +8,7 @@ import { AppealFilters } from "@/components/dashboard/appeals/appeal-filters"
 import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
 import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
+import { Card, CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
@@ -176,11 +177,15 @@ export default function AppealsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <AppealTable
-              appeals={filteredAppeals}
-              onView={handleViewAppeal}
-              onArchive={handleArchiveAppeal}
-            />
+            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+              <CardContent className="p-0">
+                <AppealTable
+                  appeals={filteredAppeals}
+                  onView={handleViewAppeal}
+                  onArchive={handleArchiveAppeal}
+                />
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </div>
