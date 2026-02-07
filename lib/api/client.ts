@@ -211,9 +211,27 @@ async function parseResponseBody(response: Response): Promise<ApiErrorDetails> {
 
 /**
  * Xato xabarini oladi response dan
+ * Django ValidationError field-level xatolarini ham qo'llab-quvvatlaydi
  */
 function extractErrorMessage(data: ApiErrorDetails, status: number): string {
-  return data.detail || data.message || `So'rov muvaffaqiyatsiz: ${status}`
+  // Standard Django error messages
+  if (data.detail) return data.detail
+  if (data.message) return data.message
+  
+  // Handle Django serializer field-level validation errors
+  // Format: { "field_name": ["error message"] } or { "field_name": "error message" }
+  const fieldErrors = Object.entries(data)
+    .filter(([key]) => !['detail', 'message', 'status_code'].includes(key))
+    .map(([field, errors]) => {
+      const errorMsg = Array.isArray(errors) ? errors.join(', ') : String(errors)
+      return `${field}: ${errorMsg}`
+    })
+  
+  if (fieldErrors.length > 0) {
+    return fieldErrors.join('; ')
+  }
+  
+  return `So'rov muvaffaqiyatsiz: ${status}`
 }
 
 // ============================================================================
