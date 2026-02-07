@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Header } from "@/components/layout/header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialog"
 import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
@@ -12,7 +11,6 @@ import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialo
 import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
-import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
 
@@ -144,12 +142,10 @@ export default function TasksPage() {
     return (
       <>
         <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">{t.common.loading}</p>
-            </div>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-slate-600 text-sm">{t.common.loading}</p>
           </div>
         </div>
       </>
@@ -159,111 +155,84 @@ export default function TasksPage() {
   return (
     <>
       <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-        {/* Modern geometric background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
-        </div>
-        
-        <div className="relative z-10 p-6 space-y-6">
-          <TaskStats
-            total={stats.total}
-            pending={stats.pending}
-            inProgress={stats.inProgress}
-            completed={stats.completed}
+      <div className="space-y-6">
+        {/* Stats */}
+        <TaskStats
+          total={stats.total}
+          pending={stats.pending}
+          inProgress={stats.inProgress}
+          completed={stats.completed}
+        />
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
+          <TaskFilters
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            priorityFilter={priorityFilter}
+            categoryFilter={categoryFilter}
+            organizationFilter={organizationFilter}
+            organizations={organizations}
+            onSearchChange={setSearchQuery}
+            onStatusChange={(value) => setStatusFilter(value as any)}
+            onPriorityChange={(value) => setPriorityFilter(value as any)}
+            onCategoryChange={setCategoryFilter}
+            onOrganizationChange={setOrganizationFilter}
+            onCreate={handleCreateTask}
+            showCreateButton={canCreateTask}
+            onClear={() => {
+              setSearchQuery("")
+              setStatusFilter("all")
+              setPriorityFilter("all")
+              setCategoryFilter("all")
+              setOrganizationFilter("all")
+            }}
           />
+        </div>
 
-          {/* Filters and Actions – redesigned for clarity and UX */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{t.pages.tasks.filtersTitle}</CardTitle>
-              </CardHeader>
-            <CardContent>
-              <TaskFilters
-                searchQuery={searchQuery}
-                statusFilter={statusFilter}
-                priorityFilter={priorityFilter}
-                categoryFilter={categoryFilter}
-                organizationFilter={organizationFilter}
-                organizations={organizations}
-                onSearchChange={setSearchQuery}
-                onStatusChange={(value) => setStatusFilter(value as any)}
-                onPriorityChange={(value) => setPriorityFilter(value as any)}
-                onCategoryChange={setCategoryFilter}
-                onOrganizationChange={setOrganizationFilter}
-                onCreate={handleCreateTask}
-                showCreateButton={canCreateTask}
-                onClear={() => {
-                  setSearchQuery("")
-                  setStatusFilter("all")
-                  setPriorityFilter("all")
-                  setCategoryFilter("all")
-                  setOrganizationFilter("all")
-                }}
-              />
-            </CardContent>
-          </Card>
-          </motion.div>
+        {/* Tasks Table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-lg font-semibold text-slate-800">Topshiriqlar Jadvali</h2>
+          </div>
+          <TaskTable
+            tasks={filteredTasks}
+            onView={handleViewTask}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+          />
+        </div>
 
-          {/* Tasks Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
-            <CardContent className="p-0">
-              <TaskTable
-                tasks={filteredTasks}
-                onView={handleViewTask}
-                onEdit={handleEditTask}
-                onDelete={handleDeleteTask}
-              />
-            </CardContent>
-          </Card>
-          </motion.div>
-
-          <motion.div 
-            className="flex items-center justify-between text-sm bg-white/95 backdrop-blur-xl shadow-lg p-5 rounded-2xl border border-slate-200 hover:shadow-xl transition-all duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="text-slate-700">
-              {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-900">{totalCount}</span>
-              {searchQuery && <span className="text-slate-600"> ({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t.pages.tasks.previous}
-              </Button>
-              <span className="font-semibold text-slate-900 bg-slate-100 px-4 py-1.5 rounded-lg">
-                {page} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= totalPages}
-                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t.pages.tasks.next}
-              </Button>
-            </div>
-          </motion.div>
+        {/* Pagination */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="text-sm text-slate-600">
+            {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
+            {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="text-sm"
+            >
+              {t.pages.tasks.previous}
+            </Button>
+            <span className="text-sm font-medium text-slate-700 px-3 py-1.5 bg-slate-100 rounded-md">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages}
+              className="text-sm"
+            >
+              {t.pages.tasks.next}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -272,7 +241,6 @@ export default function TasksPage() {
         onClose={() => setSelectedTask(null)}
       />
 
-      {/* Create Task Dialog */}
       <CreateTaskDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}

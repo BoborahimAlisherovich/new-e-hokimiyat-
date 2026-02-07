@@ -95,6 +95,7 @@ export default function TaskDetailPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const wsRef = useRef<WebSocket | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const normalizeChatMessage = (msg: any) => {
     if (msg?.type === 'execution') return null
@@ -391,6 +392,29 @@ export default function TaskDetailPage() {
     } finally {
       setIsLocationLoading(false)
     }
+  }
+
+  // Handle paste for images
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          setChatFile(file)
+        }
+        break
+      }
+    }
+  }
+
+  // Trigger file input click
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click()
   }
 
   const sendMessage = async () => {
@@ -963,18 +987,29 @@ export default function TaskDetailPage() {
                       )}
                       
                       <div className="flex gap-2">
-                        {/* File attach */}
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                            onChange={(e) => setChatFile(e.target.files?.[0] || null)}
-                          />
-                          <Button variant="ghost" size="icon" className="shrink-0" type="button" title="Fayl biriktirish">
-                            <Paperclip className="h-4 w-4" />
-                          </Button>
-                        </label>
+                        {/* Hidden file input */}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                          onChange={(e) => {
+                            setChatFile(e.target.files?.[0] || null)
+                            e.target.value = '' // Reset for re-selection
+                          }}
+                        />
+                        
+                        {/* File attach button */}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="shrink-0" 
+                          type="button" 
+                          title="Fayl biriktirish"
+                          onClick={handleFileButtonClick}
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
                         
                         {/* Audio record */}
                         <Button 
@@ -1002,10 +1037,11 @@ export default function TaskDetailPage() {
                         </Button>
                         
                         <Input
-                          placeholder={editingMessageId ? "Xabarni tahrirlash..." : "Xabar yozing..."}
+                          placeholder={editingMessageId ? "Xabarni tahrirlash..." : "Xabar yozing... (Ctrl+V - rasm)"}
                           value={editingMessageId ? editingContent : newMessage}
                           onChange={(e) => editingMessageId ? setEditingContent(e.target.value) : setNewMessage(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                          onPaste={handlePaste}
                           className="bg-secondary"
                         />
                         <Button onClick={sendMessage} className="shrink-0">
@@ -1013,13 +1049,24 @@ export default function TaskDetailPage() {
                         </Button>
                       </div>
                       {chatFile && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <FileText className="h-3 w-3" />
-                          <span>{chatFile.name}</span>
+                        <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                          {chatFile.type.startsWith('image/') ? (
+                            <>
+                              <Image className="h-4 w-4 text-blue-500" />
+                              <img 
+                                src={URL.createObjectURL(chatFile)} 
+                                alt="Tanlangan rasm" 
+                                className="h-12 w-12 object-cover rounded"
+                              />
+                            </>
+                          ) : (
+                            <FileText className="h-4 w-4" />
+                          )}
+                          <span className="text-xs text-muted-foreground flex-1 truncate">{chatFile.name}</span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5"
+                            className="h-6 w-6"
                             onClick={() => setChatFile(null)}
                           >
                             <Trash2 className="h-3 w-3" />

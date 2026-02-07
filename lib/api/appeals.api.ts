@@ -312,19 +312,46 @@ export interface SendMessageResponse {
  * Murojaatga javob xabari yuboradi
  * 
  * @param appealId - Murojaat ID
- * @param text - Xabar matni
+ * @param text - Xabar matni (ixtiyoriy)
+ * @param attachment - Fayl (ixtiyoriy)
  */
 export async function sendAppealMessage(
   appealId: string, 
-  text: string
+  text?: string,
+  attachment?: File
 ): Promise<SendMessageResponse> {
   const id = stripTelegramPrefix(appealId)
   
+  const hasContent = text?.trim()
+  const hasFile = attachment instanceof File
+  
+  if (!hasContent && !hasFile) {
+    throw new Error('Xabar yoki fayl bo\'lishi kerak')
+  }
+  
+  // If file is attached, use FormData
+  if (hasFile) {
+    const form = new FormData()
+    if (hasContent) {
+      form.append('text', text!.trim())
+    }
+    form.append('file', attachment)
+    
+    return fetchApi<SendMessageResponse>(
+      `/telegram-bot/appeals/${id}/send_message/`,
+      {
+        method: 'POST',
+        body: form,
+      }
+    )
+  }
+  
+  // Text only
   return fetchApi<SendMessageResponse>(
     `/telegram-bot/appeals/${id}/send_message/`,
     {
       method: 'POST',
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text: text!.trim() }),
     }
   )
 }

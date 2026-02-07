@@ -2,9 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, X } from "lucide-react"
+import { Plus, Search, X } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
 
 type Organization = {
@@ -51,38 +50,40 @@ export function TaskFilters({
     categoryFilter !== "all" || organizationFilter !== "all" || searchQuery !== ""
   
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="flex-1">
-          <Input
-            placeholder={t.tasks.searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-white"
-          />
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <div className="flex flex-col gap-4">
+        {/* Search and Actions */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder={t.tasks.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 h-10 border-slate-200 focus:border-slate-300 focus:ring-slate-200"
+            />
+          </div>
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={onClear} className="text-slate-500 hover:text-slate-700 h-10">
+                <X className="h-4 w-4 mr-1" />
+                Tozalash
+              </Button>
+            )}
+            {showCreateButton && onCreate && (
+              <Button onClick={onCreate} className="h-10">
+                <Plus className="h-4 w-4 mr-1" />
+                {t.tasks.newTask}
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {hasActiveFilters && (
-            <Button variant="outline" onClick={onClear} className="flex items-center gap-2">
-              <X className="h-4 w-4" />
-              Tozalash
-            </Button>
-          )}
-          {showCreateButton && onCreate && (
-            <Button onClick={onCreate} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              {t.tasks.newTask}
-            </Button>
-          )}
-        </div>
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">{t.tasks.statusFilterLabel}</Label>
+        {/* Filters */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className={statusFilter !== "all" ? "border-primary bg-primary/5" : "bg-white"}>
-              <SelectValue placeholder={t.tasks.allOption} />
+            <SelectTrigger className="h-10 border-slate-200">
+              <SelectValue placeholder="Holat" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -95,13 +96,10 @@ export function TaskFilters({
               <SelectItem value="NAZORATDAN_YECHILDI">{t.task.statuses.RESOLVED}</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">{t.tasks.priorityFilterLabel}</Label>
           <Select value={priorityFilter} onValueChange={onPriorityChange}>
-            <SelectTrigger className={priorityFilter !== "all" ? "border-primary bg-primary/5" : "bg-white"}>
-              <SelectValue placeholder={t.tasks.allOption} />
+            <SelectTrigger className="h-10 border-slate-200">
+              <SelectValue placeholder="Muhimlik" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -111,13 +109,10 @@ export function TaskFilters({
               <SelectItem value="PAST">{t.tasks.priorityOptionLow}</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">{t.tasks.categoryFilterLabel}</Label>
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
-            <SelectTrigger className={categoryFilter !== "all" ? "border-primary bg-primary/5" : "bg-white"}>
-              <SelectValue placeholder={t.tasks.allOption} />
+            <SelectTrigger className="h-10 border-slate-200">
+              <SelectValue placeholder="Soha" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -130,14 +125,11 @@ export function TaskFilters({
               <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        {onOrganizationChange && (
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Tashkilot</Label>
+          {onOrganizationChange && (
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className={organizationFilter !== "all" ? "border-primary bg-primary/5" : "bg-white"}>
-                <SelectValue placeholder="Barchasi" />
+              <SelectTrigger className="h-10 border-slate-200">
+                <SelectValue placeholder="Tashkilot" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barchasi</SelectItem>
@@ -148,8 +140,8 @@ export function TaskFilters({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
