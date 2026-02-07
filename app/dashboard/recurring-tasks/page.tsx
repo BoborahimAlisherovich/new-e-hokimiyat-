@@ -639,60 +639,68 @@ export default function RecurringTasksPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Sarlavha</TableHead>
-                  <TableHead>Takrorlanish</TableHead>
-                  <TableHead>Holat</TableHead>
-                  <TableHead>Keyingi ishga tushish</TableHead>
-                  <TableHead>Yaratilgan</TableHead>
-                  <TableHead className="w-16"></TableHead>
+                <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+                  <TableHead className="font-semibold text-slate-700 py-3">Sarlavha</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3">Takrorlanish</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3">Holat</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3">Keyingi ishga tushish</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3">Yaratilgan</TableHead>
+                  <TableHead className="w-16 py-3"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
+                {tasks.map((task, index) => (
+                  <TableRow 
+                    key={task.id}
+                    className={`border-b border-slate-100 hover:bg-blue-50/50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                  >
+                    <TableCell className="py-3">
                       <div>
-                        <p className="font-medium">{task.title}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-xs">
+                        <p className="font-medium text-slate-800">{task.title}</p>
+                        <p className="text-sm text-slate-500 truncate max-w-xs">
                           {task.description}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                    <TableCell className="py-3">
+                      <span className="text-sm text-slate-600">
                         {task.frequency_display}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3">
                       <Badge
-                        className={`${STATUS_COLORS[task.status]} text-white`}
+                        variant="outline"
+                        className={`text-xs font-medium border ${
+                          task.status === 'ACTIVE' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                          task.status === 'PAUSED' ? 'border-yellow-300 bg-yellow-50 text-yellow-700' :
+                          task.status === 'COMPLETED' ? 'border-blue-300 bg-blue-50 text-blue-700' :
+                          'border-red-300 bg-red-50 text-red-700'
+                        }`}
                       >
                         {task.status_display}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3">
                       {task.next_run_date ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-slate-600">
                           {formatDistanceToNow(new Date(task.next_run_date), {
                             addSuffix: true,
                             locale: uz,
                           })}
-                        </div>
+                        </span>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-slate-400">—</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {task.total_created} ta topshiriq
+                    <TableCell className="py-3">
+                      <span className="text-sm text-slate-600">
+                        {task.total_created} ta
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
