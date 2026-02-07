@@ -837,16 +837,16 @@ export default function ChatPage() {
                       const isCurrentUser = currentUser && msg.senderId === currentUser.id
 
                       return (
-                        <div key={msg.id} className={cn("flex gap-3 group", isCurrentUser && "flex-row-reverse")}>
-                          <Avatar className="h-8 w-8 shrink-0">
+                        <div key={msg.id} className={cn("flex gap-2 sm:gap-3 group", isCurrentUser && "flex-row-reverse")}>
+                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
                             <AvatarFallback className="text-xs bg-primary/10 text-primary">
                               {msg.senderName?.split(" ").map(n => n[0]).join("").substring(0, 2)}
                             </AvatarFallback>
                           </Avatar>
-                          <div className={cn("max-w-[78%] space-y-1", isCurrentUser && "items-end")}>
-                            <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
-                              <span className="text-sm font-medium text-foreground">{msg.senderName}</span>
-                              <span className="text-xs text-muted-foreground">{formatDateTime(msg.timestamp)}</span>
+                          <div className={cn("max-w-[85%] sm:max-w-[78%] lg:max-w-[65%] space-y-1", isCurrentUser && "items-end")}>
+                            <div className={cn("flex flex-wrap items-center gap-1 sm:gap-2", isCurrentUser && "flex-row-reverse")}>
+                              <span className="text-xs sm:text-sm font-medium text-foreground">{msg.senderName}</span>
+                              <span className="text-[10px] sm:text-xs text-muted-foreground">{formatDateTime(msg.timestamp)}</span>
                               {/* Read status checkmarks - only show for current user's messages */}
                               {isCurrentUser && (
                                 <span className={cn(
@@ -873,7 +873,7 @@ export default function ChatPage() {
                             </div>
                             <div
                               className={cn(
-                                "rounded-xl p-3 shadow-sm border",
+                                "rounded-xl p-2.5 sm:p-3 shadow-sm border",
                                 isCurrentUser ? "bg-primary text-primary-foreground border-primary/20" : "bg-white/80 border-border/60",
                               )}
                             >
@@ -1058,7 +1058,7 @@ export default function ChatPage() {
                       )}
                     </AnimatePresence>
                     
-                    <div className="flex gap-2 items-end">
+                    <div className="flex gap-1.5 sm:gap-2 items-end">
                       {/* File attach */}
                       <input
                         ref={fileInputRef}
@@ -1070,7 +1070,7 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="shrink-0" 
+                        className="shrink-0 h-9 w-9 sm:h-10 sm:w-10" 
                         type="button" 
                         title="Fayl biriktirish"
                         onClick={() => fileInputRef.current?.click()}
@@ -1082,7 +1082,7 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className={cn("shrink-0", isRecording && "text-red-500")}
+                        className={cn("shrink-0 h-9 w-9 sm:h-10 sm:w-10 hidden sm:inline-flex", isRecording && "text-red-500")}
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isSending}
@@ -1095,7 +1095,7 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="shrink-0" 
+                        className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 hidden sm:inline-flex" 
                         type="button"
                         onClick={sendLocation}
                         disabled={isLocationLoading || isSending}
@@ -1130,19 +1130,19 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-6 shadow-xl shadow-blue-500/25">
-                  <MessageSquare className="h-12 w-12 text-white" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-blue-500/25">
+                  <MessageSquare className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">Suhbatni tanlang</h3>
-                <p className="text-slate-600 max-w-sm">
-                  Chap tomondagi ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">Suhbatni tanlang</h3>
+                <p className="text-sm sm:text-base text-slate-600 max-w-sm px-4">
+                  Ro&apos;yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
-                <div className="mt-8 flex items-center gap-2 text-sm text-slate-500">
+                <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm text-slate-500">
                   <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs border-2 border-white">A</div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-xs border-2 border-white">B</div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-xs border-2 border-white">C</div>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">A</div>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">B</div>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">C</div>
                   </div>
                   <span>{users.length} ta foydalanuvchi mavjud</span>
                 </div>
