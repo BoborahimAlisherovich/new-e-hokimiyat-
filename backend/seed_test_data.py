@@ -812,16 +812,16 @@ def create_telegram_bot_data():
     
     # Murojaat turlari
     appeal_types_data = [
-        {"name_uz": "Ariza", "name_ru": "Заявление", "name_en": "Application", "icon": "📋", "order": 1},
-        {"name_uz": "Shikoyat", "name_ru": "Жалоба", "name_en": "Complaint", "icon": "⚠️", "order": 2},
-        {"name_uz": "Taklif", "name_ru": "Предложение", "name_en": "Suggestion", "icon": "💡", "order": 3},
-        {"name_uz": "So'rov", "name_ru": "Запрос", "name_en": "Request", "icon": "❓", "order": 4},
+        {"name_uz": "Ariza", "name_ru": "Заявление", "name_en": "Application", "code": "application", "icon": "📋", "order": 1},
+        {"name_uz": "Shikoyat", "name_ru": "Жалоба", "name_en": "Complaint", "code": "complaint", "icon": "⚠️", "order": 2},
+        {"name_uz": "Taklif", "name_ru": "Предложение", "name_en": "Suggestion", "code": "suggestion", "icon": "💡", "order": 3},
+        {"name_uz": "So'rov", "name_ru": "Запрос", "name_en": "Request", "code": "request", "icon": "❓", "order": 4},
     ]
     
     appeal_types = []
     for data in appeal_types_data:
         at, created = AppealType.objects.get_or_create(
-            name_uz=data['name_uz'],
+            code=data['code'],
             defaults=data
         )
         appeal_types.append(at)
@@ -830,22 +830,22 @@ def create_telegram_bot_data():
     
     # Kategoriyalar (sohalar)
     categories_data = [
-        {"name_uz": "Ta'lim va fan", "name_ru": "Образование и наука", "name_en": "Education", "icon": "📚", "order": 1},
-        {"name_uz": "Sog'liqni saqlash", "name_ru": "Здравоохранение", "name_en": "Healthcare", "icon": "🏥", "order": 2},
-        {"name_uz": "Kommunal xizmatlar", "name_ru": "Коммунальные услуги", "name_en": "Utilities", "icon": "🔧", "order": 3},
-        {"name_uz": "Yo'l va transport", "name_ru": "Дороги и транспорт", "name_en": "Roads & Transport", "icon": "🚗", "order": 4},
-        {"name_uz": "Ijtimoiy himoya", "name_ru": "Социальная защита", "name_en": "Social Protection", "icon": "🤝", "order": 5},
-        {"name_uz": "Qurilish va arxitektura", "name_ru": "Строительство и архитектура", "name_en": "Construction", "icon": "🏗️", "order": 6},
-        {"name_uz": "Yer masalalari", "name_ru": "Земельные вопросы", "name_en": "Land Issues", "icon": "🏞️", "order": 7},
-        {"name_uz": "Ekologiya", "name_ru": "Экология", "name_en": "Ecology", "icon": "🌿", "order": 8},
-        {"name_uz": "Xavfsizlik", "name_ru": "Безопасность", "name_en": "Security", "icon": "🛡️", "order": 9},
-        {"name_uz": "Boshqa", "name_ru": "Другое", "name_en": "Other", "icon": "📁", "order": 10},
+        {"name_uz": "Ta'lim va fan", "name_ru": "Образование и наука", "name_en": "Education", "code": "education", "icon": "📚", "order": 1},
+        {"name_uz": "Sog'liqni saqlash", "name_ru": "Здравоохранение", "name_en": "Healthcare", "code": "healthcare", "icon": "🏥", "order": 2},
+        {"name_uz": "Kommunal xizmatlar", "name_ru": "Коммунальные услуги", "name_en": "Utilities", "code": "utilities", "icon": "🔧", "order": 3},
+        {"name_uz": "Yo'l va transport", "name_ru": "Дороги и транспорт", "name_en": "Roads & Transport", "code": "transport", "icon": "🚗", "order": 4},
+        {"name_uz": "Ijtimoiy himoya", "name_ru": "Социальная защита", "name_en": "Social Protection", "code": "social", "icon": "🤝", "order": 5},
+        {"name_uz": "Qurilish va arxitektura", "name_ru": "Строительство и архитектура", "name_en": "Construction", "code": "construction", "icon": "🏗️", "order": 6},
+        {"name_uz": "Yer masalalari", "name_ru": "Земельные вопросы", "name_en": "Land Issues", "code": "land", "icon": "🏞️", "order": 7},
+        {"name_uz": "Ekologiya", "name_ru": "Экология", "name_en": "Ecology", "code": "ecology", "icon": "🌿", "order": 8},
+        {"name_uz": "Xavfsizlik", "name_ru": "Безопасность", "name_en": "Security", "code": "security", "icon": "🛡️", "order": 9},
+        {"name_uz": "Boshqa", "name_ru": "Другое", "name_en": "Other", "code": "other", "icon": "📁", "order": 10},
     ]
     
     categories = []
     for data in categories_data:
         cat, created = AppealCategory.objects.get_or_create(
-            name_uz=data['name_uz'],
+            code=data['code'],
             defaults=data
         )
         categories.append(cat)
