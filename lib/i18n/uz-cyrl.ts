@@ -36,8 +36,8 @@ export const uzCyrlTranslations: Translations = {
     daysOverdue: 'кун кечиккан',
   },
   auth: {
-    systemName: 'Мурожаатлар ижроси ва ижро назорати ахборот тизими',
-    systemDescription: 'Туман ҳокимлиги топшириқлар бошқарув тизими - вазифалар, ижро назорати, аналитика',
+    systemName: 'E-Hokimiyat',
+    systemDescription: 'Мурожаатлар ижроси ва ижро назорати ахборот тизими',
     login: 'Кириш',
     pnflLabel: 'ПНФЛ',
     pnflPlaceholder: 'ПНФЛ рақамини киритинг',
@@ -208,10 +208,10 @@ export const uzCyrlTranslations: Translations = {
   pages: {
     dashboard: {
       title: 'Бош саҳифа',
-      description: 'Туман ҳокимлиги топшириқлар бошқарув тизими',
+      description: 'Мурожаатлар ижроси ва ижро назорати ахборот тизими',
     },
     tasks: {
-      title: 'Топшириқлар бошқаруви',
+      title: 'Топшириқлар',
       description: 'Барча топшириқларнинг рўйхати, филтрлаш ва бошқаруви',
       filtersTitle: 'Филтрлаш ва қидирув',
       totalLabel: 'Жами',

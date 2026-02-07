@@ -36,8 +36,8 @@ export const uzTranslations: Translations = {
     daysOverdue: 'kun kechikkan',
   },
   auth: {
-    systemName: 'Murojaatlar ijrosi va ijro nazorati axborot tizimi',
-    systemDescription: 'Tuman hokimligi topshiriqlar boshqaruv tizimi',
+    systemName: 'E-Hokimiyat',
+    systemDescription: 'Murojaatlar ijrosi va ijro nazorati axborot tizimi',
     login: 'Kirish',
     pnflLabel: 'PNFL (JSHSHIR)',
     pnflPlaceholder: '14 raqamli PNFL kiriting',
@@ -210,10 +210,10 @@ export const uzTranslations: Translations = {
   pages: {
     dashboard: {
       title: 'Bosh sahifa',
-      description: 'Tuman hokimligi topshiriqlar boshqaruv tizimi',
+      description: 'Murojaatlar ijrosi va ijro nazorati axborot tizimi',
     },
     tasks: {
-      title: 'Topshiriqlar boshqaruvi',
+      title: 'Topshiriqlar',
       description: "Barcha topshiriqlarning ro'yxati, filtrlash va boshqaruvi",
       filtersTitle: 'Filtrlash va qidiruv',
       totalLabel: 'Jami',
