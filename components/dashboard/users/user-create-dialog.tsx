@@ -71,7 +71,7 @@ export function UserCreateDialog({
         pnfl: formData.pnfl,
         position: formData.position || undefined,
         role: formData.role,
-        organization: parseInt(formData.organizationId),
+        organization: formData.organizationId,
       })
       onSubmit()
     } catch (error: any) {
