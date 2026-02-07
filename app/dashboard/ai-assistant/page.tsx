@@ -38,6 +38,7 @@ import { useAudioRecorder, formatTime } from "@/hooks/use-audio-recorder";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import { Header } from "@/components/layout/header";
 
 interface AIMessage {
   id: string;
@@ -403,12 +404,15 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] gap-4">
-      {/* Main content area */}
-      <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
+    <>
+      <Header title="AI Yordamchi" description="Sun'iy intellekt yordamchisi bilan suhbatlashing" />
+      <div className="p-6">
+        <div className="flex flex-col h-[calc(100vh-10rem)] gap-4">
+          {/* Main content area */}
+          <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         
-        {/* Left sidebar - Conversations */}
-        <div className="w-full lg:w-72 flex-shrink-0">
+            {/* Left sidebar - Conversations */}
+            <div className="w-full lg:w-72 flex-shrink-0">
           <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm">
             <CardHeader className="pb-3 border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -785,6 +789,8 @@ export default function AIAssistantPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
