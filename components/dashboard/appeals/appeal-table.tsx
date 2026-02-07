@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -19,93 +18,108 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
   const router = useRouter()
 
   const handleRowClick = (appeal: Appeal) => {
-    // tg- prefiksini olib tashlash
     const id = appeal.id.startsWith('tg-') ? appeal.id.replace('tg-', '') : appeal.id
     router.push(`/dashboard/appeals/${id}`)
   }
 
   if (appeals.length === 0) {
     return (
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <MessageSquare className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium text-foreground mb-1">Murojaatlar topilmadi</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-sm">
-            Hozircha bu filtrlar bo'yicha murojaatlar mavjud emas. Filtrlarni o'zgartiring yoki keyinroq qaytib keling.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="rounded-full bg-slate-100 p-4 mb-4">
+          <MessageSquare className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-lg font-medium text-slate-700 mb-1">Murojaatlar topilmadi</h3>
+        <p className="text-sm text-slate-500 text-center max-w-sm">
+          Hozircha bu filtrlar bo'yicha murojaatlar mavjud emas.
+        </p>
+      </div>
     )
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fuqaro</TableHead>
-              <TableHead>Mavzu</TableHead>
-              <TableHead>Kategoriya</TableHead>
-              <TableHead>Holat</TableHead>
-              <TableHead>Muhimlik</TableHead>
-              <TableHead>Hudud</TableHead>
-              <TableHead>Sana</TableHead>
-              <TableHead>Amallar</TableHead>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-slate-50 hover:bg-slate-50">
+            <TableHead className="font-semibold text-slate-700 py-3">Fuqaro</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Mavzu</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Kategoriya</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Holat</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Muhimlik</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Hudud</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3">Sana</TableHead>
+            <TableHead className="font-semibold text-slate-700 py-3 w-[60px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {appeals.map((appeal, index) => (
+            <TableRow 
+              key={appeal.id} 
+              className={cn(
+                "cursor-pointer transition-colors border-b border-slate-100",
+                index % 2 === 0 ? "bg-white" : "bg-slate-50/50",
+                "hover:bg-blue-50/50"
+              )}
+              onClick={() => handleRowClick(appeal)}
+            >
+              <TableCell className="py-3">
+                <span className="font-medium text-slate-800">{appeal.citizenName}</span>
+              </TableCell>
+              <TableCell className="py-3">
+                <div className="max-w-[200px] truncate text-sm text-slate-600" title={appeal.subject}>
+                  {appeal.subject}
+                </div>
+              </TableCell>
+              <TableCell className="py-3">
+                <span className="text-sm text-slate-600">{appeal.category}</span>
+              </TableCell>
+              <TableCell className="py-3">
+                <Badge 
+                  variant="outline"
+                  className={cn("text-xs font-medium border", STATUS_COLORS[appeal.status])}
+                >
+                  {STATUS_LABELS[appeal.status]}
+                </Badge>
+              </TableCell>
+              <TableCell className="py-3">
+                <Badge 
+                  variant="outline"
+                  className={cn("text-xs font-medium border", PRIORITY_COLORS[appeal.priority])}
+                >
+                  {PRIORITY_LABELS[appeal.priority]}
+                </Badge>
+              </TableCell>
+              <TableCell className="py-3">
+                <span className="text-sm text-slate-600">{appeal.district}</span>
+              </TableCell>
+              <TableCell className="py-3">
+                <span className="text-sm text-slate-500">
+                  {new Date(appeal.createdAt).toLocaleDateString("uz-UZ")}
+                </span>
+              </TableCell>
+              <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleRowClick(appeal)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Batafsil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onArchive(appeal.id)}>
+                      <Archive className="mr-2 h-4 w-4" />
+                      Arxivlash
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {appeals.map((appeal) => (
-              <TableRow 
-                key={appeal.id} 
-                className="hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => handleRowClick(appeal)}
-              >
-                <TableCell className="font-medium">{appeal.citizenName}</TableCell>
-                <TableCell>
-                  <div className="max-w-xs truncate" title={appeal.subject}>
-                    {appeal.subject}
-                  </div>
-                </TableCell>
-                <TableCell>{appeal.category}</TableCell>
-                <TableCell>
-                  <Badge className={cn("px-2 py-1 text-xs font-medium", STATUS_COLORS[appeal.status])}>
-                    {STATUS_LABELS[appeal.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn("px-2 py-1 text-xs font-medium", PRIORITY_COLORS[appeal.priority])}>
-                    {PRIORITY_LABELS[appeal.priority]}
-                  </Badge>
-                </TableCell>
-                <TableCell>{appeal.district}</TableCell>
-                <TableCell>{new Date(appeal.createdAt).toLocaleDateString("uz-UZ")}</TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleRowClick(appeal)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Batafsil
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onArchive(appeal.id)}>
-                        <Archive className="mr-2 h-4 w-4" />
-                        Arxivlash
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
