@@ -710,21 +710,23 @@ export default function ChatPage() {
               !showUserList && "hidden lg:flex"
             )}
           >
-            <CardHeader className="pb-3 border-b border-border">
+            <CardHeader className="pb-3 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
+                    <Users className="h-4 w-4 text-white" />
+                  </div>
                   Foydalanuvchilar
                 </CardTitle>
-                <Badge variant="secondary">{users.length}</Badge>
+                <Badge variant="secondary" className="bg-white/80 text-indigo-700 font-semibold shadow-sm">{users.length}</Badge>
               </div>
               <div className="relative mt-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Qidiruv..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-secondary/70 focus-visible:bg-white"
+                  className="pl-9 bg-white/90 border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl shadow-inner"
                 />
               </div>
             </CardHeader>
@@ -741,36 +743,36 @@ export default function ChatPage() {
                       key={user.id}
                       onClick={() => handleSelectUser(user.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 p-3 hover:bg-muted/60 transition-colors text-left overflow-hidden",
-                        isSelected && "bg-primary/10 border-l-2 border-l-primary"
+                        "w-full flex items-center gap-3 p-3.5 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 text-left overflow-hidden",
+                        isSelected && "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-3 border-l-indigo-500"
                       )}
                     >
                       <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm font-semibold">
                             {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         {user.is_online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                         )}
                         {/* Unread message badge */}
                         {unreadCount > 0 && (
-                          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-[10px] font-bold text-white shadow-md">
                             {unreadCount > 99 ? '99+' : unreadCount}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center justify-between gap-2 min-w-0">
-                          <p className={cn("font-medium text-sm truncate", unreadCount > 0 && "font-bold")}>
+                          <p className={cn("font-semibold text-sm text-slate-800 truncate", unreadCount > 0 && "text-slate-900")}>
                             {user.first_name} {user.last_name}
                           </p>
                           {lastMsg && (
-                            <span className="text-xs text-muted-foreground shrink-0">{lastMsg.time}</span>
+                            <span className="text-xs text-slate-500 shrink-0 font-medium">{lastMsg.time}</span>
                           )}
                         </div>
-                        <p className={cn("text-xs text-muted-foreground truncate", unreadCount > 0 && "font-semibold text-foreground")}>
+                        <p className={cn("text-xs text-slate-500 truncate mt-0.5", unreadCount > 0 && "font-semibold text-slate-700")}>
                           {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Foydalanuvchi")}
                         </p>
                       </div>
@@ -791,28 +793,39 @@ export default function ChatPage() {
             {selectedUser ? (
               <>
                 {/* Chat Header */}
-                <CardHeader className="py-3 border-b border-slate-200 flex-shrink-0 bg-slate-50/50">
+                <CardHeader className="py-3 border-b border-slate-100 flex-shrink-0 bg-gradient-to-r from-slate-50 via-blue-50/30 to-indigo-50/30">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="lg:hidden"
+                      className="lg:hidden hover:bg-white/80"
                       onClick={() => setShowUserList(true)}
                       title="Foydalanuvchilar ro'yxati"
                     >
                       <Users className="h-4 w-4" />
                     </Button>
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                    <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold">
                         {selectedUser.first_name?.charAt(0)}{selectedUser.last_name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-semibold">{selectedUser.first_name} {selectedUser.last_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedUser.is_online ? "Onlayn" : "Oflayn"}
-                        {selectedUser.role && ` • ${ROLE_LABELS[selectedUser.role] || selectedUser.role}`}
-                      </p>
+                      <p className="font-bold text-slate-900">{selectedUser.first_name} {selectedUser.last_name}</p>
+                      <div className="flex items-center gap-2">
+                        {selectedUser.is_online ? (
+                          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Onlayn
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500 font-medium">Oflayn</span>
+                        )}
+                        {selectedUser.role && (
+                          <Badge variant="outline" className="text-[10px] px-2 py-0 font-medium bg-white/80 border-slate-200">
+                            {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -1099,11 +1112,11 @@ export default function ChatPage() {
                         onKeyDown={handleKeyPress}
                         onPaste={handlePaste}
                         disabled={isSending}
-                        className="bg-white/70"
+                        className="bg-white/90 border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl"
                       />
                       <Button 
                         onClick={sendMessage} 
-                        className="shrink-0"
+                        className="shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 rounded-xl"
                         disabled={isSending || (!newMessage.trim() && !chatFile)}
                       >
                         {isSending ? (
@@ -1117,14 +1130,22 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/50">
-                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-10 w-10 text-blue-600" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-6 shadow-xl shadow-blue-500/25">
+                  <MessageSquare className="h-12 w-12 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Suhbatni tanlang</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">Suhbatni tanlang</h3>
                 <p className="text-slate-600 max-w-sm">
                   Chap tomondagi ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
+                <div className="mt-8 flex items-center gap-2 text-sm text-slate-500">
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs border-2 border-white">A</div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-xs border-2 border-white">B</div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-xs border-2 border-white">C</div>
+                  </div>
+                  <span>{users.length} ta foydalanuvchi mavjud</span>
+                </div>
               </div>
             )}
           </Card>
