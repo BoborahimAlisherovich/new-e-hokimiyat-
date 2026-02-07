@@ -8,7 +8,6 @@ import { OrganizationFilters } from "@/components/dashboard/organizations/organi
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
 export default function OrganizationsPage() {
@@ -149,35 +148,19 @@ export default function OrganizationsPage() {
   return (
     <>
       <Header title={t.pages.organizations.title} description={t.pages.organizations.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-        {/* Modern geometric background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
-        </div>
-        
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="space-y-12 py-8">
-
+      <div className="p-6 space-y-6">
             {/* Filters and Actions */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <OrganizationFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                typeFilter={typeFilter}
-                onTypeChange={setTypeFilter}
-                statusFilter={statusFilter}
-                onStatusChange={setStatusFilter}
-                onCreate={() => setIsCreateOpen(true)}
-                totalCount={organizations.length}
-                filteredCount={filteredOrganizations.length}
-              />
-            </motion.section>
+            <OrganizationFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              typeFilter={typeFilter}
+              onTypeChange={setTypeFilter}
+              statusFilter={statusFilter}
+              onStatusChange={setStatusFilter}
+              onCreate={() => setIsCreateOpen(true)}
+              totalCount={organizations.length}
+              filteredCount={filteredOrganizations.length}
+            />
 
             <OrganizationCreateDialog 
               open={isCreateOpen} 
@@ -189,37 +172,29 @@ export default function OrganizationsPage() {
             />
 
             {/* Organizations Table */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">{t.pages.organizations.loading}</span>
-                </div>
-              ) : error ? (
-                <div className="text-center py-16">
-                  <p className="text-red-500">{error}</p>
-                  <button 
-                    onClick={() => window.location.reload()} 
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    {t.pages.organizations.retry}
-                  </button>
-                </div>
-              ) : (
-                <OrganizationTable 
-                  organizations={filteredOrganizations} 
-                  users={users}
-                  onDelete={handleDeleteOrganization}
-                  onToggleStatus={handleToggleStatus}
-                />
-              )}
-            </motion.section>
-          </div>
-        </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600"></div>
+                <span className="ml-3 text-slate-600">{t.pages.organizations.loading}</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-16">
+                <p className="text-red-500">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  {t.pages.organizations.retry}
+                </button>
+              </div>
+            ) : (
+              <OrganizationTable 
+                organizations={filteredOrganizations} 
+                users={users}
+                onDelete={handleDeleteOrganization}
+                onToggleStatus={handleToggleStatus}
+              />
+            )}
       </div>
     </>
   )

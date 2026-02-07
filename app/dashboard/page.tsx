@@ -15,9 +15,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="space-y-12 py-8">
+      <div className="p-6 space-y-6">
 
             {/* 1. Task Summary (KPI) */}
             <section className="animate-slide-up">
@@ -49,8 +47,6 @@ export default function DashboardPage() {
               <DeadlineCriticalTasks />
             </section>
 
-          </div>
-        </div>
       </div>
     </>
   )

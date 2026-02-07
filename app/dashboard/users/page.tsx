@@ -9,7 +9,6 @@ import { UserStats } from "@/components/dashboard/users/user-stats"
 import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
 import { UserCreateDialog } from "@/components/dashboard/users/user-create-dialog"
-import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
 export default function UsersPage() {
@@ -116,10 +115,10 @@ export default function UsersPage() {
     return (
       <>
         <Header title={t.pages.users.title} description={t.pages.users.description} />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+        <div className="p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600 mx-auto"></div>
               <p className="mt-4 text-slate-600">{t.common.loading}</p>
             </div>
           </div>
@@ -131,37 +130,17 @@ export default function UsersPage() {
   return (
     <>
       <Header title={t.pages.users.title} description={t.pages.users.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-        {/* Modern geometric background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
-        </div>
-        
-        <div className="relative z-10 p-6 space-y-6">
+      <div className="p-6 space-y-6">
           {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <UserStats
+          <UserStats
             total={users.length}
             active={users.filter((u) => u.status === "FAOL").length}
             inactive={users.filter((u) => u.status === "BLOKLANGAN" || u.status === "ARXIV" || u.status === "DRAFT").length}
             organizations={organizations.length}
           />
-          </motion.div>
 
           {/* Filters and Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <UserFilters
+          <UserFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             roleFilter={roleFilter}
@@ -175,17 +154,9 @@ export default function UsersPage() {
             totalCount={users.length}
             filteredCount={filteredUsers.length}
           />
-          </motion.div>
 
           {/* Users Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <UserTable users={filteredUsers} />
-          </motion.div>
-        </div>
+          <UserTable users={filteredUsers} />
       </div>
       <UserCreateDialog
         open={isCreateDialogOpen}
