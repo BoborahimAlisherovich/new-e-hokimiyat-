@@ -68,7 +68,7 @@ export function UserCreateDialog({
         middle_name: formData.middleName,
         email: formData.email || undefined,
         phone: formData.phone,
-        pnfl: formData.pnfl || undefined,
+        pnfl: formData.pnfl,
         position: formData.position || undefined,
         role: formData.role,
         organization: parseInt(formData.organizationId),
@@ -76,7 +76,36 @@ export function UserCreateDialog({
       onSubmit()
     } catch (error: any) {
       console.error("Create user error:", error)
-      setErrors({ submit: error.message || "Yaratishda xatolik yuz berdi" })
+      
+      // Handle field-specific errors from API
+      const fieldErrors: Record<string, string> = {}
+      
+      if (error.data && typeof error.data === 'object') {
+        // Map backend field names to frontend field names
+        const fieldMap: Record<string, string> = {
+          'first_name': 'firstName',
+          'last_name': 'lastName',
+          'middle_name': 'middleName',
+          'organization': 'organizationId',
+          'pnfl': 'pnfl',
+          'phone': 'phone',
+          'email': 'email',
+          'role': 'role',
+          'position': 'position',
+        }
+        
+        for (const [field, errors] of Object.entries(error.data)) {
+          const frontendField = fieldMap[field] || field
+          const errorMsg = Array.isArray(errors) ? errors.join(', ') : String(errors)
+          fieldErrors[frontendField] = errorMsg
+        }
+      }
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors)
+      } else {
+        setErrors({ submit: error.message || "Yaratishda xatolik yuz berdi" })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -174,7 +203,7 @@ export function UserCreateDialog({
             <div className="space-y-2">
               <Label htmlFor="role">Rol <span className="text-red-500">*</span></Label>
               <Select value={formData.role} onValueChange={(value) => onChange("role", value)}>
-                <SelectTrigger>
+                <SelectTrigger className={errors.role ? "border-red-500" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -184,6 +213,7 @@ export function UserCreateDialog({
                   <SelectItem value="TASHKILOT_MASUL">Tashkilot mas'uli</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.role && <p className="text-xs text-red-500">{errors.role}</p>}
             </div>
           </div>
           <div className="space-y-2">
