@@ -495,18 +495,18 @@ export default function TelegramBotPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Tabs defaultValue="connection" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="connection">
-            <Link className="h-4 w-4 mr-2" />
+        <Tabs defaultValue="connection" className="space-y-6">
+        <TabsList className="gap-2 p-1 bg-slate-100/80 rounded-xl">
+          <TabsTrigger value="connection" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+            <Link className="h-4 w-4" />
             Ulanish
           </TabsTrigger>
-          <TabsTrigger value="ai">
-            <Brain className="h-4 w-4 mr-2" />
+          <TabsTrigger value="ai" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+            <Brain className="h-4 w-4" />
             AI Sozlamalari
           </TabsTrigger>
-          <TabsTrigger value="messages">
-            <MessageSquare className="h-4 w-4 mr-2" />
+          <TabsTrigger value="messages" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+            <MessageSquare className="h-4 w-4" />
             Xabarlar
           </TabsTrigger>
         </TabsList>

@@ -19,11 +19,13 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
   const t = useTranslation()
   if (notifications.length === 0) {
     return (
-      <Card className="bg-card border-border">
-        <CardContent className="p-0 divide-y divide-border">
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Bell className="h-12 w-12 mb-4 opacity-20" />
-            <p>{t.notifications.emptyTitle}</p>
+      <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+        <CardContent className="p-0">
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <div className="rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 p-5 mb-4">
+              <Bell className="h-10 w-10 text-blue-500" />
+            </div>
+            <p className="text-lg font-medium">{t.notifications.emptyTitle}</p>
           </div>
         </CardContent>
       </Card>
@@ -31,22 +33,22 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardContent className="p-0 divide-y divide-border">
-        {notifications.map((notification) => {
+    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+      <CardContent className="p-0 divide-y divide-slate-100">
+        {notifications.map((notification, idx) => {
           const Icon = notificationIcons[notification.type] || Bell
           return (
             <div
               key={notification.id}
               className={cn(
-                "flex items-start gap-4 p-4 transition-colors hover:bg-muted/50",
-                !notification.is_read && "bg-primary/5",
+                "flex items-start gap-4 p-5 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50",
+                !notification.is_read && "bg-gradient-to-r from-blue-50/30 to-indigo-50/30",
               )}
             >
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                  notificationColors[notification.type] || "bg-muted text-muted-foreground",
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-md",
+                  notificationColors[notification.type] || "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600",
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -56,24 +58,24 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                 <div className="flex items-center gap-2">
                   <p
                     className={cn(
-                      "font-medium text-foreground",
-                      notification.type === "TASK_OVERDUE" && "text-destructive",
+                      "font-semibold text-slate-900",
+                      notification.type === "TASK_OVERDUE" && "text-red-600",
                     )}
                   >
                     {notification.title}
                   </p>
-                  {!notification.is_read && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                  {!notification.is_read && <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 shrink-0 animate-pulse" />}
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-slate-600 mt-1 font-medium">{notification.message}</p>
+                <p className="text-xs text-slate-500 mt-2 font-medium">
                   {formatNotificationDate(notification.created_at)}
                 </p>
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {notification.related_task_id && (
                   <Link href={`/dashboard/tasks/${notification.related_task_id}`}>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                       {t.notifications.view}
                     </Button>
                   </Link>
@@ -82,7 +84,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
                     onClick={() => onMarkAsRead(notification.id)}
                   >
                     <Check className="h-4 w-4" />
@@ -91,7 +93,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50"
                   onClick={() => onDelete(notification.id)}
                 >
                   <Trash2 className="h-4 w-4" />

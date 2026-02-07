@@ -25,7 +25,8 @@ export default function OrganizationsPage() {
   const [formData, setFormData] = useState({
     name: '',
     servicePhone: '',
-    address: ''
+    address: '',
+    sector_id: ''
   })
 
   const loadOrganizations = useCallback(async () => {
@@ -87,7 +88,8 @@ export default function OrganizationsPage() {
       await createOrganization({
         name: formData.name,
         phone: formData.servicePhone,
-        address: formData.address
+        address: formData.address,
+        sector: formData.sector_id || undefined
       })
       
       toast({
@@ -96,7 +98,7 @@ export default function OrganizationsPage() {
       })
       
       setIsCreateOpen(false)
-      setFormData({ name: '', servicePhone: '', address: '' })
+      setFormData({ name: '', servicePhone: '', address: '', sector_id: '' })
       await loadOrganizations()
     } catch (err: any) {
       toast({

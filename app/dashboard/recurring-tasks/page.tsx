@@ -622,50 +622,50 @@ export default function RecurringTasksPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-white hover:bg-white border-b border-slate-200">
-                  <TableHead className="font-semibold text-slate-700 py-3.5">Sarlavha</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3.5">Takrorlanish</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3.5">Holat</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3.5">Keyingi ishga tushish</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3.5">Yaratilgan</TableHead>
-                  <TableHead className="w-16 py-3.5"></TableHead>
+                <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+                  <TableHead className="font-bold text-slate-800 py-4 text-sm">Sarlavha</TableHead>
+                  <TableHead className="font-bold text-slate-800 py-4 text-sm">Takrorlanish</TableHead>
+                  <TableHead className="font-bold text-slate-800 py-4 text-sm">Holat</TableHead>
+                  <TableHead className="font-bold text-slate-800 py-4 text-sm">Keyingi ishga tushish</TableHead>
+                  <TableHead className="font-bold text-slate-800 py-4 text-sm">Yaratilgan</TableHead>
+                  <TableHead className="w-16 py-4"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tasks.map((task) => (
                   <TableRow 
                     key={task.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    className="border-b border-slate-100 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-violet-50/50 transition-all duration-200"
                   >
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       <div>
-                        <p className="font-medium text-slate-800">{task.title}</p>
-                        <p className="text-sm text-slate-500 truncate max-w-xs">
+                        <p className="font-semibold text-slate-900">{task.title}</p>
+                        <p className="text-sm text-slate-500 truncate max-w-xs font-medium">
                           {task.description}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3">
-                      <span className="text-sm text-slate-600">
+                    <TableCell className="py-4">
+                      <span className="text-sm text-slate-700 font-medium">
                         {task.frequency_display}
                       </span>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       <Badge
                         variant="outline"
-                        className={`text-xs font-medium border ${
-                          task.status === 'ACTIVE' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
-                          task.status === 'PAUSED' ? 'border-yellow-300 bg-yellow-50 text-yellow-700' :
-                          task.status === 'COMPLETED' ? 'border-blue-300 bg-blue-50 text-blue-700' :
-                          'border-red-300 bg-red-50 text-red-700'
+                        className={`text-xs font-semibold border px-3 py-1.5 shadow-sm rounded-lg ${
+                          task.status === 'ACTIVE' ? 'border-emerald-300 bg-emerald-100 text-emerald-700' :
+                          task.status === 'PAUSED' ? 'border-yellow-300 bg-yellow-100 text-yellow-700' :
+                          task.status === 'COMPLETED' ? 'border-blue-300 bg-blue-100 text-blue-700' :
+                          'border-red-300 bg-red-100 text-red-700'
                         }`}
                       >
                         {task.status_display}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       {task.next_run_date ? (
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-700 font-medium">
                           {formatDistanceToNow(new Date(task.next_run_date), {
                             addSuffix: true,
                             locale: uz,
@@ -675,12 +675,12 @@ export default function RecurringTasksPage() {
                         <span className="text-slate-400">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="py-3">
-                      <span className="text-sm text-slate-600">
+                    <TableCell className="py-4">
+                      <code className="rounded-lg bg-gradient-to-r from-purple-100 to-violet-100 border border-purple-200 px-3 py-1.5 text-sm font-mono font-bold text-purple-700 shadow-sm">
                         {task.total_created} ta
-                      </span>
+                      </code>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

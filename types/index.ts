@@ -375,16 +375,17 @@ export interface UserUpdateInput extends Partial<Omit<UserCreateInput, 'pnfl'>> 
 
 export interface OrganizationCreateInput {
   name: string
-  type: OrganizationType
+  type?: OrganizationType
   inn?: string
   address?: string
   phone?: string
   email?: string
   website?: string
-  district_id: number
+  district_id?: number
   parent_id?: number
   director_id?: number
   description?: string
+  sector?: string
 }
 
 export interface OrganizationUpdateInput extends Partial<OrganizationCreateInput> {
