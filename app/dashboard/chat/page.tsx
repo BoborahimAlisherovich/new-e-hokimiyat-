@@ -28,7 +28,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react"
-import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage } from "@/lib/api"
+import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -507,6 +507,30 @@ export default function ChatPage() {
     }
   }
 
+  // Xabarni o'chirish
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!selectedUserId) return
+    
+    try {
+      await deleteChatMessage(messageId)
+      
+      // Xabarni local state dan o'chirish
+      setConversations(prev => {
+        const newMap = new Map(prev)
+        const conv = newMap.get(selectedUserId)
+        if (conv) {
+          conv.messages = conv.messages.filter(m => m.id !== messageId)
+        }
+        return newMap
+      })
+      
+      toast.success("Xabar o'chirildi")
+    } catch (error: any) {
+      console.error("Xabarni o'chirishda xatolik:", error)
+      toast.error(error?.message || "Xabarni o'chirishda xatolik yuz berdi")
+    }
+  }
+
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + " B"
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
@@ -800,7 +824,7 @@ export default function ChatPage() {
                       const isCurrentUser = currentUser && msg.senderId === currentUser.id
 
                       return (
-                        <div key={msg.id} className={cn("flex gap-3", isCurrentUser && "flex-row-reverse")}>
+                        <div key={msg.id} className={cn("flex gap-3 group", isCurrentUser && "flex-row-reverse")}>
                           <Avatar className="h-8 w-8 shrink-0">
                             <AvatarFallback className="text-xs bg-primary/10 text-primary">
                               {msg.senderName?.split(" ").map(n => n[0]).join("").substring(0, 2)}
@@ -822,6 +846,16 @@ export default function ChatPage() {
                                     <Check className="h-4 w-4" />
                                   )}
                                 </span>
+                              )}
+                              {/* Delete button - only for own messages */}
+                              {isCurrentUser && (
+                                <button
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  className="opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                  title="Xabarni o'chirish"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                               )}
                             </div>
                             <div

@@ -219,3 +219,37 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
             is_read=False
         ).count()
         return Response({'unread_count': count})
+
+    @action(detail=True, methods=['delete'], url_path='delete')
+    def delete_message(self, request, pk=None):
+        """Delete a message (only sender can delete their own message)."""
+        message = get_object_or_404(DirectMessage, pk=pk)
+        
+        # Faqat o'zi yuborgan xabarni o'chirishi mumkin
+        if message.sender != request.user:
+            return Response(
+                {'detail': 'Siz faqat o\'zingiz yuborgan xabarlarni o\'chira olasiz'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Agar bu xabar conversation.last_message bo'lsa, uni yangilash kerak
+        try:
+            conversation = ChatConversation.objects.filter(
+                Q(participant1=message.sender, participant2=message.recipient) |
+                Q(participant1=message.recipient, participant2=message.sender)
+            ).first()
+            
+            if conversation and conversation.last_message_id == message.id:
+                # Keyingi oxirgi xabarni topish
+                next_last_message = DirectMessage.objects.filter(
+                    Q(sender=message.sender, recipient=message.recipient) |
+                    Q(sender=message.recipient, recipient=message.sender)
+                ).exclude(id=message.id).order_by('-created_at').first()
+                
+                conversation.last_message = next_last_message
+                conversation.save()
+        except Exception:
+            pass  # Conversation yangilanmasa ham xabar o'chirilsin
+        
+        message.delete()
+        return Response({'status': 'message deleted'}, status=status.HTTP_200_OK)

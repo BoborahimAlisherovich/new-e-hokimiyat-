@@ -149,3 +149,22 @@ export async function getUnreadChatCount(): Promise<number> {
   const data = await fetchApi<{ unread_count: number }>('/chat/messages/unread-count/')
   return data.unread_count ?? 0
 }
+
+// ============================================================================
+// Delete Message
+// ============================================================================
+
+/**
+ * Xabarni o'chiradi (faqat o'zi yuborgan xabarni)
+ * 
+ * @param messageId - O'chiriladigan xabar ID
+ * @returns void
+ * 
+ * @example
+ * await deleteChatMessage(123)
+ */
+export async function deleteChatMessage(messageId: number | string): Promise<void> {
+  return fetchApi<void>(`/chat/messages/${messageId}/delete/`, {
+    method: 'DELETE',
+  })
+}

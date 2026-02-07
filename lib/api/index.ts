@@ -212,6 +212,7 @@ export {
   sendChatMessage,
   markChatMessagesAsRead,
   getUnreadChatCount,
+  deleteChatMessage,
 } from './chat.api'
 
 // ============================================================================

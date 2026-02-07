@@ -7,8 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceGuard } from "@/components/performance-guard"
 
 export const metadata: Metadata = {
-  title: "Топшириқлар Бошқарув Тизими",
-  description: "Туман ҳокимлиги топшириқлар бошқарув тизими - вазифалар, ижро назорати, аналитика",
+  title: "E-Hokimiyat",
+  description: "Murojaatlar ijrosi va ijro nazorati axborot tizimi",
   generator: "v0.app",
   icons: {
     icon: "/government-icon.svg",
