@@ -20,10 +20,12 @@ import {
   FileText,
   X,
   Maximize2,
+  Trash2,
 } from "lucide-react"
-import { getCurrentUser, getUsers } from "@/lib/api"
+import { getCurrentUser, getUsers, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 // Role labels
 const ROLE_LABELS: Record<string, string> = {
@@ -204,6 +206,33 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
       }
       return newMap
     })
+  }
+
+  // Xabarni o'chirish
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!selectedUserId) return
+    
+    try {
+      // Demo xabarlar uchun faqat local o'chirish
+      if (!messageId.startsWith("demo-") && !messageId.startsWith("msg-")) {
+        await deleteChatMessage(messageId)
+      }
+      
+      // Xabarni local state dan o'chirish
+      setConversations(prev => {
+        const newMap = new Map(prev)
+        const conv = newMap.get(selectedUserId)
+        if (conv) {
+          conv.messages = conv.messages.filter(m => m.id !== messageId)
+        }
+        return newMap
+      })
+      
+      toast.success("Xabar o'chirildi")
+    } catch (error: any) {
+      console.error("Xabarni o'chirishda xatolik:", error)
+      toast.error("Xabarni o'chirishda xatolik yuz berdi")
+    }
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -430,16 +459,27 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
                       return (
                         <div
                           key={message.id}
-                          className={cn("flex", isOwn ? "justify-end" : "justify-start")}
+                          className={cn("flex group", isOwn ? "justify-end" : "justify-start")}
                         >
                           <div
                             className={cn(
-                              "max-w-[70%] rounded-2xl px-3 py-2 shadow-sm",
+                              "max-w-[70%] rounded-2xl px-3 py-2 shadow-sm relative",
                               isOwn
                                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md"
                                 : "bg-white rounded-bl-md"
                             )}
                           >
+                            {/* Delete button for own messages */}
+                            {isOwn && (
+                              <button
+                                onClick={() => handleDeleteMessage(message.id)}
+                                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-md"
+                                title="Xabarni o'chirish"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            
                             {message.attachment && (
                               <div className="mb-1.5">
                                 {message.attachment.type === "image" ? (
