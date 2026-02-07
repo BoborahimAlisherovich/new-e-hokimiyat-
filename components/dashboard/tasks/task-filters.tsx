@@ -61,7 +61,7 @@ export function TaskFilters({
             <SelectTrigger className={statusFilter !== "all" ? "border-primary" : ""}>
               <SelectValue placeholder={t.tasks.allOption} />
             </SelectTrigger>
-            <SelectContent className="bg-card border shadow-lg z-[100]" position="popper" sideOffset={4}>
+            <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
               <SelectItem value="YANGI">{t.task.statuses.NEW}</SelectItem>
               <SelectItem value="IJRODA">{t.task.statuses.IN_PROGRESS}</SelectItem>
@@ -80,7 +80,7 @@ export function TaskFilters({
             <SelectTrigger className={priorityFilter !== "all" ? "border-primary" : ""}>
               <SelectValue placeholder={t.tasks.allOption} />
             </SelectTrigger>
-            <SelectContent className="bg-card border shadow-lg z-[100]" position="popper" sideOffset={4}>
+            <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
               <SelectItem value="FAVQULODDA">{t.tasks.priorityOptionCritical}</SelectItem>
               <SelectItem value="YUQORI">{t.tasks.priorityOptionHigh}</SelectItem>
@@ -96,12 +96,7 @@ export function TaskFilters({
             <SelectTrigger className={categoryFilter !== "all" ? "border-primary" : ""}>
               <SelectValue placeholder={t.tasks.allOption} />
             </SelectTrigger>
-            <SelectContent 
-              className="bg-card border shadow-lg z-[100]" 
-              position="popper" 
-              sideOffset={4}
-              style={{ maxHeight: '300px', overflowY: 'auto' }}
-            >
+            <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
               <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
               <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
