@@ -1130,12 +1130,43 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         attachments = data.get('attachments', [])
         for att in attachments:
             file_url = bot.get_file(att['file_id'])
-            AppealAttachment.objects.create(
+            
+            # Faylni yuklab olish va saqlash
+            attachment = AppealAttachment(
                 appeal=appeal,
                 file_type=att['file_type'],
-                telegram_file_id=att['file_id'],
-                file_url=file_url or ''
+                telegram_file_id=att['file_id']
             )
+            
+            # Fayl URL mavjud bo'lsa, yuklab olish
+            if file_url:
+                try:
+                    import requests
+                    from django.core.files.base import ContentFile
+                    
+                    response = requests.get(file_url, timeout=30)
+                    if response.status_code == 200:
+                        # Fayl nomini aniqlash
+                        file_ext = att['file_type']
+                        if file_ext == 'photo':
+                            file_ext = 'jpg'
+                        elif file_ext == 'voice':
+                            file_ext = 'ogg'
+                        elif file_ext == 'video':
+                            file_ext = 'mp4'
+                        elif file_ext == 'audio':
+                            file_ext = 'mp3'
+                        else:
+                            file_ext = 'bin'
+                        
+                        file_name = f"{att['file_id'][:20]}.{file_ext}"
+                        attachment.file_name = file_name
+                        attachment.file_size = len(response.content)
+                        attachment.file.save(file_name, ContentFile(response.content), save=False)
+                except Exception as e:
+                    logger.error(f"Fayl yuklashda xato: {e}")
+            
+            attachment.save()
         
         clear_user_state(user)
         
