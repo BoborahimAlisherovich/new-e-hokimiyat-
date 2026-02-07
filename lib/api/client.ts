@@ -35,6 +35,10 @@ function resolveApiBaseUrl(): string {
       return 'https://api.gameroom.uz/api'
     }
     
+    if (hostname === 'pytech.uz' || hostname === 'www.pytech.uz') {
+      return 'https://api.pytech.uz/api'
+    }
+    
     if (hostname === 'localhost') {
       return 'http://localhost:8000/api'
     }
