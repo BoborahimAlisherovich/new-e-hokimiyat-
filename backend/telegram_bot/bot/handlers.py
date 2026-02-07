@@ -697,8 +697,17 @@ def process_callback_query(callback_query: Dict):
     # Murojaatni tasdiqlash
     if data == 'confirm':
         state = get_user_state(user)
+        logger.info(f"Confirm callback: state={state.state if state else None}, data_type={type(state.data) if state else None}")
         if state and state.state == 'appeal:confirm':
+            logger.info(f"Creating appeal with data: {state.data}")
             create_appeal(user, state.data, chat_id)
+        else:
+            logger.warning(f"Confirm pressed but state is wrong: state={state}")
+            bot.send_message(
+                chat_id,
+                get_text('error_something_wrong', lang),
+                reply_markup=main_menu_keyboard(lang)
+            )
         return
     
     # Til o'zgartirish
@@ -1112,9 +1121,25 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
     """Murojaatni yaratish"""
     lang = user.language
     
+    logger.info(f"create_appeal called with data: {data}")
+    
     try:
-        appeal_type = AppealType.objects.get(id=data.get('type_id'))
-        category = AppealCategory.objects.get(id=data.get('category_id'))
+        type_id = data.get('type_id')
+        category_id = data.get('category_id')
+        
+        logger.info(f"Looking for type_id={type_id}, category_id={category_id}")
+        
+        if not type_id or not category_id:
+            logger.error(f"Missing type_id or category_id: type_id={type_id}, category_id={category_id}")
+            bot.send_message(
+                chat_id,
+                get_text('error_something_wrong', lang),
+                reply_markup=main_menu_keyboard(lang)
+            )
+            return
+        
+        appeal_type = AppealType.objects.get(id=type_id)
+        category = AppealCategory.objects.get(id=category_id)
         
         # Murojaat yaratish
         appeal = TelegramAppeal.objects.create(
@@ -1180,8 +1205,22 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         process_appeal_with_ai(appeal)
         notify_admins_about_appeal(appeal)
         
+    except AppealType.DoesNotExist:
+        logger.error(f"AppealType topilmadi: type_id={data.get('type_id')}")
+        bot.send_message(
+            chat_id,
+            get_text('error_something_wrong', lang),
+            reply_markup=main_menu_keyboard(lang)
+        )
+    except AppealCategory.DoesNotExist:
+        logger.error(f"AppealCategory topilmadi: category_id={data.get('category_id')}")
+        bot.send_message(
+            chat_id,
+            get_text('error_something_wrong', lang),
+            reply_markup=main_menu_keyboard(lang)
+        )
     except Exception as e:
-        logger.error(f"Murojaat yaratishda xato: {e}")
+        logger.error(f"Murojaat yaratishda xato: {type(e).__name__}: {e}", exc_info=True)
         bot.send_message(
             chat_id,
             get_text('error_something_wrong', lang),
