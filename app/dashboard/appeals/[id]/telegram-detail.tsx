@@ -63,7 +63,11 @@ import {
   Clock,
   Loader2,
   ClipboardList,
-  X
+  X,
+  Paperclip,
+  Mic,
+  Image,
+  Trash2
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
@@ -120,7 +124,16 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const [organizations, setOrganizations] = useState<any[]>([])
   const [creatingTask, setCreatingTask] = useState(false)
   
+  // File/Audio/Location state
+  const [chatFile, setChatFile] = useState<File | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [isLocationLoading, setIsLocationLoading] = useState(false)
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   const loadData = async () => {
     try {
@@ -149,12 +162,17 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   }, [messages])
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || sendingMessage) return
+    const hasText = messageText.trim()
+    const hasFile = chatFile instanceof File
+    
+    if (!hasText && !hasFile) return
+    if (sendingMessage) return
 
     try {
       setSendingMessage(true)
-      await sendAppealMessage(appealId, messageText)
+      await sendAppealMessage(appealId, hasText ? messageText : undefined, hasFile ? chatFile : undefined)
       setMessageText("")
+      setChatFile(null)
       // Reload messages
       const newMessages = await getAppealMessages(appealId)
       setMessages(newMessages || [])
@@ -265,6 +283,114 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
         ? prev.filter(id => id !== orgId)
         : [...prev, orgId]
     )
+  }
+
+  // Audio recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        setAudioBlob(audioBlob)
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (error) {
+      console.error('Microphone access denied:', error)
+      alert('Mikrofondan foydalanish uchun ruxsat berilmagan')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    setAudioBlob(null)
+  }
+
+  const sendAudio = async () => {
+    if (!audioBlob) return
+    const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' })
+    try {
+      setSendingMessage(true)
+      await sendAppealMessage(appealId, '🎤 Ovozli xabar', audioFile)
+      setAudioBlob(null)
+      const newMessages = await getAppealMessages(appealId)
+      setMessages(newMessages || [])
+    } catch (error) {
+      console.error('Audio yuborishda xatolik:', error)
+    } finally {
+      setSendingMessage(false)
+    }
+  }
+
+  // Location function
+  const sendLocation = async () => {
+    setIsLocationLoading(true)
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        })
+      })
+      
+      const { latitude, longitude } = position.coords
+      const locationMessage = `📍 Joylashuv: https://maps.google.com/maps?q=${latitude},${longitude}`
+      
+      await sendAppealMessage(appealId, locationMessage)
+      const newMessages = await getAppealMessages(appealId)
+      setMessages(newMessages || [])
+    } catch (error) {
+      console.error('Location error:', error)
+      alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
+    } finally {
+      setIsLocationLoading(false)
+    }
+  }
+
+  // Handle paste for images
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          setChatFile(file)
+        }
+        break
+      }
+    }
+  }
+
+  // Trigger file input click
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click()
   }
 
   const formatDate = (dateStr: string) => {
@@ -569,28 +695,136 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                         </ScrollArea>
                         
                         {/* Message Input */}
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Xabar yozing..."
-                            value={messageText}
-                            onChange={(e) => setMessageText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault()
-                                handleSendMessage()
-                              }
-                            }}
-                          />
-                          <Button 
-                            onClick={handleSendMessage} 
-                            disabled={sendingMessage || !messageText.trim()}
-                          >
-                            {sendingMessage ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                          </Button>
+                        <div className="flex flex-col gap-2">
+                          {/* Audio Recording UI */}
+                          {isRecording && (
+                            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                              <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+                              <span className="text-sm text-red-600 font-medium">Yozib olinmoqda...</span>
+                              <div className="flex-1" />
+                              <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
+                                Tugatish
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
+                                Bekor qilish
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Audio Preview */}
+                          {audioBlob && !isRecording && (
+                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                              <Mic className="h-4 w-4 text-blue-600" />
+                              <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
+                              <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700" disabled={sendingMessage}>
+                                {sendingMessage ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Send className="h-3 w-3 mr-1" /> Yuborish</>}
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2">
+                            {/* Hidden file input */}
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              className="hidden"
+                              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                              onChange={(e) => {
+                                setChatFile(e.target.files?.[0] || null)
+                                e.target.value = ''
+                              }}
+                            />
+                            
+                            {/* File attach button */}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="shrink-0" 
+                              type="button" 
+                              title="Fayl biriktirish"
+                              onClick={handleFileButtonClick}
+                            >
+                              <Paperclip className="h-4 w-4" />
+                            </Button>
+                            
+                            {/* Audio record */}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className={cn("shrink-0", isRecording && "text-red-500")}
+                              type="button"
+                              onClick={isRecording ? stopRecording : startRecording}
+                              title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
+                            >
+                              <Mic className="h-4 w-4" />
+                            </Button>
+                            
+                            {/* Location */}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="shrink-0" 
+                              type="button"
+                              onClick={sendLocation}
+                              disabled={isLocationLoading}
+                              title="Joylashuvni yuborish"
+                            >
+                              <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
+                            </Button>
+                            
+                            <Input
+                              placeholder="Xabar yozing... (Ctrl+V - rasm)"
+                              value={messageText}
+                              onChange={(e) => setMessageText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  handleSendMessage()
+                                }
+                              }}
+                              onPaste={handlePaste}
+                            />
+                            <Button 
+                              onClick={handleSendMessage} 
+                              disabled={sendingMessage || (!messageText.trim() && !chatFile)}
+                            >
+                              {sendingMessage ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                          
+                          {/* File preview */}
+                          {chatFile && (
+                            <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                              {chatFile.type.startsWith('image/') ? (
+                                <>
+                                  <Image className="h-4 w-4 text-blue-500" />
+                                  <img 
+                                    src={URL.createObjectURL(chatFile)} 
+                                    alt="Tanlangan rasm" 
+                                    className="h-12 w-12 object-cover rounded"
+                                  />
+                                </>
+                              ) : (
+                                <FileText className="h-4 w-4" />
+                              )}
+                              <span className="text-xs text-muted-foreground flex-1 truncate">{chatFile.name}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => setChatFile(null)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </TabsContent>

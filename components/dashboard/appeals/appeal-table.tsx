@@ -24,11 +24,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
 
   if (appeals.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="rounded-full bg-slate-100 p-4 mb-4">
-          <MessageSquare className="h-8 w-8 text-slate-400" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="rounded-full bg-slate-100 p-5 mb-4">
+          <MessageSquare className="h-10 w-10 text-slate-400" />
         </div>
-        <h3 className="text-lg font-medium text-slate-700 mb-1">Murojaatlar topilmadi</h3>
+        <h3 className="text-lg font-semibold text-slate-700 mb-2">Murojaatlar topilmadi</h3>
         <p className="text-sm text-slate-500 text-center max-w-sm">
           Hozircha bu filtrlar bo'yicha murojaatlar mavjud emas.
         </p>
@@ -40,76 +40,69 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-slate-50 hover:bg-slate-50">
-            <TableHead className="font-semibold text-slate-700 py-3">Fuqaro</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Mavzu</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Kategoriya</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Holat</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Muhimlik</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Hudud</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3">Sana</TableHead>
-            <TableHead className="font-semibold text-slate-700 py-3 w-[60px]"></TableHead>
+          <TableRow className="bg-white border-b border-slate-200 hover:bg-white">
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">ID</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Murojaatchi</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Mahalla</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Turi</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Sana</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">Holati</TableHead>
+            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6 w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {appeals.map((appeal, index) => (
             <TableRow 
               key={appeal.id} 
-              className={cn(
-                "cursor-pointer transition-colors border-b border-slate-100",
-                index % 2 === 0 ? "bg-white" : "bg-slate-50/50",
-                "hover:bg-blue-50/50"
-              )}
+              className="cursor-pointer transition-colors border-b border-slate-100 hover:bg-slate-50/80"
               onClick={() => handleRowClick(appeal)}
             >
-              <TableCell className="py-3">
-                <span className="font-medium text-slate-800">{appeal.citizenName}</span>
+              <TableCell className="py-4 px-6">
+                <span className="text-sm text-slate-600 font-medium">{appeal.id}</span>
               </TableCell>
-              <TableCell className="py-3">
-                <div className="max-w-[200px] truncate text-sm text-slate-600" title={appeal.subject}>
-                  {appeal.subject}
-                </div>
+              <TableCell className="py-4 px-6">
+                <span className="text-sm text-slate-700">{appeal.citizenName}</span>
               </TableCell>
-              <TableCell className="py-3">
-                <span className="text-sm text-slate-600">{appeal.category}</span>
+              <TableCell className="py-4 px-6">
+                <span className="text-sm text-slate-600">{appeal.district || "—"}</span>
               </TableCell>
-              <TableCell className="py-3">
-                <Badge 
-                  variant="outline"
-                  className={cn("text-xs font-medium border", STATUS_COLORS[appeal.status])}
-                >
-                  {STATUS_LABELS[appeal.status]}
-                </Badge>
+              <TableCell className="py-4 px-6">
+                <span className="text-sm text-slate-600">{appeal.category || "—"}</span>
               </TableCell>
-              <TableCell className="py-3">
-                <Badge 
-                  variant="outline"
-                  className={cn("text-xs font-medium border", PRIORITY_COLORS[appeal.priority])}
-                >
-                  {PRIORITY_LABELS[appeal.priority]}
-                </Badge>
-              </TableCell>
-              <TableCell className="py-3">
-                <span className="text-sm text-slate-600">{appeal.district}</span>
-              </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <span className="text-sm text-slate-500">
-                  {new Date(appeal.createdAt).toLocaleDateString("uz-UZ")}
+                  {new Date(appeal.createdAt).toLocaleDateString("uz-UZ", {
+                    day: "2-digit",
+                    month: "2-digit", 
+                    year: "numeric"
+                  })}
                 </span>
               </TableCell>
-              <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+              <TableCell className="py-4 px-6">
+                <span className={cn(
+                  "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium min-w-[90px]",
+                  appeal.status === "PENDING" && "bg-blue-50 text-blue-600",
+                  appeal.status === "IN_PROGRESS" && "bg-emerald-50 text-emerald-600",
+                  appeal.status === "RESOLVED" && "bg-teal-50 text-teal-600",
+                  appeal.status === "REJECTED" && "bg-rose-50 text-rose-600",
+                  (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-red-50 text-red-600"
+                )}>
+                  {STATUS_LABELS[appeal.status] || appeal.status}
+                </span>
+              </TableCell>
+              <TableCell className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
+                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleRowClick(appeal)}>
+                  <DropdownMenuContent align="end" className="min-w-[150px]">
+                    <DropdownMenuItem onClick={() => handleRowClick(appeal)} className="cursor-pointer">
                       <Eye className="mr-2 h-4 w-4" />
                       Batafsil
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onArchive(appeal.id)}>
+                    <DropdownMenuItem onClick={() => onArchive(appeal.id)} className="cursor-pointer">
                       <Archive className="mr-2 h-4 w-4" />
                       Arxivlash
                     </DropdownMenuItem>

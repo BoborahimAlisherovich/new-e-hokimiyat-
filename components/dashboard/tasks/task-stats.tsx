@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { useTranslation } from "@/lib/i18n/context"
 import { ClipboardList, Clock, Loader2, CheckCircle2 } from "lucide-react"
 
@@ -14,62 +13,54 @@ type TaskStatsProps = {
 export function TaskStats({ total, pending, inProgress, completed }: TaskStatsProps) {
   const t = useTranslation()
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{t.dashboard.totalTasks}</p>
-              <p className="text-2xl font-bold">{total}</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <ClipboardList className="h-6 w-6 text-blue-600" />
-            </div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">{t.dashboard.totalTasks}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-1">{total}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-3 bg-slate-100 rounded-lg">
+            <ClipboardList className="h-5 w-5 text-slate-600" />
+          </div>
+        </div>
+      </div>
 
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{t.task.statuses.NEW}</p>
-              <p className="text-2xl font-bold">{pending}</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">{t.task.statuses.NEW}</p>
+            <p className="text-2xl font-bold text-amber-600 mt-1">{pending}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-3 bg-amber-50 rounded-lg">
+            <Clock className="h-5 w-5 text-amber-600" />
+          </div>
+        </div>
+      </div>
 
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{t.task.statuses.IN_PROGRESS}</p>
-              <p className="text-2xl font-bold">{inProgress}</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-              <Loader2 className="h-6 w-6 text-orange-600" />
-            </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">{t.task.statuses.IN_PROGRESS}</p>
+            <p className="text-2xl font-bold text-blue-600 mt-1">{inProgress}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <Loader2 className="h-5 w-5 text-blue-600" />
+          </div>
+        </div>
+      </div>
 
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{t.task.statuses.COMPLETED}</p>
-              <p className="text-2xl font-bold">{completed}</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-            </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">{t.task.statuses.COMPLETED}</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-1">{completed}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-3 bg-emerald-50 rounded-lg">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -773,13 +773,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def send_message(self, request, pk=None):
-        """Foydalanuvchiga xabar yuborish"""
+        """Foydalanuvchiga xabar yuborish (matn va/yoki fayl)"""
         appeal = self.get_object()
-        text = request.data.get('text')
+        text = request.data.get('text', '')
+        uploaded_file = request.FILES.get('file')
         
-        if not text:
+        if not text and not uploaded_file:
             return Response(
-                {'error': 'Xabar matni kiritilmagan'},
+                {'error': 'Xabar matni yoki fayl kiritilmagan'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -793,14 +794,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             appeal=appeal,
             is_from_admin=True,
             admin=admin,
-            text=text
+            text=text or ''
         )
         
-        # Telegram orqali yuborish - Javob berish tugmasi bilan
+        # Telegram orqali yuborish
         try:
             settings = BotSettings.objects.first()
             if settings and settings.bot_token:
-                import requests
+                import requests as req
                 
                 # Javob berish tugmasi
                 keyboard = {
@@ -811,18 +812,76 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                     ]
                 }
                 
-                requests.post(
-                    f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
-                    json={
-                        'chat_id': appeal.telegram_user.telegram_id,
-                        'text': f"📨 Sizning #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}",
-                        'parse_mode': 'HTML',
-                        'reply_markup': keyboard
-                    },
-                    timeout=10
-                )
+                chat_id = appeal.telegram_user.telegram_id
+                
+                # Fayl bor bo'lsa
+                if uploaded_file:
+                    file_name = uploaded_file.name.lower()
+                    content_type = uploaded_file.content_type or ''
+                    
+                    # Rasm
+                    if content_type.startswith('image/') or file_name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                        req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/sendPhoto',
+                            data={
+                                'chat_id': chat_id,
+                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga rasm yuborildi",
+                                'parse_mode': 'HTML',
+                                'reply_markup': str(keyboard).replace("'", '"')
+                            },
+                            files={'photo': (uploaded_file.name, uploaded_file.read(), content_type)},
+                            timeout=30
+                        )
+                    # Video
+                    elif content_type.startswith('video/') or file_name.endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                        req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/sendVideo',
+                            data={
+                                'chat_id': chat_id,
+                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga video yuborildi",
+                                'parse_mode': 'HTML',
+                            },
+                            files={'video': (uploaded_file.name, uploaded_file.read(), content_type)},
+                            timeout=60
+                        )
+                    # Audio
+                    elif content_type.startswith('audio/') or file_name.endswith(('.mp3', '.ogg', '.wav', '.webm', '.m4a')):
+                        req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/sendVoice',
+                            data={
+                                'chat_id': chat_id,
+                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob" if not text else text,
+                            },
+                            files={'voice': (uploaded_file.name, uploaded_file.read(), content_type)},
+                            timeout=30
+                        )
+                    # Boshqa fayl
+                    else:
+                        req.post(
+                            f'https://api.telegram.org/bot{settings.bot_token}/sendDocument',
+                            data={
+                                'chat_id': chat_id,
+                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga fayl yuborildi",
+                                'parse_mode': 'HTML',
+                            },
+                            files={'document': (uploaded_file.name, uploaded_file.read(), content_type)},
+                            timeout=30
+                        )
+                else:
+                    # Faqat matn
+                    req.post(
+                        f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
+                        json={
+                            'chat_id': chat_id,
+                            'text': f"📨 Sizning #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}",
+                            'parse_mode': 'HTML',
+                            'reply_markup': keyboard
+                        },
+                        timeout=10
+                    )
         except Exception as e:
-            pass  # Log xato
+            import logging
+            logging.error(f"Telegram xabar yuborishda xato: {e}")
         
         return Response({'success': True, 'message_id': message.id})
     

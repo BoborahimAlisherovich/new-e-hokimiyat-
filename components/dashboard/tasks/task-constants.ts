@@ -1,21 +1,21 @@
 export const PRIORITY_COLORS: Record<string, string> = {
-  PAST: "bg-gray-100 text-gray-800 border-gray-200",
-  ODDIY: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  YUQORI: "bg-orange-100 text-orange-800 border-orange-200",
-  FAVQULODDA: "bg-red-100 text-red-800 border-red-200",
-  MUHIM: "bg-orange-100 text-orange-800 border-orange-200",
-  SHOSHILINCH: "bg-red-100 text-red-800 border-red-200",
-  MUHIM_SHOSHILINCH: "bg-red-100 text-red-800 border-red-200",
+  PAST: "bg-slate-50 text-slate-600 border-slate-200",
+  ODDIY: "bg-amber-50 text-amber-600 border-amber-200",
+  YUQORI: "bg-orange-50 text-orange-600 border-orange-200",
+  FAVQULODDA: "bg-rose-50 text-rose-600 border-rose-200",
+  MUHIM: "bg-orange-50 text-orange-600 border-orange-200",
+  SHOSHILINCH: "bg-rose-50 text-rose-600 border-rose-200",
+  MUHIM_SHOSHILINCH: "bg-rose-50 text-rose-600 border-rose-200",
 }
 
 export const STATUS_COLORS: Record<string, string> = {
-  YANGI: "bg-blue-100 text-blue-800 border-blue-200",
-  IJRODA: "bg-green-100 text-green-800 border-green-200",
-  BAJARILDI: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  QAYTA_IJROGA_YUBORILDI: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  MUDDATI_KECH: "bg-red-100 text-red-800 border-red-200",
-  BAJARILMADI: "bg-gray-100 text-gray-800 border-gray-200",
-  NAZORATDAN_YECHILDI: "bg-gray-100 text-gray-800 border-gray-200",
+  YANGI: "bg-blue-50 text-blue-600 border-blue-100",
+  IJRODA: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  BAJARILDI: "bg-teal-50 text-teal-600 border-teal-100",
+  QAYTA_IJROGA_YUBORILDI: "bg-amber-50 text-amber-600 border-amber-100",
+  MUDDATI_KECH: "bg-red-50 text-red-600 border-red-100",
+  BAJARILMADI: "bg-slate-50 text-slate-600 border-slate-200",
+  NAZORATDAN_YECHILDI: "bg-slate-50 text-slate-600 border-slate-200",
 }
 
 export const STATUS_LABELS: Record<string, string> = {

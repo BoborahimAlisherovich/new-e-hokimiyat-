@@ -1,27 +1,28 @@
 export const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-gray-100 text-gray-800 border-gray-200",
-  MEDIUM: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  HIGH: "bg-red-100 text-red-800 border-red-200",
+  LOW: "bg-slate-50 text-slate-600 border-slate-200",
+  MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
+  HIGH: "bg-rose-50 text-rose-600 border-rose-200",
   // Telegram bot priorities
-  low: "bg-gray-100 text-gray-800 border-gray-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  urgent: "bg-red-100 text-red-800 border-red-200",
+  low: "bg-slate-50 text-slate-600 border-slate-200",
+  medium: "bg-amber-50 text-amber-700 border-amber-200",
+  high: "bg-orange-50 text-orange-600 border-orange-200",
+  urgent: "bg-rose-50 text-rose-600 border-rose-200",
 }
 
 export const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-blue-100 text-blue-800 border-blue-200",
-  IN_PROGRESS: "bg-orange-100 text-orange-800 border-orange-200",
-  RESOLVED: "bg-green-100 text-green-800 border-green-200",
-  REJECTED: "bg-red-100 text-red-800 border-red-200",
+  PENDING: "bg-blue-50 text-blue-600 border-blue-100",
+  IN_PROGRESS: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  RESOLVED: "bg-teal-50 text-teal-600 border-teal-100",
+  REJECTED: "bg-rose-50 text-rose-600 border-rose-100",
+  OVERDUE: "bg-red-50 text-red-600 border-red-100",
   // Telegram bot statuses
-  pending_ai: "bg-blue-100 text-blue-800 border-blue-200",
-  pending_review: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  approved: "bg-green-100 text-green-800 border-green-200",
-  rejected: "bg-red-100 text-red-800 border-red-200",
-  responded: "bg-purple-100 text-purple-800 border-purple-200",
-  forwarded: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  resolved: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  pending_ai: "bg-blue-50 text-blue-600 border-blue-100",
+  pending_review: "bg-amber-50 text-amber-600 border-amber-100",
+  approved: "bg-teal-50 text-teal-600 border-teal-100",
+  rejected: "bg-rose-50 text-rose-600 border-rose-100",
+  responded: "bg-violet-50 text-violet-600 border-violet-100",
+  forwarded: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  resolved: "bg-emerald-50 text-emerald-600 border-emerald-100",
 }
 
 export const PRIORITY_LABELS: Record<string, string> = {

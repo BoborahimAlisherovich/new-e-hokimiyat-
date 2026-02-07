@@ -8,8 +8,6 @@ import { AppealFilters } from "@/components/dashboard/appeals/appeal-filters"
 import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
 import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
-import { Card, CardContent } from "@/components/ui/card"
-import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
 export default function AppealsPage() {
@@ -111,16 +109,10 @@ export default function AppealsPage() {
     return (
       <>
         <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-          <div className="flex items-center justify-center h-64">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center"
-            >
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-slate-700">Yuklanmoqda...</p>
-            </motion.div>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-slate-600 text-sm">Yuklanmoqda...</p>
           </div>
         </div>
       </>
@@ -130,63 +122,37 @@ export default function AppealsPage() {
   return (
     <>
       <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
-        {/* Modern geometric background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-400/8 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-400/6 to-transparent rounded-full blur-xl" />
-        </div>
-        
-        <div className="relative z-10 p-6 space-y-6">
-          {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <AppealStats stats={calculatedStats} />
-          </motion.div>
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <AppealStats stats={calculatedStats} />
 
-          {/* Filters and Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <AppealFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            priorityFilter={priorityFilter}
-            onPriorityChange={setPriorityFilter}
-            categoryFilter={categoryFilter}
-            onCategoryChange={setCategoryFilter}
-            districtFilter={districtFilter}
-            onDistrictChange={setDistrictFilter}
-            options={options}
-            totalCount={appeals.length}
-            filteredCount={filteredAppeals.length}
+        {/* Filters */}
+        <AppealFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          priorityFilter={priorityFilter}
+          onPriorityChange={setPriorityFilter}
+          categoryFilter={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+          districtFilter={districtFilter}
+          onDistrictChange={setDistrictFilter}
+          options={options}
+          totalCount={appeals.length}
+          filteredCount={filteredAppeals.length}
+        />
+
+        {/* Appeals Table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-lg font-semibold text-slate-800">Murojaatlar Jadvali</h2>
+          </div>
+          <AppealTable
+            appeals={filteredAppeals}
+            onView={handleViewAppeal}
+            onArchive={handleArchiveAppeal}
           />
-          </motion.div>
-
-          {/* Appeals Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
-              <CardContent className="p-0">
-                <AppealTable
-                  appeals={filteredAppeals}
-                  onView={handleViewAppeal}
-                  onArchive={handleArchiveAppeal}
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
         </div>
       </div>
       <AppealDetailDialog appeal={selectedAppeal} onClose={() => setSelectedAppeal(null)} />
