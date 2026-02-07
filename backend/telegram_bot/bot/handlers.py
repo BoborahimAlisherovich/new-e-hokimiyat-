@@ -710,8 +710,14 @@ def process_callback_query(callback_query: Dict):
         bot.edit_message_text(
             chat_id,
             message_id,
-            get_text('settings_menu', new_lang),
-            reply_markup=settings_keyboard(new_lang)
+            get_text('language_changed', new_lang)
+        )
+        
+        # Yangi tilda main menyu ko'rsatish
+        bot.send_message(
+            chat_id,
+            get_text('main_menu', new_lang),
+            reply_markup=main_menu_keyboard(new_lang)
         )
         return
     

@@ -132,6 +132,8 @@ Jami: {count} ta murojaat
 
 Quyidagi sozlamalarni o'zgartirishingiz mumkin:""",
         
+        'language_changed': "✅ Til muvaffaqiyatli o'zgartirildi!",
+        
         'btn_change_name': "📝 Ismni o'zgartirish",
         'btn_change_phone': "📱 Telefon raqamni o'zgartirish",
         'btn_change_region': "🏘 Hududni o'zgartirish",
@@ -239,6 +241,7 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_my_appeals': "📋 Мои обращения",
         'btn_about': "ℹ️ О нас",
         'btn_settings': "⚙️ Настройки",
+        'language_changed': "✅ Язык успешно изменен!",
         
         # ... qolgan ruscha tarjimalar
     },
@@ -257,6 +260,7 @@ Please register to continue.""",
         'btn_my_appeals': "📋 My Appeals",
         'btn_about': "ℹ️ About Us",
         'btn_settings': "⚙️ Settings",
+        'language_changed': "✅ Language successfully changed!",
         
         # ... qolgan inglizcha tarjimalar
     }
