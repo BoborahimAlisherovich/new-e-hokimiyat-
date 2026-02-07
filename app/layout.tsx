@@ -1,7 +1,6 @@
 // @ts-nocheck
 import type React from "react"
 import type { Metadata } from "next"
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -35,7 +34,6 @@ export default function RootLayout({
           <I18nProvider>
             <PerformanceGuard />
             {children}
-            <Analytics />
           </I18nProvider>
           <a
             href="https://www.flaticon.com/free-icons/government"
