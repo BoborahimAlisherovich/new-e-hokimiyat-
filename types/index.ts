@@ -365,8 +365,8 @@ export interface UserCreateInput {
   phone?: string
   role: UserRole
   position?: string
-  organization_id?: number
-  district_id?: number
+  organization?: string  // UUID string
+  district_id?: string   // UUID string
 }
 
 export interface UserUpdateInput extends Partial<Omit<UserCreateInput, 'pnfl'>> {
