@@ -854,20 +854,20 @@ def create_telegram_bot_data():
     
     # Hududlar (mahallalar)
     regions_data = [
-        {"name_uz": "Hatirchi shaharchasi", "name_ru": "г. Хатирчи", "name_en": "Hatirchi town", "order": 1},
-        {"name_uz": "Gulzor MFY", "name_ru": "МСГ Гулзор", "name_en": "Gulzor MFY", "order": 2},
-        {"name_uz": "Bogʻishamol MFY", "name_ru": "МСГ Богишамол", "name_en": "Bogishamol MFY", "order": 3},
-        {"name_uz": "Yangi hayot MFY", "name_ru": "МСГ Янги хаёт", "name_en": "Yangi hayot MFY", "order": 4},
-        {"name_uz": "Mustaqillik MFY", "name_ru": "МСГ Мустакиллик", "name_en": "Mustaqillik MFY", "order": 5},
-        {"name_uz": "Navbahor MFY", "name_ru": "МСГ Навбахор", "name_en": "Navbahor MFY", "order": 6},
-        {"name_uz": "Tinchlik MFY", "name_ru": "МСГ Тинчлик", "name_en": "Tinchlik MFY", "order": 7},
-        {"name_uz": "Oqtepa MFY", "name_ru": "МСГ Октепа", "name_en": "Oqtepa MFY", "order": 8},
+        {"name_uz": "Hatirchi shaharchasi", "name_ru": "г. Хатирчи", "name_en": "Hatirchi town", "code": "hatirchi", "order": 1},
+        {"name_uz": "Gulzor MFY", "name_ru": "МСГ Гулзор", "name_en": "Gulzor MFY", "code": "gulzor", "order": 2},
+        {"name_uz": "Bogʻishamol MFY", "name_ru": "МСГ Богишамол", "name_en": "Bogishamol MFY", "code": "bogishamol", "order": 3},
+        {"name_uz": "Yangi hayot MFY", "name_ru": "МСГ Янги хаёт", "name_en": "Yangi hayot MFY", "code": "yangihayot", "order": 4},
+        {"name_uz": "Mustaqillik MFY", "name_ru": "МСГ Мустакиллик", "name_en": "Mustaqillik MFY", "code": "mustaqillik", "order": 5},
+        {"name_uz": "Navbahor MFY", "name_ru": "МСГ Навбахор", "name_en": "Navbahor MFY", "code": "navbahor", "order": 6},
+        {"name_uz": "Tinchlik MFY", "name_ru": "МСГ Тинчлик", "name_en": "Tinchlik MFY", "code": "tinchlik", "order": 7},
+        {"name_uz": "Oqtepa MFY", "name_ru": "МСГ Октепа", "name_en": "Oqtepa MFY", "code": "oqtepa", "order": 8},
     ]
     
     regions = []
     for data in regions_data:
         region, created = BotRegion.objects.get_or_create(
-            name_uz=data['name_uz'],
+            code=data['code'],
             defaults=data
         )
         regions.append(region)
