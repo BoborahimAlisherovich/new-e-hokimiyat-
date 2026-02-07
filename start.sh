@@ -42,13 +42,13 @@ echo "✅ Backend started with WebSocket support"
 
 # Start Next.js frontend
 echo "⚛️  Starting Next.js frontend on port 3000..."
-npm run dev &
+npx next dev -H 0.0.0.0 -p 3000 &
 FRONTEND_PID=$!
 
 echo "✅ Both services started successfully!"
-echo "🌐 Frontend: http://localhost:3000"
-echo "🔗 Backend API: http://localhost:8000"
-echo "💬 WebSocket Chat: ws://localhost:8000/ws/tasks/{task_id}/chat/"
+echo "🌐 Frontend: http://10.185.6.214:3000"
+echo "🔗 Backend API: http://10.185.6.214:8000"
+echo "💬 WebSocket Chat: ws://10.185.6.214:8000/ws/tasks/{task_id}/chat/"
 echo ""
 echo "📝 To stop the services, press Ctrl+C or run: kill $BACKEND_PID $FRONTEND_PID"
 echo "🔴 Redis logs: redis-cli ping"
