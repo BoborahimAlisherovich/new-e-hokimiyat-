@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Organization } from "@/types"
-import { Plus, X, Search } from "lucide-react"
+import { Plus, X, Search, Filter, Sparkles } from "lucide-react"
 
 interface UserFiltersProps {
   searchQuery: string
@@ -48,48 +48,61 @@ export function UserFilters({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h3 className="text-base font-semibold text-slate-800">Filtrlash va qidiruv</h3>
-          {hasActiveFilters && (
-            <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-600">
-              {filteredCount} / {totalCount} ta
-            </Badge>
-          )}
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+      {/* Header with gradient accent */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 border-b border-slate-100 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white shadow-sm">
+              <Filter className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-800">Filtrlash va qidiruv</h3>
+              <p className="text-xs text-slate-500">Foydalanuvchilarni qidiring va filtrlang</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="text-xs bg-indigo-100 text-indigo-700 border-indigo-200">
+                <Sparkles className="h-3 w-3 mr-1" />
+                {filteredCount} / {totalCount} ta
+              </Badge>
+            )}
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
+                <X className="h-4 w-4 mr-1" />
+                Tozalash
+              </Button>
+            )}
+          </div>
         </div>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-slate-700">
-            <X className="h-4 w-4 mr-1" />
-            Tozalash
+      </div>
+
+      <div className="p-4 space-y-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Foydalanuvchilarni qidirish..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-9 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+            />
+          </div>
+          <Button onClick={onCreate} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all">
+            <Plus className="h-4 w-4 mr-1" />
+            Yangi foydalanuvchi
           </Button>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Foydalanuvchilarni qidirish..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 border-slate-200"
-          />
         </div>
-        <Button onClick={onCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Yangi foydalanuvchi
-        </Button>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">Rol bo'yicha</label>
-          <Select value={roleFilter} onValueChange={onRoleChange}>
-            <SelectTrigger className="border-slate-200">
-              <SelectValue placeholder="Rolni tanlang" />
-            </SelectTrigger>
-          <SelectContent>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 ml-1">Rol bo'yicha</label>
+            <Select value={roleFilter} onValueChange={onRoleChange}>
+              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                <SelectValue placeholder="Rolni tanlang" />
+              </SelectTrigger>
+              <SelectContent>
               <SelectItem value="all">Barchasi</SelectItem>
               <SelectItem value="HOKIM">Hokim</SelectItem>
               <SelectItem value="HOKIMLIK_MASUL">Hokimlik mas'uli</SelectItem>
@@ -100,10 +113,10 @@ export function UserFilters({
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600">Holat bo'yicha</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 ml-1">Holat bo'yicha</label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="border-slate-200">
+              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -117,10 +130,10 @@ export function UserFilters({
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600">Tashkilot bo'yicha</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 ml-1">Tashkilot bo'yicha</label>
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className="border-slate-200">
+              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
             <SelectContent>
@@ -134,6 +147,7 @@ export function UserFilters({
             </Select>
           </div>
         </div>
+      </div>
     </div>
   )
 }
