@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Edit, Eye, Lock, MoreHorizontal, Building2, Trash2, Unlock } from "lucide-react"
@@ -29,88 +28,87 @@ const getResponsibleUser = (org: any, users: any[]) => {
 export function OrganizationTable({ organizations, users = [], onDelete, onToggleStatus }: OrganizationTableProps) {
   if (organizations.length === 0) {
     return (
-      <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <Building2 className="h-8 w-8 text-muted-foreground" />
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="rounded-full bg-slate-100 p-4 mb-4">
+            <Building2 className="h-8 w-8 text-slate-400" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-1">Tashkilotlar topilmadi</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-sm">
+          <h3 className="text-lg font-medium text-slate-700 mb-1">Tashkilotlar topilmadi</h3>
+          <p className="text-sm text-slate-500 text-center max-w-sm">
             Hozircha bu filtrlar bo'yicha tashkilotlar mavjud emas. Yangi tashkilot qo'shing yoki filtrlarni o'zgartiring.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-      <CardContent className="p-0">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-border hover:bg-muted/20 transition-colors duration-300 bg-muted/10">
-              <TableHead className="text-foreground font-semibold px-6 py-4">ID</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Tashkilot nomi</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Rahbar</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Telefon</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4">Holat</TableHead>
-              <TableHead className="text-foreground font-semibold px-6 py-4 w-[70px]">Amallar</TableHead>
+            <TableRow className="bg-white hover:bg-white border-b border-slate-200">
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4">ID</TableHead>
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4">Tashkilot nomi</TableHead>
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4">Rahbar</TableHead>
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4">Telefon</TableHead>
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4">Holat</TableHead>
+              <TableHead className="font-semibold text-slate-700 py-3.5 px-4 w-[70px]">Amallar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {organizations.map((org) => (
-              <TableRow key={org.id} className="border-border hover:bg-muted/10 transition-colors duration-300 group">
-                <TableCell className="px-6 py-4">
-                  <code className="rounded-lg bg-muted/30 px-3 py-2 text-sm font-mono text-muted-foreground border border-border/50">
+              <TableRow key={org.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                <TableCell className="py-3 px-4">
+                  <code className="rounded-md bg-slate-100 px-2 py-1 text-sm font-mono text-slate-600">
                     {formatOrgId(String(org.id))}
                   </code>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="py-3 px-4">
                   <div>
-                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                    <p className="font-medium text-slate-800">
                       {org.name}
                     </p>
                     {org.sector_name && (
-                      <p className="text-sm text-muted-foreground">{org.sector_name}</p>
+                      <p className="text-sm text-slate-500">{org.sector_name}</p>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4">
-                  <span className="text-sm text-muted-foreground font-medium">
+                <TableCell className="py-3 px-4">
+                  <span className="text-sm text-slate-600">
                     {org.director_name || org.head || getResponsibleUser(org, users) || "—"}
                   </span>
                 </TableCell>
-                <TableCell className="px-6 py-4">
-                  <span className="text-sm text-muted-foreground font-medium">{org.phone || "—"}</span>
+                <TableCell className="py-3 px-4">
+                  <span className="text-sm text-slate-600">{org.phone || "—"}</span>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="py-3 px-4">
                   <Badge
                     variant="outline"
-                    className={`font-normal border-border/50 ${
+                    className={`font-medium text-xs border ${
                       org.is_active
-                        ? "bg-green-500/10 text-green-600 hover:bg-green-500/20"
-                        : "bg-muted/20 text-muted-foreground hover:bg-muted/30"
-                    } transition-colors duration-200`}
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                        : "bg-slate-50 text-slate-600 border-slate-300"
+                    }`}
                   >
                     {org.is_active ? "Faol" : "Nofaol"}
                   </Badge>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="py-3 px-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-muted/20 hover:text-primary transition-all duration-300 rounded-lg">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-xl">
+                    <DropdownMenuContent align="end">
                       <Link href={`/dashboard/organizations/${org.id}`}>
-                        <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
+                        <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           Batafsil ko'rish
                         </DropdownMenuItem>
                       </Link>
                       <Link href={`/dashboard/organizations/${org.id}`}>
-                        <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg">
+                        <DropdownMenuItem>
                           <Edit className="mr-2 h-4 w-4" />
                           Tahrirlash
                         </DropdownMenuItem>
@@ -118,7 +116,6 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => onToggleStatus?.(org.id, org.is_active)}
-                        className="hover:bg-amber-500/10 hover:text-amber-600 transition-all duration-300 rounded-lg"
                       >
                         {org.is_active ? (
                           <><Lock className="mr-2 h-4 w-4" /> Nofaollashtirish</>
@@ -128,7 +125,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onDelete?.(org.id)}
-                        className="hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
+                        className="text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         O'chirish
@@ -140,7 +137,6 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

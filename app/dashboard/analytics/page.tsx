@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
     return (
       <>
         <Header title={t.pages.analytics.title} description={t.pages.analytics.description} />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+        <div className="p-6">
           <div className="flex items-center justify-center h-[calc(100vh-120px)]">
             <div className="text-center">
               <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
   return (
     <>
       <Header title={t.pages.analytics.title} description={t.pages.analytics.description} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      <div className="p-6">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />

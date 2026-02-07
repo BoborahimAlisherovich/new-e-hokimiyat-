@@ -131,7 +131,7 @@ export default function UserEditPage() {
     return (
       <>
         <Header title="Foydalanuvchini tahrirlash" description="Ma'lumotlar yuklanmoqda..." />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 p-6">
+        <div className="p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -147,7 +147,7 @@ export default function UserEditPage() {
     return (
       <>
         <Header title="Foydalanuvchi topilmadi" description="So'ralgan foydalanuvchi mavjud emas" />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 p-6">
+        <div className="p-6">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <AlertTriangle className="h-16 w-16 text-yellow-500" />
             <p className="text-muted-foreground">Foydalanuvchi topilmadi</p>
@@ -167,7 +167,7 @@ export default function UserEditPage() {
         title="Foydalanuvchini tahrirlash" 
         description={`${user.last_name} ${user.first_name} ma'lumotlarini o'zgartirish`} 
       />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 p-6">
+      <div className="p-6">
         {/* Back button */}
         <div className="mb-6">
           <Button variant="outline" onClick={() => router.back()}>

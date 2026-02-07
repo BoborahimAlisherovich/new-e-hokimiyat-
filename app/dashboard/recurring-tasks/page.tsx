@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -355,23 +354,16 @@ export default function RecurringTasksPage() {
         title="Takrorlanuvchi topshiriqlar" 
         description="Avtomatik ravishda yaratiluvchi muntazam topshiriqlar" 
       />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50">
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-200/15 to-transparent rounded-full blur-2xl" />
-        </div>
-        
-        <div className="relative z-10 p-6 space-y-6">
+      <div className="p-6 space-y-6">
           {/* Header Actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Repeat className="h-5 w-5 text-primary" />
+              <div className="p-2.5 rounded-lg bg-slate-100">
+                <Repeat className="h-5 w-5 text-slate-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">Boshqaruv</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-lg font-semibold text-slate-800">Boshqaruv</h2>
+                <p className="text-sm text-slate-500">
                   Takrorlanuvchi topshiriqlarni yarating va boshqaring
                 </p>
               </div>
@@ -539,67 +531,59 @@ export default function RecurringTasksPage() {
       {/* Statistics */}
       {statistics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <Repeat className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{statistics.total}</p>
-                  <p className="text-sm text-muted-foreground">Jami</p>
-                </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-blue-50">
+                <Repeat className="h-5 w-5 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-100">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{statistics.active}</p>
-                  <p className="text-sm text-muted-foreground">Faol</p>
-                </div>
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">{statistics.total}</p>
+                <p className="text-sm text-slate-500">Jami</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-100">
-                  <Pause className="h-5 w-5 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{statistics.paused}</p>
-                  <p className="text-sm text-muted-foreground">To&apos;xtatilgan</p>
-                </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-50">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100">
-                  <History className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {statistics.total_tasks_created}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Yaratilgan</p>
-                </div>
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">{statistics.active}</p>
+                <p className="text-sm text-slate-500">Faol</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-amber-50">
+                <Pause className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">{statistics.paused}</p>
+                <p className="text-sm text-slate-500">To&apos;xtatilgan</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-purple-50">
+                <History className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">
+                  {statistics.total_tasks_created}
+                </p>
+                <p className="text-sm text-slate-500">Yaratilgan</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Filter */}
       <div className="flex items-center gap-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 bg-white border-slate-200">
             <SelectValue placeholder="Holat bo'yicha" />
           </SelectTrigger>
           <SelectContent>
@@ -609,26 +593,25 @@ export default function RecurringTasksPage() {
             <SelectItem value="COMPLETED">Yakunlangan</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={loadTasks}>
+        <Button variant="outline" onClick={loadTasks} className="border-slate-200">
           <RefreshCw className="h-4 w-4 mr-2" />
           Yangilash
         </Button>
       </div>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
             </div>
           ) : tasks.length === 0 ? (
             <div className="text-center py-12">
-              <Repeat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">
+              <Repeat className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+              <h3 className="text-lg font-medium text-slate-700 mb-2">
                 Takrorlanuvchi topshiriqlar yo&apos;q
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-slate-500 mb-4">
                 Yangi takrorlanuvchi topshiriq yarating
               </p>
               <Button onClick={() => setIsDialogOpen(true)}>
@@ -639,20 +622,20 @@ export default function RecurringTasksPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
-                  <TableHead className="font-semibold text-slate-700 py-3">Sarlavha</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3">Takrorlanish</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3">Holat</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3">Keyingi ishga tushish</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-3">Yaratilgan</TableHead>
-                  <TableHead className="w-16 py-3"></TableHead>
+                <TableRow className="bg-white hover:bg-white border-b border-slate-200">
+                  <TableHead className="font-semibold text-slate-700 py-3.5">Sarlavha</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3.5">Takrorlanish</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3.5">Holat</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3.5">Keyingi ishga tushish</TableHead>
+                  <TableHead className="font-semibold text-slate-700 py-3.5">Yaratilgan</TableHead>
+                  <TableHead className="w-16 py-3.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map((task, index) => (
+                {tasks.map((task) => (
                   <TableRow 
                     key={task.id}
-                    className={`border-b border-slate-100 hover:bg-blue-50/50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                   >
                     <TableCell className="py-3">
                       <div>
@@ -745,29 +728,28 @@ export default function RecurringTasksPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+      </div>
       
       {/* History Dialog */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-slate-800">
+              <History className="h-5 w-5 text-slate-600" />
               Yaratilgan topshiriqlar tarixi
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-500">
               {editingTask?.title} - oxirgi 20 ta topshiriq
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             {historyLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
               </div>
             ) : historyData.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <div className="text-center py-8 text-slate-500">
+                <Calendar className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p>Hali topshiriq yaratilmagan</p>
               </div>
             ) : (
@@ -776,17 +758,17 @@ export default function RecurringTasksPage() {
                   {historyData.map((item: any, index: number) => (
                     <div 
                       key={item.id || index} 
-                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <div className="p-2 rounded-lg bg-blue-50">
+                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-sm text-slate-800">
                             Topshiriq #{item.created_task?.id || item.task_id}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-slate-500">
                             {item.created_at 
                               ? format(new Date(item.created_at), "dd.MM.yyyy HH:mm", { locale: uz })
                               : "—"
@@ -815,7 +797,6 @@ export default function RecurringTasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-        </div>
       </div>
     </>
   );

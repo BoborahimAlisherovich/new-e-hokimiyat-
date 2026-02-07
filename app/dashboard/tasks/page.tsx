@@ -142,9 +142,9 @@ export default function TasksPage() {
     return (
       <>
         <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-        <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="p-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-600 border-t-transparent mx-auto"></div>
             <p className="mt-4 text-slate-600 text-sm">{t.common.loading}</p>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function TasksPage() {
   return (
     <>
       <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Stats */}
         <TaskStats
           total={stats.total}
