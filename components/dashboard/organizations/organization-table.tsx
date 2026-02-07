@@ -55,13 +55,13 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       
       <Table>
         <TableHeader>
-          <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide">ID</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide">Tashkilot nomi</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide">Rahbar</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide">Telefon</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide">Holat</TableHead>
-            <TableHead className="font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wide w-[70px]">Amallar</TableHead>
+          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Tashkilot nomi</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Rahbar</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Telefon</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Holat</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm w-[70px]">Amallar</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -71,28 +71,28 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
               className="border-b border-slate-100/80 hover:bg-gradient-to-r hover:from-violet-50/50 hover:to-purple-50/50 transition-all duration-200 group"
               style={{ animationDelay: `${index * 30}ms` }}
             >
-              <TableCell className="py-3.5 px-4">
-                <code className="rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 px-2.5 py-1 text-sm font-mono text-violet-600">
+              <TableCell className="py-4 px-4">
+                <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-3 py-1.5 text-sm font-mono font-bold text-violet-700 shadow-sm">
                   {formatOrgId(String(org.id))}
                 </code>
               </TableCell>
-              <TableCell className="py-3.5 px-4">
+              <TableCell className="py-4 px-4">
                 <div>
-                  <p className="font-medium text-slate-800">
+                  <p className="font-semibold text-slate-900 text-base">
                     {org.name}
                   </p>
                   {org.sector_name && (
-                    <p className="text-xs text-slate-500 mt-0.5">{org.sector_name}</p>
+                    <p className="text-sm text-slate-500 mt-0.5 font-medium">{org.sector_name}</p>
                   )}
                 </div>
               </TableCell>
-              <TableCell className="py-3.5 px-4">
-                <span className="text-sm text-slate-600">
+              <TableCell className="py-4 px-4">
+                <span className="text-sm text-slate-700 font-medium">
                   {org.director_name || org.head || getResponsibleUser(org, users) || "—"}
                 </span>
               </TableCell>
-              <TableCell className="py-3.5 px-4">
-                <span className="text-sm text-slate-600">{org.phone || "—"}</span>
+              <TableCell className="py-4 px-4">
+                <span className="text-sm text-slate-700 font-medium">{org.phone || "—"}</span>
               </TableCell>
               <TableCell className="py-3.5 px-4">
                 <Badge

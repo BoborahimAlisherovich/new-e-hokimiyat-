@@ -66,12 +66,12 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-white border-b border-slate-200 hover:bg-white">
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">{t.tasks.titleLabel}</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">{t.tasks.categoryLabel}</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">{t.tasks.organizationsLabel}</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">{t.tasks.deadlineLabel}</TableHead>
-            <TableHead className="font-medium text-slate-500 text-sm py-4 px-6">{t.tasks.statusLabel}</TableHead>
+          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.titleLabel}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.categoryLabel}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.organizationsLabel}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.deadlineLabel}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.statusLabel}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -83,23 +83,23 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
               <TableRow 
                 key={task.id} 
                 className={cn(
-                  "cursor-pointer transition-colors border-b border-slate-100 hover:bg-slate-50/80",
+                  "cursor-pointer transition-all duration-200 border-b border-slate-100 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50",
                   isOverdue && "bg-red-50/50 hover:bg-red-50"
                 )}
                 onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
               >
                 <TableCell className="py-4 px-6">
-                  <div className="max-w-[280px] truncate text-sm text-slate-700" title={task.title}>
+                  <div className="max-w-[280px] truncate text-sm font-semibold text-slate-900" title={task.title}>
                     {task.title || '—'}
                   </div>
                 </TableCell>
                 <TableCell className="py-4 px-6">
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-slate-700 font-medium">
                     {categoryLabels[task.category] || task.category || '—'}
                   </span>
                 </TableCell>
                 <TableCell className="py-4 px-6">
-                  <div className="max-w-[200px] truncate text-sm text-slate-600">
+                  <div className="max-w-[200px] truncate text-sm text-slate-700 font-medium">
                     {(task.assigned_organizations || []).map((org: any) => 
                       typeof org === 'object' ? (org.organization?.name || org.name) : org
                     ).filter(Boolean).join(", ") || '—'}
@@ -107,8 +107,8 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 </TableCell>
                 <TableCell className="py-4 px-6">
                   <div className={cn(
-                    "flex items-center gap-1.5 text-sm",
-                    isOverdue ? "text-red-600 font-medium" : "text-slate-500"
+                    "flex items-center gap-1.5 text-sm font-medium",
+                    isOverdue ? "text-red-600 font-semibold" : "text-slate-600"
                   )}>
                     {isOverdue && <AlertTriangle className="h-3.5 w-3.5" />}
                     {(task.deadline || task.due_date) 
@@ -122,14 +122,14 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 </TableCell>
                 <TableCell className="py-4 px-6">
                   <span className={cn(
-                    "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium min-w-[90px]",
-                    task.status === "YANGI" && "bg-blue-50 text-blue-600",
-                    task.status === "IJRODA" && "bg-emerald-50 text-emerald-600",
-                    task.status === "BAJARILDI" && "bg-teal-50 text-teal-600",
-                    task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-50 text-amber-600",
-                    task.status === "MUDDATI_KECH" && "bg-red-50 text-red-600",
-                    task.status === "BAJARILMADI" && "bg-slate-50 text-slate-600",
-                    task.status === "NAZORATDAN_YECHILDI" && "bg-slate-50 text-slate-600"
+                    "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold min-w-[90px] shadow-sm",
+                    task.status === "YANGI" && "bg-blue-100 text-blue-700",
+                    task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
+                    task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
+                    task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
+                    task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
+                    task.status === "BAJARILMADI" && "bg-slate-100 text-slate-700",
+                    task.status === "NAZORATDAN_YECHILDI" && "bg-slate-100 text-slate-700"
                   )}>
                     {statusLabels[task.status] || task.status}
                   </span>
