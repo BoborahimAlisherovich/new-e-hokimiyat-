@@ -137,6 +137,8 @@ export default function AIAssistantPage() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef<boolean>(false);
   const speechRecognitionRef = useRef<any>(null);
   const speechFinalRef = useRef<string>("");
   const isRecordingRef = useRef<boolean>(false);
@@ -186,7 +188,10 @@ export default function AIAssistantPage() {
   }, [loadConversations, loadStats]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (shouldScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      shouldScrollRef.current = false;
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -266,6 +271,7 @@ export default function AIAssistantPage() {
       content: userMessage,
       created_at: new Date().toISOString(),
     };
+    shouldScrollRef.current = true;
     setMessages((prev) => [...prev, tempUserMessage]);
 
     try {
@@ -275,6 +281,7 @@ export default function AIAssistantPage() {
       );
 
       // Replace temp message and add AI response
+      shouldScrollRef.current = true;
       setMessages((prev) => [
         ...prev.filter((m) => m.id !== tempUserMessage.id),
         response.data.user_message,
@@ -375,6 +382,7 @@ export default function AIAssistantPage() {
       created_at: new Date().toISOString(),
       is_audio_message: true,
     };
+    shouldScrollRef.current = true;
     setMessages((prev) => [...prev, tempUserMessage]);
 
     try {
@@ -387,6 +395,7 @@ export default function AIAssistantPage() {
       );
 
       // Replace temp message with transcribed message and AI response
+      shouldScrollRef.current = true;
       setMessages((prev) => [
         ...prev.filter((m) => m.id !== tempUserMessage.id),
         response.data.user_message,

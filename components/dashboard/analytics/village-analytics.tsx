@@ -26,7 +26,8 @@ const translations = {
     selectedVillage: "Tanlangan qishloq",
     total: "Jami",
     villageNotFound: "Qishloq topilmadi",
-    noData: "Ma'lumot topilmadi"
+    noData: "Ma'lumot topilmadi",
+    selectVillage: "Xaritadan qishloqni tanlang"
   },
   "uz-cyrl": {
     title: "Ҳатирчи тумани қишлоқлар кесими",
@@ -42,7 +43,8 @@ const translations = {
     selectedVillage: "Танланган қишлоқ",
     total: "Жами",
     villageNotFound: "Қишлоқ топилмади",
-    noData: "Маълумот топилмади"
+    noData: "Маълумот топилмади",
+    selectVillage: "Харитадан қишлоқни танланг"
   },
   ru: {
     title: "Разбивка по сёлам района Хатирчи",
@@ -58,7 +60,8 @@ const translations = {
     selectedVillage: "Выбранное село",
     total: "Всего",
     villageNotFound: "Село не найдено",
-    noData: "Данные не найдены"
+    noData: "Данные не найдены",
+    selectVillage: "Выберите село на карте"
   },
   en: {
     title: "Hatirchi district villages breakdown",
@@ -74,7 +77,8 @@ const translations = {
     selectedVillage: "Selected village",
     total: "Total",
     villageNotFound: "Village not found",
-    noData: "No data found"
+    noData: "No data found",
+    selectVillage: "Select a village from the map"
   }
 }
 
@@ -463,19 +467,31 @@ export function VillageAnalytics() {
         </motion.div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid gap-6 lg:grid-cols-[1.5fr,1fr]">
-        {/* Map */}
+      {/* Main Content - Xarita chap, Statistika o'ng */}
+      <div className="grid gap-6 lg:grid-cols-[1fr,400px]">
+        {/* Map - Chap tomon */}
         <Card className="bg-white/90 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-emerald-500" />
-              {t.interactiveMap}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-500" />
+                {t.interactiveMap}
+              </CardTitle>
+              {/* Search in Map Header */}
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-4">
             <div className="relative rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-inner">
-              <svg viewBox="0 0 838 400" className="w-full h-[320px]">
+              <svg viewBox="0 0 838 400" className="w-full h-[400px]">
                 <defs>
                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1"/>
@@ -561,90 +577,179 @@ export function VillageAnalytics() {
                 </div>
               </div>
             </div>
+
+            {/* Qishloqlar ro'yxati - xarita ostida */}
+            <div className="mt-4">
+              <ScrollArea className="h-[200px]">
+                <div className="grid grid-cols-3 gap-2">
+                  {filteredVillages.length > 0 ? (
+                    filteredVillages.map((village) => (
+                      <VillageListItem
+                        key={village.id}
+                        village={village}
+                        isSelected={village.id === selectedId}
+                        onClick={() => setSelectedId(village.id)}
+                        maxTotal={maxTotal}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-8 text-slate-500">
+                      <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>{t.villageNotFound}</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Village List */}
-        <Card className="bg-white/90 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+        {/* Tanlangan qishloq statistikasi - O'ng tomon */}
+        <Card className="bg-white/90 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl h-fit sticky top-4">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-500" />
-              {t.villagesList}
+              <BarChart3 className="w-4 h-4 text-emerald-500" />
+              {t.selectedVillage}
             </CardTitle>
-            {/* Search */}
-            <div className="relative mt-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-slate-50 border-slate-200 focus:bg-white"
-              />
-            </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            {/* Selected Village Detail */}
             <AnimatePresence mode="wait">
-              {selectedVillage && (
+              {selectedVillage ? (
                 <motion.div
                   key={selectedVillage.id}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mb-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200"
+                  className="space-y-4"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-2 rounded-lg bg-emerald-500 text-white">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-emerald-800">{selectedVillage.name}</p>
-                      <p className="text-xs text-emerald-600">{t.selectedVillage}</p>
+                  {/* Qishloq nomi */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-emerald-500 text-white shadow-lg">
+                        <MapPin className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold text-emerald-800">{selectedVillage.name}</p>
+                        <p className="text-sm text-emerald-600">{t.selectedVillage}</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white/80 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-slate-700">{selectedVillage.stats.total}</p>
-                      <p className="text-xs text-slate-500">{t.total}</p>
+
+                  {/* Statistika kartochkalari */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      className="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <BarChart3 className="w-4 h-4 text-slate-600" />
+                        <span className="text-xs text-slate-500 font-medium">{t.total}</span>
+                      </div>
+                      <p className="text-3xl font-bold text-slate-700">{selectedVillage.stats.total}</p>
+                    </motion.div>
+
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span className="text-xs text-emerald-600 font-medium">{t.resolved}</span>
+                      </div>
+                      <p className="text-3xl font-bold text-emerald-700">{selectedVillage.stats.resolved}</p>
+                    </motion.div>
+
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs text-amber-600 font-medium">{t.inProgress}</span>
+                      </div>
+                      <p className="text-3xl font-bold text-amber-700">{selectedVillage.stats.inProgress}</p>
+                    </motion.div>
+
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs text-blue-600 font-medium">{t.pending}</span>
+                      </div>
+                      <p className="text-3xl font-bold text-blue-700">{selectedVillage.stats.pending}</p>
+                    </motion.div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200">
+                    <p className="text-sm font-medium text-slate-600 mb-3">{t.completed}</p>
+                    <div className="flex gap-1 h-4 rounded-full overflow-hidden bg-slate-100 mb-3">
+                      <motion.div 
+                        className="bg-emerald-500" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(selectedVillage.stats.resolved / selectedVillage.stats.total) * 100}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      />
+                      <motion.div 
+                        className="bg-amber-500" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(selectedVillage.stats.inProgress / selectedVillage.stats.total) * 100}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+                      />
+                      <motion.div 
+                        className="bg-blue-500" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(selectedVillage.stats.pending / selectedVillage.stats.total) * 100}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+                      />
                     </div>
-                    <div className="bg-white/80 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-emerald-600">{selectedVillage.stats.resolved}</p>
-                      <p className="text-xs text-emerald-600">{t.resolved}</p>
+                    <div className="flex justify-between text-xs">
+                      <span className="flex items-center gap-1 text-emerald-600">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        {t.resolved} ({Math.round((selectedVillage.stats.resolved / selectedVillage.stats.total) * 100)}%)
+                      </span>
+                      <span className="flex items-center gap-1 text-amber-600">
+                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                        {t.inProgress} ({Math.round((selectedVillage.stats.inProgress / selectedVillage.stats.total) * 100)}%)
+                      </span>
+                      <span className="flex items-center gap-1 text-blue-600">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        {t.pending} ({Math.round((selectedVillage.stats.pending / selectedVillage.stats.total) * 100)}%)
+                      </span>
                     </div>
-                    <div className="bg-white/80 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-amber-600">{selectedVillage.stats.inProgress}</p>
-                      <p className="text-xs text-amber-600">{t.inProgress}</p>
-                    </div>
-                    <div className="bg-white/80 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-blue-600">{selectedVillage.stats.pending}</p>
-                      <p className="text-xs text-blue-600">{t.pending}</p>
+                  </div>
+
+                  {/* Umumiy bajarilish foizi */}
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm opacity-80">{t.completed}</p>
+                        <p className="text-3xl font-bold">
+                          {Math.round((selectedVillage.stats.resolved / selectedVillage.stats.total) * 100)}%
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-white/20">
+                        <TrendingUp className="w-8 h-8" />
+                      </div>
                     </div>
                   </div>
                 </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-12"
+                >
+                  <div className="p-4 rounded-full bg-slate-100 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 mb-2">{t.noData}</p>
+                  <p className="text-sm text-slate-400">{t.selectVillage}</p>
+                </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Village List - 2 ustunli */}
-            <ScrollArea className="h-[380px] pr-2">
-              <div className="grid grid-cols-2 gap-2">
-                {filteredVillages.length > 0 ? (
-                  filteredVillages.map((village) => (
-                    <VillageListItem
-                      key={village.id}
-                      village={village}
-                      isSelected={village.id === selectedId}
-                      onClick={() => setSelectedId(village.id)}
-                      maxTotal={maxTotal}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center py-8 text-slate-500">
-                    <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>{t.villageNotFound}</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
           </CardContent>
         </Card>
       </div>
