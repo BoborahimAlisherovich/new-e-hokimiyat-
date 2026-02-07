@@ -29,6 +29,7 @@ from tasks.models import Task, TaskOrganization, TaskMessage, TaskExecution
 from notifications.models import Notification
 from chat.models import DirectMessage, ChatConversation
 from audit.models import AuditLog
+from telegram_bot.models import AppealType, AppealCategory, BotRegion
 
 # O'zbek ismlari va famililari
 FIRST_NAMES_MALE = [
@@ -805,6 +806,82 @@ def create_recurring_tasks(users, orgs):
     return recurring_tasks
 
 
+def create_telegram_bot_data():
+    """Telegram bot uchun murojaat turlari va kategoriyalarini yaratish"""
+    print("\n📱 TELEGRAM BOT MA'LUMOTLARI YARATILMOQDA...")
+    
+    # Murojaat turlari
+    appeal_types_data = [
+        {"name_uz": "Ariza", "name_ru": "Заявление", "name_en": "Application", "icon": "📋", "order": 1},
+        {"name_uz": "Shikoyat", "name_ru": "Жалоба", "name_en": "Complaint", "icon": "⚠️", "order": 2},
+        {"name_uz": "Taklif", "name_ru": "Предложение", "name_en": "Suggestion", "icon": "💡", "order": 3},
+        {"name_uz": "So'rov", "name_ru": "Запрос", "name_en": "Request", "icon": "❓", "order": 4},
+    ]
+    
+    appeal_types = []
+    for data in appeal_types_data:
+        at, created = AppealType.objects.get_or_create(
+            name_uz=data['name_uz'],
+            defaults=data
+        )
+        appeal_types.append(at)
+        status = "yaratildi" if created else "mavjud"
+        print(f"  ✓ Murojaat turi: {data['name_uz']} ({status})")
+    
+    # Kategoriyalar (sohalar)
+    categories_data = [
+        {"name_uz": "Ta'lim va fan", "name_ru": "Образование и наука", "name_en": "Education", "icon": "📚", "order": 1},
+        {"name_uz": "Sog'liqni saqlash", "name_ru": "Здравоохранение", "name_en": "Healthcare", "icon": "🏥", "order": 2},
+        {"name_uz": "Kommunal xizmatlar", "name_ru": "Коммунальные услуги", "name_en": "Utilities", "icon": "🔧", "order": 3},
+        {"name_uz": "Yo'l va transport", "name_ru": "Дороги и транспорт", "name_en": "Roads & Transport", "icon": "🚗", "order": 4},
+        {"name_uz": "Ijtimoiy himoya", "name_ru": "Социальная защита", "name_en": "Social Protection", "icon": "🤝", "order": 5},
+        {"name_uz": "Qurilish va arxitektura", "name_ru": "Строительство и архитектура", "name_en": "Construction", "icon": "🏗️", "order": 6},
+        {"name_uz": "Yer masalalari", "name_ru": "Земельные вопросы", "name_en": "Land Issues", "icon": "🏞️", "order": 7},
+        {"name_uz": "Ekologiya", "name_ru": "Экология", "name_en": "Ecology", "icon": "🌿", "order": 8},
+        {"name_uz": "Xavfsizlik", "name_ru": "Безопасность", "name_en": "Security", "icon": "🛡️", "order": 9},
+        {"name_uz": "Boshqa", "name_ru": "Другое", "name_en": "Other", "icon": "📁", "order": 10},
+    ]
+    
+    categories = []
+    for data in categories_data:
+        cat, created = AppealCategory.objects.get_or_create(
+            name_uz=data['name_uz'],
+            defaults=data
+        )
+        categories.append(cat)
+        status = "yaratildi" if created else "mavjud"
+        print(f"  ✓ Kategoriya: {data['name_uz']} ({status})")
+    
+    # Hududlar (mahallalar)
+    regions_data = [
+        {"name_uz": "Hatirchi shaharchasi", "name_ru": "г. Хатирчи", "name_en": "Hatirchi town", "order": 1},
+        {"name_uz": "Gulzor MFY", "name_ru": "МСГ Гулзор", "name_en": "Gulzor MFY", "order": 2},
+        {"name_uz": "Bogʻishamol MFY", "name_ru": "МСГ Богишамол", "name_en": "Bogishamol MFY", "order": 3},
+        {"name_uz": "Yangi hayot MFY", "name_ru": "МСГ Янги хаёт", "name_en": "Yangi hayot MFY", "order": 4},
+        {"name_uz": "Mustaqillik MFY", "name_ru": "МСГ Мустакиллик", "name_en": "Mustaqillik MFY", "order": 5},
+        {"name_uz": "Navbahor MFY", "name_ru": "МСГ Навбахор", "name_en": "Navbahor MFY", "order": 6},
+        {"name_uz": "Tinchlik MFY", "name_ru": "МСГ Тинчлик", "name_en": "Tinchlik MFY", "order": 7},
+        {"name_uz": "Oqtepa MFY", "name_ru": "МСГ Октепа", "name_en": "Oqtepa MFY", "order": 8},
+    ]
+    
+    regions = []
+    for data in regions_data:
+        region, created = BotRegion.objects.get_or_create(
+            name_uz=data['name_uz'],
+            defaults=data
+        )
+        regions.append(region)
+        status = "yaratildi" if created else "mavjud"
+        print(f"  ✓ Hudud: {data['name_uz']} ({status})")
+    
+    print(f"\n  📊 Telegram bot ma'lumotlari:")
+    print(f"     • Murojaat turlari: {len(appeal_types)}")
+    print(f"     • Kategoriyalar: {len(categories)}")
+    print(f"     • Hududlar: {len(regions)}")
+    
+    return appeal_types, categories, regions
+
+
 def main():
     print("=" * 60)
     print("🚀 E-HOKIMIYAT TEST MA'LUMOTLARI GENERATORI")
@@ -824,6 +901,7 @@ def main():
     create_task_executions(all_tasks, users)
     create_notifications(users, all_tasks)
     create_recurring_tasks(users, orgs)
+    create_telegram_bot_data()
     
     print("\n" + "=" * 60)
     print("✅ BARCHA MA'LUMOTLAR MUVAFFAQIYATLI YARATILDI!")
@@ -844,6 +922,9 @@ def main():
     print(f"  • Topshiriq xabarlari: {TaskMessage.objects.count()}")
     print(f"  • Ijro yozuvlari: {TaskExecution.objects.count()}")
     print(f"  • Bildirishnomalar: {Notification.objects.count()}")
+    print(f"  • Bot murojaat turlari: {AppealType.objects.count()}")
+    print(f"  • Bot kategoriyalar: {AppealCategory.objects.count()}")
+    print(f"  • Bot hududlar: {BotRegion.objects.count()}")
     
     print("\n🔑 TEST LOGIN MA'LUMOTLARI:")
     print("  ┌─────────────────────┬────────────────┬────────────┐")
