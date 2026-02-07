@@ -306,10 +306,12 @@ def create_users(orgs):
             "is_superuser": True,
         }
     )
+    admin.set_password("admin123")
+    admin.save()
     if created:
-        admin.set_password("admin123")
-        admin.save()
-        print(f"  ✓ Admin: admin@xatirchi.uz (PNFL: 00000000000001)")
+        print(f"  ✓ Admin: admin@xatirchi.uz (PNFL: 00000000000001, Parol: admin123)")
+    else:
+        print(f"  ↺ Admin: mavjud, parol yangilandi")
     users.append(admin)
     
     # Hokim
@@ -329,8 +331,15 @@ def create_users(orgs):
             "is_active": True,
         }
     )
+    hokim.set_password("hokim123")
+    hokim.save()
+    if hokim_org:
+        hokim_org.director_name = hokim.full_name
+        hokim_org.save()
     if created:
-        print(f"  ✓ Hokim: {hokim.full_name} (PNFL: 10000000000001)")
+        print(f"  ✓ Hokim: {hokim.full_name} (PNFL: 10000000000001, Parol: hokim123)")
+    else:
+        print(f"  ↺ Hokim: mavjud, parol yangilandi")
     users.append(hokim)
     
     # Hokimlik mas'ullari (3 ta)
@@ -356,8 +365,10 @@ def create_users(orgs):
                 "is_active": True,
             }
         )
+        masul.set_password("masul123")
+        masul.save()
         if created:
-            print(f"  ✓ Hokimlik mas'uli: {masul.full_name}")
+            print(f"  ✓ Hokimlik mas'uli: {masul.full_name} (PNFL: {pnfl}, Parol: masul123)")
         users.append(masul)
     
     # Tashkilot rahbarlari (har bir tashkilot uchun)
@@ -383,7 +394,11 @@ def create_users(orgs):
                 "is_active": True,
             }
         )
+        rahbar.set_password("rahbar123")
+        rahbar.save()
         if created:
+            org.director_name = rahbar.full_name
+            org.save()
             print(f"  ✓ Tashkilot rahbari: {rahbar.full_name} ({org.name[:30]}...)")
         users.append(rahbar)
     
@@ -412,11 +427,19 @@ def create_users(orgs):
                     "is_active": True,
                 }
             )
+            masul.set_password("masul123")
+            masul.save()
             if created:
                 masul_count += 1
             users.append(masul)
     
     print(f"\n  📊 Jami {len(users)} ta foydalanuvchi yaratildi/mavjud")
+    print(f"  🔑 Barcha foydalanuvchilar uchun standart parollar:")
+    print(f"      Admin: admin123")
+    print(f"      Hokim: hokim123")
+    print(f"      Hokimlik mas'uli: masul123")
+    print(f"      Tashkilot rahbari: rahbar123")
+    print(f"      Tashkilot mas'ul: masul123")
     return users
 
 
@@ -698,6 +721,90 @@ def create_notifications(users, tasks):
     print(f"  📊 Jami {notifications_created} ta bildirishnoma yaratildi")
 
 
+def create_recurring_tasks(users, orgs):
+    """Create recurring tasks"""
+    print("\n🔄 Takrorlanuvchi topshiriqlar yaratilmoqda...")
+    from tasks.models import RecurringTask
+    
+    # Hokimlar va mas'ullar
+    hokims = [u for u in users if u.role in ['HOKIM', 'HOKIMLIK_MASUL']]
+    if not hokims:
+        print("  ⚠ Hokim yoki mas'ul topilmadi!")
+        return []
+    
+    recurring_templates = [
+        {
+            "title": "Oylik hisobot tayyorlash",
+            "description": "Har oy oxirida barcha bo'limlar oylik faoliyat hisobotini taqdim etishi kerak.",
+            "frequency": "MONTHLY",
+            "deadline_days": 5,
+            "priority": "YUQORI",
+        },
+        {
+            "title": "Haftalik yig'ilish o'tkazish",
+            "description": "Har hafta dushanba kuni rahbarlar yig'ilishi o'tkaziladi.",
+            "frequency": "WEEKLY",
+            "deadline_days": 1,
+            "priority": "ODDIY",
+        },
+        {
+            "title": "Choraklik moliyaviy hisobot",
+            "description": "Har chorakda moliyaviy hisobot tayyorlash va taqdim etish.",
+            "frequency": "QUARTERLY",
+            "deadline_days": 15,
+            "priority": "FAVQULODDA",
+        },
+        {
+            "title": "Kunlik monitoring",
+            "description": "Har kunlik vaziyat monitoringi va hisoboti.",
+            "frequency": "DAILY",
+            "deadline_days": 1,
+            "priority": "PAST",
+        },
+        {
+            "title": "O'quv yili boshlanishiga tayyorgarlik",
+            "description": "Har yili avgustda o'quv yili boshlanishiga tayyorgarlik ko'rish.",
+            "frequency": "YEARLY",
+            "deadline_days": 30,
+            "priority": "YUQORI",
+        },
+        {
+            "title": "Ikki haftalik tekshiruv",
+            "description": "Ikki haftada bir marta tashkilotlarni tekshirish.",
+            "frequency": "BIWEEKLY",
+            "deadline_days": 3,
+            "priority": "ODDIY",
+        },
+    ]
+    
+    recurring_tasks = []
+    for template in recurring_templates:
+        creator = random.choice(hokims)
+        assigned_orgs = random.sample(orgs[1:], min(random.randint(2, 5), len(orgs)-1))
+        
+        rt, created = RecurringTask.objects.get_or_create(
+            title=template["title"],
+            defaults={
+                "description": template["description"],
+                "frequency": template["frequency"],
+                "priority": template["priority"],
+                "deadline_days": template["deadline_days"],
+                "start_date": timezone.now().date(),
+                "created_by": creator,
+                "status": "ACTIVE",
+            }
+        )
+        
+        if created:
+            # Tashkilotlar qo'shish
+            rt.organizations.set(assigned_orgs)
+            recurring_tasks.append(rt)
+            print(f"  ✓ {template['title']}")
+    
+    print(f"  📊 Jami {len(recurring_tasks)} ta takrorlanuvchi topshiriq yaratildi")
+    return recurring_tasks
+
+
 def main():
     print("=" * 60)
     print("🚀 E-HOKIMIYAT TEST MA'LUMOTLARI GENERATORI")
@@ -716,10 +823,14 @@ def main():
     create_task_messages(all_tasks, users)
     create_task_executions(all_tasks, users)
     create_notifications(users, all_tasks)
+    create_recurring_tasks(users, orgs)
     
     print("\n" + "=" * 60)
     print("✅ BARCHA MA'LUMOTLAR MUVAFFAQIYATLI YARATILDI!")
     print("=" * 60)
+    
+    # Import RecurringTask for statistics
+    from tasks.models import RecurringTask
     
     # Statistics
     print("\n📊 STATISTIKA:")
@@ -728,15 +839,24 @@ def main():
     print(f"  • Foydalanuvchilar: {User.objects.count()}")
     print(f"  • Topshiriqlar: {Task.objects.count()}")
     print(f"  • Murojatlar (IJRO): {Task.objects.filter(category='IJRO').count()}")
+    print(f"  • Takrorlanuvchi topshiriqlar: {RecurringTask.objects.count()}")
     print(f"  • Chat xabarlari: {DirectMessage.objects.count()}")
     print(f"  • Topshiriq xabarlari: {TaskMessage.objects.count()}")
     print(f"  • Ijro yozuvlari: {TaskExecution.objects.count()}")
     print(f"  • Bildirishnomalar: {Notification.objects.count()}")
     
     print("\n🔑 TEST LOGIN MA'LUMOTLARI:")
-    print("  PNFL: 00000000000001 (Admin)")
-    print("  PNFL: 10000000000001 (Hokim)")
-    print("  PNFL: 20000000000001 (Hokimlik mas'uli)")
+    print("  ┌─────────────────────┬────────────────┬────────────┐")
+    print("  │ Rol                 │ PNFL           │ Parol      │")
+    print("  ├─────────────────────┼────────────────┼────────────┤")
+    print("  │ Admin               │ 00000000000001 │ admin123   │")
+    print("  │ Hokim               │ 10000000000001 │ hokim123   │")
+    print("  │ Hokimlik mas'uli #1 │ 20000000000001 │ masul123   │")
+    print("  │ Hokimlik mas'uli #2 │ 20000000000002 │ masul123   │")
+    print("  │ Hokimlik mas'uli #3 │ 20000000000003 │ masul123   │")
+    print("  │ Tashkilot rahbari   │ 30000000000001 │ rahbar123  │")
+    print("  │ Tashkilot mas'ul    │ 40000000000000 │ masul123   │")
+    print("  └─────────────────────┴────────────────┴────────────┘")
     print("-" * 60)
 
 
