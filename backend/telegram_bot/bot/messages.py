@@ -131,6 +131,18 @@ Jami: {count} ta murojaat
         'settings_menu': """⚙️ <b>Sozlamalar</b>
 
 Quyidagi sozlamalarni o'zgartirishingiz mumkin:""",
+
+        'change_name_prompt': """📝 <b>Ismni o'zgartirish</b>
+
+Iltimos, ismingiz va familiyangizni kiriting.
+
+<i>Misol: Aliyev Vali</i>""",
+
+        'name_updated': "✅ Ism muvaffaqiyatli o'zgartirildi!",
+
+        'phone_updated': "✅ Telefon raqam muvaffaqiyatli o'zgartirildi!",
+
+        'region_updated': "✅ Hudud muvaffaqiyatli o'zgartirildi!",
         
         'language_changed': "✅ Til muvaffaqiyatli o'zgartirildi!",
         
@@ -242,6 +254,14 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_about': "ℹ️ О нас",
         'btn_settings': "⚙️ Настройки",
         'language_changed': "✅ Язык успешно изменен!",
+        'change_name_prompt': """📝 <b>Изменение имени</b>
+
+Пожалуйста, введите имя и фамилию.
+
+<i>Пример: Алиев Вали</i>""",
+        'name_updated': "✅ Имя успешно изменено!",
+        'phone_updated': "✅ Номер телефона успешно изменен!",
+        'region_updated': "✅ Регион успешно изменен!",
         
         # ... qolgan ruscha tarjimalar
     },
@@ -261,6 +281,14 @@ Please register to continue.""",
         'btn_about': "ℹ️ About Us",
         'btn_settings': "⚙️ Settings",
         'language_changed': "✅ Language successfully changed!",
+        'change_name_prompt': """📝 <b>Change name</b>
+
+Please enter your first and last name.
+
+<i>Example: Aliyev Vali</i>""",
+        'name_updated': "✅ Name successfully changed!",
+        'phone_updated': "✅ Phone number successfully changed!",
+        'region_updated': "✅ Region successfully changed!",
         
         # ... qolgan inglizcha tarjimalar
     }
