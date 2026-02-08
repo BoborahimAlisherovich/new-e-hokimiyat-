@@ -358,6 +358,12 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
         clear_user_state(user)
         if 'registration' in current_state:
             bot.send_message(chat_id, get_text('registration_cancelled', lang))
+        elif current_state.startswith('settings:'):
+            bot.send_message(
+                chat_id,
+                get_text('settings_menu', lang),
+                reply_markup=settings_keyboard(lang)
+            )
         else:
             bot.send_message(
                 chat_id,
@@ -404,6 +410,36 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             else:
                 # Hududlar yo'q, ro'yxatdan o'tishni yakunlash
                 complete_registration(user, chat_id)
+        else:
+            bot.send_message(chat_id, get_text('error_invalid_input', lang))
+
+    elif current_state == 'settings:name':
+        parts = text.strip().split(maxsplit=1)
+        if len(parts) >= 1:
+            user.first_name = parts[0]
+            if len(parts) > 1:
+                user.last_name = parts[1]
+            user.save()
+            clear_user_state(user)
+            bot.send_message(
+                chat_id,
+                get_text('name_updated', lang),
+                reply_markup=settings_keyboard(lang)
+            )
+        else:
+            bot.send_message(chat_id, get_text('error_invalid_input', lang))
+
+    elif current_state == 'settings:phone':
+        phone = re.sub(r'[^\d+]', '', text)
+        if len(phone) >= 9:
+            user.phone = phone
+            user.save()
+            clear_user_state(user)
+            bot.send_message(
+                chat_id,
+                get_text('phone_updated', lang),
+                reply_markup=settings_keyboard(lang)
+            )
         else:
             bot.send_message(chat_id, get_text('error_invalid_input', lang))
     
@@ -497,7 +533,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
 def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
     """Kontakt xabarini qayta ishlash"""
     state = get_user_state(user)
-    if not state or state.state != 'registration:phone':
+    if not state or state.state not in ['registration:phone', 'settings:phone']:
         return
     
     contact = message['contact']
@@ -505,6 +541,15 @@ def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
     
     user.phone = phone
     user.save()
+
+    if state.state == 'settings:phone':
+        clear_user_state(user)
+        bot.send_message(
+            chat_id,
+            get_text('phone_updated', user.language),
+            reply_markup=settings_keyboard(user.language)
+        )
+        return
     
     # Hududlarni ko'rsatish
     regions = list(BotRegion.objects.filter(is_active=True).values('id', 'name_uz', 'name_ru', 'name_en'))
@@ -529,27 +574,42 @@ def handle_media(user: TelegramUser, message: Dict, chat_id: int):
     attachments = data.get('attachments', [])
     
     # Fayl turini aniqlash
+    file_name = None
+    mime_type = None
+
     if 'photo' in message:
         file_id = message['photo'][-1]['file_id']
         file_type = 'photo'
     elif 'video' in message:
         file_id = message['video']['file_id']
         file_type = 'video'
+        mime_type = message['video'].get('mime_type')
+    elif 'video_note' in message:
+        file_id = message['video_note']['file_id']
+        file_type = 'video_note'
+        mime_type = message['video_note'].get('mime_type')
     elif 'audio' in message:
         file_id = message['audio']['file_id']
         file_type = 'audio'
+        file_name = message['audio'].get('file_name')
+        mime_type = message['audio'].get('mime_type')
     elif 'voice' in message:
         file_id = message['voice']['file_id']
-        file_type = 'audio'
+        file_type = 'voice'
+        mime_type = message['voice'].get('mime_type')
     elif 'document' in message:
         file_id = message['document']['file_id']
         file_type = 'document'
+        file_name = message['document'].get('file_name')
+        mime_type = message['document'].get('mime_type')
     else:
         return
     
     attachments.append({
         'file_id': file_id,
-        'file_type': file_type
+        'file_type': file_type,
+        'file_name': file_name,
+        'mime_type': mime_type
     })
     
     data['attachments'] = attachments
@@ -629,6 +689,8 @@ def process_callback_query(callback_query: Dict):
     # Hudud tanlash
     if data.startswith('region:'):
         region_id = data.split(':')[1]
+        state = get_user_state(user)
+        is_settings_flow = bool(state and state.state == 'settings:region')
         
         # "Boshqa" tanlansa
         if region_id == 'other':
@@ -639,7 +701,15 @@ def process_callback_query(callback_query: Dict):
                 message_id,
                 "✅ Boshqa hudud"
             )
-            complete_registration(user, chat_id)
+            if is_settings_flow:
+                clear_user_state(user)
+                bot.send_message(
+                    chat_id,
+                    get_text('region_updated', lang),
+                    reply_markup=settings_keyboard(lang)
+                )
+            else:
+                complete_registration(user, chat_id)
             return
         
         try:
@@ -652,8 +722,16 @@ def process_callback_query(callback_query: Dict):
                 message_id,
                 f"✅ {region.name_uz}"
             )
-            
-            complete_registration(user, chat_id)
+
+            if is_settings_flow:
+                clear_user_state(user)
+                bot.send_message(
+                    chat_id,
+                    get_text('region_updated', lang),
+                    reply_markup=settings_keyboard(lang)
+                )
+            else:
+                complete_registration(user, chat_id)
         except BotRegion.DoesNotExist:
             bot.send_message(chat_id, get_text('error_something_wrong', lang))
         return
@@ -799,6 +877,34 @@ def process_callback_query(callback_query: Dict):
                 "🌐 Tilni tanlang / Выберите язык / Choose language:",
                 reply_markup=language_keyboard()
             )
+            return
+        if setting == 'name':
+            bot.edit_message_text(
+                chat_id,
+                message_id,
+                get_text('change_name_prompt', lang)
+            )
+            set_user_state(user, 'settings:name')
+            return
+        if setting == 'phone':
+            bot.edit_message_text(
+                chat_id,
+                message_id,
+                get_text('ask_phone', lang),
+                reply_markup=phone_keyboard(lang)
+            )
+            set_user_state(user, 'settings:phone')
+            return
+        if setting == 'region':
+            regions = list(BotRegion.objects.filter(is_active=True).values('id', 'name_uz', 'name_ru', 'name_en'))
+            bot.edit_message_text(
+                chat_id,
+                message_id,
+                get_text('ask_region', lang),
+                reply_markup=regions_keyboard(regions, lang)
+            )
+            set_user_state(user, 'settings:region')
+            return
         # ... boshqa sozlamalar
         return
 
@@ -1154,37 +1260,58 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         # Fayllarni saqlash
         attachments = data.get('attachments', [])
         for att in attachments:
-            file_url = bot.get_file(att['file_id'])
+            file_id = att.get('file_id')
+            if not file_id:
+                logger.warning("Attachment skipped: missing file_id")
+                continue
+            file_type = att.get('file_type') or 'document'
+            file_url = bot.get_file(file_id)
+            original_file_name = att.get('file_name')
+            mime_type = att.get('mime_type')
             
             # Faylni yuklab olish va saqlash
             attachment = AppealAttachment(
                 appeal=appeal,
-                file_type=att['file_type'],
-                telegram_file_id=att['file_id']
+                file_type=file_type,
+                telegram_file_id=file_id
             )
+
+            if original_file_name:
+                attachment.file_name = original_file_name
+            if mime_type:
+                attachment.mime_type = mime_type
             
             # Fayl URL mavjud bo'lsa, yuklab olish
             if file_url:
                 try:
                     import requests
+                    import os
                     from django.core.files.base import ContentFile
                     
                     response = requests.get(file_url, timeout=30)
                     if response.status_code == 200:
                         # Fayl nomini aniqlash
-                        file_ext = att['file_type']
+                        file_ext = file_type
                         if file_ext == 'photo':
                             file_ext = 'jpg'
                         elif file_ext == 'voice':
                             file_ext = 'ogg'
                         elif file_ext == 'video':
                             file_ext = 'mp4'
+                        elif file_ext == 'video_note':
+                            file_ext = 'mp4'
                         elif file_ext == 'audio':
                             file_ext = 'mp3'
+                        elif file_ext == 'document':
+                            if original_file_name:
+                                _, ext = os.path.splitext(original_file_name)
+                                file_ext = ext.lstrip('.') or 'bin'
+                            else:
+                                file_ext = 'bin'
                         else:
                             file_ext = 'bin'
                         
-                        file_name = f"{att['file_id'][:20]}.{file_ext}"
+                        file_name = f"{file_id[:20]}.{file_ext}"
                         attachment.file_name = file_name
                         attachment.file_size = len(response.content)
                         attachment.file.save(file_name, ContentFile(response.content), save=False)
