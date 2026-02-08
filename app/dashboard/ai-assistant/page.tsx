@@ -23,6 +23,8 @@ import {
   MicOff,
   Sparkles,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -93,6 +95,7 @@ export default function AIAssistantPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [statsCollapsed, setStatsCollapsed] = useState(true);
   const [stats, setStats] = useState<AIStats | null>(null);
   const [speechText, setSpeechText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -412,7 +415,7 @@ export default function AIAssistantPage() {
           <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         
             {/* Left sidebar - Conversations */}
-            <div className="w-full lg:w-72 flex-shrink-0">
+            <div className="w-full lg:w-64 xl:w-72 flex-shrink-0">
           <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm">
             <CardHeader className="pb-3 border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -501,7 +504,7 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Main chat area */}
-        <div className="flex-1 min-h-0">
+        <div className={`flex-1 min-h-0 ${statsCollapsed ? "lg:flex-[1.8]" : "lg:flex-[1.4]"}`}>
           <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm overflow-hidden">
             {currentConversation ? (
               <>
@@ -510,13 +513,30 @@ export default function AIAssistantPage() {
                     <CardTitle className="text-base font-semibold text-slate-800 truncate max-w-[200px]">
                       {currentConversation.title || "Yangi suhbat"}
                     </CardTitle>
-                    <Badge variant="outline" className={`text-xs ${
-                      currentConversation.status === "ACTIVE" 
-                        ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                        : "bg-slate-50 text-slate-600 border-slate-200"
-                    }`}>
-                      {currentConversation.status === "ACTIVE" ? "Faol" : "Yakunlangan"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={`text-xs ${
+                        currentConversation.status === "ACTIVE" 
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
+                          : "bg-slate-50 text-slate-600 border-slate-200"
+                      }`}>
+                        {currentConversation.status === "ACTIVE" ? "Faol" : "Yakunlangan"}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setStatsCollapsed((prev) => !prev)}
+                        className="hidden lg:inline-flex h-8 px-2.5 text-xs"
+                      >
+                        <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                        {statsCollapsed ? "AI faollik" : "Yopish"}
+                        {statsCollapsed ? (
+                          <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                        ) : (
+                          <ChevronLeft className="h-3.5 w-3.5 ml-1" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
@@ -673,7 +693,8 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Right sidebar - Stats */}
-        <div className="w-full lg:w-64 flex-shrink-0 hidden lg:block">
+        {!statsCollapsed && (
+        <div className="w-full lg:w-56 xl:w-64 flex-shrink-0 hidden lg:block">
           <Card className="h-full bg-white border-slate-200 shadow-sm">
             <CardHeader className="pb-3 border-b border-slate-100">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-800">
@@ -755,6 +776,7 @@ export default function AIAssistantPage() {
             </CardContent>
           </Card>
         </div>
+        )}
       </div>
 
       {/* Bottom FAQ section */}

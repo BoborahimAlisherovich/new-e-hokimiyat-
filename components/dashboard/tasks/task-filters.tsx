@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, X, Filter, Sparkles } from "lucide-react"
@@ -161,65 +162,77 @@ export function TaskFilters({
 
         {/* Filters */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Holat bo'yicha" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-              <SelectItem value="YANGI">{t.task.statuses.NEW}</SelectItem>
-              <SelectItem value="IJRODA">{t.task.statuses.IN_PROGRESS}</SelectItem>
-              <SelectItem value="BAJARILDI">{t.task.statuses.COMPLETED}</SelectItem>
-              <SelectItem value="QAYTA_IJROGA_YUBORILDI">{t.task.statuses.REASSIGNED}</SelectItem>
-              <SelectItem value="MUDDATI_KECH">{t.task.statuses.OVERDUE}</SelectItem>
-              <SelectItem value="BAJARILMADI">{t.task.statuses.FAILED}</SelectItem>
-              <SelectItem value="NAZORATDAN_YECHILDI">{t.task.statuses.RESOLVED}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={priorityFilter} onValueChange={onPriorityChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Muhimlik bo'yicha" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-              <SelectItem value="FAVQULODDA">{t.tasks.priorityOptionCritical}</SelectItem>
-              <SelectItem value="YUQORI">{t.tasks.priorityOptionHigh}</SelectItem>
-              <SelectItem value="ODDIY">{t.tasks.priorityOptionMedium}</SelectItem>
-              <SelectItem value="PAST">{t.tasks.priorityOptionLow}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={categoryFilter} onValueChange={onCategoryChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Soha bo'yicha" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-              <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
-              <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
-              <SelectItem value="HUQUQIY">{t.task.categories.HUQUQIY}</SelectItem>
-              <SelectItem value="INFRASTRUKTURA">{t.task.categories.INFRASTRUKTURA}</SelectItem>
-              <SelectItem value="TA_LIM">{t.task.categories.TA_LIM}</SelectItem>
-              <SelectItem value="SOG_LIQNI_SAQLASH">{t.task.categories.SOG_LIQNI_SAQLASH}</SelectItem>
-              <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {onOrganizationChange && (
-            <Select value={organizationFilter} onValueChange={onOrganizationChange}>
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">Holat bo'yicha</Label>
+            <Select value={statusFilter} onValueChange={onStatusChange}>
               <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-                <SelectValue placeholder="Tashkilot bo'yicha" />
+                <SelectValue placeholder="Holat bo'yicha" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Barchasi</SelectItem>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
+                <SelectItem value="YANGI">{t.task.statuses.NEW}</SelectItem>
+                <SelectItem value="IJRODA">{t.task.statuses.IN_PROGRESS}</SelectItem>
+                <SelectItem value="BAJARILDI">{t.task.statuses.COMPLETED}</SelectItem>
+                <SelectItem value="QAYTA_IJROGA_YUBORILDI">{t.task.statuses.REASSIGNED}</SelectItem>
+                <SelectItem value="MUDDATI_KECH">{t.task.statuses.OVERDUE}</SelectItem>
+                <SelectItem value="BAJARILMADI">{t.task.statuses.FAILED}</SelectItem>
+                <SelectItem value="NAZORATDAN_YECHILDI">{t.task.statuses.RESOLVED}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">Muhimlik bo'yicha</Label>
+            <Select value={priorityFilter} onValueChange={onPriorityChange}>
+              <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                <SelectValue placeholder="Muhimlik bo'yicha" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
+                <SelectItem value="FAVQULODDA">{t.tasks.priorityOptionCritical}</SelectItem>
+                <SelectItem value="YUQORI">{t.tasks.priorityOptionHigh}</SelectItem>
+                <SelectItem value="ODDIY">{t.tasks.priorityOptionMedium}</SelectItem>
+                <SelectItem value="PAST">{t.tasks.priorityOptionLow}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
+            <Select value={categoryFilter} onValueChange={onCategoryChange}>
+              <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                <SelectValue placeholder="Soha bo'yicha" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
+                <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
+                <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
+                <SelectItem value="HUQUQIY">{t.task.categories.HUQUQIY}</SelectItem>
+                <SelectItem value="INFRASTRUKTURA">{t.task.categories.INFRASTRUKTURA}</SelectItem>
+                <SelectItem value="TA_LIM">{t.task.categories.TA_LIM}</SelectItem>
+                <SelectItem value="SOG_LIQNI_SAQLASH">{t.task.categories.SOG_LIQNI_SAQLASH}</SelectItem>
+                <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {onOrganizationChange && (
+            <div className="space-y-1">
+              <Label className="text-xs text-slate-500">Tashkilot bo'yicha</Label>
+              <Select value={organizationFilter} onValueChange={onOrganizationChange}>
+                <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                  <SelectValue placeholder="Tashkilot bo'yicha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Barchasi</SelectItem>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
       </div>
