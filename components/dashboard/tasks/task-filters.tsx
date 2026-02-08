@@ -143,7 +143,7 @@ export function TaskFilters({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              placeholder={t.tasks.searchPlaceholder}
+              placeholder="Topshiriqlarni qidirish (sarlavha/tavsif)"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
@@ -163,7 +163,7 @@ export function TaskFilters({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select value={statusFilter} onValueChange={onStatusChange}>
             <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Holat" />
+              <SelectValue placeholder="Holat bo'yicha" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -179,7 +179,7 @@ export function TaskFilters({
 
           <Select value={priorityFilter} onValueChange={onPriorityChange}>
             <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Muhimlik" />
+              <SelectValue placeholder="Muhimlik bo'yicha" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -192,7 +192,7 @@ export function TaskFilters({
 
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
             <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-              <SelectValue placeholder="Soha" />
+              <SelectValue placeholder="Soha bo'yicha" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.tasks.allOption}</SelectItem>
@@ -209,7 +209,7 @@ export function TaskFilters({
           {onOrganizationChange && (
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
               <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-                <SelectValue placeholder="Tashkilot" />
+                <SelectValue placeholder="Tashkilot bo'yicha" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barchasi</SelectItem>

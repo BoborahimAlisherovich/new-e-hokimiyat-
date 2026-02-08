@@ -190,7 +190,7 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
                 <SelectTrigger aria-invalid={!!errors.priority}>
                   <SelectValue placeholder="Muhimlik darajasini tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover z-[100]">
+                <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-lg z-[100]">
                   <SelectItem value="FAVQULODDA">Muhim va shoshilinch (1 kun)</SelectItem>
                   <SelectItem value="YUQORI">Muhim, lekin shoshilinch emas (3 kun)</SelectItem>
                   <SelectItem value="ODDIY">Shoshilinch, lekin muhim emas (5 kun)</SelectItem>
@@ -206,7 +206,7 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
                 <SelectTrigger aria-invalid={!!errors.category}>
                   <SelectValue placeholder="Sohani tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover z-[100]">
+                <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-lg z-[100]">
                   <SelectItem value="IJTIMOIY">Ijtimoiy</SelectItem>
                   <SelectItem value="IQTISODIY">Iqtisodiy</SelectItem>
                   <SelectItem value="HUQUQIY">Huquqiy</SelectItem>
@@ -234,9 +234,9 @@ export function CreateTaskDialog({ open, onOpenChange, organizations, onCreated 
                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Qidirish..." />
+                <PopoverContent className="w-full p-0 bg-white border border-slate-200 shadow-lg" align="start">
+                  <Command className="bg-white">
+                    <CommandInput placeholder="Qidirish..." className="bg-white" />
                     <CommandList>
                       <CommandEmpty>Topilmadi</CommandEmpty>
                       <CommandGroup>
