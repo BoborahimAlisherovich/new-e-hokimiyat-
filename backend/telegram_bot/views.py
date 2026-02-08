@@ -91,7 +91,29 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             )
         
         try:
+            import os
+            import signal
+            import time
             import requests
+            
+            # Polling ishlayotgan bo'lsa, to'xtatish
+            pid_file = '/tmp/telegram_bot.pid'
+            if os.path.exists(pid_file):
+                try:
+                    with open(pid_file, 'r') as f:
+                        pid = int(f.read().strip())
+                    try:
+                        pgid = os.getpgid(pid)
+                        os.killpg(pgid, signal.SIGTERM)
+                    except Exception:
+                        os.kill(pid, signal.SIGTERM)
+                    time.sleep(1)
+                except (ProcessLookupError, ValueError):
+                    pass
+                finally:
+                    if os.path.exists(pid_file):
+                        os.remove(pid_file)
+
             response = requests.post(
                 f'https://api.telegram.org/bot{settings.bot_token}/setWebhook',
                 json={'url': webhook_url},
@@ -102,6 +124,7 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             if data.get('ok'):
                 settings.webhook_url = webhook_url
                 settings.use_webhook = True
+                settings.is_active = True
                 settings.save()
                 return Response({'success': True})
             else:
@@ -131,6 +154,7 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             if data.get('ok'):
                 settings.webhook_url = ''
                 settings.use_webhook = False
+                settings.is_active = False
                 settings.save()
                 return Response({'success': True})
             else:
@@ -154,9 +178,10 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if settings.use_webhook:
+        force = bool(request.data.get('force'))
+        if settings.use_webhook and not force:
             return Response(
-                {'error': 'Webhook rejimi faol. Avval webhook\'ni o\'chiring'},
+                {'error': 'Webhook rejimi faol. Avval webhook\'ni o\'chiring yoki force=true yuboring'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -164,24 +189,49 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             import subprocess
             import os
             import signal
+            import time
+            import requests
             
+            # Webhook rejimidan pollingga o'tish
+            if settings.use_webhook:
+                try:
+                    requests.post(
+                        f'https://api.telegram.org/bot{settings.bot_token}/deleteWebhook',
+                        timeout=10
+                    )
+                except Exception:
+                    pass
+                settings.use_webhook = False
+                settings.webhook_url = ''
+
             # Avval eski processni to'xtatish
             pid_file = '/tmp/telegram_bot.pid'
             if os.path.exists(pid_file):
                 try:
                     with open(pid_file, 'r') as f:
                         old_pid = int(f.read().strip())
-                    os.kill(old_pid, signal.SIGTERM)
+                    try:
+                        pgid = os.getpgid(old_pid)
+                        os.killpg(pgid, signal.SIGTERM)
+                    except Exception:
+                        os.kill(old_pid, signal.SIGTERM)
+                    time.sleep(1)
                 except (ProcessLookupError, ValueError):
                     pass
-                os.remove(pid_file)
+                if os.path.exists(pid_file):
+                    os.remove(pid_file)
             
             # Yangi processni ishga tushirish
             bot_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'run_bot.py')
+            log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, 'telegram_bot.log')
+            log_file = open(log_path, 'a')
+
             process = subprocess.Popen(
                 ['python3', bot_script],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=log_file,
+                stderr=log_file,
                 start_new_session=True
             )
             
@@ -217,15 +267,24 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             pid_file = '/tmp/telegram_bot.pid'
             stopped = False
             pid = None
+            was_webhook = bool(settings.use_webhook)
             if os.path.exists(pid_file):
                 try:
                     with open(pid_file, 'r') as f:
                         pid = int(f.read().strip())
-                    os.kill(pid, signal.SIGTERM)
+                    try:
+                        pgid = os.getpgid(pid)
+                        os.killpg(pgid, signal.SIGTERM)
+                    except Exception:
+                        os.kill(pid, signal.SIGTERM)
                     time.sleep(1)
                     try:
                         os.kill(pid, 0)
-                        os.kill(pid, signal.SIGKILL)
+                        try:
+                            pgid = os.getpgid(pid)
+                            os.killpg(pgid, signal.SIGKILL)
+                        except Exception:
+                            os.kill(pid, signal.SIGKILL)
                         time.sleep(1)
                     except ProcessLookupError:
                         pass
@@ -261,7 +320,7 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             settings.is_active = False
             settings.save()
 
-            if not stopped and not settings.use_webhook:
+            if not stopped and not settings.use_webhook and not was_webhook:
                 return Response(
                     {
                         'success': False,

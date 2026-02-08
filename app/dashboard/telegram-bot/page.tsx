@@ -119,10 +119,13 @@ export default function TelegramBotPage() {
     loadData();
   }, [loadData]);
 
-  const startBot = useCallback(async () => {
+  const startBot = useCallback(async (force = false) => {
     try {
       setStarting(true);
-      const response = await api.post<{ success: boolean; error?: string; message?: string; pid?: number }>("/telegram-bot/settings/start_bot/");
+      const response = await api.post<{ success: boolean; error?: string; message?: string; pid?: number }>(
+        "/telegram-bot/settings/start_bot/",
+        force ? { force: true } : undefined
+      );
       
       if (response.data.success) {
         toast({
@@ -150,6 +153,39 @@ export default function TelegramBotPage() {
     }
   }, [toast]);
 
+  const switchToPolling = useCallback(async () => {
+    try {
+      setStarting(true);
+      const response = await api.post<{ success: boolean; error?: string }>(
+        "/telegram-bot/settings/start_bot/",
+        { force: true }
+      );
+      if (response.data.success) {
+        toast({
+          title: "Muvaffaqiyat",
+          description: "Webhook o'chirildi va polling ishga tushdi"
+        });
+        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
+        setBotStatus(statusRes.data);
+        setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
+      } else {
+        toast({
+          title: "Xato",
+          description: response.data.error || "Pollingga o'tishda xato",
+          variant: "destructive"
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Xato",
+        description: err?.response?.data?.error || "Pollingga o'tishda xato",
+        variant: "destructive"
+      });
+    } finally {
+      setStarting(false);
+    }
+  }, [toast]);
+
   const stopBot = useCallback(async () => {
     try {
       setStopping(true);
@@ -163,6 +199,7 @@ export default function TelegramBotPage() {
         // Statusni yangilash
         const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
         setBotStatus(statusRes.data);
+        setSettings(prev => prev ? { ...prev, use_webhook: statusRes.data.use_webhook, is_active: statusRes.data.is_active } : null);
       }
     } catch (err) {
       toast({
@@ -274,6 +311,8 @@ export default function TelegramBotPage() {
           description: "Webhook o'rnatildi"
         });
         setSettings(prev => prev ? { ...prev, use_webhook: true } : null);
+        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
+        setBotStatus(statusRes.data);
       } else {
         toast({
           title: "Xato",
@@ -300,6 +339,8 @@ export default function TelegramBotPage() {
           description: "Webhook o'chirildi"
         });
         setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
+        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
+        setBotStatus(statusRes.data);
       }
     } catch (err) {
       toast({
@@ -353,7 +394,12 @@ export default function TelegramBotPage() {
             <Bot className="h-6 w-6 text-blue-500" />
             Telegram Bot
             {/* Bot holati ko'rsatkichi */}
-            {botStatus?.is_running ? (
+            {settings?.use_webhook ? (
+              <span className="flex items-center gap-1 text-sm font-normal text-blue-600">
+                <Circle className="h-3 w-3 fill-blue-500 text-blue-500" />
+                Webhook rejimi
+              </span>
+            ) : botStatus?.is_running ? (
               <span className="flex items-center gap-1 text-sm font-normal text-emerald-600">
                 <Circle className="h-3 w-3 fill-emerald-500 text-emerald-500" />
                 Ishlayapti
@@ -377,7 +423,27 @@ export default function TelegramBotPage() {
           </Button>
           
           {/* Bot boshqaruv tugmalari */}
-          {!settings?.use_webhook && (
+          {settings?.use_webhook ? (
+            <>
+              <Button 
+                variant="outline"
+                onClick={switchToPolling}
+                disabled={starting || !settings?.bot_token}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {starting ? "Pollingga o'tyapti..." : "Pollingga o'tish"}
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={stopBot} 
+                disabled={stopping}
+              >
+                <Square className="h-4 w-4 mr-2" />
+                {stopping ? "To'xtatilmoqda..." : "Webhookni to'xtatish"}
+              </Button>
+            </>
+          ) : (
             <>
               {botStatus?.is_running ? (
                 <Button 
@@ -393,7 +459,7 @@ export default function TelegramBotPage() {
                 <Button 
                   variant="default"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={startBot} 
+                  onClick={() => startBot(false)} 
                   disabled={starting || !settings?.bot_token}
                 >
                   <Play className="h-4 w-4 mr-2" />
