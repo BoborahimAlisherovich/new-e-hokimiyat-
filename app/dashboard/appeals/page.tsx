@@ -2,20 +2,21 @@
 
 import { Header } from "@/components/layout/header"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { getAppeals } from "@/lib/api"
-import { Appeal, FilterOptions, Stats } from "@/types"
+import { api, getAppeals } from "@/lib/api"
+import { Appeal, FilterOptions } from "@/types"
 import { AppealFilters } from "@/components/dashboard/appeals/appeal-filters"
 import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
 import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
 import { useTranslation } from "@/lib/i18n/context"
+import { PRIORITY_LABELS, STATUS_LABELS } from "@/components/dashboard/appeals/appeal-constants"
 
 export default function AppealsPage() {
   const t = useTranslation()
   // State management
   const [appeals, setAppeals] = useState<Appeal[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, inProgress: 0, resolved: 0 })
   const [options, setOptions] = useState<FilterOptions>({ status: {}, priority: {}, category: {}, districts: [] })
+  const [regions, setRegions] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -25,29 +26,16 @@ export default function AppealsPage() {
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null)
 
   // Data loading
-  const loadData = useCallback(async () => {
+  const loadRegions = useCallback(async () => {
     try {
-      setLoading(true)
-      // Mock data for now
-      const mockStats: Stats = {
-        total: 1247,
-        pending: 423,
-        inProgress: 189,
-        resolved: 635
-      }
-      setStats(mockStats)
-
-      const mockOptions: FilterOptions = {
-        status: { all: "Barchasi", pending: "Kutilmoqda", in_progress: "Bajarilmoqda", resolved: "Hal etilgan" },
-        priority: { all: "Barchasi", low: "Past", medium: "O'rtacha", high: "Yuqori" },
-        category: { all: "Barchasi", social: "Ijtimoiy", economic: "Iqtisodiy", legal: "Huquqiy", other: "Boshqa" },
-        districts: ["Hatirchi tumani"]
-      }
-      setOptions(mockOptions)
-    } catch (error) {
-      // Error loading data
-    } finally {
-      setLoading(false)
+      const response = await api.get<any>("/telegram-bot/regions/")
+      const raw = Array.isArray(response.data) ? response.data : (response.data?.results ?? [])
+      const names = raw
+        .map((region: any) => region.name_uz || region.name || region.name_ru || region.name_en || "")
+        .filter(Boolean)
+      setRegions(names)
+    } catch {
+      setRegions([])
     }
   }, [])
 
@@ -65,12 +53,45 @@ export default function AppealsPage() {
 
   // Effects
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadRegions()
+  }, [loadRegions])
 
   useEffect(() => {
     loadAppeals()
   }, [loadAppeals])
+
+  useEffect(() => {
+    const statusOptions: Record<string, string> = { all: "Barchasi" }
+    const priorityOptions: Record<string, string> = { all: "Barchasi" }
+    const categoryOptions: Record<string, string> = { all: "Barchasi" }
+
+    const statusSet = new Set(appeals.map((appeal) => appeal.status).filter(Boolean))
+    statusSet.forEach((status) => {
+      statusOptions[status] = STATUS_LABELS[status] || status
+    })
+
+    const prioritySet = new Set(appeals.map((appeal) => appeal.priority).filter(Boolean))
+    prioritySet.forEach((priority) => {
+      priorityOptions[priority] = PRIORITY_LABELS[priority] || priority
+    })
+
+    const categorySet = new Set(appeals.map((appeal) => appeal.category).filter(Boolean))
+    categorySet.forEach((category) => {
+      categoryOptions[category] = category
+    })
+
+    const districtOptions = (regions.length
+      ? regions
+      : Array.from(new Set(appeals.map((appeal) => appeal.district).filter(Boolean)))
+    ).sort((a, b) => a.localeCompare(b))
+
+    setOptions({
+      status: statusOptions,
+      priority: priorityOptions,
+      category: categoryOptions,
+      districts: districtOptions,
+    })
+  }, [appeals, regions])
 
   // Filtered appeals
   const filteredAppeals = useMemo(() => {

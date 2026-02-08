@@ -71,6 +71,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.categoryLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.organizationsLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.deadlineLabel}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Yaratilgan sana</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.statusLabel}</TableHead>
           </TableRow>
         </TableHeader>
@@ -119,6 +120,17 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                         }) 
                       : '—'}
                   </div>
+                </TableCell>
+                <TableCell className="py-4 px-6">
+                  <span className="text-sm text-slate-600 font-medium">
+                    {task.created_at
+                      ? new Date(task.created_at).toLocaleDateString("uz-UZ", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric"
+                        })
+                      : '—'}
+                  </span>
                 </TableCell>
                 <TableCell className="py-4 px-6">
                   <span className={cn(

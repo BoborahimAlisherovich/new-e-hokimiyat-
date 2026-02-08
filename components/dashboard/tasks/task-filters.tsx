@@ -49,6 +49,53 @@ export function TaskFilters({
   
   const hasActiveFilters = statusFilter !== "all" || priorityFilter !== "all" || 
     categoryFilter !== "all" || organizationFilter !== "all" || searchQuery !== ""
+
+  const statusLabels: Record<string, string> = {
+    YANGI: t.task.statuses.NEW,
+    IJRODA: t.task.statuses.IN_PROGRESS,
+    BAJARILDI: t.task.statuses.COMPLETED,
+    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
+    MUDDATI_KECH: t.task.statuses.OVERDUE,
+    BAJARILMADI: t.task.statuses.FAILED,
+    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
+  }
+
+  const priorityLabels: Record<string, string> = {
+    FAVQULODDA: t.tasks.priorityOptionCritical,
+    YUQORI: t.tasks.priorityOptionHigh,
+    ODDIY: t.tasks.priorityOptionMedium,
+    PAST: t.tasks.priorityOptionLow,
+  }
+
+  const categoryLabels: Record<string, string> = {
+    IJTIMOIY: t.task.categories.IJTIMOIY,
+    IQTISODIY: t.task.categories.IQTISODIY,
+    HUQUQIY: t.task.categories.HUQUQIY,
+    INFRASTRUKTURA: t.task.categories.INFRASTRUKTURA,
+    TA_LIM: t.task.categories.TA_LIM,
+    SOG_LIQNI_SAQLASH: t.task.categories.SOG_LIQNI_SAQLASH,
+    BOSHQA: t.task.categories.BOSHQA,
+  }
+
+  const organizationLabel = organizations.find(
+    (org) => String(org.id) === String(organizationFilter)
+  )?.name
+
+  const activeFilters = [
+    searchQuery ? { label: "Qidiruv", value: searchQuery } : null,
+    statusFilter !== "all"
+      ? { label: "Holat", value: statusLabels[statusFilter] || statusFilter }
+      : null,
+    priorityFilter !== "all"
+      ? { label: "Muhimlik", value: priorityLabels[priorityFilter] || priorityFilter }
+      : null,
+    categoryFilter !== "all"
+      ? { label: "Soha", value: categoryLabels[categoryFilter] || categoryFilter }
+      : null,
+    organizationFilter !== "all"
+      ? { label: "Tashkilot", value: organizationLabel || organizationFilter }
+      : null,
+  ].filter(Boolean) as { label: string; value: string }[]
   
   return (
     <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
@@ -68,7 +115,7 @@ export function TaskFilters({
             {hasActiveFilters && (
               <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Aktiv filtr
+                {activeFilters.length} ta filtr
               </Badge>
             )}
             {hasActiveFilters && (
@@ -79,6 +126,15 @@ export function TaskFilters({
             )}
           </div>
         </div>
+        {hasActiveFilters && activeFilters.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {activeFilters.map((filter) => (
+              <Badge key={`${filter.label}-${filter.value}`} variant="outline" className="text-xs border-orange-200 text-orange-700">
+                {filter.label}: {filter.value}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="p-4 space-y-4">

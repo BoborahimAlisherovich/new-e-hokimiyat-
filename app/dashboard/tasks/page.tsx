@@ -58,7 +58,7 @@ export default function TasksPage() {
       const [usersData, orgsData, tasksPage, statsData, me] = await Promise.all([
         getUsers(),
         getOrganizations(),
-        getTasksPage(filters, page, pageSize),
+        getTasksPage(filters, page, pageSize, '-created_at'),
         getTaskStats(filters),
         getCurrentUser(),
       ])

@@ -183,7 +183,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     status: TELEGRAM_STATUS_MAP[appeal.status] || 'PENDING',
     assignedTo: undefined,
     organization: undefined,
-    district: telegramUser?.region_name || 'Xatirchi tumani',
+    district: telegramUser?.region_name || '',
     address: '',
     createdAt: appeal.created_at,
     updatedAt: appeal.updated_at,

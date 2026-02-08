@@ -211,20 +211,65 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
         try:
             import os
             import signal
+            import time
+            import requests
             
             pid_file = '/tmp/telegram_bot.pid'
+            stopped = False
+            pid = None
             if os.path.exists(pid_file):
                 try:
                     with open(pid_file, 'r') as f:
                         pid = int(f.read().strip())
                     os.kill(pid, signal.SIGTERM)
-                    os.remove(pid_file)
+                    time.sleep(1)
+                    try:
+                        os.kill(pid, 0)
+                        os.kill(pid, signal.SIGKILL)
+                        time.sleep(1)
+                    except ProcessLookupError:
+                        pass
+                    try:
+                        os.kill(pid, 0)
+                        return Response(
+                            {
+                                'success': False,
+                                'error': 'Bot jarayonini to\'xtatib bo\'lmadi. Serverdagi processni tekshiring.'
+                            },
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                    except ProcessLookupError:
+                        stopped = True
                 except (ProcessLookupError, ValueError):
+                    stopped = False
+                finally:
+                    if os.path.exists(pid_file):
+                        os.remove(pid_file)
+
+            # Webhook rejimini ham to'xtatish
+            if settings.bot_token and settings.use_webhook:
+                try:
+                    response = requests.post(
+                        f'https://api.telegram.org/bot{settings.bot_token}/deleteWebhook',
+                        timeout=10
+                    )
+                    if response.json().get('ok'):
+                        settings.use_webhook = False
+                except Exception:
                     pass
             
             settings.is_active = False
             settings.save()
-            
+
+            if not stopped and not settings.use_webhook:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Bot jarayoni topilmadi yoki allaqachon to\'xtagan.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             return Response({
                 'success': True,
                 'message': 'Bot muvaffaqiyatli to\'xtatildi'
