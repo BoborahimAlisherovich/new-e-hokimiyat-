@@ -415,6 +415,19 @@ export interface Appeal {
   rating_comment?: string
   rated_at?: string | null
   closed_at?: string | null
+  attachments?: AppealAttachment[]
+}
+
+export interface AppealAttachment {
+  id: number
+  file_type: string
+  telegram_file_id: string
+  file?: string | null
+  file_url?: string | null
+  file_name?: string
+  file_size?: number
+  mime_type?: string
+  created_at?: string
 }
 
 export interface Stats {

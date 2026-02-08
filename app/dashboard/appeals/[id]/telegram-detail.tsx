@@ -74,6 +74,24 @@ import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Appeal } from "@/types"
 
+const FILE_TYPE_LABELS: Record<string, string> = {
+  photo: "Rasm",
+  video: "Video",
+  audio: "Audio",
+  voice: "Ovozli xabar",
+  document: "Hujjat",
+  video_note: "Video xabar",
+}
+
+const formatFileSize = (size?: number) => {
+  if (!size || Number.isNaN(size)) return ""
+  if (size < 1024) return `${size} B`
+  const kb = size / 1024
+  if (kb < 1024) return `${kb.toFixed(1)} KB`
+  const mb = kb / 1024
+  return `${mb.toFixed(1)} MB`
+}
+
 interface AppealMessage {
   id: number
   text: string
@@ -595,6 +613,55 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     <div className="p-4 bg-muted/30 rounded-lg overflow-hidden">
                       <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{appeal.description}</p>
                     </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Murojaat fayllari</p>
+                    {appeal.attachments && appeal.attachments.length > 0 ? (
+                      <div className="space-y-2">
+                        {appeal.attachments.map((attachment) => {
+                          const fileHref = attachment.file_url || attachment.file || ""
+                          const fileLabel = FILE_TYPE_LABELS[attachment.file_type] || "Fayl"
+                          const fileName = attachment.file_name || fileHref.split("/").pop() || "Fayl"
+                          const fileSize = formatFileSize(attachment.file_size)
+                          const isImage = attachment.file_type === "photo"
+                          return (
+                            <div
+                              key={attachment.id}
+                              className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/70 p-3"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="h-9 w-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                                    {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate">{fileName}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {fileLabel}{fileSize ? ` • ${fileSize}` : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                                {fileHref ? (
+                                  <a
+                                    href={fileHref}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-sm text-blue-600 hover:text-blue-700"
+                                  >
+                                    Ochish
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Link yo'q</span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Fayl biriktirilmagan</p>
+                    )}
                   </div>
                   
                   {/* Baholash ko'rsatish */}
