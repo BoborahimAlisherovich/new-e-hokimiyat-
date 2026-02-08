@@ -11,7 +11,7 @@
  * @author E-Hokimiyat Development Team
  */
 
-import type { Appeal } from '@/types'
+import type { Appeal, AppealAttachment } from '@/types'
 import { fetchApi } from './client'
 
 // ============================================================================
@@ -25,6 +25,11 @@ interface TelegramAppealResponse {
   status: string
   priority: string
   category_name?: string
+  category_detail?: {
+    name_uz?: string
+    name_ru?: string
+    name_en?: string
+  }
   appeal_number?: string
   appeal_type_name?: string
   ai_analysis?: string
@@ -41,6 +46,19 @@ interface TelegramAppealResponse {
     region_name?: string
   }
   user_name?: string
+  attachments?: TelegramAppealAttachmentResponse[]
+}
+
+interface TelegramAppealAttachmentResponse {
+  id: number
+  file_type: string
+  telegram_file_id: string
+  file?: string | null
+  file_url?: string | null
+  file_name?: string
+  file_size?: number
+  mime_type?: string
+  created_at?: string
 }
 
 /** Murojaat xabari */
@@ -170,6 +188,17 @@ function extractSubject(appeal: TelegramAppealResponse): string {
  */
 function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
   const telegramUser = appeal.telegram_user
+  const attachments: AppealAttachment[] | undefined = appeal.attachments?.map((att) => ({
+    id: att.id,
+    file_type: att.file_type,
+    telegram_file_id: att.telegram_file_id,
+    file: att.file ?? null,
+    file_url: att.file_url ?? null,
+    file_name: att.file_name,
+    file_size: att.file_size,
+    mime_type: att.mime_type,
+    created_at: att.created_at,
+  }))
   
   return {
     id: `tg-${appeal.id}`,
@@ -178,7 +207,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     citizenEmail: '',
     subject: extractSubject(appeal),
     description: appeal.text || '',
-    category: appeal.category_name || 'Boshqa',
+    category: appeal.category_name || appeal.category_detail?.name_uz || 'Boshqa',
     priority: TELEGRAM_PRIORITY_MAP[appeal.priority] || 'MEDIUM',
     status: TELEGRAM_STATUS_MAP[appeal.status] || 'PENDING',
     assignedTo: undefined,
@@ -187,6 +216,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     address: '',
     createdAt: appeal.created_at,
     updatedAt: appeal.updated_at,
+    attachments,
   }
 }
 
