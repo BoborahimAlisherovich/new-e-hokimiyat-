@@ -10,6 +10,7 @@ Usage:
 
 from django.core.management.base import BaseCommand
 from telegram_bot.models import BotSettings, BotRegion, AppealCategory, AppealType
+from telegram_bot.region_sync import build_region_fields, load_map_region_names
 
 
 class Command(BaseCommand):
@@ -166,7 +167,8 @@ class Command(BaseCommand):
         self.stdout.write('Boshlang\'ich ma\'lumotlar yaratilmoqda...')
         
         # Hududlar
-        regions = [
+        map_names = load_map_region_names()
+        regions = map_names or [
             'Hatirchi shaharchasi',
             'Achchiq QFY',
             'Bandigon QFY',
@@ -186,13 +188,10 @@ class Command(BaseCommand):
             'Tinchlik QFY',
             'Yangiobod QFY',
         ]
-        
+
         for i, name in enumerate(regions, 1):
-            code = name.lower().replace(' ', '_').replace("'", "")
-            BotRegion.objects.get_or_create(
-                name_uz=name,
-                defaults={'code': code, 'order': i, 'is_active': True}
-            )
+            defaults = build_region_fields(name, order=i)
+            BotRegion.objects.update_or_create(code=defaults['code'], defaults=defaults)
         self.stdout.write(f'  {len(regions)} ta hudud yaratildi')
         
         # Murojaat turlari

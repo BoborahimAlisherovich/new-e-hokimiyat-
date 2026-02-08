@@ -160,6 +160,18 @@ def get_or_create_user(telegram_data: Dict) -> TelegramUser:
     return user
 
 
+def normalize_phone(raw_phone: str) -> Optional[str]:
+    """Telefon raqamini +998XXXXXXXXX formatiga keltirish."""
+    digits = re.sub(r"\D+", "", raw_phone or "")
+    if digits.startswith("998") and len(digits) == 12:
+        return f"+{digits}"
+    if digits.startswith("0") and len(digits) == 10:
+        return f"+998{digits[1:]}"
+    if len(digits) == 9:
+        return f"+998{digits}"
+    return None
+
+
 def get_user_state(user: TelegramUser) -> Optional[UserState]:
     """Foydalanuvchi holatini olish"""
     try:
@@ -393,8 +405,8 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
     
     elif current_state == 'registration:phone':
         # Telefon raqam (qo'lda kiritilgan)
-        phone = re.sub(r'[^\d+]', '', text)
-        if len(phone) >= 9:
+        phone = normalize_phone(text)
+        if phone:
             user.phone = phone
             user.save()
             
@@ -430,8 +442,8 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             bot.send_message(chat_id, get_text('error_invalid_input', lang))
 
     elif current_state == 'settings:phone':
-        phone = re.sub(r'[^\d+]', '', text)
-        if len(phone) >= 9:
+        phone = normalize_phone(text)
+        if phone:
             user.phone = phone
             user.save()
             clear_user_state(user)
@@ -537,7 +549,10 @@ def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
         return
     
     contact = message['contact']
-    phone = contact.get('phone_number', '')
+    phone = normalize_phone(contact.get('phone_number', ''))
+    if not phone:
+        bot.send_message(chat_id, get_text('error_invalid_input', user.language))
+        return
     
     user.phone = phone
     user.save()
@@ -1259,66 +1274,73 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         
         # Fayllarni saqlash
         attachments = data.get('attachments', [])
+        allowed_types = {'photo', 'video', 'audio', 'voice', 'document', 'video_note'}
         for att in attachments:
-            file_id = att.get('file_id')
-            if not file_id:
-                logger.warning("Attachment skipped: missing file_id")
-                continue
-            file_type = att.get('file_type') or 'document'
-            file_url = bot.get_file(file_id)
-            original_file_name = att.get('file_name')
-            mime_type = att.get('mime_type')
-            
-            # Faylni yuklab olish va saqlash
-            attachment = AppealAttachment(
-                appeal=appeal,
-                file_type=file_type,
-                telegram_file_id=file_id
-            )
+            try:
+                file_id = att.get('file_id')
+                if not file_id:
+                    logger.warning("Attachment skipped: missing file_id")
+                    continue
+                file_type = att.get('file_type') or 'document'
+                if file_type not in allowed_types:
+                    logger.warning(f"Attachment skipped: invalid file_type={file_type}")
+                    file_type = 'document'
+                file_url = bot.get_file(file_id)
+                original_file_name = att.get('file_name')
+                mime_type = att.get('mime_type')
+                
+                # Faylni yuklab olish va saqlash
+                attachment = AppealAttachment(
+                    appeal=appeal,
+                    file_type=file_type,
+                    telegram_file_id=file_id
+                )
 
-            if original_file_name:
-                attachment.file_name = original_file_name
-            if mime_type:
-                attachment.mime_type = mime_type
-            
-            # Fayl URL mavjud bo'lsa, yuklab olish
-            if file_url:
-                try:
-                    import requests
-                    import os
-                    from django.core.files.base import ContentFile
-                    
-                    response = requests.get(file_url, timeout=30)
-                    if response.status_code == 200:
-                        # Fayl nomini aniqlash
-                        file_ext = file_type
-                        if file_ext == 'photo':
-                            file_ext = 'jpg'
-                        elif file_ext == 'voice':
-                            file_ext = 'ogg'
-                        elif file_ext == 'video':
-                            file_ext = 'mp4'
-                        elif file_ext == 'video_note':
-                            file_ext = 'mp4'
-                        elif file_ext == 'audio':
-                            file_ext = 'mp3'
-                        elif file_ext == 'document':
-                            if original_file_name:
-                                _, ext = os.path.splitext(original_file_name)
-                                file_ext = ext.lstrip('.') or 'bin'
+                if original_file_name:
+                    attachment.file_name = original_file_name
+                if mime_type:
+                    attachment.mime_type = mime_type
+                
+                # Fayl URL mavjud bo'lsa, yuklab olish
+                if file_url:
+                    try:
+                        import requests
+                        import os
+                        from django.core.files.base import ContentFile
+                        
+                        response = requests.get(file_url, timeout=30)
+                        if response.status_code == 200:
+                            # Fayl nomini aniqlash
+                            file_ext = file_type
+                            if file_ext == 'photo':
+                                file_ext = 'jpg'
+                            elif file_ext == 'voice':
+                                file_ext = 'ogg'
+                            elif file_ext == 'video':
+                                file_ext = 'mp4'
+                            elif file_ext == 'video_note':
+                                file_ext = 'mp4'
+                            elif file_ext == 'audio':
+                                file_ext = 'mp3'
+                            elif file_ext == 'document':
+                                if original_file_name:
+                                    _, ext = os.path.splitext(original_file_name)
+                                    file_ext = ext.lstrip('.') or 'bin'
+                                else:
+                                    file_ext = 'bin'
                             else:
                                 file_ext = 'bin'
-                        else:
-                            file_ext = 'bin'
-                        
-                        file_name = f"{file_id[:20]}.{file_ext}"
-                        attachment.file_name = file_name
-                        attachment.file_size = len(response.content)
-                        attachment.file.save(file_name, ContentFile(response.content), save=False)
-                except Exception as e:
-                    logger.error(f"Fayl yuklashda xato: {e}")
-            
-            attachment.save()
+                            
+                            file_name = f"{file_id[:20]}.{file_ext}"
+                            attachment.file_name = file_name
+                            attachment.file_size = len(response.content)
+                            attachment.file.save(file_name, ContentFile(response.content), save=False)
+                    except Exception as e:
+                        logger.error(f"Fayl yuklashda xato: {e}")
+                
+                attachment.save()
+            except Exception as e:
+                logger.error(f"Attachment saqlashda xato: {e}")
         
         clear_user_state(user)
         
