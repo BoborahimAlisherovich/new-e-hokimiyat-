@@ -25,7 +25,6 @@ import {
   UserCog,
   Bot,
   Sparkles,
-  Repeat,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -41,7 +40,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOKIM: [
     '/dashboard',
     '/dashboard/tasks',
-    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
@@ -55,7 +53,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOKIM_YORDAMCHISI: [
     '/dashboard',
     '/dashboard/tasks',
-    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
@@ -69,7 +66,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOKIMLIK_MASUL: [
     '/dashboard',
     '/dashboard/tasks',
-    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
@@ -100,7 +96,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   ADMIN: [
     '/dashboard',
     '/dashboard/tasks',
-    '/dashboard/recurring-tasks',
     '/dashboard/users',
     '/dashboard/organizations',
     '/dashboard/notifications',
@@ -208,13 +203,6 @@ export function Sidebar() {
       title: t.navigation.tasks,
       href: "/dashboard/tasks",
       icon: CheckSquare2,
-      section: "main"
-    },
-    {
-      title: t.navigation.recurringTasks,
-      href: "/dashboard/recurring-tasks",
-      icon: Repeat,
-      adminOnly: true,
       section: "main"
     },
     {

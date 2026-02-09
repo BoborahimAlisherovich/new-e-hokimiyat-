@@ -63,7 +63,6 @@ export interface Translations {
   navigation: {
     dashboard: string
     tasks: string
-    recurringTasks: string
     users: string
     organizations: string
     notifications: string
