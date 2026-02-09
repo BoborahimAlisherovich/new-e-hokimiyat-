@@ -9,41 +9,44 @@ import AnalyticsSection from "@/components/dashboard/analytics-section"
 import DeadlineCriticalTasks from "@/components/dashboard/deadline-critical-tasks"
 import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics-charts"
 import { useTranslation } from "@/lib/i18n/context"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
 export default function DashboardPage() {
   const t = useTranslation()
+  const pageRef = useGSAPPageEntrance()
+  
   return (
     <>
       <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
 
             {/* 1. Task Summary (KPI) */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <StatsCards />
             </section>
 
             {/* 2. Analytics (charts only if data) */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <AnalyticsSection />
             </section>
 
             {/* 2.1 Additional Analytics Charts */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <DashboardAnalyticsCharts />
             </section>
 
             {/* 3. Organization Performance */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <OrganizationRanking />
             </section>
 
             {/* 3.1 Sector Overview */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <SectorOverview />
             </section>
 
             {/* 4. Deadline‑Critical Tasks */}
-            <section className="animate-slide-up">
+            <section data-gsap-section>
               <DeadlineCriticalTasks />
             </section>
 

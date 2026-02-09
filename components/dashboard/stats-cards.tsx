@@ -63,9 +63,9 @@ export function StatsCards() {
       change: `${activeSectors}`,
       changeLabel: t.dashboard.inSectors,
       icon: ListTodo,
-      gradient: "from-blue-500 to-cyan-500",
-      bgColor: "bg-gradient-to-br from-blue-500/10 to-cyan-500/10",
-      iconColor: "text-blue-600",
+      gradient: "from-indigo-500 to-violet-500",
+      bgColor: "bg-gradient-to-br from-indigo-500/12 to-violet-500/12",
+      iconColor: "text-indigo-600",
       trend: "up",
       trendValue: "+12%",
       description: t.dashboard.allTasksDescription,
@@ -76,8 +76,8 @@ export function StatsCards() {
       change: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%",
       changeLabel: t.dashboard.completionLabel,
       icon: CheckCircle,
-      gradient: "from-emerald-500 to-teal-500",
-      bgColor: "bg-gradient-to-br from-emerald-500/10 to-teal-500/10",
+      gradient: "from-emerald-500 to-cyan-500",
+      bgColor: "bg-gradient-to-br from-emerald-500/12 to-cyan-500/12",
       iconColor: "text-emerald-600",
       trend: "up",
       trendValue: "+8%",
@@ -89,9 +89,9 @@ export function StatsCards() {
       change: t.dashboard.overdueStatus,
       changeLabel: t.dashboard.statusLabel,
       icon: AlertCircle,
-      gradient: "from-red-500 to-pink-500",
-      bgColor: "bg-gradient-to-br from-red-500/10 to-pink-500/10",
-      iconColor: "text-red-600",
+      gradient: "from-rose-500 to-pink-500",
+      bgColor: "bg-gradient-to-br from-rose-500/12 to-pink-500/12",
+      iconColor: "text-rose-600",
       trend: "down",
       trendValue: "-3%",
       description: t.dashboard.overdueDescription,
@@ -132,7 +132,7 @@ export function StatsCards() {
             whileHover={{ scale: 1.02, y: -4 }}
           >
             <Card
-              className="group relative overflow-hidden bg-white/95 backdrop-blur-xl border-slate-200 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
+              className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border-indigo-100/40 rounded-2xl shadow-lg shadow-indigo-100/20 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all duration-300 ring-1 ring-white/50"
             >
               {/* Gradient overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />

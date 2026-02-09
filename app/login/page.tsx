@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import gsap from "gsap"
 import {
   Shield,
   ExternalLink,
@@ -38,10 +39,95 @@ export default function LoginPage() {
   const [pnfl, setPnfl] = useState("")
   const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
+  
+  // GSAP refs
+  const pageRef = useRef<HTMLDivElement>(null)
+  const leftSideRef = useRef<HTMLDivElement>(null)
+  const rightSideRef = useRef<HTMLDivElement>(null)
+  const formCardRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
+  const orbsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // GSAP entrance animation
+  useEffect(() => {
+    if (!mounted || !pageRef.current) return
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
+
+      // Animate floating orbs
+      if (orbsRef.current) {
+        const orbs = orbsRef.current.querySelectorAll('.login-orb')
+        gsap.set(orbs, { scale: 0, opacity: 0 })
+        tl.to(orbs, {
+          scale: 1,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.15,
+          ease: "elastic.out(1, 0.5)",
+        }, 0)
+        
+        // Continuous floating
+        orbs.forEach((orb, i) => {
+          gsap.to(orb, {
+            y: `random(-60, 60)`,
+            x: `random(-40, 40)`,
+            scale: `random(0.85, 1.15)`,
+            duration: `random(8, 14)`,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: i * 0.3,
+          })
+        })
+      }
+
+      // Left side image reveal
+      if (leftSideRef.current) {
+        tl.from(leftSideRef.current, {
+          clipPath: "inset(0 100% 0 0)",
+          duration: 1,
+          ease: "power4.inOut",
+        }, 0.2)
+      }
+
+      // Header entrance
+      if (headerRef.current) {
+        tl.from(headerRef.current.children, {
+          y: 30,
+          opacity: 0,
+          duration: 0.7,
+          stagger: 0.1,
+        }, 0.5)
+      }
+
+      // Form card entrance
+      if (formCardRef.current) {
+        tl.from(formCardRef.current, {
+          y: 40,
+          opacity: 0,
+          scale: 0.96,
+          duration: 0.8,
+        }, 0.7)
+      }
+
+      // Footer entrance
+      if (footerRef.current) {
+        tl.from(footerRef.current, {
+          y: 20,
+          opacity: 0,
+          duration: 0.5,
+        }, 1)
+      }
+    }, pageRef)
+
+    return () => ctx.revert()
+  }, [mounted])
 
   const handlePnflCheck = async () => {
     if (!/^\d{14}$/.test(pnfl)) {
@@ -98,9 +184,9 @@ export default function LoginPage() {
     )
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
+    <div ref={pageRef} className="min-h-screen flex overflow-hidden relative">
       {/* Left Side - Image Section */}
-      <div className="hidden lg:flex lg:w-[55%] relative">
+      <div ref={leftSideRef} className="hidden lg:flex lg:w-[55%] relative">
         {/* Full Background Image */}
         <Image
           src="/xatirchi-login.png"
@@ -110,33 +196,41 @@ export default function LoginPage() {
           priority
         />
         
-        {/* Subtle Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/30 via-transparent to-transparent" />
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative">
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100/40 to-indigo-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-100/30 to-indigo-100/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      <div ref={rightSideRef} className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 lg:p-12 relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-violet-50/50" />
         
-        <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* Floating orbs */}
+        <div ref={orbsRef} className="absolute inset-0 pointer-events-none">
+          <div className="login-orb absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-indigo-300/25 to-blue-200/20 blur-3xl" />
+          <div className="login-orb absolute bottom-[-15%] left-[-10%] w-[350px] h-[350px] rounded-full bg-gradient-to-br from-violet-300/20 to-purple-200/15 blur-3xl" />
+          <div className="login-orb absolute top-[40%] left-[-5%] w-[250px] h-[250px] rounded-full bg-gradient-to-br from-cyan-300/15 to-teal-200/10 blur-3xl" />
+          <div className="login-orb absolute bottom-[30%] right-[5%] w-[200px] h-[200px] rounded-full bg-gradient-to-br from-amber-300/12 to-orange-200/8 blur-3xl" />
+        </div>
+        
+        <div className="w-full max-w-md relative z-10">
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                 <Building2 className="h-7 w-7 text-white" />
               </div>
               <div className="text-left">
                 <h2 className="text-xl font-bold text-gray-900">E-Hokimiyat</h2>
-                <p className="text-sm text-blue-600 font-medium">Xatirchi tumani</p>
+                <p className="text-sm text-indigo-600 font-medium">Xatirchi tumani</p>
               </div>
             </div>
           </div>
 
           {/* Form Header */}
-          <div className="text-center lg:text-left mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold mb-4">
+          <div ref={headerRef} className="text-center lg:text-left mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-100 to-violet-100 text-indigo-700 text-xs font-semibold mb-4 border border-indigo-200/50">
               <Shield className="h-3.5 w-3.5" />
               Xavfsiz kirish
             </div>
@@ -149,7 +243,7 @@ export default function LoginPage() {
           </div>
 
           {/* Login Card */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-gray-200/50 p-7 sm:p-9 border border-gray-100/80">
+          <div ref={formCardRef} className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-indigo-200/30 p-7 sm:p-9 border border-white/60 ring-1 ring-indigo-100/20">
             {step === "initial" && (
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -166,7 +260,7 @@ export default function LoginPage() {
                       }
                       maxLength={14}
                       placeholder="• • • • • • • • • • • • • •"
-                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-gray-50/50 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
+                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
                     />
                     {pnfl.length === 14 && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -184,16 +278,16 @@ export default function LoginPage() {
                   </div>
                   
                   {/* Progress bar */}
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-300 ease-out"
+                      className="h-full bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
                       style={{ width: `${(pnfl.length / 14) * 100}%` }}
                     />
                   </div>
                 </div>
 
                 <Button
-                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all duration-300 group"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-500 group"
                   onClick={handlePnflCheck}
                   disabled={pnfl.length !== 14}
                 >
@@ -212,7 +306,7 @@ export default function LoginPage() {
 
                 <Button
                   variant="outline"
-                  className="w-full h-14 text-base font-medium border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 rounded-xl transition-all duration-300 group"
+                  className="w-full h-14 text-base font-medium border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-300 group"
                   onClick={() => setStep("oneid_redirect")}
                   disabled={pnfl.length !== 14}
                 >
@@ -231,8 +325,8 @@ export default function LoginPage() {
             {step === "checking" && (
               <div className="flex flex-col items-center py-14">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" />
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-400/30">
                     <Loader2 className="h-8 w-8 animate-spin text-white" />
                   </div>
                 </div>
@@ -247,18 +341,18 @@ export default function LoginPage() {
 
             {step === "oneid_redirect" && (
               <div className="space-y-6">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-200">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-blue-800 font-medium text-sm">PNFL tasdiqlandi</p>
-                    <p className="text-blue-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
+                    <p className="text-indigo-800 font-medium text-sm">PNFL tasdiqlandi</p>
+                    <p className="text-indigo-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
                   </div>
                 </div>
 
                 <Button
-                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300"
                   onClick={handleOneIdLogin}
                 >
                   <ExternalLink className="mr-2 h-5 w-5" />
@@ -302,8 +396,8 @@ export default function LoginPage() {
             {step === "success" && (
               <div className="flex flex-col items-center py-14">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
-                  <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+                  <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                     <CheckCircle2 className="h-10 w-10 text-white" />
                   </div>
                 </div>
@@ -318,7 +412,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-center space-y-1">
+          <div ref={footerRef} className="mt-8 text-center space-y-1">
             <p className="text-xs text-gray-400">
               O'zbekiston Respublikasi Raqamli texnologiyalar vazirligi
             </p>

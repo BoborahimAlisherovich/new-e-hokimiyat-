@@ -3,6 +3,18 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 // Re-export audio recorder hook
 export { useAudioRecorder, formatTime } from './use-audio-recorder'
 
+// Re-export GSAP hooks
+export {
+  useGSAPFadeIn,
+  useGSAPTextReveal,
+  useGSAPCounter,
+  useGSAPMagnetic,
+  useGSAPParallax,
+  useGSAPStaggerGrid,
+  useGSAPPageEntrance,
+  useGSAPProgress,
+} from './use-gsap'
+
 // Generic debounce hook
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
