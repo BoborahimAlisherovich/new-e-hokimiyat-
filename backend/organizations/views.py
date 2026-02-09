@@ -368,7 +368,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         
         org = self.get_object()
         employees = org.employees.filter(status='FAOL')
-        serializer = UserMinimalSerializer(employees, many=True)
+        serializer = UserMinimalSerializer(employees, many=True, context={'request': request})
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])

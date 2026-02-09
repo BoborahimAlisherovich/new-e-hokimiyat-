@@ -111,7 +111,7 @@ class AuthViewSet(viewsets.ViewSet):
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
-            'user': UserMeSerializer(user).data
+            'user': UserMeSerializer(user, context={'request': request}).data
         })
     
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
@@ -292,7 +292,7 @@ class UserViewSet(viewsets.ModelViewSet):
             ip_address=getattr(request, 'client_ip', None)
         )
         
-        return Response(UserSerializer(user).data)
+        return Response(UserSerializer(user, context={'request': request}).data)
     
     @action(detail=True, methods=['patch'])
     def archive(self, request, pk=None):
@@ -331,7 +331,7 @@ class UserViewSet(viewsets.ModelViewSet):
             ip_address=getattr(request, 'client_ip', None)
         )
         
-        return Response(UserSerializer(user).data)
+        return Response(UserSerializer(user, context={'request': request}).data)
     
     @action(detail=True, methods=['patch'])
     def activate(self, request, pk=None):
@@ -368,7 +368,7 @@ class UserViewSet(viewsets.ModelViewSet):
             ip_address=getattr(request, 'client_ip', None)
         )
         
-        return Response(UserSerializer(user).data)
+        return Response(UserSerializer(user, context={'request': request}).data)
 
     @action(detail=False, methods=['get'])
     def chat_users(self, request):
