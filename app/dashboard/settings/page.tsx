@@ -14,13 +14,14 @@ import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-
 import { SettingsSectorsTab } from "@/components/dashboard/settings/settings-sectors-tab"
 import { SettingsAdminTab } from "@/components/dashboard/settings/settings-admin-tab"
 import { useToast } from "@/hooks/use-toast"
-import { motion } from "framer-motion"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { api } from "@/lib/api"
 
 export default function SettingsPage() {
   const t = useTranslation()
   const { language, setLanguage } = useI18n()
   const { toast } = useToast()
+  const pageRef = useGSAPPageEntrance()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -166,14 +167,10 @@ export default function SettingsPage() {
         <Header title={t.settings.title} description={t.settings.description} />
         <div className="p-6">
           <div className="flex items-center justify-center h-64">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center"
-            >
+            <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-4 text-slate-700">{t.common.loading}</p>
-            </motion.div>
+            </div>
           </div>
         </div>
       </>
@@ -189,15 +186,17 @@ export default function SettingsPage() {
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-purple-400/8 to-transparent rounded-full blur-2xl" />
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+        <div
+          ref={pageRef}
           className="max-w-4xl mx-auto relative z-10"
         >
           <Tabs defaultValue="profile" className="space-y-6">
-            <SettingsTabs t={t} isAdmin={isAdmin} userRole={currentUser?.role} />
-            <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
+            <section data-gsap-section>
+              <SettingsTabs t={t} isAdmin={isAdmin} userRole={currentUser?.role} />
+            </section>
+            <section data-gsap-section>
+              <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
+            </section>
             <SettingsNotificationsTab
               t={t}
               emailNotifications={emailNotifications}
@@ -245,7 +244,7 @@ export default function SettingsPage() {
               />
             )}
           </Tabs>
-        </motion.div>
+        </div>
       </div>
     </>
   )

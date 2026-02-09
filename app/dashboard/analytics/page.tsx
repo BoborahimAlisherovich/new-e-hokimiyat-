@@ -9,11 +9,12 @@ import { AnalyticsMetrics } from "@/components/dashboard/analytics/analytics-met
 import { VillageAnalytics } from "@/components/dashboard/analytics/village-analytics"
 import { AnalyticsCharts } from "@/components/dashboard/analytics/analytics-charts"
 import { Loader2 } from "lucide-react"
-import { motion } from "framer-motion"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { useTranslation } from "@/lib/i18n/context"
 
 export default function AnalyticsPage() {
   const t = useTranslation()
+  const pageRef = useGSAPPageEntrance()
   const [tasks, setTasks] = useState<any[]>([])
   const [orgs, setOrgs] = useState<any[]>([])
   const [appeals, setAppeals] = useState<any[]>([])
@@ -75,48 +76,28 @@ export default function AnalyticsPage() {
           <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
         </div>
         
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div ref={pageRef} className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-12 py-8">
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
+            <section data-gsap-section>
               <AnalyticsOverview tasks={tasks} organizations={orgs} appeals={appeals} />
-            </motion.div>
+            </section>
             
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            <section data-gsap-section>
               <AnalyticsTabs tasks={tasks} organizations={orgs} />
-            </motion.div>
+            </section>
             
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+            <section data-gsap-section>
               <AnalyticsCharts tasks={tasks} organizations={orgs} appeals={appeals} />
-            </motion.div>
+            </section>
             
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+            <section data-gsap-section>
               <AnalyticsMetrics tasks={tasks} />
-            </motion.div>
+            </section>
             
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
+            <section data-gsap-section>
               <VillageAnalytics />
-            </motion.div>
+            </section>
 
           </div>
         </div>

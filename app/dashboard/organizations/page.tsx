@@ -9,10 +9,12 @@ import { OrganizationTable } from "@/components/dashboard/organizations/organiza
 import { OrganizationCreateDialog } from "@/components/dashboard/organizations/organization-create-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/i18n/context"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
 export default function OrganizationsPage() {
   const t = useTranslation()
   const { toast } = useToast()
+  const pageRef = useGSAPPageEntrance()
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -150,9 +152,10 @@ export default function OrganizationsPage() {
   return (
     <>
       <Header title={t.pages.organizations.title} description={t.pages.organizations.description} />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
             {/* Filters and Actions */}
-            <OrganizationFilters
+            <section data-gsap-section>
+              <OrganizationFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               typeFilter={typeFilter}
@@ -163,6 +166,7 @@ export default function OrganizationsPage() {
               totalCount={organizations.length}
               filteredCount={filteredOrganizations.length}
             />
+            </section>
 
             <OrganizationCreateDialog 
               open={isCreateOpen} 
@@ -174,6 +178,7 @@ export default function OrganizationsPage() {
             />
 
             {/* Organizations Table */}
+            <section data-gsap-section>
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600"></div>
@@ -197,6 +202,7 @@ export default function OrganizationsPage() {
                 onToggleStatus={handleToggleStatus}
               />
             )}
+            </section>
       </div>
     </>
   )

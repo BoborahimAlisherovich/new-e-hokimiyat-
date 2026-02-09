@@ -10,9 +10,11 @@ import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
 import { UserCreateDialog } from "@/components/dashboard/users/user-create-dialog"
 import { useTranslation } from "@/lib/i18n/context"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
 export default function UsersPage() {
   const t = useTranslation()
+  const pageRef = useGSAPPageEntrance()
   // State management
   const [users, setUsers] = useState<User[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -130,17 +132,20 @@ export default function UsersPage() {
   return (
     <>
       <Header title={t.pages.users.title} description={t.pages.users.description} />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
           {/* Stats Cards */}
-          <UserStats
-            total={users.length}
-            active={users.filter((u) => u.status === "FAOL").length}
-            inactive={users.filter((u) => u.status === "BLOKLANGAN" || u.status === "ARXIV" || u.status === "DRAFT").length}
-            organizations={organizations.length}
-          />
+          <section data-gsap-section>
+            <UserStats
+              total={users.length}
+              active={users.filter((u) => u.status === "FAOL").length}
+              inactive={users.filter((u) => u.status === "BLOKLANGAN" || u.status === "ARXIV" || u.status === "DRAFT").length}
+              organizations={organizations.length}
+            />
+          </section>
 
           {/* Filters and Actions */}
-          <UserFilters
+          <section data-gsap-section>
+            <UserFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             roleFilter={roleFilter}
@@ -154,9 +159,12 @@ export default function UsersPage() {
             totalCount={users.length}
             filteredCount={filteredUsers.length}
           />
+          </section>
 
           {/* Users Table */}
-          <UserTable users={filteredUsers} />
+          <section data-gsap-section>
+            <UserTable users={filteredUsers} />
+          </section>
       </div>
       <UserCreateDialog
         open={isCreateDialogOpen}

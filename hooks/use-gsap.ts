@@ -66,6 +66,93 @@ export function useGSAPFadeIn(options?: {
 }
 
 /**
+ * Professional page entrance with staggered sections & smooth content reveal.
+ * Applies to an entire page container with `data-gsap-section` children.
+ * Also animates cards (`data-gsap-card`) within each section.
+ */
+export function useGSAPDashboardPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out" },
+      });
+
+      // 1. Fade in the entire container
+      tl.from(containerRef.current, {
+        opacity: 0,
+        duration: 0.35,
+      });
+
+      // 2. Stagger sections
+      const sections = containerRef.current!.querySelectorAll("[data-gsap-section]");
+      if (sections.length > 0) {
+        tl.from(
+          sections,
+          {
+            opacity: 0,
+            y: 24,
+            duration: 0.55,
+            stagger: 0.1,
+          },
+          "-=0.15"
+        );
+      }
+
+      // 3. Stagger individual cards within sections
+      const cards = containerRef.current!.querySelectorAll("[data-gsap-card]");
+      if (cards.length > 0) {
+        tl.from(
+          cards,
+          {
+            opacity: 0,
+            y: 16,
+            scale: 0.97,
+            duration: 0.45,
+            stagger: 0.06,
+            ease: "back.out(1.4)",
+          },
+          "-=0.3"
+        );
+      }
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return containerRef;
+}
+
+/**
+ * Smooth loading skeleton pulse (call once, toggles on `loading` change)
+ */
+export function useGSAPLoadingReveal(loading: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    if (!loading) {
+      const ctx = gsap.context(() => {
+        gsap.from(ref.current!.children, {
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: "power3.out",
+        });
+      }, ref);
+      return () => ctx.revert();
+    }
+  }, [loading]);
+
+  return ref;
+}
+
+/**
  * GSAP text reveal animation (character by character or word by word)
  */
 export function useGSAPTextReveal(options?: {
@@ -273,7 +360,8 @@ export function useGSAPStaggerGrid(options?: {
 }
 
 /**
- * Simple GSAP timeline for page entrance
+ * Professional GSAP page entrance with refined timing & easing.
+ * Animate container, then stagger `[data-gsap-section]` children.
  */
 export function useGSAPPageEntrance() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -282,12 +370,13 @@ export function useGSAPPageEntrance() {
     if (!containerRef.current) return;
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline();
-      
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out" },
+      });
+
       tl.from(containerRef.current, {
         opacity: 0,
         duration: 0.3,
-        ease: "power2.out",
       });
 
       const sections = containerRef.current!.querySelectorAll("[data-gsap-section]");
@@ -296,12 +385,28 @@ export function useGSAPPageEntrance() {
           sections,
           {
             opacity: 0,
-            y: 30,
-            duration: 0.6,
-            stagger: 0.12,
-            ease: "power3.out",
+            y: 28,
+            duration: 0.55,
+            stagger: 0.1,
           },
           "-=0.1"
+        );
+      }
+
+      // Also animate any data-gsap-card within sections
+      const cards = containerRef.current!.querySelectorAll("[data-gsap-card]");
+      if (cards.length > 0) {
+        tl.from(
+          cards,
+          {
+            opacity: 0,
+            y: 14,
+            scale: 0.97,
+            duration: 0.4,
+            stagger: 0.05,
+            ease: "back.out(1.3)",
+          },
+          "-=0.35"
         );
       }
     }, containerRef);
