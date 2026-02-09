@@ -55,6 +55,18 @@ class BotSettings(models.Model):
         verbose_name="AI modeli"
     )
     
+    # Auto-response sozlamalari
+    auto_response_enabled = models.BooleanField(
+        default=True,
+        verbose_name="AI avtomatik javob",
+        help_text="Admin javob bermasa AI avtomatik javob beradi"
+    )
+    auto_response_timeout_minutes = models.PositiveIntegerField(
+        default=5,
+        verbose_name="Kutish vaqti (daqiqa)",
+        help_text="Admin javob berish uchun kutish vaqti (daqiqada). O'tgandan so'ng AI javob beradi."
+    )
+    
     # Xabar shablonlari
     welcome_message_uz = models.TextField(
         default="🏛 Xatirchi hokimligiga xush kelibsiz!\n\nBu bot orqali siz murojaatlaringizni yuborishingiz mumkin.",
@@ -469,6 +481,17 @@ class TelegramAppeal(models.Model):
         null=True, 
         blank=True,
         verbose_name="Ko'rib chiqilgan vaqt"
+    )
+    
+    # Admin xabardor qilingan vaqt (auto-response timeout uchun)
+    admin_notified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Adminlarga xabar yuborilgan vaqt"
+    )
+    ai_auto_responded = models.BooleanField(
+        default=False,
+        verbose_name="AI avtomatik javob bergan"
     )
     
     # Topshiriq sifatida kiritish

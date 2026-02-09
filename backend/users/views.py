@@ -156,7 +156,7 @@ class AuthViewSet(viewsets.ViewSet):
         Returns:
             Response: Foydalanuvchi profili
         """
-        return Response(UserMeSerializer(request.user).data)
+        return Response(UserMeSerializer(request.user, context={'request': request}).data)
     
     @action(detail=False, methods=['post'])
     def refresh(self, request: Request) -> Response:
@@ -402,8 +402,61 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             queryset = queryset.none()
         
-        serializer = UserSerializer(queryset.order_by('first_name', 'last_name'), many=True)
+        serializer = UserSerializer(queryset.order_by('first_name', 'last_name'), many=True, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    def avatar(self, request):
+        """
+        Profil rasmini yuklash yoki o'chirish.
+        
+        POST /api/users/avatar/ - Rasm yuklash (multipart/form-data, field: 'avatar')
+        DELETE /api/users/avatar/ - Rasmni o'chirish
+        """
+        user = request.user
+        
+        if request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete(save=False)
+                user.avatar = None
+                user.save(update_fields=['avatar'])
+            return Response({'status': "Rasm o'chirildi"})
+        
+        # POST - rasm yuklash
+        avatar_file = request.FILES.get('avatar')
+        if not avatar_file:
+            return Response(
+                {'error': 'Rasm fayli topilmadi. "avatar" kalit bilan yuklang.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Fayl turini tekshirish
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if avatar_file.content_type not in allowed_types:
+            return Response(
+                {'error': 'Faqat JPEG, PNG, WebP va GIF formatidagi rasmlar qabul qilinadi.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Fayl hajmini tekshirish (5 MB)
+        if avatar_file.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': "Rasm hajmi 5 MB dan oshmasligi kerak."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Eski rasmni o'chirish
+        if user.avatar:
+            user.avatar.delete(save=False)
+        
+        user.avatar = avatar_file
+        user.save(update_fields=['avatar'])
+        
+        avatar_url = request.build_absolute_uri(user.avatar.url)
+        return Response({
+            'status': 'Rasm muvaffaqiyatli yuklandi',
+            'avatar_url': avatar_url
+        })
 
 
 class UserAssignmentViewSet(viewsets.ReadOnlyModelViewSet):

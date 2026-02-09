@@ -5,7 +5,18 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    unoptimized: false,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.pytech.uz',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+      },
+    ],
   },
 }
 

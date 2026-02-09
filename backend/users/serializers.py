@@ -13,10 +13,19 @@ class UserMinimalSerializer(serializers.ModelSerializer):
     Minimal user serializer for nested relations.
     """
     full_name = serializers.CharField(read_only=True)
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'role', 'position']
+        fields = ['id', 'full_name', 'role', 'position', 'avatar_url']
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -29,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     is_online = serializers.BooleanField(read_only=True)
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
@@ -36,12 +46,22 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'pnfl', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
             'position', 'status', 'oneid_connected', 'cabinet_type',
-            'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen'
+            'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen',
+            'avatar', 'avatar_url'
         ]
         read_only_fields = ['id', 'oneid_connected', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
         extra_kwargs = {
-            'pnfl': {'write_only': True}  # Don't expose PNFL in responses
+            'pnfl': {'write_only': True},
+            'avatar': {'write_only': True, 'required': False}
         }
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -175,14 +195,27 @@ class UserMeSerializer(serializers.ModelSerializer):
     cabinet_type = serializers.CharField(read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     permissions = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = [
             'id', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
-            'position', 'status', 'cabinet_type', 'permissions'
+            'position', 'status', 'cabinet_type', 'permissions',
+            'avatar', 'avatar_url'
         ]
+        extra_kwargs = {
+            'avatar': {'write_only': True, 'required': False}
+        }
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
     
     def get_permissions(self, obj):
         """Return user permissions based on role."""

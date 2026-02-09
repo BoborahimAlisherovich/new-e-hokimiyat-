@@ -79,14 +79,14 @@ export function OrganizationCreateDialog({
               Soha
             </Label>
             <Select
-              value={formData.sector_id}
-              onValueChange={(value) => onChange("sector_id", value)}
+              value={formData.sector_id || "none"}
+              onValueChange={(value) => onChange("sector_id", value === "none" ? "" : value)}
             >
               <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500/20">
                 <SelectValue placeholder={loadingSectors ? "Yuklanmoqda..." : "Sohani tanlang"} />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="">Tanlanmagan</SelectItem>
+                <SelectItem value="none">Tanlanmagan</SelectItem>
                 {sectors.map((sector) => (
                   <SelectItem key={sector.id} value={sector.id}>
                     {sector.name}

@@ -20,6 +20,7 @@ class BotSettingsSerializer(serializers.ModelSerializer):
             'id', 'bot_token', 'has_token', 'bot_username', 'is_active',
             'webhook_url', 'use_webhook',
             'ai_provider', 'ai_api_key', 'has_ai_key', 'ai_model',
+            'auto_response_enabled', 'auto_response_timeout_minutes',
             'welcome_message_uz', 'welcome_message_ru', 'welcome_message_en',
             'created_at', 'updated_at'
         ]
@@ -160,6 +161,7 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
             'appeal_type', 'appeal_type_name', 'category', 'category_name',
             'text', 'status', 'priority', 'source',
             'ai_priority', 'ai_is_valid', 'ai_analysis', 'ai_score',
+            'ai_auto_responded', 'admin_notified_at',
             'forwarded_to_site', 'attachments_count',
             'rating', 'rated_at', 'closed_at',
             'created_at', 'updated_at'
@@ -187,6 +189,7 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
             'text', 'status', 'priority', 'source',
             'ai_analysis', 'ai_priority', 'ai_category_suggestion',
             'ai_response', 'ai_is_valid', 'ai_rejection_reason',
+            'ai_auto_responded', 'admin_notified_at',
             'admin_response', 'reviewed_by', 'reviewed_by_detail', 'reviewed_at',
             'forwarded_to_site', 'site_appeal_id', 'site_task_id',
             'rating', 'rating_comment', 'rated_at', 'closed_at',

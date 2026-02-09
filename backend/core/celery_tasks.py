@@ -353,3 +353,149 @@ def check_appeal_resolution():
     
     logger.info(f"Checked appeals, auto-resolved: {resolved_count}")
     return resolved_count
+
+
+@shared_task(name='core.tasks.auto_respond_unanswered_appeals')
+def auto_respond_unanswered_appeals():
+    """
+    Admin javob bermagan murojaatlarga AI avtomatik javob berish.
+    Har 2 daqiqada ishga tushadi.
+    
+    Logika:
+    1. pending_review holatidagi murojaatlarni tekshirish
+    2. admin_notified_at vaqtidan beri BotSettings.auto_response_timeout_minutes o'tganmi
+    3. Agar o'tgan bo'lsa va hech qanday admin javob bermagan bo'lsa - AI javob beradi
+    4. Foydalanuvchiga Telegram orqali javob yuboriladi
+    5. Adminlarga AI javob berganligi haqida xabar yuboriladi
+    """
+    from telegram_bot.models import TelegramAppeal, BotSettings, BotAdmin, AppealMessage
+    from telegram_bot.bot.ai_service import generate_ai_response_for_appeal
+    from telegram_bot.bot.handlers import TelegramBot
+    from telegram_bot.bot.keyboards import satisfaction_with_rating_keyboard
+    from telegram_bot.bot.messages import get_text
+    from notifications.models import Notification
+    
+    settings = BotSettings.objects.first()
+    if not settings or not settings.is_active:
+        return 0
+    
+    if not getattr(settings, 'auto_response_enabled', True):
+        return 0
+    
+    timeout_minutes = getattr(settings, 'auto_response_timeout_minutes', 5)
+    cutoff_time = timezone.now() - timedelta(minutes=timeout_minutes)
+    
+    # Admin javob bermagan va timeout o'tgan murojaatlar
+    unanswered_appeals = TelegramAppeal.objects.filter(
+        status='pending_review',
+        admin_notified_at__isnull=False,
+        admin_notified_at__lte=cutoff_time,
+        ai_auto_responded=False,
+        reviewed_by__isnull=True,
+    ).exclude(
+        # Admin allaqachon xabar yozganlarni chiqarib tashlash
+        messages__is_from_admin=True
+    ).select_related('telegram_user', 'appeal_type', 'category')
+    
+    bot = TelegramBot()
+    responded_count = 0
+    
+    for appeal in unanswered_appeals:
+        try:
+            user = appeal.telegram_user
+            lang = user.language or 'uz'
+            chat_id = int(user.telegram_id)
+            
+            # AI javob yaratish
+            ai_response = generate_ai_response_for_appeal(appeal)
+            
+            if not ai_response:
+                continue
+            
+            # Javobni saqlash
+            appeal.ai_response = ai_response
+            appeal.ai_auto_responded = True
+            appeal.status = 'responded'
+            appeal.save(update_fields=['ai_response', 'ai_auto_responded', 'status', 'updated_at'])
+            
+            # AppealMessage yaratish
+            AppealMessage.objects.create(
+                appeal=appeal,
+                is_from_admin=True,
+                text=ai_response,
+                is_ai_generated=True
+            )
+            
+            # Foydalanuvchiga Telegram orqali yuborish 
+            response_text = f"""🤖 <b>AI Yordamchi javobi</b>
+
+📋 <b>Murojaat:</b> #{appeal.appeal_number}
+
+{ai_response}
+
+<i>Bu javob AI yordamchi tomonidan tayyorlangan. Admin ko'rib chiqishi davom etmoqda.</i>"""
+
+            appeal_id = getattr(appeal, 'id', None) or getattr(appeal, 'pk', None)
+            
+            bot.send_message(
+                chat_id,
+                response_text,
+                reply_markup=satisfaction_with_rating_keyboard(appeal_id, lang) if appeal_id else None
+            )
+            
+            responded_count += 1
+            
+            # Adminlarga AI javob berganligi haqida xabar
+            _notify_admins_ai_responded(appeal, ai_response, bot)
+            
+            logger.info(f"AI auto-responded to appeal #{appeal.appeal_number}")
+            
+        except Exception as e:
+            logger.error(f"AI auto-response error for appeal #{appeal.appeal_number}: {e}", exc_info=True)
+    
+    if responded_count > 0:
+        logger.info(f"AI auto-responded to {responded_count} unanswered appeals")
+    
+    return responded_count
+
+
+def _notify_admins_ai_responded(appeal, ai_response: str, bot):
+    """Adminlarga AI javob berganligi haqida xabar yuborish"""
+    from telegram_bot.models import BotAdmin
+    from notifications.models import Notification
+    
+    admins = BotAdmin.objects.filter(is_active=True)
+    appeal_id = getattr(appeal, 'id', None) or getattr(appeal, 'pk', None)
+    
+    for admin in admins:
+        try:
+            user_obj = appeal.telegram_user
+            text = f"""🤖 <b>AI avtomatik javob berdi</b>
+
+📋 <b>Murojaat:</b> #{appeal.appeal_number}
+👤 <b>Fuqaro:</b> {user_obj.full_name}
+📞 <b>Telefon:</b> {user_obj.phone or '-'}
+
+⏰ <b>Sabab:</b> Admin {getattr(appeal, '_timeout_minutes', 5)} daqiqa ichida javob bermadi
+
+<b>AI javobi:</b>
+{ai_response[:500]}
+
+<i>Agar javob noto'g'ri bo'lsa, murojaatni qayta ko'rib chiqing.</i>"""
+
+            bot.send_message(int(admin.telegram_id), text)
+            
+            # Dashboard notification
+            if admin.user and admin.user.is_active:
+                Notification.objects.create(
+                    user=admin.user,
+                    title="🤖 AI avtomatik javob berdi",
+                    message=(
+                        f"#{appeal.appeal_number} - {user_obj.full_name} murojaatiga "
+                        f"admin javob bermagan uchun AI avtomatik javob berdi."
+                    ),
+                    notification_type='WARNING',
+                    link=f"/dashboard/appeals/{appeal_id}" if appeal_id else "/dashboard/appeals"
+                )
+        except Exception as e:
+            logger.error(f"Admin {admin.telegram_id} ga AI xabar yuborishda xato: {e}")
