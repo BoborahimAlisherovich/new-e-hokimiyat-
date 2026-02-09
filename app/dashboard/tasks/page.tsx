@@ -170,8 +170,8 @@ export default function TasksPage() {
 
         {/* Filters */}
         <section data-gsap-section>
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-4">{t.pages.tasks.filtersTitle}</h3>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
             <TaskFilters
             searchQuery={searchQuery}
             statusFilter={statusFilter}
@@ -199,9 +199,9 @@ export default function TasksPage() {
 
         {/* Tasks Table */}
         <section data-gsap-section>
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Topshiriqlar Jadvali</h2>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-800">Topshiriqlar Jadvali</h2>
             </div>
             <TaskTable
               tasks={filteredTasks}
@@ -214,7 +214,7 @@ export default function TasksPage() {
 
         {/* Pagination */}
         <section data-gsap-section>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
           <div className="text-sm text-slate-600">
             {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
             {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}

@@ -101,6 +101,7 @@ interface Conversation {
 }
 
 export default function ChatPage() {
+  const pageRef = useGSAPPageEntrance()
   const [users, setUsers] = useState<ChatUser[]>([])
   const [conversations, setConversations] = useState<Map<string, Conversation>>(new Map())
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -690,8 +691,6 @@ export default function ChatPage() {
       </>
     )
   }
-
-  const pageRef = useGSAPPageEntrance()
 
   return (
     <>

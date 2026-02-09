@@ -172,9 +172,9 @@ export default function AppealsPage() {
 
         {/* Appeals Table */}
         <section data-gsap-section>
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Murojaatlar Jadvali</h2>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-800">Murojaatlar Jadvali</h2>
             </div>
             <AppealTable
               appeals={filteredAppeals}
