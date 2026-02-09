@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import {
   Dialog,
   DialogContent,
@@ -371,12 +371,12 @@ export default function OrganizationDetailPage() {
                             className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                                  {(user.first_name || user.firstName || '?')[0]}
-                                  {(user.last_name || user.lastName || '?')[0]}
-                                </AvatarFallback>
-                              </Avatar>
+                              <UserAvatar
+                                firstName={user.first_name || user.firstName}
+                                lastName={user.last_name || user.lastName}
+                                avatarUrl={user.avatar_url}
+                                size="md"
+                              />
                               <div>
                                 <p className="font-medium text-foreground">
                                   {user.last_name || user.lastName} {user.first_name || user.firstName}

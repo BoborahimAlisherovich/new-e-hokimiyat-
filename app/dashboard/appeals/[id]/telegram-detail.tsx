@@ -745,6 +745,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                       ? "bg-primary text-primary-foreground" 
                                       : "bg-muted"
                                   )}>
+                                    <p className={cn(
+                                      "text-xs font-medium mb-1",
+                                      msg.is_from_admin ? "text-primary-foreground/80" : "text-muted-foreground"
+                                    )}>
+                                      {msg.is_from_admin ? (msg.admin_name || "Admin") : (appeal.citizenName || "Fuqaro")}
+                                    </p>
                                     <p className="text-sm">{msg.text}</p>
                                     <p className={cn(
                                       "text-xs mt-1",
