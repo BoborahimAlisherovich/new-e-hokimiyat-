@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -177,11 +177,12 @@ export default function UserDetailPage() {
           {/* Main info card */}
           <Card className="lg:col-span-2 bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
             <CardHeader className="flex flex-row items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                  {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                firstName={user.first_name}
+                lastName={user.last_name}
+                avatarUrl={user.avatar_url}
+                size="xl"
+              />
               <div className="flex-1">
                 <CardTitle className="text-2xl">
                   {user.last_name} {user.first_name} {user.middle_name}

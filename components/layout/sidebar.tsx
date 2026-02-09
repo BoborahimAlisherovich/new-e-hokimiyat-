@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
 import type { User, UserRole } from "@/types"
@@ -453,11 +454,12 @@ export function Sidebar() {
             collapsed && "justify-center p-2"
           )}
         >
-          <Avatar className="h-9 w-9 ring-2 ring-blue-100">
-            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-700 text-white text-xs font-semibold">
-              {currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : "AK"}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            firstName={currentUser?.first_name}
+            lastName={currentUser?.last_name}
+            avatarUrl={(currentUser as any)?.avatar_url}
+            size="md"
+          />
           
           {!collapsed && (
             <div className="flex-1 min-w-0">

@@ -106,6 +106,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, verbose_name='Telefon')
     email = models.EmailField(blank=True, verbose_name='Email')
     
+    # Profile picture
+    avatar = models.ImageField(
+        upload_to='avatars/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name='Profil rasmi'
+    )
+    
     # Role and Organization
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name='Rol')
     organization = models.ForeignKey(

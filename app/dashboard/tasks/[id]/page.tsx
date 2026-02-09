@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -866,12 +866,12 @@ export default function TaskDetailPage() {
 
                         return (
                           <div key={msg.id} className={cn("flex gap-3", isCurrentUser && "flex-row-reverse")}>
-                            <Avatar className="h-8 w-8 shrink-0">
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                {sender?.firstName?.[0]}
-                                {sender?.lastName?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              firstName={sender?.firstName}
+                              lastName={sender?.lastName}
+                              avatarUrl={sender?.avatar_url}
+                              size="sm"
+                            />
                             <div className={cn("max-w-[70%] space-y-1", isCurrentUser && "items-end")}>
                               <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
                                 <span className="text-sm font-medium text-foreground">

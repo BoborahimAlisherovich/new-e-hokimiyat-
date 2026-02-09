@@ -46,6 +46,7 @@ export interface User extends BaseModel {
   district_id?: number
   last_login?: string
   avatar?: string
+  avatar_url?: string
   full_name: string
 }
 

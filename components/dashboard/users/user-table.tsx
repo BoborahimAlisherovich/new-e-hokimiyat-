@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -71,12 +71,12 @@ export function UserTable({ users }: UserTableProps) {
             >
               <TableCell className="py-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-white shadow-md">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm font-bold">
-                      {user.first_name?.charAt(0)}
-                      {user.last_name?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    firstName={user.first_name}
+                    lastName={user.last_name}
+                    avatarUrl={user.avatar_url}
+                    size="md"
+                  />
                   <div>
                     <div className="font-semibold text-slate-900 text-base">
                       {user.last_name} {user.first_name} {user.middle_name}

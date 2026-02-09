@@ -10,7 +10,7 @@
 }
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  /* Font loaded via next/font in layout.tsx */
 
   html {
     scroll-behavior: smooth;
@@ -926,9 +926,11 @@ html {
   transform: translateY(0) scale(0.98);
 }
 
-/* Smooth transitions for all interactive elements */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+/* Smooth transitions for interactive elements only */
+a, button, input, select, textarea,
+[role="button"], .btn, .card, .badge,
+.nav-link, .sidebar-item, .menu-item {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Glassmorphism utilities */

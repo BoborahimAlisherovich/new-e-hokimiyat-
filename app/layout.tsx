@@ -1,10 +1,18 @@
 // @ts-nocheck
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter } from "next/font/google"
 import "./globals.css"
 import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceGuard } from "@/components/performance-guard"
+
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
+})
 
 export const metadata: Metadata = {
   title: "E-Hokimiyat",
@@ -23,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uz" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground font-sans antialiased" suppressHydrationWarning>
+      <body className={`${inter.variable} min-h-screen bg-background text-foreground font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <a
             href="#main-content"

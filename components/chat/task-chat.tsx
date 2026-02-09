@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -117,12 +117,12 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
 
                 return (
                   <div key={msg.id} className={cn("flex gap-3 group", isCurrentUser && "flex-row-reverse")}>
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {sender?.firstName?.[0]}
-                        {sender?.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      firstName={sender?.firstName}
+                      lastName={sender?.lastName}
+                      avatarUrl={sender?.avatar_url}
+                      size="sm"
+                    />
                     <div className={cn("max-w-[70%] space-y-1", isCurrentUser && "items-end")}>
                       <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
                         <span className="text-sm font-medium text-foreground">

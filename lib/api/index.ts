@@ -107,6 +107,8 @@ export {
   archiveUser,
   getUserStatistics,
   updateCurrentUserProfile,
+  uploadAvatar,
+  deleteAvatar,
   getChatUsers,
 } from './users.api'
 

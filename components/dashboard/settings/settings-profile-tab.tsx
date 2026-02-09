@@ -3,13 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TabsContent } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { useTranslation } from "@/lib/i18n/context"
-import { Save, UserCheck, Loader2 } from "lucide-react"
-import { useState, useEffect } from "react"
-import { updateCurrentUserProfile } from "@/lib/api"
+import { Save, UserCheck, Loader2, Camera, Trash2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { updateCurrentUserProfile, uploadAvatar, deleteAvatar } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
 type Translation = ReturnType<typeof useTranslation>
@@ -22,6 +22,7 @@ interface CurrentUser {
   phone?: string
   pnfl?: string
   role: string
+  avatar_url?: string | null
 }
 
 interface SettingsProfileTabProps {
@@ -39,6 +40,9 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
   const [middleName, setMiddleName] = useState(currentUser.middleName || "")
   const [phone, setPhone] = useState(currentUser.phone || "")
   const [saving, setSaving] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(currentUser.avatar_url || null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Update state when currentUser changes
   useEffect(() => {
@@ -46,6 +50,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
     setLastName(currentUser.lastName)
     setMiddleName(currentUser.middleName || "")
     setPhone(currentUser.phone || "")
+    setAvatarUrl(currentUser.avatar_url || null)
   }, [currentUser])
 
   const handleSave = async () => {
@@ -96,6 +101,94 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
     return (first + last).toUpperCase() || "ФИ"
   }
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Xatolik",
+        description: "Faqat JPEG, PNG, WebP va GIF formatidagi rasmlar qabul qilinadi.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Xatolik",
+        description: "Rasm hajmi 5 MB dan oshmasligi kerak.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const result = await uploadAvatar(file)
+      setAvatarUrl(result.avatar_url)
+
+      // Update localStorage
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        user.avatar_url = result.avatar_url
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+
+      toast({
+        title: "Muvaffaqiyatli",
+        description: "Profil rasmi yuklandi",
+      })
+
+      onUserUpdate?.()
+      window.dispatchEvent(new Event('userUpdated'))
+    } catch (error: any) {
+      toast({
+        title: "Xatolik",
+        description: error.message || "Rasm yuklashda xatolik yuz berdi",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingAvatar(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAvatarDelete = async () => {
+    setUploadingAvatar(true)
+    try {
+      await deleteAvatar()
+      setAvatarUrl(null)
+
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        user.avatar_url = null
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+
+      toast({
+        title: "Muvaffaqiyatli",
+        description: "Profil rasmi o'chirildi",
+      })
+
+      onUserUpdate?.()
+      window.dispatchEvent(new Event('userUpdated'))
+    } catch (error: any) {
+      toast({
+        title: "Xatolik",
+        description: error.message || "Rasmni o'chirishda xatolik",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   const getRoleLabel = (role: string) => {
     const roleLabels: Record<string, string> = {
       ADMIN: "Администратор",
@@ -117,20 +210,59 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-blue-600 text-white text-lg font-medium">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative group">
+              <UserAvatar
+                firstName={firstName}
+                lastName={lastName}
+                avatarUrl={avatarUrl}
+                size="xl"
+                className="ring-4 ring-blue-100"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                {uploadingAvatar ? (
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5 text-white" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="absolute inset-0 rounded-full cursor-pointer"
+                aria-label="Rasm yuklash"
+              />
+            </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900">
                 {lastName} {firstName} {middleName}
               </h3>
               <p className="text-sm text-gray-600">{getRoleLabel(currentUser.role)}</p>
-              <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-600 border-blue-200">
-                <UserCheck className="mr-1 h-3 w-3" />
-                {t.settings.oneIDConnected}
-              </Badge>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+                  <UserCheck className="mr-1 h-3 w-3" />
+                  {t.settings.oneIDConnected}
+                </Badge>
+                {avatarUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAvatarDelete}
+                    disabled={uploadingAvatar}
+                    className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Rasmni o'chirish
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 

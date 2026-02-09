@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import Link from "next/link"
 import { getNotifications, getUnreadNotificationsCount, logout, getCurrentUser } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -267,11 +267,12 @@ export function Header({ title, description }: HeaderProps) {
                 variant="ghost" 
                 className="h-10 w-10 rounded-xl hover:bg-slate-100 p-0"
               >
-                <Avatar className="h-9 w-9 ring-2 ring-blue-100">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-700 text-white text-xs font-semibold">
-                    {currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : "AK"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  firstName={currentUser?.first_name}
+                  lastName={currentUser?.last_name}
+                  avatarUrl={currentUser?.avatar_url}
+                  size="md"
+                />
               </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl">

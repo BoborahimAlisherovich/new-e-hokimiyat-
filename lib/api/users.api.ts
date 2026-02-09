@@ -199,6 +199,31 @@ export async function updateCurrentUserProfile(
 }
 
 /**
+ * Foydalanuvchi avatarini yuklaydi
+ * 
+ * @param file - Rasm fayli (JPEG, PNG, WebP, GIF, max 5MB)
+ * @returns Avatar URL
+ */
+export async function uploadAvatar(file: File): Promise<{ status: string; avatar_url: string }> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  
+  return fetchApi<{ status: string; avatar_url: string }>('/users/avatar/', {
+    method: 'POST',
+    body: formData,
+  })
+}
+
+/**
+ * Foydalanuvchi avatarini o'chiradi
+ */
+export async function deleteAvatar(): Promise<{ status: string }> {
+  return fetchApi<{ status: string }>('/users/avatar/', {
+    method: 'DELETE',
+  })
+}
+
+/**
  * Chat uchun foydalanuvchilar ro'yxatini oladi
  * 
  * Rolga qarab filtrlangan foydalanuvchilar:

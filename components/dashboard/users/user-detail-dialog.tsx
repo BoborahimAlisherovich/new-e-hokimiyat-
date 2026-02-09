@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -25,12 +25,12 @@ export function UserDetailDialog({ user, onClose }: UserDetailDialogProps) {
         {user && (
           <div className="space-y-6">
             <div className="flex items-center gap-6">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-semibold">
-                  {user.first_name?.charAt(0)}
-                  {user.last_name?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                firstName={user.first_name}
+                lastName={user.last_name}
+                avatarUrl={user.avatar_url}
+                size="xl"
+              />
               <div className="flex-1 space-y-2">
                 <h3 className="text-xl font-semibold">
                   {user.last_name} {user.first_name} {user.middle_name}

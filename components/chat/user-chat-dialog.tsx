@@ -6,6 +6,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { 
   Send, 
@@ -374,14 +375,14 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
                         )}
                       >
                         <div className="relative flex-shrink-0">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
-                              {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {user.is_online && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                          )}
+                          <UserAvatar
+                            firstName={user.first_name}
+                            lastName={user.last_name}
+                            avatarUrl={(user as any).avatar_url}
+                            size="lg"
+                            showOnline
+                            isOnline={user.is_online}
+                          />
                         </div>
                         
                         <div className="flex-1 min-w-0">
@@ -417,14 +418,14 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
                 {/* Chat Header */}
                 <div className="px-4 py-3 border-b bg-white/80 backdrop-blur-sm flex items-center gap-3">
                   <div className="relative">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
-                        {selectedUser.first_name?.charAt(0)}{selectedUser.last_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {selectedUser.is_online && (
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
-                    )}
+                    <UserAvatar
+                      firstName={selectedUser.first_name}
+                      lastName={selectedUser.last_name}
+                      avatarUrl={(selectedUser as any).avatar_url}
+                      size="md"
+                      showOnline
+                      isOnline={selectedUser.is_online}
+                    />
                   </div>
                   
                   <div className="flex-1 min-w-0">

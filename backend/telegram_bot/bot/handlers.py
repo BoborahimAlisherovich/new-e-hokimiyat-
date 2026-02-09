@@ -1505,9 +1505,14 @@ def notify_admins_user_blocked(user: TelegramUser, appeal: TelegramAppeal, reaso
 
 def notify_admins_about_appeal(appeal: TelegramAppeal):
     """Adminlarga yangi murojaat haqida xabar"""
+    from django.utils import timezone as tz
     admins = BotAdmin.objects.filter(is_active=True)
     from notifications.models import Notification
     appeal_id = getattr(appeal, "id", None) or getattr(appeal, "pk", None)
+    
+    # Admin xabardor qilingan vaqtni belgilash (auto-response timeout uchun)
+    appeal.admin_notified_at = tz.now()
+    appeal.save(update_fields=['admin_notified_at'])
     
     for admin in admins:
         try:

@@ -60,6 +60,12 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute='0', hour='*/2'),  # Har 2 soatda
     },
     
+    # AI avtomatik javob - admin javob bermasa
+    'auto-respond-unanswered-appeals': {
+        'task': 'core.tasks.auto_respond_unanswered_appeals',
+        'schedule': crontab(minute='*/2'),  # Har 2 daqiqada tekshirish
+    },
+    
     # Eski ma'lumotlarni tozalash
     'cleanup-old-data': {
         'task': 'core.tasks.cleanup_old_data',
