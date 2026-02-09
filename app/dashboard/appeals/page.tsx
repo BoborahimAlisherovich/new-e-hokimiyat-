@@ -134,8 +134,8 @@ export default function AppealsPage() {
         <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
         <div className="p-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-600 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-600 text-sm">Yuklanmoqda...</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-slate-500 text-sm">Yuklanmoqda...</p>
           </div>
         </div>
       </>
@@ -172,8 +172,8 @@ export default function AppealsPage() {
 
         {/* Appeals Table */}
         <section data-gsap-section>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
+            <div className="px-6 py-4 border-b border-indigo-50/60 bg-gradient-to-r from-indigo-50/30 to-transparent">
               <h2 className="text-lg font-semibold text-slate-800">Murojaatlar Jadvali</h2>
             </div>
             <AppealTable

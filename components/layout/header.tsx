@@ -75,8 +75,8 @@ export function Header({ title, description }: HeaderProps) {
       <motion.header 
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-indigo-100/50 bg-white/80 backdrop-blur-xl px-6 shadow-[0_1px_12px_-4px_rgba(99,102,241,0.08)]" 
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-indigo-100/40 bg-white/70 backdrop-blur-2xl px-6 shadow-[0_1px_20px_-6px_rgba(99,102,241,0.08)]" 
         role="banner"
       >
 

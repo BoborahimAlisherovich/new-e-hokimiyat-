@@ -48,7 +48,7 @@ export function SettingsAdminTab({
   return (
     <TabsContent value="admin">
       <div className="space-y-6">
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 border-b border-blue-100/50 pb-6">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
@@ -95,13 +95,13 @@ export function SettingsAdminTab({
                     placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                     value={botToken}
                     onChange={(e) => onBotTokenChange(e.target.value)}
-                    className="font-mono pr-10 h-11 rounded-xl border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                    className="font-mono pr-10 h-11 rounded-xl border-indigo-100/60 focus:border-indigo-400 focus:ring-indigo-400/20"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 hover:bg-slate-100 rounded-lg"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 hover:bg-indigo-50/50 rounded-lg"
                     onClick={onShowTokenToggle}
                   >
                     {showToken ? <EyeOff className="h-4 w-4 text-slate-500" /> : <Eye className="h-4 w-4 text-slate-500" />}
@@ -113,7 +113,7 @@ export function SettingsAdminTab({
               <div className="space-y-2">
                 <Label htmlFor="botUsername" className="text-sm font-semibold text-slate-700">{t.settings.botUsername}</Label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 text-slate-600 text-sm font-semibold">
+                  <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-indigo-100/60 bg-gradient-to-r from-slate-50 to-slate-100 text-slate-600 text-sm font-semibold">
                     @
                   </span>
                   <Input
@@ -121,14 +121,14 @@ export function SettingsAdminTab({
                     placeholder="hokimlik_bot"
                     value={botUsername}
                     onChange={(e) => onBotUsernameChange(e.target.value)}
-                    className="rounded-l-none rounded-r-xl h-11 border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                    className="rounded-l-none rounded-r-xl h-11 border-indigo-100/60 focus:border-indigo-400 focus:ring-indigo-400/20"
                   />
                 </div>
                 <p className="text-xs text-slate-500 font-medium">{t.settings.botUsernameDesc}</p>
               </div>
             </div>
 
-            <Separator className="bg-slate-100" />
+            <Separator className="bg-indigo-50/50" />
 
             <div className="flex justify-end">
               <Button 
@@ -142,7 +142,7 @@ export function SettingsAdminTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-b border-amber-100/50 pb-6">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25">
@@ -176,7 +176,7 @@ export function SettingsAdminTab({
                   value={smtpHost} 
                   onChange={(e) => onSmtpHostChange(e.target.value)} 
                   disabled
-                  className="h-11 rounded-xl border-slate-200"
+                  className="h-11 rounded-xl border-indigo-100/60"
                 />
               </div>
               <div className="space-y-2">
@@ -187,7 +187,7 @@ export function SettingsAdminTab({
                   value={smtpPort} 
                   onChange={(e) => onSmtpPortChange(e.target.value)} 
                   disabled
-                  className="h-11 rounded-xl border-slate-200"
+                  className="h-11 rounded-xl border-indigo-100/60"
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
@@ -199,7 +199,7 @@ export function SettingsAdminTab({
                   value={senderEmail}
                   onChange={(e) => onSenderEmailChange(e.target.value)}
                   disabled
-                  className="h-11 rounded-xl border-slate-200"
+                  className="h-11 rounded-xl border-indigo-100/60"
                 />
               </div>
             </div>

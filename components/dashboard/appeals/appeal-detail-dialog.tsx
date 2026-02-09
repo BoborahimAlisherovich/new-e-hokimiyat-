@@ -26,7 +26,7 @@ export function AppealDetailDialog({ appeal, onClose, onUpdate }: AppealDetailDi
 
   return (
     <Dialog open={!!appeal} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Мурожаат тафсилотлари

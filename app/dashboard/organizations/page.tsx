@@ -181,8 +181,8 @@ export default function OrganizationsPage() {
             <section data-gsap-section>
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600"></div>
-                <span className="ml-3 text-slate-600">{t.pages.organizations.loading}</span>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                <span className="ml-3 text-slate-500">{t.pages.organizations.loading}</span>
               </div>
             ) : error ? (
               <div className="text-center py-16">

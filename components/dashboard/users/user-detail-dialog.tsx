@@ -17,7 +17,7 @@ interface UserDetailDialogProps {
 export function UserDetailDialog({ user, onClose }: UserDetailDialogProps) {
   return (
     <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60">
         <DialogHeader>
           <DialogTitle>Фойдаланувчи маълумотлари</DialogTitle>
           <DialogDescription>Фойдаланувчи ҳақида тўлиқ маълумотлар</DialogDescription>

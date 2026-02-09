@@ -224,7 +224,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
   return (
     <section className="animate-slide-up" style={{ animationDelay: "300ms" }}>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Holatlar bo'yicha</CardTitle>
           </CardHeader>
@@ -247,7 +247,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Muhimlik bo'yicha</CardTitle>
           </CardHeader>
@@ -265,7 +265,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">Kategoriyalar kesimi</CardTitle>
           </CardHeader>
@@ -288,7 +288,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Topshiriqlar tendensiyasi</CardTitle>
           </CardHeader>
@@ -311,7 +311,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg">
+        <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Tashkilotlar yuklamasi (Top 6)</CardTitle>
           </CardHeader>

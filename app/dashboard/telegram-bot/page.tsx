@@ -358,7 +358,7 @@ export default function TelegramBotPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-            <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
+            <p className="mt-4 text-slate-500">Yuklanmoqda...</p>
           </div>
         </div>
       </AdminOnly>
@@ -410,7 +410,7 @@ export default function TelegramBotPage() {
               </span>
             )}
           </h1>
-          <p className="text-slate-600">
+          <p className="text-slate-500">
             Bot sozlamalari va statistikasi
           </p>
         </div>
@@ -491,60 +491,60 @@ export default function TelegramBotPage() {
         data-gsap-section
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
       >
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-slate-600">Foydalanuvchilar</p>
+                <p className="text-sm text-slate-500">Foydalanuvchilar</p>
                 <p className="text-2xl font-bold text-slate-900">{stats?.registered_users || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-slate-600">Jami murojaatlar</p>
+                <p className="text-sm text-slate-500">Jami murojaatlar</p>
                 <p className="text-2xl font-bold text-slate-900">{stats?.total_appeals || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-yellow-500" />
               <div>
-                <p className="text-sm text-slate-600">Kutilmoqda</p>
+                <p className="text-sm text-slate-500">Kutilmoqda</p>
                 <p className="text-2xl font-bold text-slate-900">{stats?.pending_appeals || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-sm text-slate-600">Bugun</p>
+                <p className="text-sm text-slate-500">Bugun</p>
                 <p className="text-2xl font-bold text-slate-900">{stats?.today_appeals || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Folder className="h-5 w-5 text-orange-500" />
               <div>
-                <p className="text-sm text-slate-600">Topshiriq sifatida kiritilgan</p>
+                <p className="text-sm text-slate-500">Topshiriq sifatida kiritilgan</p>
                 <p className="text-2xl font-bold text-slate-900">{stats?.forwarded_appeals || 0}</p>
               </div>
             </div>
@@ -557,7 +557,7 @@ export default function TelegramBotPage() {
         data-gsap-section
       >
         <Tabs defaultValue="connection" className="space-y-6">
-        <TabsList className="gap-2 p-1 bg-slate-100/80 rounded-xl">
+        <TabsList className="gap-2 p-1 bg-indigo-50/50 rounded-xl">
           <TabsTrigger value="connection" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
             <Link className="h-4 w-4" />
             Ulanish
@@ -574,19 +574,19 @@ export default function TelegramBotPage() {
 
         {/* Connection Tab */}
         <TabsContent value="connection">
-          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Link className="h-5 w-5 text-blue-500" />
                 Bot ulanish sozlamalari
               </CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-500">
                 Telegram Bot API ulanish parametrlari va bot boshqaruvi
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Bot Status Switch */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-indigo-50/30 rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base font-medium">Bot holati</Label>
                   <p className="text-sm text-slate-500">
@@ -675,8 +675,8 @@ export default function TelegramBotPage() {
                   </p>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
-                  <p className="text-slate-600 flex items-center gap-2">
+                <div className="p-4 bg-indigo-50/50 rounded-lg border border-indigo-100/40">
+                  <p className="text-slate-500 flex items-center gap-2">
                     <span>ℹ️</span>
                     <span>Bot ulanmagan. @BotFather dan token oling va yuqoriga kiriting.</span>
                   </p>
@@ -684,7 +684,7 @@ export default function TelegramBotPage() {
               )}
 
               {/* Divider */}
-              <div className="border-t border-slate-200 pt-4">
+              <div className="border-t border-indigo-100/40 pt-4">
                 <h4 className="font-medium text-slate-900 mb-4">Xabar qabul qilish usuli</h4>
               </div>
 
@@ -744,9 +744,9 @@ export default function TelegramBotPage() {
               </div>
 
               {/* Help box */}
-              <div className="p-4 bg-slate-100 rounded-lg">
+              <div className="p-4 bg-indigo-50/50 rounded-lg">
                 <h5 className="font-medium text-slate-900 mb-2">💡 Qaysi usulni tanlash kerak?</h5>
-                <div className="text-sm text-slate-600 space-y-2">
+                <div className="text-sm text-slate-500 space-y-2">
                   <p><strong>Webhook:</strong> Production server uchun (HTTPS talab qilinadi). Tez va samarali.</p>
                   <p><strong>Polling:</strong> Lokal ishlab chiqish yoki HTTPS bo'lmagan serverlar uchun. "Botni ishga tushirish" tugmasini bosing.</p>
                 </div>
@@ -757,13 +757,13 @@ export default function TelegramBotPage() {
 
         {/* AI Tab */}
         <TabsContent value="ai">
-          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-500" />
                 AI tahlil sozlamalari
               </CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-500">
                 AI Yordamchi va Telegram Bot uchun sun'iy intellekt sozlamalari
               </CardDescription>
             </CardHeader>
@@ -837,7 +837,7 @@ export default function TelegramBotPage() {
                 {/* Provider status */}
                 <div className={`p-3 rounded-lg ${
                   settings?.ai_provider === 'disabled' 
-                    ? 'bg-slate-100 text-slate-600' 
+                    ? 'bg-indigo-50/50 text-slate-500' 
                     : 'bg-emerald-50 text-emerald-700'
                 }`}>
                   {settings?.ai_provider === 'disabled' ? (
@@ -857,7 +857,7 @@ export default function TelegramBotPage() {
               {settings?.ai_provider && settings.ai_provider !== 'disabled' && (
                 <>
                   {/* Divider */}
-                  <div className="border-t border-slate-200 pt-4">
+                  <div className="border-t border-indigo-100/40 pt-4">
                     <h4 className="font-medium text-slate-900 mb-4">API sozlamalari</h4>
                   </div>
 
@@ -997,13 +997,13 @@ export default function TelegramBotPage() {
 
         {/* Messages Tab */}
         <TabsContent value="messages">
-          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-green-500" />
                 Xabar shablonlari
               </CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-500">
                 Foydalanuvchilarga yuboriladigan xabarlarni sozlash
               </CardDescription>
             </CardHeader>
@@ -1065,7 +1065,7 @@ export default function TelegramBotPage() {
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         <Card 
-          className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
           onClick={() => router.push("/dashboard/telegram-bot/users")}
         >
           <CardContent className="pt-4">
@@ -1073,7 +1073,7 @@ export default function TelegramBotPage() {
               <Users className="h-8 w-8 text-blue-500" />
               <div>
                 <p className="font-medium text-slate-900">Foydalanuvchilar</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-500">
                   {stats?.registered_users || 0} ta ro'yxatdan o'tgan
                 </p>
               </div>
@@ -1082,7 +1082,7 @@ export default function TelegramBotPage() {
         </Card>
 
         <Card 
-          className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
           onClick={() => router.push("/dashboard/telegram-bot/appeals")}
         >
           <CardContent className="pt-4">
@@ -1090,7 +1090,7 @@ export default function TelegramBotPage() {
               <MessageSquare className="h-8 w-8 text-blue-500" />
               <div>
                 <p className="font-medium text-slate-900">Murojaatlar</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-500">
                   {stats?.pending_appeals || 0} ta kutilmoqda
                 </p>
               </div>
@@ -1099,7 +1099,7 @@ export default function TelegramBotPage() {
         </Card>
 
         <Card 
-          className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
           onClick={() => router.push("/dashboard/telegram-bot/regions")}
         >
           <CardContent className="pt-4">
@@ -1107,7 +1107,7 @@ export default function TelegramBotPage() {
               <MapPin className="h-8 w-8 text-orange-500" />
               <div>
                 <p className="font-medium text-slate-900">Hududlar</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-500">
                   Mahalla va qishloqlar
                 </p>
               </div>

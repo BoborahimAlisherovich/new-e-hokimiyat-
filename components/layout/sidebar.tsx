@@ -303,9 +303,9 @@ export function Sidebar() {
       <motion.div
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={cn(
-          "flex h-screen flex-col bg-gradient-to-b from-white/95 via-indigo-50/30 to-white/90 text-slate-800 border-r border-indigo-100/60 transition-all duration-300 shadow-[4px_0_24px_-8px_rgba(99,102,241,0.08)] backdrop-blur-xl",
+          "flex h-screen flex-col bg-gradient-to-b from-white/95 via-indigo-50/20 to-white/90 text-slate-800 border-r border-indigo-100/40 transition-all duration-300 shadow-[4px_0_30px_-10px_rgba(99,102,241,0.06)] backdrop-blur-2xl",
           isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "relative",
           collapsed 
             ? (isMobile ? "-translate-x-full w-[280px]" : "w-20") 
@@ -314,7 +314,7 @@ export function Sidebar() {
       >
       
       {/* Header */}
-      <div className="relative z-10 flex h-20 items-center justify-between px-5 border-b border-indigo-100/40 bg-white/60 backdrop-blur-sm">
+      <div className="relative z-10 flex h-20 items-center justify-between px-5 border-b border-indigo-100/30 bg-white/50 backdrop-blur-xl">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Image src="/government-icon.svg" alt="Logo" width={44} height={44} className="w-11 h-11" />
@@ -431,14 +431,14 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-indigo-100/40 bg-white/40 backdrop-blur-sm px-4 py-4">
+      <div className="border-t border-indigo-100/30 bg-white/30 backdrop-blur-xl px-4 py-4">
         {/* User Profile */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className={cn(
-            "group relative flex items-center gap-3 rounded-xl p-3 bg-white/80 border border-indigo-100/50 transition-all duration-200 hover:shadow-sm hover:border-indigo-200/60",
+            "group relative flex items-center gap-3 rounded-xl p-3 bg-white/70 border border-indigo-100/40 transition-all duration-200 hover:shadow-sm hover:border-indigo-200/50 backdrop-blur-sm",
             collapsed && "justify-center p-2"
           )}
         >
@@ -502,11 +502,11 @@ function NavItem({ item, isActive, collapsed, index }: {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: index * 0.03 }}
         className={cn(
-          "group relative flex items-center gap-3 rounded-[11px] px-3 py-2.5 transition-all duration-200",
+          "group relative flex items-center gap-3 rounded-[12px] px-3 py-2.5 transition-all duration-200",
           collapsed ? "h-11 justify-center" : "h-11",
           isActive
-            ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25"
-            : "text-slate-700 hover:bg-indigo-50/80 hover:shadow-sm"
+            ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+            : "text-slate-600 hover:bg-white/80 hover:shadow-sm hover:text-indigo-700"
         )}
         whileHover={{ scale: collapsed ? 1.05 : 1.01 }}
         whileTap={{ scale: 0.98 }}
@@ -516,7 +516,7 @@ function NavItem({ item, isActive, collapsed, index }: {
         <div className="relative flex-shrink-0">
           <item.icon className={cn(
             "h-[21px] w-[21px] transition-colors duration-200",
-            isActive ? "text-white" : "text-slate-500 group-hover:text-indigo-600"
+            isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-600"
           )} />
           {/* Badge for collapsed state */}
           {collapsed && hasBadge && (

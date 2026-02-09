@@ -684,7 +684,7 @@ export default function ChatPage() {
           <div className="flex items-center justify-center h-[calc(100vh-120px)]">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
-              <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
+              <p className="mt-4 text-slate-500">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
@@ -708,7 +708,7 @@ export default function ChatPage() {
           {/* Users List */}
           <Card
             className={cn(
-              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
+              "bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               !showUserList && "hidden lg:flex"
             )}
           >
@@ -728,7 +728,7 @@ export default function ChatPage() {
                   placeholder="Qidiruv..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-white/90 border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl shadow-inner"
+                  className="pl-9 bg-white/90 border-indigo-100/40 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl shadow-inner"
                 />
               </div>
             </CardHeader>
@@ -788,7 +788,7 @@ export default function ChatPage() {
           {/* Chat Area */}
           <Card
             className={cn(
-              "bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
+              "bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
               showUserList && "hidden lg:flex"
             )}
           >
@@ -826,7 +826,7 @@ export default function ChatPage() {
                           <span className="text-xs text-slate-500 font-medium">Oflayn</span>
                         )}
                         {selectedUser.role && (
-                          <Badge variant="outline" className="text-[10px] px-2 py-0 font-medium bg-white/80 border-slate-200">
+                          <Badge variant="outline" className="text-[10px] px-2 py-0 font-medium bg-white/80 border-indigo-100/40">
                             {ROLE_LABELS[selectedUser.role] || selectedUser.role}
                           </Badge>
                         )}
@@ -1038,8 +1038,8 @@ export default function ChatPage() {
                               </div>
                             )}
                             {!chatFile.type.startsWith('image/') && !chatFile.type.startsWith('video/') && !chatFile.type.startsWith('audio/') && (
-                              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800">
-                                <FileText className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-50/50 dark:bg-slate-800">
+                                <FileText className="h-6 w-6 text-slate-500 dark:text-slate-400" />
                               </div>
                             )}
                             
@@ -1113,7 +1113,7 @@ export default function ChatPage() {
                         onKeyDown={handleKeyPress}
                         onPaste={handlePaste}
                         disabled={isSending}
-                        className="bg-white/90 border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl"
+                        className="bg-white/90 border-indigo-100/40 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl"
                       />
                       <Button 
                         onClick={sendMessage} 
@@ -1136,7 +1136,7 @@ export default function ChatPage() {
                   <MessageSquare className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">Suhbatni tanlang</h3>
-                <p className="text-sm sm:text-base text-slate-600 max-w-sm px-4">
+                <p className="text-sm sm:text-base text-slate-500 max-w-sm px-4">
                   Ro&apos;yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
                 </p>
                 <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm text-slate-500">

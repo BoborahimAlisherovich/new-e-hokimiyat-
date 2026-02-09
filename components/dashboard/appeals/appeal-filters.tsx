@@ -47,9 +47,9 @@ export function AppealFilters({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
       {/* Header with gradient accent */}
-      <div className="bg-gradient-to-r from-teal-50 via-cyan-50 to-sky-50 border-b border-slate-100 p-4">
+      <div className="bg-gradient-to-r from-teal-50 via-cyan-50 to-sky-50 border-b border-indigo-50/60 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-white shadow-sm">
@@ -85,14 +85,14 @@ export function AppealFilters({
             placeholder="Murojaatlarni qidirish..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all"
+            className="pl-10 h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all"
           />
         </div>
 
         {/* Filters */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+            <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
               <SelectValue placeholder="Holat" />
             </SelectTrigger>
             <SelectContent>
@@ -105,7 +105,7 @@ export function AppealFilters({
           </Select>
 
           <Select value={priorityFilter} onValueChange={onPriorityChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+            <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
               <SelectValue placeholder="Muhimlik" />
             </SelectTrigger>
             <SelectContent>
@@ -118,7 +118,7 @@ export function AppealFilters({
           </Select>
 
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+            <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
               <SelectValue placeholder="Soha" />
             </SelectTrigger>
             <SelectContent>
@@ -131,7 +131,7 @@ export function AppealFilters({
           </Select>
 
           <Select value={districtFilter} onValueChange={onDistrictChange}>
-            <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+            <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
               <SelectValue placeholder="Hudud" />
             </SelectTrigger>
             <SelectContent>

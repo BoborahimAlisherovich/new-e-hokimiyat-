@@ -94,7 +94,7 @@ export function ActivityChart() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
+      <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between rounded-t-2xl bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">

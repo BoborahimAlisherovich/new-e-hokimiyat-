@@ -28,7 +28,7 @@ const getResponsibleUser = (org: any, users: any[]) => {
 export function OrganizationTable({ organizations, users = [], onDelete, onToggleStatus }: OrganizationTableProps) {
   if (organizations.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
         <div className="flex flex-col items-center justify-center py-20">
           <div className="rounded-2xl bg-gradient-to-br from-violet-100 to-purple-200 p-5 mb-5 shadow-inner">
             <Building2 className="h-10 w-10 text-violet-600" />
@@ -43,9 +43,9 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
       {/* Table header with gradient */}
-      <div className="bg-gradient-to-r from-slate-50 via-violet-50/30 to-purple-50/30 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-slate-50 via-violet-50/30 to-purple-50/30 px-4 py-3 border-b border-indigo-50/60 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 className="h-5 w-5 text-violet-600" />
           <span className="font-medium text-slate-800">Tashkilotlar ro'yxati</span>
@@ -55,7 +55,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Tashkilot nomi</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">Rahbar</TableHead>
@@ -68,7 +68,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
           {organizations.map((org, index) => (
             <TableRow 
               key={org.id} 
-              className="border-b border-slate-100/80 hover:bg-gradient-to-r hover:from-violet-50/50 hover:to-purple-50/50 transition-all duration-200 group"
+              className="border-b border-indigo-50/60/80 hover:bg-gradient-to-r hover:from-violet-50/50 hover:to-purple-50/50 transition-all duration-200 group"
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <TableCell className="py-4 px-4">
@@ -100,7 +100,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   className={`font-medium text-xs border rounded-lg ${
                     org.is_active
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200"
+                      : "bg-indigo-50/30 text-slate-600 border-indigo-100/40"
                   }`}
                 >
                   {org.is_active ? "Faol" : "Nofaol"}

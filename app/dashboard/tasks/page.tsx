@@ -146,8 +146,8 @@ export default function TasksPage() {
         <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
         <div className="p-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-600 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-600 text-sm">{t.common.loading}</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-slate-500 text-sm">{t.common.loading}</p>
           </div>
         </div>
       </>
@@ -170,7 +170,7 @@ export default function TasksPage() {
 
         {/* Filters */}
         <section data-gsap-section>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] p-5 ring-1 ring-indigo-50/30">
             <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
             <TaskFilters
             searchQuery={searchQuery}
@@ -199,8 +199,8 @@ export default function TasksPage() {
 
         {/* Tasks Table */}
         <section data-gsap-section>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] overflow-hidden ring-1 ring-indigo-50/30">
+            <div className="px-6 py-4 border-b border-indigo-50/60 bg-gradient-to-r from-indigo-50/30 to-transparent">
               <h2 className="text-lg font-semibold text-slate-800">Topshiriqlar Jadvali</h2>
             </div>
             <TaskTable
@@ -214,7 +214,7 @@ export default function TasksPage() {
 
         {/* Pagination */}
         <section data-gsap-section>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] p-4 ring-1 ring-indigo-50/30">
           <div className="text-sm text-slate-600">
             {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
             {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}

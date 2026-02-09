@@ -99,9 +99,9 @@ export function TaskFilters({
   ].filter(Boolean) as { label: string; value: string }[]
   
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
       {/* Header with gradient accent */}
-      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-b border-slate-100 p-4">
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-b border-indigo-50/60 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-white shadow-sm">
@@ -147,7 +147,7 @@ export function TaskFilters({
               placeholder="Topshiriqlarni qidirish (sarlavha/tavsif)"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
+              className="pl-10 h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
             />
           </div>
           <div className="flex gap-2">
@@ -165,7 +165,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Holat bo'yicha</Label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
                 <SelectValue placeholder="Holat bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -184,7 +184,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Muhimlik bo'yicha</Label>
             <Select value={priorityFilter} onValueChange={onPriorityChange}>
-              <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
                 <SelectValue placeholder="Muhimlik bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +200,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
             <Select value={categoryFilter} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
                 <SelectValue placeholder="Soha bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ export function TaskFilters({
             <div className="space-y-1">
               <Label className="text-xs text-slate-500">Tashkilot bo'yicha</Label>
               <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-                <SelectTrigger className="h-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
                   <SelectValue placeholder="Tashkilot bo'yicha" />
                 </SelectTrigger>
                 <SelectContent>
