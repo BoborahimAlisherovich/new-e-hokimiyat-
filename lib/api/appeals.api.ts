@@ -47,6 +47,8 @@ interface TelegramAppealResponse {
   }
   user_name?: string
   attachments?: TelegramAppealAttachmentResponse[]
+  new_messages_count?: number
+  last_message_at?: string | null
 }
 
 interface TelegramAppealAttachmentResponse {
@@ -218,6 +220,8 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     createdAt: appeal.created_at,
     updatedAt: appeal.updated_at,
     attachments,
+    newMessagesCount: appeal.new_messages_count || 0,
+    lastMessageAt: appeal.last_message_at || null,
   }
 }
 

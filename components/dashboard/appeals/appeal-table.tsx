@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { Appeal } from "@/types"
-import { Archive, Eye, MoreHorizontal, MessageSquare } from "lucide-react"
+import { Archive, Eye, MoreHorizontal, MessageSquare, MessageCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "./appeal-constants"
 
@@ -63,7 +63,15 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 </code>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm font-semibold text-slate-900">{appeal.citizenName}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900">{appeal.citizenName}</span>
+                  {(appeal.newMessagesCount ?? 0) > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                      <MessageCircle className="h-3 w-3" />
+                      {appeal.newMessagesCount}
+                    </span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="py-4 px-6">
                 <span className="text-sm text-slate-700 font-medium">{appeal.district || "—"}</span>

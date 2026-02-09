@@ -153,6 +153,8 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
     appeal_type_name = serializers.CharField(source='appeal_type.name_uz', read_only=True)
     category_name = serializers.CharField(source='category.name_uz', read_only=True)
     attachments_count = serializers.SerializerMethodField()
+    new_messages_count = serializers.SerializerMethodField()
+    last_message_at = serializers.SerializerMethodField()
     
     class Meta:
         model = TelegramAppeal
@@ -163,12 +165,30 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
             'ai_priority', 'ai_is_valid', 'ai_analysis', 'ai_score',
             'ai_auto_responded', 'admin_notified_at',
             'forwarded_to_site', 'attachments_count',
+            'new_messages_count', 'last_message_at',
             'rating', 'rated_at', 'closed_at',
             'created_at', 'updated_at'
         ]
     
     def get_attachments_count(self, obj):
         return obj.attachments.count()
+
+    def get_new_messages_count(self, obj):
+        """Fuqarodan kelgan yangi (o'qilmagan) xabarlar soni.
+        
+        Oxirgi admin xabaridan keyin kelgan fuqaro xabarlari sonini hisoblaydi.
+        Agar admin hech qachon javob bermagan bo'lsa, barcha fuqaro xabarlari yangi.
+        """
+        messages = obj.messages.all()
+        last_admin_msg = messages.filter(is_from_admin=True).order_by('-created_at').first()
+        if last_admin_msg:
+            return messages.filter(is_from_admin=False, created_at__gt=last_admin_msg.created_at).count()
+        return messages.filter(is_from_admin=False).count()
+
+    def get_last_message_at(self, obj):
+        """Oxirgi xabar vaqti"""
+        last_msg = obj.messages.order_by('-created_at').first()
+        return last_msg.created_at.isoformat() if last_msg else None
 
 
 class TelegramAppealDetailSerializer(serializers.ModelSerializer):
