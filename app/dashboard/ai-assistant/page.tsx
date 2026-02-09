@@ -411,99 +411,94 @@ export default function AIAssistantPage() {
   return (
     <>
       <Header title="AI Yordamchi" description="Sun'iy intellekt yordamchisi bilan suhbatlashing" />
-      <div ref={pageRef} className="p-6">
-        <div className="flex flex-col h-[calc(100vh-10rem)] gap-4">
-          <section data-gsap-section className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
+      <div ref={pageRef} className="p-4 sm:p-6">
+        <div className="flex flex-col h-[calc(100vh-10rem)] gap-3">
+          <section data-gsap-section className="flex flex-col lg:flex-row flex-1 gap-3 min-h-0">
         
             {/* Left sidebar - Conversations */}
-            <div className="w-full lg:w-64 xl:w-72 flex-shrink-0 min-h-0 lg:h-full">
-          <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm overflow-visible">
-            <CardHeader className="pb-3 border-b border-slate-100 flex-shrink-0">
+            <div className="w-full lg:w-60 xl:w-68 flex-shrink-0 min-h-[200px] lg:min-h-0 lg:h-full">
+          <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm">
+            <CardHeader className="py-2.5 px-3 border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-800">
-                  <Bot className="h-5 w-5 text-blue-600" />
-                  AI Yordamchi
+                <CardTitle className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                  <Bot className="h-4 w-4 text-blue-600" />
+                  Suhbatlar
                 </CardTitle>
                 <Button 
                   size="sm" 
                   onClick={createNewConversation}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2.5"
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  <Plus className="h-3 w-3 mr-1" />
                   Yangi
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-3 min-h-0">
-              <ScrollArea className="h-full pr-1">
+            <CardContent className="flex-1 p-2 min-h-0 overflow-y-auto">
                 {error ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-                    <p className="text-sm text-red-600">{error}</p>
-                    <Button variant="outline" size="sm" className="mt-3" onClick={loadConversations}>
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <AlertCircle className="h-6 w-6 text-red-500 mb-2" />
+                    <p className="text-xs text-red-600">{error}</p>
+                    <Button variant="outline" size="sm" className="mt-2 h-7 text-xs" onClick={loadConversations}>
                       Qayta urinish
                     </Button>
                   </div>
                 ) : conversations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <MessageSquare className="h-10 w-10 text-slate-300 mb-3" />
-                    <p className="text-sm text-slate-500 mb-3">Hali suhbatlar yo'q</p>
-                    <Button variant="outline" size="sm" onClick={createNewConversation}>
-                      <Plus className="h-3.5 w-3.5 mr-1" />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <MessageSquare className="h-8 w-8 text-slate-300 mb-2" />
+                    <p className="text-xs text-slate-500 mb-2">Hali suhbatlar yo'q</p>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={createNewConversation}>
+                      <Plus className="h-3 w-3 mr-1" />
                       Yangi suhbat
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {conversations.map((conv) => {
                       const displayTitle = conv.title && conv.title !== "Yangi suhbat" 
                         ? conv.title 
                         : conv.last_message?.content 
-                          ? conv.last_message.content.substring(0, 35) + (conv.last_message.content.length > 35 ? "..." : "")
+                          ? conv.last_message.content.substring(0, 30) + (conv.last_message.content.length > 30 ? "..." : "")
                           : "Yangi suhbat";
                       
                       return (
                         <div
                           key={conv.id}
-                          className={`group relative rounded-lg cursor-pointer transition-colors p-2.5 overflow-visible ${
+                          className={`relative flex items-center gap-2 rounded-lg cursor-pointer transition-colors p-2 ${
                             currentConversation?.id === conv.id
                               ? "bg-blue-50 border border-blue-200"
-                              : "bg-white hover:bg-slate-50 border border-transparent"
+                              : "hover:bg-slate-50 border border-transparent"
                           }`}
                           onClick={() => selectConversation(conv)}
                         >
-                          <div className="flex items-start gap-2 pr-8">
-                            <MessageSquare className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
-                              currentConversation?.id === conv.id ? "text-blue-600" : "text-slate-400"
-                            }`} />
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-medium truncate ${
-                                currentConversation?.id === conv.id ? "text-blue-700" : "text-slate-700"
-                              }`}>
-                                {displayTitle}
-                              </p>
-                              <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true, locale: uz })}
-                              </p>
-                            </div>
+                          <MessageSquare className={`h-3.5 w-3.5 flex-shrink-0 ${
+                            currentConversation?.id === conv.id ? "text-blue-600" : "text-slate-400"
+                          }`} />
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-medium truncate ${
+                              currentConversation?.id === conv.id ? "text-blue-700" : "text-slate-700"
+                            }`}>
+                              {displayTitle}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true, locale: uz })}
+                            </p>
                           </div>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteConversation(conv.id, e);
                             }}
-                            className="absolute top-1/2 -translate-y-1/2 right-1 p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors z-10"
+                            className="flex-shrink-0 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                             title="O'chirish"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
                       );
                     })}
                   </div>
                 )}
-              </ScrollArea>
             </CardContent>
           </Card>
         </div>
