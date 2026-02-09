@@ -453,6 +453,8 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save(update_fields=['avatar'])
         
         avatar_url = request.build_absolute_uri(user.avatar.url)
+        if avatar_url.startswith('http://'):
+            avatar_url = avatar_url.replace('http://', 'https://', 1)
         return Response({
             'status': 'Rasm muvaffaqiyatli yuklandi',
             'avatar_url': avatar_url

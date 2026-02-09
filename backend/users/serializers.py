@@ -8,6 +8,16 @@ from django.contrib.auth import authenticate
 from .models import User, UserAssignment
 
 
+def _build_avatar_url(obj, request):
+    """Avatar URL'ni HTTPS bilan qaytaradi."""
+    if not obj.avatar:
+        return None
+    if request:
+        url = request.build_absolute_uri(obj.avatar.url)
+        return url.replace('http://', 'https://', 1) if url.startswith('http://') else url
+    return obj.avatar.url
+
+
 class UserMinimalSerializer(serializers.ModelSerializer):
     """
     Minimal user serializer for nested relations.
@@ -20,12 +30,7 @@ class UserMinimalSerializer(serializers.ModelSerializer):
         fields = ['id', 'full_name', 'role', 'position', 'avatar_url']
     
     def get_avatar_url(self, obj):
-        if obj.avatar:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.avatar.url)
-            return obj.avatar.url
-        return None
+        return _build_avatar_url(obj, self.context.get('request'))
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -56,12 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
     
     def get_avatar_url(self, obj):
-        if obj.avatar:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.avatar.url)
-            return obj.avatar.url
-        return None
+        return _build_avatar_url(obj, self.context.get('request'))
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -210,12 +210,7 @@ class UserMeSerializer(serializers.ModelSerializer):
         }
     
     def get_avatar_url(self, obj):
-        if obj.avatar:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.avatar.url)
-            return obj.avatar.url
-        return None
+        return _build_avatar_url(obj, self.context.get('request'))
     
     def get_permissions(self, obj):
         """Return user permissions based on role."""
