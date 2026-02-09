@@ -437,12 +437,12 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             user.save()
             
             # Hududlarni ko'rsatish
-            regions = list(BotRegion.objects.filter(is_active=True).values('id', 'name_uz', 'name_ru', 'name_en'))
+            regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
             if regions:
                 bot.send_message(
                     chat_id,
                     get_text('ask_region', lang),
-                    reply_markup=regions_keyboard(regions, lang)
+                    reply_markup=regions_keyboard(regions, lang, page=0)
                 )
                 set_user_state(user, 'registration:region')
             else:
@@ -593,12 +593,12 @@ def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
         return
     
     # Hududlarni ko'rsatish
-    regions = list(BotRegion.objects.filter(is_active=True).values('id', 'name_uz', 'name_ru', 'name_en'))
+    regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
     if regions:
         bot.send_message(
             chat_id,
             get_text('ask_region', user.language),
-            reply_markup=regions_keyboard(regions, user.language)
+            reply_markup=regions_keyboard(regions, user.language, page=0)
         )
         set_user_state(user, 'registration:region')
     else:
@@ -725,6 +725,22 @@ def process_callback_query(callback_query: Dict):
             reply_markup=phone_keyboard(lang)
         )
         set_user_state(user, 'registration:phone')
+        return
+    
+    # Hudud sahifalash (pagination)
+    if data.startswith('region_page:'):
+        page = int(data.split(':')[1])
+        regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            get_text('ask_region', lang),
+            reply_markup=regions_keyboard(regions, lang, page=page)
+        )
+        return
+    
+    # Hudud info tugmasi (hech narsa qilmaydi)
+    if data == 'region:info':
         return
     
     # Hudud tanlash
@@ -937,12 +953,12 @@ def process_callback_query(callback_query: Dict):
             set_user_state(user, 'settings:phone')
             return
         if setting == 'region':
-            regions = list(BotRegion.objects.filter(is_active=True).values('id', 'name_uz', 'name_ru', 'name_en'))
+            regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
             bot.edit_message_text(
                 chat_id,
                 message_id,
                 get_text('ask_region', lang),
-                reply_markup=regions_keyboard(regions, lang)
+                reply_markup=regions_keyboard(regions, lang, page=0)
             )
             set_user_state(user, 'settings:region')
             return

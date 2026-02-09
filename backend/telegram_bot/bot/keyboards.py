@@ -87,13 +87,29 @@ def phone_keyboard(language: str = 'uz') -> dict:
     ])
 
 
-def regions_keyboard(regions: list, language: str = 'uz') -> dict:
-    """Hududlar ro'yxati klaviaturasi"""
+def regions_keyboard(regions: list, language: str = 'uz', page: int = 0, per_page: int = 20) -> dict:
+    """
+    Hududlar ro'yxati klaviaturasi (sahifalash bilan)
+    
+    Args:
+        regions: Barcha hududlar ro'yxati
+        language: Til kodi
+        page: Joriy sahifa raqami (0 dan boshlanadi)
+        per_page: Har sahifadagi hududlar soni
+    """
     from .messages import get_text
+    
+    total = len(regions)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = max(0, min(page, total_pages - 1))
+    
+    start = page * per_page
+    end = min(start + per_page, total)
+    page_regions = regions[start:end]
     
     buttons = []
     row = []
-    for region in regions:
+    for region in page_regions:
         # Tilga qarab nomni olish
         name = region.get(f'name_{language}') or region.get('name_uz') or region.get('name', '')
         row.append({
@@ -106,6 +122,25 @@ def regions_keyboard(regions: list, language: str = 'uz') -> dict:
     
     if row:
         buttons.append(row)
+    
+    # Sahifa ma'lumoti
+    page_info_text = {
+        'uz': f'📄 {page + 1}/{total_pages} sahifa ({total} ta mahalla)',
+        'ru': f'📄 {page + 1}/{total_pages} стр. ({total} махалля)',
+        'en': f'📄 Page {page + 1}/{total_pages} ({total} mahallas)'
+    }
+    buttons.append([{'text': page_info_text.get(language, page_info_text['uz']), 'callback_data': 'region:info'}])
+    
+    # Sahifalash tugmalari
+    nav_row = []
+    if page > 0:
+        prev_text = {'uz': '⬅️ Oldingi', 'ru': '⬅️ Назад', 'en': '⬅️ Previous'}
+        nav_row.append({'text': prev_text.get(language, '⬅️ Oldingi'), 'callback_data': f'region_page:{page - 1}'})
+    if page < total_pages - 1:
+        next_text = {'uz': 'Keyingi ➡️', 'ru': 'Далее ➡️', 'en': 'Next ➡️'}
+        nav_row.append({'text': next_text.get(language, 'Keyingi ➡️'), 'callback_data': f'region_page:{page + 1}'})
+    if nav_row:
+        buttons.append(nav_row)
     
     # "Boshqa" tugmasi
     other_text = {

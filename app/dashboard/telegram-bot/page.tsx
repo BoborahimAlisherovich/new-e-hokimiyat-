@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { motion } from "framer-motion";
+import { useGSAPPageEntrance } from "@/hooks/use-gsap";
 import { Header } from "@/components/layout/header";
 import { AdminOnly } from "@/components/auth/admin-only";
 
@@ -75,6 +75,7 @@ interface BotStats {
 export default function TelegramBotPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const pageRef = useGSAPPageEntrance();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -381,13 +382,11 @@ export default function TelegramBotPage() {
 
   return (
     <AdminOnly title="Telegram Bot">
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
       {/* Header */}
-      <motion.div 
+      <section 
+        data-gsap-section
         className="flex items-center justify-between"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
       >
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -473,7 +472,7 @@ export default function TelegramBotPage() {
             {saving ? "Saqlanmoqda..." : "Saqlash"}
           </Button>
         </div>
-      </motion.div>
+      </section>
 
       {/* Webhook rejimi haqida ogohlantirish */}
       {settings?.use_webhook && (
@@ -488,11 +487,9 @@ export default function TelegramBotPage() {
       )}
 
       {/* Stats Cards */}
-      <motion.div 
+      <section 
+        data-gsap-section
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
       >
         <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
@@ -553,13 +550,11 @@ export default function TelegramBotPage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </section>
 
       {/* Settings Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+      <section
+        data-gsap-section
       >
         <Tabs defaultValue="connection" className="space-y-6">
         <TabsList className="gap-2 p-1 bg-slate-100/80 rounded-xl">
@@ -1062,13 +1057,11 @@ export default function TelegramBotPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      </motion.div>
+      </section>
 
       {/* Quick Links */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+      <section
+        data-gsap-section
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         <Card 
@@ -1121,7 +1114,7 @@ export default function TelegramBotPage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </section>
       </div>
     </AdminOnly>
   );

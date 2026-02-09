@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/header";
+import { useGSAPPageEntrance } from "@/hooks/use-gsap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +117,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function RecurringTasksPage() {
+  const pageRef = useGSAPPageEntrance();
   const [tasks, setTasks] = useState<RecurringTask[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -354,8 +356,9 @@ export default function RecurringTasksPage() {
         title="Takrorlanuvchi topshiriqlar" 
         description="Avtomatik ravishda yaratiluvchi muntazam topshiriqlar" 
       />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
           {/* Header Actions */}
+          <section data-gsap-section>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-slate-100">
@@ -527,8 +530,10 @@ export default function RecurringTasksPage() {
           </DialogContent>
         </Dialog>
       </div>
+      </section>
 
       {/* Statistics */}
+      <section data-gsap-section>
       {statistics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
@@ -579,8 +584,10 @@ export default function RecurringTasksPage() {
           </div>
         </div>
       )}
+      </section>
 
       {/* Filter */}
+      <section data-gsap-section>
       <div className="flex items-center gap-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48 bg-white border-slate-200">
@@ -598,8 +605,10 @@ export default function RecurringTasksPage() {
           Yangilash
         </Button>
       </div>
+      </section>
 
       {/* Table */}
+      <section data-gsap-section>
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-12">
@@ -729,7 +738,7 @@ export default function RecurringTasksPage() {
             </Table>
           )}
       </div>
-      
+      </section>      
       {/* History Dialog */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-w-2xl">

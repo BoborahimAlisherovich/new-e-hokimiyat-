@@ -12,10 +12,12 @@ import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { ensureDevAuth } from "@/lib/dev-auth"
 import { useTranslation } from "@/lib/i18n/context"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
 
 export default function TasksPage() {
   const t = useTranslation()
+  const pageRef = useGSAPPageEntrance()
   const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
@@ -155,19 +157,22 @@ export default function TasksPage() {
   return (
     <>
       <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
         {/* Stats */}
-        <TaskStats
-          total={stats.total}
-          pending={stats.pending}
-          inProgress={stats.inProgress}
-          completed={stats.completed}
-        />
+        <section data-gsap-section>
+          <TaskStats
+            total={stats.total}
+            pending={stats.pending}
+            inProgress={stats.inProgress}
+            completed={stats.completed}
+          />
+        </section>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-          <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
-          <TaskFilters
+        <section data-gsap-section>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
+            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-4">{t.pages.tasks.filtersTitle}</h3>
+            <TaskFilters
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
@@ -190,22 +195,26 @@ export default function TasksPage() {
             }}
           />
         </div>
+        </section>
 
         {/* Tasks Table */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h2 className="text-lg font-semibold text-slate-800">Topshiriqlar Jadvali</h2>
+        <section data-gsap-section>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Topshiriqlar Jadvali</h2>
+            </div>
+            <TaskTable
+              tasks={filteredTasks}
+              onView={handleViewTask}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+            />
           </div>
-          <TaskTable
-            tasks={filteredTasks}
-            onView={handleViewTask}
-            onEdit={handleEditTask}
-            onDelete={handleDeleteTask}
-          />
-        </div>
+        </section>
 
         {/* Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <section data-gsap-section>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
           <div className="text-sm text-slate-600">
             {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
             {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
@@ -234,6 +243,7 @@ export default function TasksPage() {
             </Button>
           </div>
         </div>
+        </section>
       </div>
 
       <TaskDetailDialog

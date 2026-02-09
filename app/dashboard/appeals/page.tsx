@@ -10,9 +10,11 @@ import { AppealTable } from "@/components/dashboard/appeals/appeal-table"
 import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail-dialog"
 import { useTranslation } from "@/lib/i18n/context"
 import { PRIORITY_LABELS, STATUS_LABELS } from "@/components/dashboard/appeals/appeal-constants"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
 export default function AppealsPage() {
   const t = useTranslation()
+  const pageRef = useGSAPPageEntrance()
   // State management
   const [appeals, setAppeals] = useState<Appeal[]>([])
   const [options, setOptions] = useState<FilterOptions>({ status: {}, priority: {}, category: {}, districts: [] })
@@ -143,38 +145,44 @@ export default function AppealsPage() {
   return (
     <>
       <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
-      <div className="p-6 space-y-6">
+      <div ref={pageRef} className="p-6 space-y-6">
         {/* Stats Cards */}
-        <AppealStats stats={calculatedStats} />
+        <section data-gsap-section>
+          <AppealStats stats={calculatedStats} />
+        </section>
 
         {/* Filters */}
-        <AppealFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          priorityFilter={priorityFilter}
-          onPriorityChange={setPriorityFilter}
-          categoryFilter={categoryFilter}
-          onCategoryChange={setCategoryFilter}
-          districtFilter={districtFilter}
-          onDistrictChange={setDistrictFilter}
-          options={options}
-          totalCount={appeals.length}
-          filteredCount={filteredAppeals.length}
-        />
+        <section data-gsap-section>
+          <AppealFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            categoryFilter={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            districtFilter={districtFilter}
+            onDistrictChange={setDistrictFilter}
+            options={options}
+            totalCount={appeals.length}
+            filteredCount={filteredAppeals.length}
+          />
+        </section>
 
         {/* Appeals Table */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h2 className="text-lg font-semibold text-slate-800">Murojaatlar Jadvali</h2>
+        <section data-gsap-section>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Murojaatlar Jadvali</h2>
+            </div>
+            <AppealTable
+              appeals={filteredAppeals}
+              onView={handleViewAppeal}
+              onArchive={handleArchiveAppeal}
+            />
           </div>
-          <AppealTable
-            appeals={filteredAppeals}
-            onView={handleViewAppeal}
-            onArchive={handleArchiveAppeal}
-          />
-        </div>
+        </section>
       </div>
       <AppealDetailDialog appeal={selectedAppeal} onClose={() => setSelectedAppeal(null)} />
     </>

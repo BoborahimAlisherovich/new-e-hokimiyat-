@@ -12,6 +12,8 @@ export {
   useGSAPParallax,
   useGSAPStaggerGrid,
   useGSAPPageEntrance,
+  useGSAPDashboardPage,
+  useGSAPLoadingReveal,
   useGSAPProgress,
 } from './use-gsap'
 

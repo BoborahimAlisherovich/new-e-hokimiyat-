@@ -41,6 +41,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { Header } from "@/components/layout/header";
+import { useGSAPPageEntrance } from "@/hooks/use-gsap";
 
 interface AIMessage {
   id: string;
@@ -89,6 +90,7 @@ interface AIStats {
 }
 
 export default function AIAssistantPage() {
+  const pageRef = useGSAPPageEntrance();
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<AIConversation | null>(null);
   const [messages, setMessages] = useState<AIMessage[]>([]);
@@ -409,10 +411,9 @@ export default function AIAssistantPage() {
   return (
     <>
       <Header title="AI Yordamchi" description="Sun'iy intellekt yordamchisi bilan suhbatlashing" />
-      <div className="p-6">
+      <div ref={pageRef} className="p-6">
         <div className="flex flex-col h-[calc(100vh-10rem)] gap-4">
-          {/* Main content area */}
-          <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
+          <section data-gsap-section className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         
             {/* Left sidebar - Conversations */}
             <div className="w-full lg:w-64 xl:w-72 flex-shrink-0">
@@ -777,9 +778,10 @@ export default function AIAssistantPage() {
           </Card>
         </div>
         )}
-      </div>
+      </section>
 
       {/* Bottom FAQ section */}
+      <section data-gsap-section>
       <Card className="bg-white border-slate-200 shadow-sm flex-shrink-0">
         <CardHeader className="py-3 border-b border-slate-100">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -811,6 +813,7 @@ export default function AIAssistantPage() {
           </div>
         </CardContent>
       </Card>
+      </section>
         </div>
       </div>
     </>

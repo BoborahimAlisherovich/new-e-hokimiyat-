@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { toast } from "sonner"
 
 // Maksimal fayl hajmi (50MB)
@@ -691,10 +691,12 @@ export default function ChatPage() {
     )
   }
 
+  const pageRef = useGSAPPageEntrance()
+
   return (
     <>
       <Header title="Chat" />
-      <div className="p-6">
+      <div ref={pageRef} className="p-6">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
@@ -703,7 +705,7 @@ export default function ChatPage() {
         </div>
         
         <div className="relative z-10 p-3 sm:p-4 lg:p-6">
-        <div className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
+        <div data-gsap-section className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Users List */}
           <Card
             className={cn(
@@ -1012,13 +1014,9 @@ export default function ChatPage() {
                     )}
                     
                     {/* File Preview */}
-                    <AnimatePresence>
                       {chatFile && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="p-3 bg-muted/60 rounded-xl border border-border/60"
+                        <div
+                          className="p-3 bg-muted/60 rounded-xl border border-border/60 animate-in fade-in slide-in-from-bottom-2 duration-200"
                         >
                           <div className="flex items-start gap-3">
                             {/* Preview rasm yoki video */}
@@ -1059,9 +1057,8 @@ export default function ChatPage() {
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                        </motion.div>
+                        </div>
                       )}
-                    </AnimatePresence>
                     
                     <div className="flex gap-1.5 sm:gap-2 items-end">
                       {/* File attach */}
@@ -1158,21 +1155,13 @@ export default function ChatPage() {
         </div>
 
         {/* Image Lightbox Modal */}
-        <AnimatePresence>
           {lightboxImage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
               onClick={() => setLightboxImage(null)}
             >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ type: "spring", damping: 25 }}
-                className="relative max-w-[90vw] max-h-[90vh]"
+              <div
+                className="relative max-w-[90vw] max-h-[90vh] animate-in zoom-in-90 fade-in duration-300"
                 onClick={(e) => e.stopPropagation()}
               >
                 <img
@@ -1198,10 +1187,9 @@ export default function ChatPage() {
                     <X className="h-5 w-5 text-white" />
                   </button>
                 </div>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </>
   )
