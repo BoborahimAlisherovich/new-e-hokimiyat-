@@ -489,8 +489,11 @@ export default function AIAssistantPage() {
                             </div>
                           </div>
                           <button
-                            onClick={(e) => deleteConversation(conv.id, e)}
-                            className="absolute top-1/2 -translate-y-1/2 right-1.5 p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(conv.id, e);
+                            }}
+                            className="absolute top-1/2 -translate-y-1/2 right-1 p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors z-10"
                             title="O'chirish"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
