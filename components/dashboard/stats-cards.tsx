@@ -132,7 +132,7 @@ export function StatsCards() {
             whileHover={{ scale: 1.02, y: -4 }}
           >
             <Card
-              className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border-indigo-100/40 rounded-2xl shadow-lg shadow-indigo-100/20 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all duration-300 ring-1 ring-white/50"
+              className="group relative overflow-hidden bg-white/75 backdrop-blur-2xl border-white/50 rounded-2xl shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-[0_12px_40px_-8px_rgba(99,102,241,0.15)] transition-all duration-300 ring-1 ring-indigo-50/50"
             >
               {/* Gradient overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
@@ -191,7 +191,7 @@ export function StatsCards() {
                     <span>{t.dashboard.completionLabel}</span>
                     <span>{stat.change}</span>
                   </div>
-                  <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="relative h-2 bg-indigo-50/50 rounded-full overflow-hidden">
                     <motion.div 
                       className={`h-full rounded-full bg-gradient-to-r ${stat.gradient}`}
                       initial={{ width: 0 }}

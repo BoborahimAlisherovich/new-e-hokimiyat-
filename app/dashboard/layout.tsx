@@ -8,17 +8,24 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-[#f0f4ff] via-[#eef0fb] to-[#f5f0ff]">
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-[#f5f7ff] via-[#eef0fb] to-[#f0ecff]">
       <Sidebar />
       <main
         id="main-content"
         className="flex-1 overflow-y-auto relative"
       >
-        {/* Subtle animated gradient mesh */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-0 left-[20%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-200/20 to-cyan-200/10 blur-3xl animate-float-gentle" />
-          <div className="absolute bottom-[10%] right-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-violet-200/15 to-purple-200/10 blur-3xl animate-float-gentle" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-[50%] left-[5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-emerald-200/10 to-teal-200/8 blur-3xl animate-float-gentle" style={{ animationDelay: '4s' }} />
+        {/* Animated gradient mesh background */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          {/* Primary indigo blob - top left */}
+          <div className="absolute -top-[5%] left-[15%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-300/20 via-violet-200/12 to-transparent blur-3xl animate-float-gentle animate-morph" />
+          {/* Cyan blob - top right */}
+          <div className="absolute top-[5%] right-[5%] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-cyan-200/15 via-blue-200/10 to-transparent blur-3xl animate-float-gentle animate-morph" style={{ animationDelay: '2s' }} />
+          {/* Purple blob - center left */}
+          <div className="absolute top-[45%] -left-[5%] w-[450px] h-[450px] rounded-full bg-gradient-to-br from-purple-200/12 via-pink-100/8 to-transparent blur-3xl animate-float-gentle" style={{ animationDelay: '4s' }} />
+          {/* Emerald blob - bottom right */}
+          <div className="absolute bottom-[5%] right-[15%] w-[550px] h-[550px] rounded-full bg-gradient-to-br from-emerald-200/10 via-teal-100/8 to-transparent blur-3xl animate-float-gentle animate-morph" style={{ animationDelay: '6s' }} />
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-40" />
         </div>
         <div className="relative z-10">
           {children}

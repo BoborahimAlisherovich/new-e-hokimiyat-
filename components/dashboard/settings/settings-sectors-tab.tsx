@@ -127,7 +127,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {isAdding && (
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-slate-50">
+            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-indigo-50/30">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nomi</Label>
@@ -171,7 +171,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
               {sectors.map((sector) => (
                 <div
                   key={sector.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-indigo-50/30 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="font-medium">{sector.name}</div>

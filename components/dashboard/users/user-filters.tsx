@@ -48,9 +48,9 @@ export function UserFilters({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
       {/* Header with gradient accent */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 border-b border-slate-100 p-4">
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 border-b border-indigo-50/60 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-white shadow-sm">
@@ -86,7 +86,7 @@ export function UserFilters({
               placeholder="Foydalanuvchilarni qidirish..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+              className="w-full pl-9 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
             />
           </div>
           <Button onClick={onCreate} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all">
@@ -99,7 +99,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 ml-1">Rol bo'yicha</label>
             <Select value={roleFilter} onValueChange={onRoleChange}>
-              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 <SelectValue placeholder="Rolni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -116,7 +116,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 ml-1">Holat bo'yicha</label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -133,7 +133,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 ml-1">Tashkilot bo'yicha</label>
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className="border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
             <SelectContent>

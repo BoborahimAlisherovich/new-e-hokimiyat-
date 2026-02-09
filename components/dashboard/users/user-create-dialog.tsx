@@ -113,7 +113,7 @@ export function UserCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60">
         <DialogHeader>
           <DialogTitle>Yangi foydalanuvchi qo'shish</DialogTitle>
           <DialogDescription>

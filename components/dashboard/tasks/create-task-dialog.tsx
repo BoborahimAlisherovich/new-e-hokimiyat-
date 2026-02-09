@@ -516,7 +516,7 @@ export function CreateTaskDialog({
   // ==================== RENDER ====================
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[780px] max-h-[92vh] overflow-y-auto bg-card">
+      <DialogContent className="w-full max-w-[780px] max-h-[92vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60">
         <DialogHeader>
           <DialogTitle>Yangi topshiriq qo&apos;shish</DialogTitle>
           <DialogDescription>
@@ -526,16 +526,16 @@ export function CreateTaskDialog({
         </DialogHeader>
 
         {/* ========== AI AUDIO PANEL ========== */}
-        <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 dark:border-blue-800 p-4 space-y-3">
+        <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-2 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4" />
               AI yordamida tezkor topshiriq yaratish
             </div>
             {aiApplied && (
               <Badge
                 variant="secondary"
-                className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs"
+                className="bg-emerald-100 text-emerald-700 text-xs"
               >
                 <Check className="h-3 w-3 mr-1" /> AI to&apos;ldirdi
               </Badge>
@@ -601,7 +601,7 @@ export function CreateTaskDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/30"
+                className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50/60"
                 onClick={() => analyzeWithAI(form.description)}
               >
                 <Sparkles className="h-4 w-4" />
@@ -610,7 +610,7 @@ export function CreateTaskDialog({
             )}
 
             {aiAnalyzing && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-sm text-indigo-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>
                   Audio matnga o&apos;girilmoqda va AI tahlil qilmoqda...
@@ -621,8 +621,8 @@ export function CreateTaskDialog({
 
           {/* Show AI transcription result */}
           {aiTranscription && !aiAnalyzing && (
-            <div className="rounded-lg bg-white/60 dark:bg-slate-800/40 border border-blue-100 dark:border-blue-900 p-3 space-y-1">
-              <div className="text-xs font-medium text-blue-600 dark:text-blue-400">
+            <div className="rounded-lg bg-white/70 border border-indigo-100/60 p-3 space-y-1">
+              <div className="text-xs font-medium text-indigo-600">
                 Audio transkripsiyasi (AI tomonidan tahrirlangan):
               </div>
               <p className="text-sm text-foreground leading-relaxed">
@@ -696,7 +696,7 @@ export function CreateTaskDialog({
                 <SelectTrigger aria-invalid={!!errors.priority}>
                   <SelectValue placeholder="Muhimlik darajasini tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-lg z-[100]">
+                <SelectContent className="bg-white text-slate-900 border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] z-[100]">
                   {PRIORITY_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -720,7 +720,7 @@ export function CreateTaskDialog({
                 <SelectTrigger aria-invalid={!!errors.category}>
                   <SelectValue placeholder="Sohani tanlang" />
                 </SelectTrigger>
-                <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-lg z-[100]">
+                <SelectContent className="bg-white text-slate-900 border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] z-[100]">
                   {CATEGORY_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -784,7 +784,7 @@ export function CreateTaskDialog({
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-full min-w-[400px] p-0 bg-white border border-slate-200 shadow-lg"
+                className="w-full min-w-[400px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
                 align="start"
               >
                 <Command className="bg-white">
@@ -841,22 +841,22 @@ export function CreateTaskDialog({
           </div>
 
           {/* ========== RECURRING TASK TOGGLE ========== */}
-          <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+          <div className="rounded-lg border border-indigo-100/40 p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
                     "flex items-center justify-center h-9 w-9 rounded-lg",
                     form.is_recurring
-                      ? "bg-violet-100 dark:bg-violet-900/30"
-                      : "bg-slate-100 dark:bg-slate-800"
+                      ? "bg-violet-100"
+                      : "bg-indigo-50/50"
                   )}
                 >
                   <Repeat
                     className={cn(
                       "h-4 w-4",
                       form.is_recurring
-                        ? "text-violet-600 dark:text-violet-400"
+                        ? "text-violet-600"
                         : "text-slate-400"
                     )}
                   />
@@ -881,7 +881,7 @@ export function CreateTaskDialog({
             </div>
 
             {form.is_recurring && (
-              <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-700">
+              <div className="space-y-4 pt-2 border-t border-indigo-50/60">
                 {/* Frequency + Deadline days */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -896,7 +896,7 @@ export function CreateTaskDialog({
                       <SelectTrigger aria-invalid={!!errors.frequency}>
                         <SelectValue placeholder="Chastotani tanlang" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-lg z-[100]">
+                      <SelectContent className="bg-white text-slate-900 border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] z-[100]">
                         {FREQUENCY_OPTIONS.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
@@ -977,9 +977,9 @@ export function CreateTaskDialog({
                 </div>
 
                 {/* Info */}
-                <div className="flex items-start gap-2 rounded-lg bg-violet-50 dark:bg-violet-900/20 p-3">
-                  <CalendarClock className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-violet-700 dark:text-violet-300">
+                <div className="flex items-start gap-2 rounded-lg bg-violet-50/70 p-3">
+                  <CalendarClock className="h-4 w-4 text-violet-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-violet-700">
                     {FREQUENCY_OPTIONS.find((f) => f.value === form.frequency)
                       ?.label || "Har oy"}{" "}
                     avtomatik yangi topshiriq yaratiladi. Har bir topshiriq uchun{" "}

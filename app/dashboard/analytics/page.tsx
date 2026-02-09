@@ -55,8 +55,8 @@ export default function AnalyticsPage() {
         <div className="p-6">
           <div className="flex items-center justify-center h-[calc(100vh-120px)]">
             <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-              <p className="mt-4 text-slate-600">{t.common.loading}</p>
+              <Loader2 className="h-12 w-12 animate-spin text-indigo-500 mx-auto" />
+              <p className="mt-4 text-slate-500">{t.common.loading}</p>
             </div>
           </div>
         </div>

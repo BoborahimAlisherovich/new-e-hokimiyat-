@@ -63,7 +63,6 @@ export const enTranslations: Translations = {
   navigation: {
     dashboard: 'Dashboard',
     tasks: 'Tasks',
-    recurringTasks: 'Recurring',
     users: 'Users',
     organizations: 'Organizations',
     notifications: 'Notifications',

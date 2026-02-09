@@ -189,7 +189,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
   return (
     <section className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl p-1.5 shadow-sm">
+        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-indigo-100/40 rounded-xl p-1.5 shadow-sm">
           <TabsTrigger
             value="status"
             className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
@@ -225,7 +225,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl hover:shadow-xl transition-all duration-300">
+                <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -246,7 +246,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
         {/* Sector Tab */}
         <TabsContent value="sector" className="mt-6 space-y-6">
           {/* Sector Management */}
-          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -327,7 +327,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                     key={sector.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-200"
+                    className="p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl border border-white/50 hover:shadow-[0_4px_16px_-4px_rgba(99,102,241,0.1)] transition-all duration-200"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -381,7 +381,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
           {/* Sector Statistics */}
           {sectorStats.length > 0 && (
-            <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-slate-900 flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -396,7 +396,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
                     >
                       <div className="flex-1">
                         <h4 className="font-medium text-slate-900">{stat.sector}</h4>
@@ -421,7 +421,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
         {/* Organizations Tab */}
         <TabsContent value="organizations" className="mt-6">
-          <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
             <CardHeader>
               <CardTitle className="text-slate-900">Tashkilotlar statistikasi</CardTitle>
               <CardDescription className="text-slate-600">
@@ -475,7 +475,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.02 }}
-                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">

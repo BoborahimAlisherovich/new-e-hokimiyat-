@@ -65,7 +65,7 @@ export function RecentTasks() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
       {/* Removed duplicate 'Muddati yaqinlashayotgan topshiriqlar' section header to prevent double rendering. */}
       <CardContent className="space-y-4">
         {upcomingTasks.map((task, index) => {
@@ -80,7 +80,7 @@ export function RecentTasks() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, x: 4 }}
-              className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-lg"
+              className="flex items-start justify-between gap-4 rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-lg"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">

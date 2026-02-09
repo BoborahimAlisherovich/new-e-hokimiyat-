@@ -63,7 +63,6 @@ export const ruTranslations: Translations = {
   navigation: {
     dashboard: 'Главная',
     tasks: 'Поручения',
-    recurringTasks: 'Повторяющиеся',
     users: 'Пользователи',
     organizations: 'Организации',
     notifications: 'Уведомления',

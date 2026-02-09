@@ -25,7 +25,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
   if (appeals.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="rounded-full bg-slate-100 p-5 mb-4">
+        <div className="rounded-full bg-indigo-50/50 p-5 mb-4">
           <MessageSquare className="h-10 w-10 text-slate-400" />
         </div>
         <h3 className="text-lg font-semibold text-slate-700 mb-2">Murojaatlar topilmadi</h3>
@@ -40,7 +40,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">ID</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Murojaatchi</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Mahalla</TableHead>
@@ -54,7 +54,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
           {appeals.map((appeal, index) => (
             <TableRow 
               key={appeal.id} 
-              className="cursor-pointer transition-all duration-200 border-b border-slate-100 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
+              className="cursor-pointer transition-all duration-200 border-b border-indigo-50/60 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
@@ -103,7 +103,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               <TableCell className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-indigo-50/50">
                       <MoreHorizontal className="h-4 w-4 text-slate-500" />
                     </Button>
                   </DropdownMenuTrigger>

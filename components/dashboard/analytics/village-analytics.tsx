@@ -187,7 +187,7 @@ const VillageListItem = memo(function VillageListItem({
         "w-full text-left rounded-xl border-2 px-4 py-3 transition-all duration-200",
         isSelected
           ? "border-emerald-500 bg-gradient-to-r from-emerald-50 to-teal-50 shadow-md"
-          : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm hover:border-slate-200",
+          : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm hover:border-indigo-100/40",
       )}
       onClick={onClick}
       whileHover={{ scale: 1.01 }}
@@ -214,7 +214,7 @@ const VillageListItem = memo(function VillageListItem({
       
       {/* Progress bar */}
       <div className="space-y-1">
-        <div className="flex gap-1 h-1.5 rounded-full overflow-hidden bg-slate-100">
+        <div className="flex gap-1 h-1.5 rounded-full overflow-hidden bg-indigo-50/50">
           <div 
             className="bg-emerald-500 transition-all duration-500" 
             style={{ width: `${(village.stats.resolved / village.stats.total) * 100}%` }} 
@@ -403,7 +403,7 @@ export function VillageAnalytics() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div whileHover={{ scale: 1.02 }} className="relative overflow-hidden">
-          <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 shadow-sm">
+          <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-slate-200/80">
@@ -470,7 +470,7 @@ export function VillageAnalytics() {
       {/* Main Content - Xarita chap, Statistika o'ng */}
       <div className="grid gap-6 lg:grid-cols-[1fr,400px]">
         {/* Map - Chap tomon */}
-        <Card className="bg-white/90 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+        <Card className="bg-white/90 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -484,13 +484,13 @@ export function VillageAnalytics() {
                   placeholder={t.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white text-sm"
+                  className="pl-9 h-9 bg-indigo-50/30 border-indigo-100/40 focus:bg-white text-sm"
                 />
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="relative rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-inner">
+            <div className="relative rounded-xl border border-indigo-100/40 bg-gradient-to-br from-slate-50 to-white p-4 shadow-inner">
               <svg viewBox="0 0 838 400" className="w-full h-[400px]">
                 <defs>
                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -516,7 +516,7 @@ export function VillageAnalytics() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="pointer-events-none absolute z-20 min-w-[200px] rounded-xl border border-slate-200 bg-white/98 p-4 shadow-xl backdrop-blur-sm"
+                    className="pointer-events-none absolute z-20 min-w-[200px] rounded-xl border border-indigo-100/40 bg-white/98 p-4 shadow-xl backdrop-blur-sm"
                     style={{ left: tooltip.x + 16, top: tooltip.y + 16 }}
                   >
                     <div className="flex items-center gap-2 mb-3">
@@ -551,7 +551,7 @@ export function VillageAnalytics() {
                     </div>
                     {/* Mini progress */}
                     <div className="mt-3 pt-3 border-t border-slate-100">
-                      <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-slate-100">
+                      <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-indigo-50/50">
                         <div className="bg-emerald-500" style={{ width: `${(tooltip.village.stats.resolved / tooltip.village.stats.total) * 100}%` }} />
                         <div className="bg-amber-500" style={{ width: `${(tooltip.village.stats.inProgress / tooltip.village.stats.total) * 100}%` }} />
                         <div className="bg-blue-500" style={{ width: `${(tooltip.village.stats.pending / tooltip.village.stats.total) * 100}%` }} />
@@ -605,7 +605,7 @@ export function VillageAnalytics() {
         </Card>
 
         {/* Tanlangan qishloq statistikasi - O'ng tomon */}
-        <Card className="bg-white/90 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl h-fit sticky top-4">
+        <Card className="bg-white/90 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl h-fit sticky top-4">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-emerald-500" />
@@ -639,7 +639,7 @@ export function VillageAnalytics() {
                   <div className="grid grid-cols-2 gap-3">
                     <motion.div 
                       whileHover={{ scale: 1.02 }}
-                      className="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200"
+                      className="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-indigo-100/40"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="w-4 h-4 text-slate-600" />
@@ -683,9 +683,9 @@ export function VillageAnalytics() {
                   </div>
 
                   {/* Progress bar */}
-                  <div className="p-4 rounded-xl bg-white border border-slate-200">
+                  <div className="p-4 rounded-xl bg-white border border-indigo-100/40">
                     <p className="text-sm font-medium text-slate-600 mb-3">{t.completed}</p>
-                    <div className="flex gap-1 h-4 rounded-full overflow-hidden bg-slate-100 mb-3">
+                    <div className="flex gap-1 h-4 rounded-full overflow-hidden bg-indigo-50/50 mb-3">
                       <motion.div 
                         className="bg-emerald-500" 
                         initial={{ width: 0 }}
@@ -742,7 +742,7 @@ export function VillageAnalytics() {
                   animate={{ opacity: 1 }}
                   className="text-center py-12"
                 >
-                  <div className="p-4 rounded-full bg-slate-100 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <div className="p-4 rounded-full bg-indigo-50/50 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                     <MapPin className="w-8 h-8 text-slate-400" />
                   </div>
                   <p className="text-slate-500 mb-2">{t.noData}</p>

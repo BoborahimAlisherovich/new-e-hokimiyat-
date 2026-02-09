@@ -47,7 +47,7 @@ export function OrganizationCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-slate-200 shadow-2xl">
+      <DialogContent className="sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-indigo-50/30 shadow-2xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
@@ -69,7 +69,7 @@ export function OrganizationCreateDialog({
               value={formData.name}
               onChange={(e) => onChange("name", e.target.value)}
               placeholder="Tashkilot nomini kiriting" 
-              className="h-11 rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500/20"
+              className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20"
             />
           </div>
           
@@ -82,7 +82,7 @@ export function OrganizationCreateDialog({
               value={formData.sector_id || "none"}
               onValueChange={(value) => onChange("sector_id", value === "none" ? "" : value)}
             >
-              <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500/20">
+              <SelectTrigger className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20">
                 <SelectValue placeholder={loadingSectors ? "Yuklanmoqda..." : "Sohani tanlang"} />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -106,7 +106,7 @@ export function OrganizationCreateDialog({
               value={formData.servicePhone}
               onChange={(e) => onChange("servicePhone", e.target.value)}
               placeholder="+998 XX XXX XX XX" 
-              className="h-11 rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500/20"
+              className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20"
             />
           </div>
           
@@ -121,7 +121,7 @@ export function OrganizationCreateDialog({
               onChange={(e) => onChange("address", e.target.value)}
               placeholder="Tashkilot manzilini kiriting" 
               rows={3}
-              className="rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 resize-none"
+              className="rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20 resize-none"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export function OrganizationCreateDialog({
             variant="outline" 
             onClick={() => onOpenChange(false)} 
             disabled={loading}
-            className="rounded-xl border-slate-200 hover:bg-slate-50"
+            className="rounded-xl border-indigo-100/60 hover:bg-indigo-50/30"
           >
             Bekor qilish
           </Button>

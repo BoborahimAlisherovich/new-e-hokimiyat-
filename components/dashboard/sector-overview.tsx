@@ -78,9 +78,9 @@ export function SectorOverview() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
       
-      <CardHeader className="relative z-10 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <CardHeader className="relative z-10 border-b border-indigo-100/40 bg-gradient-to-r from-emerald-50 to-teal-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
@@ -113,7 +113,7 @@ export function SectorOverview() {
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, y: -2 }}
               className={cn(
-                "group/sector relative rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:shadow-lg hover:border-emerald-300"
+                "group/sector relative rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:border-emerald-300"
               )}
             >
               
@@ -197,7 +197,7 @@ export function SectorOverview() {
         
         {sectorStats.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-indigo-50/50 rounded-2xl flex items-center justify-center mb-4">
               <Grid3X3 className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.sectorsEmptyTitle}</h3>

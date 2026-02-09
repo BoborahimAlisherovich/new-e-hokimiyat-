@@ -360,8 +360,9 @@ export function useGSAPStaggerGrid(options?: {
 }
 
 /**
- * Professional GSAP page entrance with refined timing & easing.
- * Animate container, then stagger `[data-gsap-section]` children.
+ * ✨ Premium GSAP page entrance with refined timing, easing & cascading animations.
+ * Animates container → sections (`[data-gsap-section]`) → cards (`[data-gsap-card]`)
+ * → stat items (`[data-gsap-stat]`) with overlapping timelines for smooth feel.
  */
 export function useGSAPPageEntrance() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -371,42 +372,80 @@ export function useGSAPPageEntrance() {
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
-        defaults: { ease: "power3.out" },
+        defaults: { ease: "power4.out" },
       });
 
+      // 1. Container fade in with slight upward motion
       tl.from(containerRef.current, {
         opacity: 0,
-        duration: 0.3,
+        y: 8,
+        duration: 0.35,
+        ease: "power2.out",
       });
 
+      // 2. Stagger sections with smooth slide-up
       const sections = containerRef.current!.querySelectorAll("[data-gsap-section]");
       if (sections.length > 0) {
         tl.from(
           sections,
           {
             opacity: 0,
-            y: 28,
-            duration: 0.55,
-            stagger: 0.1,
+            y: 30,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "power3.out",
           },
-          "-=0.1"
+          "-=0.15"
         );
       }
 
-      // Also animate any data-gsap-card within sections
+      // 3. Animate cards with scale bounce
       const cards = containerRef.current!.querySelectorAll("[data-gsap-card]");
       if (cards.length > 0) {
         tl.from(
           cards,
           {
             opacity: 0,
-            y: 14,
-            scale: 0.97,
-            duration: 0.4,
+            y: 16,
+            scale: 0.96,
+            duration: 0.5,
             stagger: 0.05,
-            ease: "back.out(1.3)",
+            ease: "back.out(1.4)",
+          },
+          "-=0.4"
+        );
+      }
+
+      // 4. Animate stat numbers with counter effect
+      const stats = containerRef.current!.querySelectorAll("[data-gsap-stat]");
+      if (stats.length > 0) {
+        tl.from(
+          stats,
+          {
+            opacity: 0,
+            y: 10,
+            scale: 0.9,
+            duration: 0.4,
+            stagger: 0.04,
+            ease: "back.out(2)",
           },
           "-=0.35"
+        );
+      }
+
+      // 5. Animate action buttons
+      const actions = containerRef.current!.querySelectorAll("[data-gsap-action]");
+      if (actions.length > 0) {
+        tl.from(
+          actions,
+          {
+            opacity: 0,
+            x: -10,
+            duration: 0.35,
+            stagger: 0.04,
+            ease: "power2.out",
+          },
+          "-=0.3"
         );
       }
     }, containerRef);
@@ -444,6 +483,88 @@ export function useGSAPProgress(value: number, options?: { duration?: number; de
 
     return () => ctx.revert();
   }, [value, options]);
+
+  return ref;
+}
+
+/**
+ * ✨ GSAP modal/dialog entrance animation
+ */
+export function useGSAPModalEntrance() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.from(ref.current, {
+        opacity: 0,
+        scale: 0.95,
+        y: 20,
+        duration: 0.4,
+        ease: "back.out(1.5)",
+      });
+
+      // Animate child sections
+      const sections = ref.current!.children;
+      if (sections.length > 0) {
+        tl.from(
+          Array.from(sections),
+          {
+            opacity: 0,
+            y: 12,
+            duration: 0.35,
+            stagger: 0.06,
+          },
+          "-=0.2"
+        );
+      }
+    }, ref);
+
+    return () => ctx.revert();
+  }, []);
+
+  return ref;
+}
+
+/**
+ * ✨ GSAP card hover glow effect
+ */
+export function useGSAPCardHover() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+
+    const handleMouseEnter = () => {
+      gsap.to(el, {
+        y: -3,
+        boxShadow: "0 12px 40px -8px rgba(99, 102, 241, 0.15), 0 4px 12px -4px rgba(0,0,0,0.06)",
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(el, {
+        y: 0,
+        boxShadow: "0 1px 3px rgba(99,102,241,0.05), 0 4px 16px rgba(99,102,241,0.04)",
+        duration: 0.4,
+        ease: "power2.out",
+      });
+    };
+
+    el.addEventListener("mouseenter", handleMouseEnter);
+    el.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      el.removeEventListener("mouseenter", handleMouseEnter);
+      el.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
 
   return ref;
 }

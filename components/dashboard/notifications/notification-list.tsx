@@ -19,7 +19,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
   const t = useTranslation()
   if (notifications.length === 0) {
     return (
-      <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl">
+      <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
         <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <div className="rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 p-5 mb-4">
@@ -33,7 +33,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-slate-200 shadow-lg rounded-2xl overflow-hidden">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl overflow-hidden">
       <CardContent className="p-0 divide-y divide-slate-100">
         {notifications.map((notification, idx) => {
           const Icon = notificationIcons[notification.type] || Bell

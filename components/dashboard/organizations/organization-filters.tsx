@@ -36,9 +36,9 @@ export function OrganizationFilters({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
       {/* Header with gradient accent */}
-      <div className="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 border-b border-slate-100 p-4">
+      <div className="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 border-b border-indigo-50/60 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-white shadow-sm">
@@ -75,11 +75,11 @@ export function OrganizationFilters({
                 placeholder="Tashkilot nomi, mas'ul yoki telefon..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-9 border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400 transition-all"
+                className="pl-9 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400 transition-all"
               />
             </div>
             <Select value={typeFilter} onValueChange={onTypeChange}>
-              <SelectTrigger className="w-full md:w-[200px] border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+              <SelectTrigger className="w-full md:w-[200px] border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
                 <Building className="mr-2 h-4 w-4 text-slate-400" />
                 <SelectValue placeholder="Sektor" />
               </SelectTrigger>
@@ -93,7 +93,7 @@ export function OrganizationFilters({
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-full md:w-[150px] border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+              <SelectTrigger className="w-full md:w-[150px] border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
                 <SelectValue placeholder="Holat" />
               </SelectTrigger>
               <SelectContent>

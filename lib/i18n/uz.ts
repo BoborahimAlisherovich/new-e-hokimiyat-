@@ -64,7 +64,6 @@ export const uzTranslations: Translations = {
   navigation: {
     dashboard: 'Asosiy sahifa',
     tasks: 'Topshiriqlar',
-    recurringTasks: 'Takrorlanuvchi',
     users: 'Foydalanuvchilar',
     organizations: 'Tashkilotlar',
     notifications: 'Bildirishnomalar',

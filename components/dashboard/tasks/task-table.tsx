@@ -53,7 +53,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="rounded-full bg-slate-100 p-5 mb-4">
+        <div className="rounded-full bg-indigo-50/50 p-5 mb-4">
           <FileX className="h-10 w-10 text-slate-400" />
         </div>
         <h3 className="text-lg font-semibold text-slate-700 mb-2">{t.tasks.emptyTitle}</h3>
@@ -66,7 +66,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-slate-100 to-slate-50 hover:bg-slate-100 border-b-2 border-slate-200">
+          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.titleLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.categoryLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.organizationsLabel}</TableHead>
@@ -84,7 +84,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
               <TableRow 
                 key={task.id} 
                 className={cn(
-                  "cursor-pointer transition-all duration-200 border-b border-slate-100 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50",
+                  "cursor-pointer transition-all duration-200 border-b border-indigo-50/60 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50",
                   isOverdue && "bg-red-50/50 hover:bg-red-50"
                 )}
                 onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
@@ -140,8 +140,8 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                     task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
                     task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
                     task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
-                    task.status === "BAJARILMADI" && "bg-slate-100 text-slate-700",
-                    task.status === "NAZORATDAN_YECHILDI" && "bg-slate-100 text-slate-700"
+                    task.status === "BAJARILMADI" && "bg-indigo-50/50 text-slate-700",
+                    task.status === "NAZORATDAN_YECHILDI" && "bg-indigo-50/50 text-slate-700"
                   )}>
                     {statusLabels[task.status] || task.status}
                   </span>
