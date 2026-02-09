@@ -11,6 +11,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import Organization, Sector
 from tasks.models import TaskOrganization
+from users.models import User
+from django.db.models import Prefetch
 from django.utils.text import slugify
 from .serializers import (
     OrganizationSerializer, OrganizationCreateSerializer,
@@ -174,7 +176,14 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter organizations based on user role."""
         user = self.request.user
-        queryset = Organization.objects.select_related('sector', 'parent')
+        queryset = Organization.objects.select_related('sector', 'parent').prefetch_related(
+            Prefetch(
+                'employees',
+                queryset=User.objects.filter(
+                    role='TASHKILOT_RAHBARI', status='FAOL'
+                ).only('first_name', 'last_name', 'middle_name', 'role', 'status', 'organization_id')
+            )
+        )
         
         # Tashkilot rahbari and mas'uli can only see their organization
         if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
