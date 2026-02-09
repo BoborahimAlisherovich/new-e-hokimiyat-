@@ -379,7 +379,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             ip_address=getattr(request, 'client_ip', None)
         )
         
-        return Response(TaskDetailSerializer(task).data)
+        return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanExecuteTasks])
     def report(self, request, pk=None):
@@ -456,7 +456,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 link=f'/dashboard/tasks/{task.id}'
             )
         
-        return Response(TaskDetailSerializer(task).data)
+        return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanCloseTask])
     def close(self, request, pk=None):
@@ -506,7 +506,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             ip_address=getattr(request, 'client_ip', None)
         )
         
-        return Response(TaskDetailSerializer(task).data)
+        return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanCloseTask])
     def reassign(self, request, pk=None):
@@ -574,7 +574,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 link=f'/dashboard/tasks/{task.id}'
             )
         
-        return Response(TaskDetailSerializer(task).data)
+        return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
     @action(detail=True, methods=['post'], url_path='mark-complete')
     def mark_complete(self, request, pk=None):
@@ -674,7 +674,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 link=f'/dashboard/tasks/{task.id}'
             )
         
-        return Response(TaskDetailSerializer(task).data)
+        return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
     @action(detail=True, methods=['get', 'post'])
     def timeline(self, request, pk=None):

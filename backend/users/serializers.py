@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from .models import User, UserAssignment
 
 
+import os
+
 def _build_avatar_url(obj, request):
     """Avatar URL'ni HTTPS bilan qaytaradi."""
     if not obj.avatar:
@@ -15,7 +17,9 @@ def _build_avatar_url(obj, request):
     if request:
         url = request.build_absolute_uri(obj.avatar.url)
         return url.replace('http://', 'https://', 1) if url.startswith('http://') else url
-    return obj.avatar.url
+    # Fallback: request mavjud bo'lmaganda to'liq URL qurish
+    base = os.environ.get('API_BASE_URL', 'https://api.pytech.uz')
+    return f"{base}{obj.avatar.url}"
 
 
 class UserMinimalSerializer(serializers.ModelSerializer):
