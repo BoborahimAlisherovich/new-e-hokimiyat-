@@ -416,8 +416,8 @@ export default function AIAssistantPage() {
           <section data-gsap-section className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         
             {/* Left sidebar - Conversations */}
-            <div className="w-full lg:w-64 xl:w-72 flex-shrink-0">
-          <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm">
+            <div className="w-full lg:w-64 xl:w-72 flex-shrink-0 min-h-0 lg:h-full">
+          <Card className="h-full flex flex-col bg-white border-slate-200 shadow-sm overflow-visible">
             <CardHeader className="pb-3 border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-800">
@@ -435,7 +435,7 @@ export default function AIAssistantPage() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-3 min-h-0">
-              <ScrollArea className="h-full">
+              <ScrollArea className="h-full pr-1">
                 {error ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
@@ -465,14 +465,14 @@ export default function AIAssistantPage() {
                       return (
                         <div
                           key={conv.id}
-                          className={`group relative rounded-lg cursor-pointer transition-colors p-2.5 ${
+                          className={`group relative rounded-lg cursor-pointer transition-colors p-2.5 overflow-visible ${
                             currentConversation?.id === conv.id
                               ? "bg-blue-50 border border-blue-200"
                               : "bg-white hover:bg-slate-50 border border-transparent"
                           }`}
                           onClick={() => selectConversation(conv)}
                         >
-                          <div className="flex items-start gap-2 pr-7">
+                          <div className="flex items-start gap-2 pr-8">
                             <MessageSquare className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
                               currentConversation?.id === conv.id ? "text-blue-600" : "text-slate-400"
                             }`} />
@@ -490,7 +490,8 @@ export default function AIAssistantPage() {
                           </div>
                           <button
                             onClick={(e) => deleteConversation(conv.id, e)}
-                            className="absolute top-1/2 -translate-y-1/2 right-2 p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-1/2 -translate-y-1/2 right-1.5 p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-10"
+                            title="O'chirish"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
