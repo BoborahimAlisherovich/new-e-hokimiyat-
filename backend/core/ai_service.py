@@ -817,7 +817,7 @@ Murojaatlar:
         appeal_status_counts = appeals.values('status').annotate(count=Count('id'))
         
         # Tashkilotlar bo'yicha statistika
-        org_stats = tasks.values('assigned_organization__name').annotate(
+        org_stats = tasks.values('assigned_organizations__name').annotate(
             count=Count('id')
         ).order_by('-count')[:10]
         
@@ -881,8 +881,8 @@ Murojaatlar:
             },
             'organizations': {
                 'top_performers': [
-                    {'name': item['assigned_organization__name'] or 'Belgilanmagan', 'count': item['count']}
-                    for item in org_stats if item['assigned_organization__name']
+                    {'name': item['assigned_organizations__name'] or 'Belgilanmagan', 'count': item['count']}
+                    for item in org_stats if item['assigned_organizations__name']
                 ][:5],
             },
             'trends': {
