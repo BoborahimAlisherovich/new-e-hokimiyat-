@@ -118,15 +118,15 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
                 return (
                   <div key={msg.id} className={cn("flex gap-3 group", isCurrentUser && "flex-row-reverse")}>
                     <UserAvatar
-                      firstName={sender?.firstName}
-                      lastName={sender?.lastName}
+                      firstName={sender?.first_name}
+                      lastName={sender?.last_name}
                       avatarUrl={sender?.avatar_url}
                       size="sm"
                     />
                     <div className={cn("max-w-[70%] space-y-1", isCurrentUser && "items-end")}>
                       <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
                         <span className="text-sm font-medium text-foreground">
-                          {sender?.lastName} {sender?.firstName}
+                          {sender?.last_name} {sender?.first_name}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {new Date(msg.created_at).toLocaleTimeString("uz-UZ", {

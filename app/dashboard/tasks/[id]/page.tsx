@@ -142,7 +142,8 @@ export default function TaskDetailPage() {
         // Setup WebSocket for real-time chat
         const token = getAccessToken()
         if (token) {
-          const wsUrl = `${API_BASE.replace(/^http/, 'ws')}/ws/tasks/${id}/chat/?token=${token}`
+          const wsBase = API_BASE.replace(/\/api\/?$/, '').replace(/^http/, 'ws')
+          const wsUrl = `${wsBase}/ws/tasks/${id}/chat/?token=${token}`
           const ws = new WebSocket(wsUrl)
           wsRef.current = ws
           ws.onmessage = (ev) => {
@@ -867,8 +868,8 @@ export default function TaskDetailPage() {
                         return (
                           <div key={msg.id} className={cn("flex gap-3", isCurrentUser && "flex-row-reverse")}>
                             <UserAvatar
-                              firstName={sender?.firstName}
-                              lastName={sender?.lastName}
+                              firstName={sender?.first_name}
+                              lastName={sender?.last_name}
                               avatarUrl={sender?.avatar_url}
                               size="sm"
                             />
@@ -878,7 +879,7 @@ export default function TaskDetailPage() {
                                   {isCurrentUser && currentUser 
                                     ? `${currentUser.last_name || ''} ${currentUser.first_name || ''}`.trim()
                                     : sender 
-                                      ? `${sender.lastName || ''} ${sender.firstName || ''}`.trim()
+                                      ? `${sender.last_name || ''} ${sender.first_name || ''}`.trim()
                                       : msg.senderName || "-"
                                   }
                                 </span>
