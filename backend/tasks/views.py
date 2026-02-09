@@ -278,7 +278,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         orgs = list(Organization.objects.filter(is_active=True).values('id', 'name', 'sector__name'))
         sectors = list(Sector.objects.filter(is_active=True).values_list('name', flat=True))
         
-        org_list = "\n".join([f"- {o['name']} (ID: {o['id']}, Soha: {o['sector__name'] or 'Noma\\'lum'})" for o in orgs])
+        org_list = "\n".join([f"- {o['name']} (ID: {o['id']}, Soha: {o['sector__name'] or 'Nomalum'})" for o in orgs])
         
         prompt = f"""Sen E-Hokimiyat tizimining professional AI yordamchisisan. 
 Quyidagi matn audio yozuvdan olingan bo'lishi mumkin. Unda imloviy, grammatik xatolar bo'lishi tabiiy.
