@@ -44,7 +44,7 @@ import {
   Layers,
   Lock,
   Download,
-  File,
+  File as FileIcon,
   Image,
 } from "lucide-react"
 import Link from "next/link"
@@ -810,7 +810,7 @@ export default function TaskDetailPage() {
                             {isImage ? (
                               <Image className="h-5 w-5 text-primary" />
                             ) : (
-                              <File className="h-5 w-5 text-primary" />
+                              <FileIcon className="h-5 w-5 text-primary" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
