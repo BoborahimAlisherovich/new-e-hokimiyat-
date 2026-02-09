@@ -1165,15 +1165,22 @@ export default function TaskDetailPage() {
                   <CardTitle className="text-base">Fayllar</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {task.attachments.map((file: string, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer"
-                    >
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{file}</span>
-                    </div>
-                  ))}
+                  {task.attachments.map((file: any, i: number) => {
+                    const fileName = typeof file === 'string' ? file : (file.file_name || file.fileName || file.file?.split('/').pop() || 'Fayl')
+                    const fileUrl = typeof file === 'string' ? file : (file.file || file.url)
+                    return (
+                      <a
+                        key={file?.id || i}
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer"
+                      >
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{fileName}</span>
+                      </a>
+                    )
+                  })}
                 </CardContent>
               </Card>
             )}
