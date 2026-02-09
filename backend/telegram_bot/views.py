@@ -1057,21 +1057,36 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     def messages(self, request, pk=None):
         """Murojaat xabarlari"""
         appeal = self.get_object()
-        messages = AppealMessage.objects.filter(appeal=appeal).select_related('admin', 'sender_user').order_by('created_at')
+        messages = AppealMessage.objects.filter(appeal=appeal).select_related('admin', 'sender_user', 'appeal__telegram_user').order_by('created_at')
+        
+        # Fuqaro ismi
+        citizen_name = None
+        if appeal.telegram_user:
+            citizen_name = appeal.telegram_user.full_name or appeal.telegram_user.username or "Fuqaro"
         
         data = []
         for msg in messages:
             # Haqiqiy yuboruvchi ismini aniqlash
             sender_name = None
             sender_avatar_url = None
-            if msg.sender_user:
-                sender_name = msg.sender_user.full_name
-                if msg.sender_user.avatar:
-                    sender_avatar_url = request.build_absolute_uri(msg.sender_user.avatar.url)
-                    if sender_avatar_url and sender_avatar_url.startswith('http://'):
-                        sender_avatar_url = sender_avatar_url.replace('http://', 'https://', 1)
-            elif msg.admin:
-                sender_name = msg.admin.full_name
+            if msg.is_from_admin:
+                # Admin/operator xabari
+                if msg.sender_user:
+                    sender_name = msg.sender_user.full_name
+                    if msg.sender_user.avatar:
+                        sender_avatar_url = request.build_absolute_uri(msg.sender_user.avatar.url)
+                        if sender_avatar_url and sender_avatar_url.startswith('http://'):
+                            sender_avatar_url = sender_avatar_url.replace('http://', 'https://', 1)
+                elif msg.admin:
+                    sender_name = msg.admin.full_name
+                    # BotAdmin orqali User'ning avatarini olishga urinish
+                    if msg.admin.user and hasattr(msg.admin.user, 'avatar') and msg.admin.user.avatar:
+                        sender_avatar_url = request.build_absolute_uri(msg.admin.user.avatar.url)
+                        if sender_avatar_url and sender_avatar_url.startswith('http://'):
+                            sender_avatar_url = sender_avatar_url.replace('http://', 'https://', 1)
+            else:
+                # Fuqaro xabari
+                sender_name = citizen_name
             
             data.append({
                 'id': msg.id,  # type: ignore[attr-defined]

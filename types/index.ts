@@ -417,6 +417,8 @@ export interface Appeal {
   rated_at?: string | null
   closed_at?: string | null
   attachments?: AppealAttachment[]
+  newMessagesCount?: number
+  lastMessageAt?: string | null
 }
 
 export interface AppealAttachment {
