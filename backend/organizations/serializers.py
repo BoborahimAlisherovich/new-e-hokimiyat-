@@ -37,6 +37,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(source='parent.name', read_only=True)
     employee_count = serializers.IntegerField(read_only=True)
     active_tasks_count = serializers.IntegerField(read_only=True)
+    director_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Organization
@@ -48,6 +49,27 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_director_name(self, obj):
+        """Tashkilot rahbarini avval model field'dan, keyin employees'dan qidiradi."""
+        # Avval model field tekshiriladi
+        if obj.director_name:
+            return obj.director_name
+        # Prefetch qilingan employees'dan rahbarni topish
+        if hasattr(obj, '_prefetched_objects_cache') and 'employees' in obj._prefetched_objects_cache:
+            for emp in obj._prefetched_objects_cache['employees']:
+                if emp.role == 'TASHKILOT_RAHBARI' and emp.status == 'FAOL':
+                    return emp.full_name
+        else:
+            # Prefetch yo'q bo'lsa query orqali
+            rahbar = obj.employees.filter(
+                role='TASHKILOT_RAHBARI', status='FAOL'
+            ).values_list('first_name', 'last_name', 'middle_name').first()
+            if rahbar:
+                first_name, last_name, middle_name = rahbar
+                parts = [last_name, first_name, middle_name]
+                return ' '.join(p for p in parts if p).strip() or None
+        return None
 
 
 class OrganizationCreateSerializer(serializers.ModelSerializer):
