@@ -71,6 +71,7 @@ export interface AppealMessage {
   is_read: boolean
   is_from_admin: boolean
   admin_name: string | null
+  sender_avatar_url: string | null
 }
 
 /** Murojaat tarix yozuvi */
@@ -295,6 +296,7 @@ export async function getAppealMessages(appealId: string): Promise<AppealMessage
     is_read: msg.is_read ?? true,
     is_from_admin: msg.is_from_admin ?? (msg.sender_type === 'operator'),
     admin_name: msg.admin_name ?? msg.sender_name ?? null,
+    sender_avatar_url: msg.sender_avatar_url || null,
   }))
 }
 

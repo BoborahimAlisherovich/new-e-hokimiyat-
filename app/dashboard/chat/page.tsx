@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
@@ -91,6 +91,7 @@ interface ChatUser {
   role?: string
   organization?: { name: string }
   is_online?: boolean
+  avatar_url?: string | null
 }
 
 interface Conversation {
@@ -748,14 +749,14 @@ export default function ChatPage() {
                       )}
                     >
                       <div className="relative">
-                        <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm font-semibold">
-                            {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        {user.is_online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-                        )}
+                        <UserAvatar
+                          firstName={user.first_name}
+                          lastName={user.last_name}
+                          avatarUrl={user.avatar_url}
+                          size="lg"
+                          showOnline={true}
+                          isOnline={user.is_online}
+                        />
                         {/* Unread message badge */}
                         {unreadCount > 0 && (
                           <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-[10px] font-bold text-white shadow-md">
@@ -804,11 +805,14 @@ export default function ChatPage() {
                     >
                       <Users className="h-4 w-4" />
                     </Button>
-                    <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold">
-                        {selectedUser.first_name?.charAt(0)}{selectedUser.last_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      firstName={selectedUser.first_name}
+                      lastName={selectedUser.last_name}
+                      avatarUrl={selectedUser.avatar_url}
+                      size="lg"
+                      showOnline={true}
+                      isOnline={selectedUser.is_online}
+                    />
                     <div className="flex-1">
                       <p className="font-bold text-slate-900">{selectedUser.first_name} {selectedUser.last_name}</p>
                       <div className="flex items-center gap-2">
@@ -838,11 +842,12 @@ export default function ChatPage() {
 
                       return (
                         <div key={msg.id} className={cn("flex gap-2 sm:gap-3 group", isCurrentUser && "flex-row-reverse")}>
-                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                              {msg.senderName?.split(" ").map(n => n[0]).join("").substring(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            firstName={isCurrentUser ? currentUser?.first_name : selectedUser?.first_name}
+                            lastName={isCurrentUser ? currentUser?.last_name : selectedUser?.last_name}
+                            avatarUrl={isCurrentUser ? (currentUser as any)?.avatar_url : selectedUser?.avatar_url}
+                            size="sm"
+                          />
                           <div className={cn("max-w-[85%] sm:max-w-[78%] lg:max-w-[65%] space-y-1", isCurrentUser && "items-end")}>
                             <div className={cn("flex flex-wrap items-center gap-1 sm:gap-2", isCurrentUser && "flex-row-reverse")}>
                               <span className="text-xs sm:text-sm font-medium text-foreground">{msg.senderName}</span>

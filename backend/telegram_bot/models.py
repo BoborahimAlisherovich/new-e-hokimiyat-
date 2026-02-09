@@ -643,6 +643,14 @@ class AppealMessage(models.Model):
         blank=True,
         verbose_name="Admin"
     )
+    sender_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appeal_messages',
+        verbose_name="Yuboruvchi foydalanuvchi"
+    )
     text = models.TextField(
         verbose_name="Xabar matni"
     )

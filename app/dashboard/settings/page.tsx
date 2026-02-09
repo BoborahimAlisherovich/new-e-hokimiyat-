@@ -150,6 +150,7 @@ export default function SettingsPage() {
     phone: currentUser.phone || "",
     pnfl: currentUser.pnfl || "",
     role: currentUser.role || "USER",
+    avatar_url: currentUser.avatar_url || null,
   } : {
     firstName: "",
     lastName: "",

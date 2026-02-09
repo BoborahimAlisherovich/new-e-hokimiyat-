@@ -97,6 +97,8 @@ interface AppealMessage {
   text: string
   is_from_admin: boolean
   admin_name: string | null
+  sender_name: string | null
+  sender_avatar_url: string | null
   created_at: string
 }
 
@@ -726,7 +728,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                 <p>Hali xabarlar yo'q</p>
                               </div>
                             ) : (
-                              messages.map((msg) => (
+                              messages.map((msg) => {
+                                const senderDisplayName = msg.is_from_admin 
+                                  ? (msg.sender_name || msg.admin_name || "Admin") 
+                                  : (appeal.citizenName || "Fuqaro")
+                                const nameParts = senderDisplayName.split(' ')
+                                return (
                                 <div
                                   key={msg.id}
                                   className={cn(
@@ -735,8 +742,9 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                   )}
                                 >
                                   <UserAvatar
-                                    firstName={msg.is_from_admin ? (msg.admin_name?.split(' ')[1] || "A") : (appeal.citizenName?.split(' ')[1] || "F")}
-                                    lastName={msg.is_from_admin ? (msg.admin_name?.split(' ')[0] || "") : (appeal.citizenName?.split(' ')[0] || "")}
+                                    firstName={nameParts[1] || nameParts[0] || ""}
+                                    lastName={nameParts[0] || ""}
+                                    avatarUrl={msg.is_from_admin ? msg.sender_avatar_url : undefined}
                                     size="sm"
                                   />
                                   <div className={cn(
@@ -749,7 +757,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                       "text-xs font-medium mb-1",
                                       msg.is_from_admin ? "text-primary-foreground/80" : "text-muted-foreground"
                                     )}>
-                                      {msg.is_from_admin ? (msg.admin_name || "Admin") : (appeal.citizenName || "Fuqaro")}
+                                      {senderDisplayName}
                                     </p>
                                     <p className="text-sm">{msg.text}</p>
                                     <p className={cn(
@@ -757,11 +765,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                       msg.is_from_admin ? "text-primary-foreground/70" : "text-muted-foreground"
                                     )}>
                                       {formatDate(msg.created_at)}
-                                      {msg.admin_name && ` • ${msg.admin_name}`}
                                     </p>
                                   </div>
                                 </div>
-                              ))
+                                )
+                              })
                             )}
                             <div ref={messagesEndRef} />
                           </div>
