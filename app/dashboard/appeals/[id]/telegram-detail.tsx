@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -734,11 +734,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                     msg.is_from_admin ? "flex-row-reverse" : ""
                                   )}
                                 >
-                                  <Avatar className="h-8 w-8 flex-shrink-0">
-                                    <AvatarFallback className={msg.is_from_admin ? "bg-primary text-primary-foreground" : "bg-muted"}>
-                                      {msg.is_from_admin ? "A" : appeal.citizenName?.charAt(0) || "F"}
-                                    </AvatarFallback>
-                                  </Avatar>
+                                  <UserAvatar
+                                    firstName={msg.is_from_admin ? (msg.admin_name?.split(' ')[1] || "A") : (appeal.citizenName?.split(' ')[1] || "F")}
+                                    lastName={msg.is_from_admin ? (msg.admin_name?.split(' ')[0] || "") : (appeal.citizenName?.split(' ')[0] || "")}
+                                    size="sm"
+                                  />
                                   <div className={cn(
                                     "max-w-[70%] rounded-lg p-3",
                                     msg.is_from_admin 
