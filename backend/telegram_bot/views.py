@@ -853,6 +853,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 appeal=appeal,
                 is_from_admin=True,
                 admin=admin,
+                sender_user=request.user,
                 text=response_text
             )
         
@@ -898,6 +899,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             appeal=appeal,
             is_from_admin=True,
             admin=admin,
+            sender_user=request.user,
             text=text or ''
         )
         
@@ -1007,6 +1009,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 appeal=appeal,
                 is_from_admin=True,
                 admin=admin,
+                sender_user=request.user,
                 text=response_text
             )
         
@@ -1054,15 +1057,29 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     def messages(self, request, pk=None):
         """Murojaat xabarlari"""
         appeal = self.get_object()
-        messages = AppealMessage.objects.filter(appeal=appeal).order_by('created_at')
+        messages = AppealMessage.objects.filter(appeal=appeal).select_related('admin', 'sender_user').order_by('created_at')
         
         data = []
         for msg in messages:
+            # Haqiqiy yuboruvchi ismini aniqlash
+            sender_name = None
+            sender_avatar_url = None
+            if msg.sender_user:
+                sender_name = msg.sender_user.full_name
+                if msg.sender_user.avatar:
+                    sender_avatar_url = request.build_absolute_uri(msg.sender_user.avatar.url)
+                    if sender_avatar_url and sender_avatar_url.startswith('http://'):
+                        sender_avatar_url = sender_avatar_url.replace('http://', 'https://', 1)
+            elif msg.admin:
+                sender_name = msg.admin.full_name
+            
             data.append({
                 'id': msg.id,  # type: ignore[attr-defined]
                 'text': msg.text,
                 'is_from_admin': msg.is_from_admin,
-                'admin_name': msg.admin.full_name if msg.admin else None,
+                'admin_name': sender_name,
+                'sender_name': sender_name,
+                'sender_avatar_url': sender_avatar_url,
                 'created_at': msg.created_at.isoformat()
             })
         
@@ -1316,6 +1333,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             appeal=appeal,
             is_from_admin=True,
             admin=admin,
+            sender_user=request.user,
             text=response_text
         )
         
