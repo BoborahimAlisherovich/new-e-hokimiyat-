@@ -946,6 +946,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                                 'chat_id': chat_id,
                                 'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga video yuborildi",
                                 'parse_mode': 'HTML',
+                                'reply_markup': str(keyboard).replace("'", '"')
                             },
                             files={'video': (uploaded_file.name, uploaded_file.read(), content_type)},
                             timeout=60
@@ -957,6 +958,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                             data={
                                 'chat_id': chat_id,
                                 'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob" if not text else text,
+                                'reply_markup': str(keyboard).replace("'", '"')
                             },
                             files={'voice': (uploaded_file.name, uploaded_file.read(), content_type)},
                             timeout=30
@@ -969,6 +971,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                                 'chat_id': chat_id,
                                 'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga fayl yuborildi",
                                 'parse_mode': 'HTML',
+                                'reply_markup': str(keyboard).replace("'", '"')
                             },
                             files={'document': (uploaded_file.name, uploaded_file.read(), content_type)},
                             timeout=30

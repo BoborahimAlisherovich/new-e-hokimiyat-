@@ -76,7 +76,7 @@ export function Header({ title, description }: HeaderProps) {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-sm px-6 shadow-sm" 
+        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-indigo-100/50 bg-white/80 backdrop-blur-xl px-6 shadow-[0_1px_12px_-4px_rgba(99,102,241,0.08)]" 
         role="banner"
       >
 
@@ -107,12 +107,12 @@ export function Header({ title, description }: HeaderProps) {
         <div className="relative group">
           <Search className={cn(
             "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200",
-            isSearchFocused ? "text-blue-600" : "group-hover:text-slate-600"
+            isSearchFocused ? "text-indigo-600" : "group-hover:text-slate-600"
           )} />
           <Input 
             placeholder={t.common.search}
             className={cn(
-              "w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
+              "w-full h-10 bg-indigo-50/50 border border-indigo-100 rounded-lg pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 transition-all duration-200"
             )}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
@@ -155,28 +155,28 @@ export function Header({ title, description }: HeaderProps) {
               <DropdownMenuSeparator className="bg-slate-200" />
               <DropdownMenuItem 
                 onClick={() => setLanguage('uz')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz' && "bg-blue-50 text-blue-700")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz' && "bg-indigo-50 text-indigo-700")}
               >
                 <span className="mr-2">🇺🇿</span>
                 <span>{t.settings.languageUzLatin}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('uz-cyrl')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz-cyrl' && "bg-blue-50 text-blue-700")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz-cyrl' && "bg-indigo-50 text-indigo-700")}
               >
                 <span className="mr-2">🇺🇿</span>
                 <span>{t.settings.languageUzCyrl}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('ru')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'ru' && "bg-blue-50 text-blue-700")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'ru' && "bg-indigo-50 text-indigo-700")}
               >
                 <span className="mr-2">🇷🇺</span>
                 <span>{t.settings.languageRu}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('en')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'en' && "bg-blue-50 text-blue-700")}
+                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'en' && "bg-indigo-50 text-indigo-700")}
               >
                 <span className="mr-2">🇬🇧</span>
                 <span>{t.settings.languageEn}</span>
@@ -209,14 +209,14 @@ export function Header({ title, description }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-80 bg-white border border-slate-200 shadow-lg rounded-xl">
             <DropdownMenuLabel className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-blue-600" />
+                <Bell className="w-4 h-4 text-indigo-600" />
                 <span className="font-semibold text-sm text-slate-900">{t.navigation.notifications}</span>
               </div>
               <Link href="/dashboard/notifications">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                 >
                   {t.common.all}
                 </Button>
@@ -231,7 +231,7 @@ export function Header({ title, description }: HeaderProps) {
                   <div className="flex items-center gap-2 w-full">
                     <div className={cn(
                       "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      notification.type === "task_overdue" ? "bg-red-500" : "bg-blue-600"
+                      notification.type === "task_overdue" ? "bg-red-500" : "bg-indigo-600"
                     )} />
                     <span className={cn(
                       "font-medium text-xs flex-1",
@@ -240,7 +240,7 @@ export function Header({ title, description }: HeaderProps) {
                       {notification.title}
                     </span>
                     {!notification.read && (
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></div>
                     )}
                   </div>
                   <span className="text-xs text-slate-600 line-clamp-2">{notification.description}</span>
@@ -278,7 +278,7 @@ export function Header({ title, description }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl">
             <DropdownMenuLabel className="px-3 py-2">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-600" />
+                <User className="w-4 h-4 text-indigo-600" />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-slate-900 truncate">
                     {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : t.common.user}

@@ -104,6 +104,36 @@ export async function createTask(data: TaskCreateInput | FormData): Promise<Task
 }
 
 /**
+ * AI yordamida topshiriq matnini tahlil qilish
+ * Audio yoki matn yuborilsa, AI topshiriq maydonlarini tavsiya qiladi.
+ * Audio avval Whisper orqali matnga o'giriladi, keyin AI tahrir qiladi.
+ */
+export async function aiAnalyzeTask(data: { text?: string; audio?: Blob }): Promise<{
+  transcription: string
+  raw_transcription: string
+  suggestions: {
+    title: string
+    description: string
+    priority: string
+    category: string
+    organization_ids: string[]
+    organization_names: string[]
+    is_recurring: boolean
+    frequency: string | null
+    deadline_days: number
+  }
+}> {
+  const form = new FormData()
+  if (data.text) form.append('text', data.text)
+  if (data.audio) form.append('audio', data.audio, 'audio.webm')
+  
+  return fetchApi('/tasks/ai-analyze/', {
+    method: 'POST',
+    body: form,
+  })
+}
+
+/**
  * Mavjud topshiriqni yangilaydi
  * 
  * @param id - Topshiriq ID
@@ -453,4 +483,64 @@ export async function postTaskExecution(
   body: ExecutionCreateInput
 ): Promise<TaskExecution> {
   return createTaskExecution(taskId, body)
+}
+
+// ============================================================================
+// Recurring Tasks
+// ============================================================================
+
+export interface RecurringTaskInput {
+  title: string
+  description: string
+  frequency: string
+  priority: string
+  deadline_days: number
+  organizations: string[]
+  start_date: string
+  end_date?: string
+}
+
+export interface RecurringTaskResponse {
+  id: string
+  title: string
+  description: string
+  frequency: string
+  frequency_display: string
+  priority: string
+  deadline_days: number
+  organizations: string[]
+  organizations_count: number
+  start_date: string
+  end_date: string | null
+  next_run_date: string | null
+  last_run_date: string | null
+  status: string
+  status_display: string
+  total_created: number
+  created_by: string
+  created_by_name: string
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * Takrorlanuvchi topshiriq yaratish
+ */
+export async function createRecurringTask(data: RecurringTaskInput): Promise<RecurringTaskResponse> {
+  return fetchApi<RecurringTaskResponse>('/tasks/recurring/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+/**
+ * Takrorlanuvchi topshiriqlar ro'yxatini olish
+ */
+export async function getRecurringTasks(params?: {
+  status?: string
+  frequency?: string
+}): Promise<RecurringTaskResponse[]> {
+  const queryString = buildQueryString((params ?? {}) as QueryParams)
+  const response = await fetchApi<PaginatedResponse<RecurringTaskResponse>>(`/tasks/recurring/${queryString}`)
+  return response?.results ?? []
 }

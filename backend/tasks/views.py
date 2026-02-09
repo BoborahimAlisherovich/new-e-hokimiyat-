@@ -238,6 +238,175 @@ class TaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'], url_path='ai-analyze')
+    def ai_analyze(self, request: Request) -> Response:
+        """Audio yoki matn asosida topshiriq maydonlarini AI bilan to'ldirish.
+        
+        Audio yuborilsa — avval Whisper bilan transkripsiya, keyin AI tahlil va tahrirlash.
+        Matn yuborilsa — to'g'ridan-to'g'ri AI tahlil.
+        
+        AI imloviy xatolarni tuzatadi, tegishli tashkilotlarni tanlaydi,
+        va takrorlanuvchi topshiriq ekanligini aniqlaydi.
+        
+        Returns:
+            AI tomonidan tavsiya qilingan topshiriq maydonlari
+        """
+        import json
+        
+        ai_service = AIService()
+        text = request.data.get('text', '')
+        audio_file = request.FILES.get('audio')
+        
+        if not text and not audio_file:
+            return Response(
+                {'error': 'Matn yoki audio fayl kerak'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        raw_transcription = ''
+        
+        # Audio bo'lsa — Whisper bilan transkripsiya
+        if audio_file:
+            raw_transcription = ai_service.transcribe_audio(audio_file)
+            if raw_transcription.startswith('Xatolik:'):
+                return Response({'error': raw_transcription}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            text = raw_transcription
+        
+        # Tashkilotlar ro'yxatini olish
+        from organizations.models import Organization, Sector
+        orgs = list(Organization.objects.filter(is_active=True).values('id', 'name', 'sector__name'))
+        sectors = list(Sector.objects.filter(is_active=True).values_list('name', flat=True))
+        
+        org_list = "\n".join([f"- {o['name']} (ID: {o['id']}, Soha: {o['sector__name'] or 'Noma\\'lum'})" for o in orgs])
+        
+        prompt = f"""Sen E-Hokimiyat tizimining professional AI yordamchisisan. 
+Quyidagi matn audio yozuvdan olingan bo'lishi mumkin. Unda imloviy, grammatik xatolar bo'lishi tabiiy.
+Sening vazifang:
+1. Matnni diqqat bilan o'qib, imloviy va grammatik xatolarni tuzatish
+2. Mazmunni tushunib, rasmiy topshiriq sifatida qayta yozish
+3. Tegishli tashkilotlarni aniqlash
+4. Agar topshiriq takrorlanuvchi (har kuni, har hafta, har oy va h.k.) bo'lsa — buni aniqlash
+
+KIRITILGAN MATN (audio transkripsiyadan, xatolar bo'lishi mumkin):
+\"{text}\"
+
+MAVJUD TASHKILOTLAR:
+{org_list}
+
+SOHALAR: {', '.join(sectors)}
+
+MUHIMLIK DARAJALARI:
+- FAVQULODDA — Juda shoshilinch va muhim (1 kun muddat)
+- YUQORI — Muhim, lekin biroz vaqt bor (3 kun muddat)
+- ODDIY — Oddiy topshiriq (5 kun muddat)
+- PAST — Muhim emas, shoshilinch emas (7 kun muddat)
+
+KATEGORIYALAR: IJTIMOIY, IQTISODIY, HUQUQIY, INFRASTRUKTURA, TA_LIM, SOG_LIQNI_SAQLASH, BOSHQA
+
+TAKRORLANISH CHASTOTALARI: DAILY (har kuni), WEEKLY (har hafta), BIWEEKLY (ikki haftada bir), MONTHLY (har oy), QUARTERLY (har chorakda), YEARLY (har yili)
+
+Quyidagi JSON formatida javob ber (FAQAT JSON, boshqa hech narsa emas):
+{{
+    "title": "Qisqa va aniq topshiriq sarlavhasi (max 100 belgi, adabiy o'zbek tilida)",
+    "description": "To'liq, rasmiy uslubda yozilgan topshiriq tavsifi. Barcha imloviy xatolar tuzatilgan, mazmun saqlanagan.",
+    "priority": "ODDIY yoki YUQORI yoki FAVQULODDA yoki PAST",
+    "category": "Tegishli kategoriya",
+    "organization_ids": ["tegishli tashkilot UUID lari"],
+    "organization_names": ["tegishli tashkilot nomlari"],
+    "is_recurring": false,
+    "frequency": null,
+    "deadline_days": 5
+}}
+
+QOIDALAR:
+1. Imloviy xatolarni ALBATTA tuzat — audio transkripsiyada ko'p xato bo'ladi
+2. Mazmunni saqla, lekin rasmiy-ish uslubida qayta yoz
+3. Matnda "har kuni", "har hafta", "har oy", "muntazam", "doimiy", "takroriy", "har doim" kabi so'zlar bo'lsa — is_recurring=true qil va tegishli frequency ni belgilasin
+4. Agar takrorlanuvchi bo'lsa, deadline_days ni chastotaga mos ravishda belgilasin (DAILY=1, WEEKLY=5, MONTHLY=7, va h.k.)
+5. Agar takrorlanuvchi bo'lmasa, is_recurring=false, frequency=null
+6. Tegishli tashkilotlar ro'yxatidan ENG MOS tashkilotlarni tanla
+7. priority ni mazmun va shoshilinchlikdan kelib chiqib belgilasin
+8. title 100 belgidan oshmasin, aniq va tushunarli bo'lsin"""
+
+        fallback_suggestions = {
+            'title': text[:100] if text else '',
+            'description': text or '',
+            'priority': 'ODDIY',
+            'category': 'BOSHQA',
+            'organization_ids': [],
+            'organization_names': [],
+            'is_recurring': False,
+            'frequency': None,
+            'deadline_days': 5
+        }
+
+        try:
+            client = ai_service.get_client()
+            if not client:
+                return Response({'error': 'AI xizmat sozlanmagan'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if ai_service.provider == 'openai':
+                response = client.chat.completions.create(
+                    model=ai_service.model,
+                    messages=[
+                        {"role": "system", "content": "Sen O'zbekiston hokimiyati uchun ishlayotgan professional AI yordamchisan. Javoblaringni faqat JSON formatida ber."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.2,
+                    response_format={"type": "json_object"}
+                )
+                result_text = response.choices[0].message.content
+            else:
+                response = client.messages.create(
+                    model=ai_service.model,
+                    max_tokens=2000,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                result_text = response.content[0].text
+            
+            # Parse JSON from response
+            result = json.loads(result_text)
+            
+            # Validate and sanitize the result
+            suggestions = {
+                'title': str(result.get('title', ''))[:500] or fallback_suggestions['title'],
+                'description': str(result.get('description', '')) or fallback_suggestions['description'],
+                'priority': result.get('priority', 'ODDIY') if result.get('priority') in ('FAVQULODDA', 'YUQORI', 'ODDIY', 'PAST') else 'ODDIY',
+                'category': result.get('category', 'BOSHQA') if result.get('category') in ('IJTIMOIY', 'IQTISODIY', 'HUQUQIY', 'INFRASTRUKTURA', 'TA_LIM', 'SOG_LIQNI_SAQLASH', 'BOSHQA') else 'BOSHQA',
+                'organization_ids': result.get('organization_ids', []) or [],
+                'organization_names': result.get('organization_names', []) or [],
+                'is_recurring': bool(result.get('is_recurring', False)),
+                'frequency': result.get('frequency') if result.get('frequency') in ('DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY') else None,
+                'deadline_days': int(result.get('deadline_days', 5)) if result.get('deadline_days') else 5,
+            }
+            
+            # Validate organization IDs exist
+            if suggestions['organization_ids']:
+                valid_org_ids = set(str(o['id']) for o in orgs)
+                suggestions['organization_ids'] = [
+                    oid for oid in suggestions['organization_ids'] 
+                    if str(oid) in valid_org_ids
+                ]
+            
+            return Response({
+                'transcription': text,
+                'raw_transcription': raw_transcription or text,
+                'suggestions': suggestions
+            })
+        except json.JSONDecodeError:
+            return Response({
+                'transcription': text,
+                'raw_transcription': raw_transcription or text,
+                'suggestions': fallback_suggestions
+            })
+        except Exception as e:
+            logger.error(f"AI task analysis error: {e}")
+            return Response({
+                'transcription': text,
+                'raw_transcription': raw_transcription or text,
+                'suggestions': fallback_suggestions
+            })
     
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Yangi topshiriq yaratish.

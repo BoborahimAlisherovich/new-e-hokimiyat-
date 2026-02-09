@@ -119,6 +119,32 @@ class TelegramBot:
         except Exception as e:
             logger.error(f"Xabarni tahrirlashda xato: {e}")
             return {'ok': False}
+
+    def edit_message_caption(
+        self,
+        chat_id: int,
+        message_id: int,
+        caption: str,
+        reply_markup: Optional[Dict] = None,
+        parse_mode: str = 'HTML'
+    ) -> Dict:
+        """Media xabar captionini tahrirlash (rasm, video, audio, hujjat)"""
+        url = f'https://api.telegram.org/bot{self.token}/editMessageCaption'
+        data = {
+            'chat_id': chat_id,
+            'message_id': message_id,
+            'caption': caption,
+            'parse_mode': parse_mode
+        }
+        if reply_markup:
+            data['reply_markup'] = reply_markup
+        
+        try:
+            response = requests.post(url, json=data, timeout=10)
+            return response.json()
+        except Exception as e:
+            logger.error(f"Caption tahrirlashda xato: {e}")
+            return {'ok': False}
     
     def get_file(self, file_id: str) -> Optional[str]:
         """Fayl URL'ini olish"""
@@ -1080,15 +1106,30 @@ def handle_user_reply_callback(user: TelegramUser, appeal_id: int, chat_id: int,
         set_user_state(user, 'user_reply', {'appeal_id': appeal_id})
         logger.info(f"User state set: user_reply, appeal_id={appeal_id}")
         
-        result = bot.edit_message_text(
-            chat_id,
-            message_id,
+        reply_prompt = (
             f"✍️ <b>#{appeal.appeal_number} raqamli murojaatga javob</b>\n\n"
             f"Javobingizni yozing va yuboring.\n\n"
-            f"Bekor qilish uchun /cancel buyrug'ini yuboring.",
-            parse_mode='HTML'
+            f"Bekor qilish uchun /cancel buyrug'ini yuboring."
         )
-        logger.info(f"edit_message_text result: {result}")
+        
+        # Avval matnli xabarni tahrirlashga urinamiz
+        result = bot.edit_message_text(
+            chat_id, message_id, reply_prompt, parse_mode='HTML'
+        )
+        
+        # Agar muvaffaqiyatsiz bo'lsa (rasm/video/audio xabar), captionni tahrirlaymiz
+        if not result.get('ok'):
+            logger.info(f"edit_message_text failed, trying edit_message_caption")
+            result = bot.edit_message_caption(
+                chat_id, message_id, reply_prompt, parse_mode='HTML'
+            )
+        
+        # Agar u ham ishlamasa, yangi xabar yuboramiz
+        if not result.get('ok'):
+            logger.info(f"edit_message_caption also failed, sending new message")
+            bot.send_message(chat_id, reply_prompt, parse_mode='HTML')
+        
+        logger.info(f"user_reply callback handled, result: {result}")
         
     except TelegramAppeal.DoesNotExist:
         logger.error(f"Appeal topilmadi: id={appeal_id}, user={user.telegram_id}")

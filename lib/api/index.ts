@@ -165,6 +165,7 @@ export {
   getTaskStats,
   getTaskById,
   createTask,
+  aiAnalyzeTask,
   updateTask,
   deleteTask,
   
@@ -196,12 +197,18 @@ export {
   // Legacy (deprecated)
   postTaskChat,
   postTaskExecution,
+  
+  // Recurring Tasks
+  createRecurringTask,
+  getRecurringTasks,
 } from './tasks.api'
 
 export type {
   ExecutionCreateInput,
   TaskMessageInput,
   TaskHistoryEntry,
+  RecurringTaskInput,
+  RecurringTaskResponse,
 } from './tasks.api'
 
 // ============================================================================
