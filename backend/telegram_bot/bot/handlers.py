@@ -16,6 +16,7 @@ from ..models import (
     AppealAttachment, AppealMessage, UserState
 )
 from .messages import get_text
+from ..region_sync import build_region_fields, load_map_region_names
 from .keyboards import (
     main_menu_keyboard, gender_keyboard, phone_keyboard,
     regions_keyboard, appeal_types_keyboard, categories_keyboard,
@@ -196,6 +197,25 @@ def normalize_phone(raw_phone: str) -> Optional[str]:
     if len(digits) == 9:
         return f"+998{digits}"
     return None
+
+
+def get_active_regions() -> list[dict]:
+    regions = list(
+        BotRegion.objects.filter(is_active=True)
+        .order_by('order', 'name_uz')
+        .values('id', 'name_uz', 'name_ru', 'name_en')
+    )
+    names = load_map_region_names()
+    if names and len(regions) < len(names):
+        for index, name in enumerate(names, 1):
+            fields = build_region_fields(name, order=index)
+            BotRegion.objects.update_or_create(code=fields['code'], defaults=fields)
+        regions = list(
+            BotRegion.objects.filter(is_active=True)
+            .order_by('order', 'name_uz')
+            .values('id', 'name_uz', 'name_ru', 'name_en')
+        )
+    return regions
 
 
 def get_user_state(user: TelegramUser) -> Optional[UserState]:
@@ -437,7 +457,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             user.save()
             
             # Hududlarni ko'rsatish
-            regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
+            regions = get_active_regions()
             if regions:
                 bot.send_message(
                     chat_id,
@@ -593,7 +613,7 @@ def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
         return
     
     # Hududlarni ko'rsatish
-    regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
+    regions = get_active_regions()
     if regions:
         bot.send_message(
             chat_id,
@@ -730,7 +750,7 @@ def process_callback_query(callback_query: Dict):
     # Hudud sahifalash (pagination)
     if data.startswith('region_page:'):
         page = int(data.split(':')[1])
-        regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
+        regions = get_active_regions()
         bot.edit_message_text(
             chat_id,
             message_id,
@@ -953,7 +973,7 @@ def process_callback_query(callback_query: Dict):
             set_user_state(user, 'settings:phone')
             return
         if setting == 'region':
-            regions = list(BotRegion.objects.filter(is_active=True).order_by('order', 'name_uz').values('id', 'name_uz', 'name_ru', 'name_en'))
+            regions = get_active_regions()
             bot.edit_message_text(
                 chat_id,
                 message_id,

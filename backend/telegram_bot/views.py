@@ -31,7 +31,7 @@ def _find_bot_pids() -> list:
 
     pids = []
     for line in output.splitlines():
-        if 'run_bot.py' in line or 'manage.py telegram_bot run' in line:
+        if 'run_bot.py' in line or ('manage.py' in line and 'telegram_bot' in line and 'run' in line):
             parts = line.strip().split(None, 1)
             if not parts:
                 continue
