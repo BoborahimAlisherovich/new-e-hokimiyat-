@@ -4,6 +4,7 @@ from .models import (
     AppealCategory, AppealType, TelegramAppeal,
     AppealAttachment, AppealMessage
 )
+from organizations.serializers import OrganizationMinimalSerializer
 
 
 class BotSettingsSerializer(serializers.ModelSerializer):
@@ -152,6 +153,7 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
     user_phone = serializers.CharField(source='telegram_user.phone', read_only=True)
     appeal_type_name = serializers.CharField(source='appeal_type.name_uz', read_only=True)
     category_name = serializers.CharField(source='category.name_uz', read_only=True)
+    assigned_organizations = OrganizationMinimalSerializer(many=True, read_only=True)
     attachments_count = serializers.SerializerMethodField()
     new_messages_count = serializers.SerializerMethodField()
     last_message_at = serializers.SerializerMethodField()
@@ -161,6 +163,7 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'uuid', 'appeal_number', 'telegram_user', 'user_name', 'user_phone',
             'appeal_type', 'appeal_type_name', 'category', 'category_name',
+            'assigned_organizations',
             'text', 'status', 'priority', 'source',
             'ai_priority', 'ai_is_valid', 'ai_analysis', 'ai_score',
             'ai_auto_responded', 'admin_notified_at',
@@ -197,6 +200,7 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
     telegram_user = TelegramUserSerializer(read_only=True)
     appeal_type_detail = AppealTypeSerializer(source='appeal_type', read_only=True)
     category_detail = AppealCategorySerializer(source='category', read_only=True)
+    assigned_organizations = OrganizationMinimalSerializer(many=True, read_only=True)
     attachments = AppealAttachmentSerializer(many=True, read_only=True)
     messages = AppealMessageSerializer(many=True, read_only=True)
     reviewed_by_detail = BotAdminSerializer(source='reviewed_by', read_only=True)
@@ -206,6 +210,7 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'uuid', 'appeal_number', 'telegram_user',
             'appeal_type', 'appeal_type_detail', 'category', 'category_detail',
+            'assigned_organizations',
             'text', 'status', 'priority', 'source',
             'ai_analysis', 'ai_priority', 'ai_category_suggestion',
             'ai_response', 'ai_is_valid', 'ai_rejection_reason',

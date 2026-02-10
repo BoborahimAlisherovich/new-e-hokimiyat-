@@ -136,8 +136,31 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'first_name', 'last_name', 'middle_name',
-            'phone', 'email', 'position'
+            'phone', 'email', 'position',
+            'role', 'status', 'organization'
         ]
+
+    def validate(self, attrs):
+        """Validate role hierarchy and organization assignment."""
+        request = self.context.get('request')
+        instance = getattr(self, 'instance', None)
+
+        role = attrs.get('role', instance.role if instance else None)
+        organization = attrs.get('organization', instance.organization if instance else None)
+
+        if request and request.user and role:
+            # Only allow role change if current user can assign that role
+            if role != getattr(instance, 'role', None) and not request.user.can_add_user_with_role(role):
+                raise serializers.ValidationError({
+                    'role': f"Siz {role} roli bilan foydalanuvchi belgilay olmaysiz"
+                })
+
+        if role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and not organization:
+            raise serializers.ValidationError({
+                'organization': "Tashkilot tanlanishi shart"
+            })
+
+        return attrs
 
 
 class LoginSerializer(serializers.Serializer):

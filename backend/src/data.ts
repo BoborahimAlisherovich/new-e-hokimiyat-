@@ -199,13 +199,27 @@ export const roles: Role[] = [
     id: '1',
     name: 'TUMAN_HOKIMI',
     displayName: 'Туман ҳокими',
-    permissions: ['create_users', 'create_organizations', 'create_tasks', 'close_tasks', 'view_all', 'manage_settings']
+    permissions: [
+      'create_users',
+      'create_organizations',
+      'manage_organizations',
+      'create_tasks',
+      'close_tasks',
+      'view_all',
+      'manage_settings'
+    ]
   },
   {
     id: '2',
     name: 'HOKIMLIK_MASUL',
     displayName: 'Ҳокимлик масъули',
-    permissions: ['create_users', 'create_organizations', 'create_tasks', 'view_department']
+    permissions: [
+      'create_users',
+      'create_organizations',
+      'manage_organizations',
+      'create_tasks',
+      'view_department'
+    ]
   },
   {
     id: '3',

@@ -808,6 +808,29 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name']
     ordering_fields = ['created_at', 'priority', 'status']
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga va sohasiga tegishlilarni ko'radi
+        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            if not user.organization:
+                return queryset.none()
+
+            queryset = queryset.filter(assigned_organizations=user.organization)
+
+            org_sector = getattr(user.organization, 'sector', None)
+            if not org_sector:
+                return queryset.none()
+
+            queryset = queryset.filter(
+                Q(category__name_uz__iexact=org_sector.name)
+                | Q(category__name_ru__iexact=org_sector.name)
+                | Q(category__name_en__iexact=org_sector.name)
+            )
+
+        return queryset
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -826,6 +849,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         response_text = serializer.validated_data.get('response', '')
         forward_to_site = serializer.validated_data.get('forward_to_site', False)
         create_task = serializer.validated_data.get('create_task', False)
+        organization_ids = serializer.validated_data.get('organization_ids', [])
         
         # Admin topish
         admin = None
@@ -846,6 +870,10 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         appeal.reviewed_by = admin
         appeal.reviewed_at = timezone.now()
         appeal.save()
+
+        # Biriktirilgan tashkilotlarni yangilash (agar yuborilgan bo'lsa)
+        if 'organization_ids' in request.data:
+            appeal.assigned_organizations.set(organization_ids)
         
         # Javob xabarini saqlash
         if response_text:
@@ -859,7 +887,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         
         # Saytga yuborish
         if forward_to_site:
-            self._forward_to_site(appeal, create_task, serializer.validated_data.get('organization_ids', []))
+            self._forward_to_site(appeal, create_task, organization_ids)
         
         return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
     
@@ -1226,8 +1254,8 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                     )
                     requests.post(
                         f'https://api.telegram.org/bot{settings_obj.bot_token}/sendMessage',
-                        json={
-                            'chat_id': appeal.telegram_user.telegram_id,
+                # Murojaatga tashkilotlarni biriktirish (yangilangan)
+                appeal.assigned_organizations.set(organization_ids)
                             'text': message,
                             'parse_mode': 'HTML'
                         },
