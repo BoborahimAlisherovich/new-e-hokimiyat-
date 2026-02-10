@@ -32,6 +32,12 @@ class BotSettings(models.Model):
         default=False,
         verbose_name="Webhook ishlatish"
     )
+    webhook_secret = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        verbose_name="Webhook secret"
+    )
     
     # AI sozlamalari
     ai_provider = models.CharField(
