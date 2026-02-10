@@ -293,6 +293,50 @@ class UserViewSet(viewsets.ModelViewSet):
         )
         
         return Response(UserSerializer(user, context={'request': request}).data)
+
+    @action(detail=True, methods=['patch'])
+    def unblock(self, request, pk=None):
+        """
+        Unblock a user.
+
+        PATCH /api/users/{id}/unblock/
+        """
+        user = self.get_object()
+
+        if user.status == 'ARXIV':
+            return Response(
+                {'detail': "Arxivlangan foydalanuvchini faollashtirish mumkin emas"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if user.status == 'FAOL':
+            return Response(
+                {'detail': "Foydalanuvchi allaqachon faol"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check hierarchy
+        if not request.user.can_add_user_with_role(user.role):
+            return Response(
+                {'detail': "Bu foydalanuvchini blokdan chiqarish huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        old_status = user.status
+        user.activate()
+
+        AuditLog.log(
+            user=request.user,
+            action='USER_ACTIVATED',
+            entity_type='USER',
+            entity_id=user.id,
+            description=f"{request.user.full_name} foydalanuvchini blokdan chiqardi: {user.full_name}",
+            old_values={'status': old_status},
+            new_values={'status': user.status},
+            ip_address=getattr(request, 'client_ip', None)
+        )
+
+        return Response(UserSerializer(user, context={'request': request}).data)
     
     @action(detail=True, methods=['patch'])
     def archive(self, request, pk=None):
