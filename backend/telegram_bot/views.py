@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
 import json
+import subprocess
 
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
@@ -18,6 +19,56 @@ from .serializers import (
     TelegramAppealListSerializer, TelegramAppealDetailSerializer,
     AppealReviewSerializer, BotStatsSerializer
 )
+
+
+def _find_bot_pids() -> list:
+    try:
+        output = subprocess.check_output([
+            'ps', '-eo', 'pid=,command='
+        ], text=True)
+    except Exception:
+        return []
+
+    pids = []
+    for line in output.splitlines():
+        if 'run_bot.py' in line or 'manage.py telegram_bot run' in line:
+            parts = line.strip().split(None, 1)
+            if not parts:
+                continue
+            try:
+                pids.append(int(parts[0]))
+            except ValueError:
+                continue
+    return pids
+
+
+def _kill_pids(pids: list) -> bool:
+    import os
+    import signal
+    import time
+
+    stopped_any = False
+    for pid in pids:
+        try:
+            try:
+                pgid = os.getpgid(pid)
+                os.killpg(pgid, signal.SIGTERM)
+            except Exception:
+                os.kill(pid, signal.SIGTERM)
+            time.sleep(0.5)
+            try:
+                os.kill(pid, 0)
+                try:
+                    pgid = os.getpgid(pid)
+                    os.killpg(pgid, signal.SIGKILL)
+                except Exception:
+                    os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stopped_any = True
+        except Exception:
+            continue
+    return stopped_any
 
 
 class BotSettingsViewSet(viewsets.ModelViewSet):
@@ -220,6 +271,11 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
                     pass
                 if os.path.exists(pid_file):
                     os.remove(pid_file)
+
+            # Pid file yo'q bo'lsa ham eski processlarni tozalash
+            extra_pids = _find_bot_pids()
+            if extra_pids:
+                _kill_pids(extra_pids)
             
             # Yangi processni ishga tushirish
             bot_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'run_bot.py')
@@ -305,6 +361,12 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
                     if os.path.exists(pid_file):
                         os.remove(pid_file)
 
+            # Pid file bo'lmasa ham eski processlarni to'xtatish
+            if not stopped:
+                extra_pids = _find_bot_pids()
+                if extra_pids:
+                    stopped = _kill_pids(extra_pids)
+
             # Webhook rejimini ham to'xtatish
             if settings.bot_token and settings.use_webhook:
                 try:
@@ -361,6 +423,11 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
                 except ProcessLookupError:
                     is_running = False
                     os.remove(pid_file)
+            if not is_running:
+                extra_pids = _find_bot_pids()
+                if extra_pids:
+                    is_running = True
+                    pid = extra_pids[0]
         except Exception:
             is_running = False
         
