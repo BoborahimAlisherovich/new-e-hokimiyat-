@@ -60,6 +60,13 @@ interface BotSettings {
 }
 
 interface BotStats {
+  type WebhookInfo = {
+    url?: string;
+    pending_update_count?: number;
+    last_error_date?: number;
+    last_error_message?: string;
+    max_connections?: number;
+  }
   total_users: number;
   registered_users: number;
   total_appeals: number;
@@ -85,12 +92,33 @@ export default function TelegramBotPage() {
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<BotSettings | null>(null);
   const [stats, setStats] = useState<BotStats | null>(null);
+    const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
   const [botStatus, setBotStatus] = useState<{
     is_active: boolean;
     is_running: boolean;
     use_webhook: boolean;
     pid: number | null;
   } | null>(null);
+
+  const loadData = useCallback(async () => {
+  const loadStatus = useCallback(async () => {
+    const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>(
+      "/telegram-bot/settings/bot_status/"
+    );
+    setBotStatus(statusRes.data);
+  }, []);
+
+  const loadWebhookInfo = useCallback(async () => {
+    if (!settings?.bot_token && !settings?.has_token) return;
+    try {
+      const response = await api.get<{ success: boolean; result?: WebhookInfo }>("/telegram-bot/settings/webhook_info/");
+      if (response.data.success && response.data.result) {
+        setWebhookInfo(response.data.result);
+      }
+    } catch {
+      setWebhookInfo(null);
+    }
+  }, [settings?.bot_token, settings?.has_token]);
 
   const loadData = useCallback(async () => {
     try {
@@ -104,6 +132,16 @@ export default function TelegramBotPage() {
       setSettings(settingsRes.data);
       setStats(statsRes.data);
       setBotStatus(statusRes.data);
+      if (settingsRes.data?.use_webhook) {
+        try {
+          const webhookRes = await api.get<{ success: boolean; result?: WebhookInfo }>("/telegram-bot/settings/webhook_info/");
+          if (webhookRes.data.success && webhookRes.data.result) {
+            setWebhookInfo(webhookRes.data.result);
+          }
+        } catch {
+          setWebhookInfo(null);
+        }
+      }
     } catch (err) {
       setError("Ma'lumotlarni yuklashda xato yuz berdi");
       toast({
@@ -259,6 +297,9 @@ export default function TelegramBotPage() {
           variant: "destructive"
         });
       }
+      }, [loadStatus, toast]);
+      }, [loadStatus, toast]);
+      }, [loadStatus, toast]);
     } catch (err) {
       toast({
         title: "Xato",
@@ -336,6 +377,8 @@ export default function TelegramBotPage() {
       });
     }
   }, [settings?.webhook_url, toast]);
+  }, [loadStatus, settings?.webhook_url, toast]);
+  }, [loadStatus, toast]);
 
   const deleteWebhook = useCallback(async () => {
     try {
@@ -757,6 +800,23 @@ export default function TelegramBotPage() {
                     </p>
                   )}
                 </div>
+                {settings?.use_webhook && webhookInfo && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Webhook holati</span>
+                      <Button size="sm" variant="ghost" onClick={loadWebhookInfo}>
+                        Yangilash
+                      </Button>
+                    </div>
+                    <div className="mt-2 grid gap-1">
+                      <div>URL: {webhookInfo.url || "-"}</div>
+                      <div>Pending: {webhookInfo.pending_update_count ?? 0}</div>
+                      {webhookInfo.last_error_message && (
+                        <div className="text-amber-700">Xato: {webhookInfo.last_error_message}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Help box */}

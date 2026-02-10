@@ -146,6 +146,7 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             import signal
             import time
             import requests
+            import secrets
             
             # Polling ishlayotgan bo'lsa, to'xtatish
             pid_file = '/tmp/telegram_bot.pid'
@@ -165,9 +166,12 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
                     if os.path.exists(pid_file):
                         os.remove(pid_file)
 
+            if not settings.webhook_secret:
+                settings.webhook_secret = secrets.token_urlsafe(32)
+
             response = requests.post(
                 f'https://api.telegram.org/bot{settings.bot_token}/setWebhook',
-                json={'url': webhook_url},
+                json={'url': webhook_url, 'secret_token': settings.webhook_secret},
                 timeout=10
             )
             data = response.json()
@@ -593,6 +597,25 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['get'])
+    def webhook_info(self, request):
+        """Telegram webhook holatini olish"""
+        settings = self.get_object()
+        if not settings.bot_token:
+            return Response({'success': False, 'error': 'Bot token kiritilmagan'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            import requests
+            response = requests.get(
+                f'https://api.telegram.org/bot{settings.bot_token}/getWebhookInfo',
+                timeout=10
+            )
+            data = response.json()
+            if data.get('ok'):
+                return Response({'success': True, 'result': data.get('result', {})})
+            return Response({'success': False, 'error': data.get('description', 'Noma\'lum xato')}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'])
     def send_media(self, request, pk=None):
@@ -1632,6 +1655,13 @@ class WebhookView(APIView):
     def post(self, request):
         """Telegram'dan kelgan yangilanishlarni qayta ishlash"""
         from .bot.handlers import process_update
+        settings = BotSettings.objects.first()
+        if not settings or not settings.is_active:
+            return Response({'ok': True})
+        if settings.use_webhook and settings.webhook_secret:
+            secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+            if secret != settings.webhook_secret:
+                return Response({'ok': False}, status=403)
         
         try:
             update = request.data
