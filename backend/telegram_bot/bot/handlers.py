@@ -964,9 +964,8 @@ def process_callback_query(callback_query: Dict):
             set_user_state(user, 'settings:name')
             return
         if setting == 'phone':
-            bot.edit_message_text(
+            bot.send_message(
                 chat_id,
-                message_id,
                 get_text('ask_phone', lang),
                 reply_markup=phone_keyboard(lang)
             )
