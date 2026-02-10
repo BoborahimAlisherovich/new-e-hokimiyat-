@@ -1239,6 +1239,9 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             appeal.status = 'forwarded'
             appeal.site_task_id = task.id  # type: ignore[attr-defined]
             appeal.save()
+
+            # Murojaatga tashkilotlarni biriktirish (yangilangan)
+            appeal.assigned_organizations.set(organization_ids)
             
             # Foydalanuvchiga xabar yuborish
             try:
@@ -1254,8 +1257,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                     )
                     requests.post(
                         f'https://api.telegram.org/bot{settings_obj.bot_token}/sendMessage',
-                # Murojaatga tashkilotlarni biriktirish (yangilangan)
-                appeal.assigned_organizations.set(organization_ids)
+                        json={
                             'text': message,
                             'parse_mode': 'HTML'
                         },
