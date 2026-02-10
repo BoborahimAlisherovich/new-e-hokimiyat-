@@ -730,7 +730,7 @@ class AIReportViewSet(viewsets.ReadOnlyModelViewSet):
         c.setFont("Helvetica", 10)
         c.drawString(margin + 0.5*cm, info_y, f"Hisobot turi: {report.get_report_type_display()}")
         if report.requested_by:
-            c.drawRightString(width - margin - 0.5*cm, info_y, f"So'ragan: {report.requested_by.get_full_name() or report.requested_by.username}")
+            c.drawRightString(width - margin - 0.5*cm, info_y, f"So'ragan: {report.requested_by.full_name or report.requested_by.username}")
         y -= 2.2 * cm
 
         # Data extraction
