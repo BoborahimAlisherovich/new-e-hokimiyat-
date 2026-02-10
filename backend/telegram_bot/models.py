@@ -400,6 +400,12 @@ class TelegramAppeal(models.Model):
         related_name='appeals',
         verbose_name="Murojaat sohasi"
     )
+    assigned_organizations = models.ManyToManyField(
+        'organizations.Organization',
+        blank=True,
+        related_name='telegram_appeals',
+        verbose_name="Biriktirilgan tashkilotlar"
+    )
     text = models.TextField(
         verbose_name="Murojaat matni"
     )
