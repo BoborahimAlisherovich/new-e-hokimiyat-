@@ -218,7 +218,14 @@ export default function TelegramBotPage() {
     
     try {
       setSaving(true);
-      await api.put("/telegram-bot/settings/1/", settings);
+      const payload: Partial<BotSettings> = { ...settings };
+      if (!payload.bot_token) {
+        delete payload.bot_token;
+      }
+      if (!payload.ai_api_key) {
+        delete payload.ai_api_key;
+      }
+      await api.put("/telegram-bot/settings/1/", payload);
       toast({
         title: "Muvaffaqiyat",
         description: "Sozlamalar saqlandi"
@@ -427,7 +434,7 @@ export default function TelegramBotPage() {
               <Button 
                 variant="outline"
                 onClick={switchToPolling}
-                disabled={starting || !settings?.bot_token}
+                disabled={starting || (!settings?.bot_token && !settings?.has_token)}
               >
                 <Play className="h-4 w-4 mr-2" />
                 {starting ? "Pollingga o'tyapti..." : "Pollingga o'tish"}
@@ -459,7 +466,7 @@ export default function TelegramBotPage() {
                   variant="default"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={() => startBot(false)} 
-                  disabled={starting || !settings?.bot_token}
+                  disabled={starting || (!settings?.bot_token && !settings?.has_token)}
                 >
                   <Play className="h-4 w-4 mr-2" />
                   {starting ? "Ishga tushirilmoqda..." : "Botni ishga tushirish"}
@@ -613,6 +620,7 @@ export default function TelegramBotPage() {
                     type="password"
                     placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                     value={settings?.bot_token || ""}
+                    autoComplete="new-password"
                     onChange={(e) => 
                       setSettings(prev => prev ? { 
                         ...prev, 
@@ -657,7 +665,15 @@ export default function TelegramBotPage() {
                     </a>
                   </p>
                 </div>
-              ) : settings?.bot_token && settings?.bot_username ? (
+              ) : settings?.has_token && !settings?.bot_token ? (
+                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-emerald-700 flex items-center gap-2">
+                    <span>✅</span>
+                    <span className="font-medium">Token saqlangan.</span>
+                    <span className="text-sm text-emerald-600">(Xavfsizlik uchun ko'rsatilmaydi)</span>
+                  </p>
+                </div>
+              ) : (settings?.bot_token || settings?.has_token) && settings?.bot_username ? (
                 <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-amber-700 flex items-center gap-2">
                     <span>⚠️</span>
@@ -666,7 +682,7 @@ export default function TelegramBotPage() {
                     <span className="text-sm text-amber-600">(Ishga tushirish tugmasini bosing)</span>
                   </p>
                 </div>
-              ) : settings?.bot_token ? (
+              ) : settings?.bot_token || settings?.has_token ? (
                 <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-amber-700 flex items-center gap-2">
                     <span>⚠️</span>

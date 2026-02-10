@@ -105,6 +105,20 @@ def run_polling():
     
     while True:
         try:
+            current_settings = BotSettings.objects.first()
+            if not current_settings:
+                logger.warning("Bot sozlamalari topilmadi, polling to'xtatildi.")
+                break
+            if not current_settings.is_active:
+                logger.info("Bot o'chirildi (is_active=False), polling to'xtatildi.")
+                break
+            if current_settings.use_webhook:
+                logger.info("Webhook rejimi yoqildi, polling to'xtatildi.")
+                break
+            if current_settings.bot_token and current_settings.bot_token != token:
+                logger.info("Bot token o'zgartirildi, eski polling to'xtatildi.")
+                break
+
             # Yangilanishlarni olish
             updates, is_conflict = get_updates(token, offset)
             
