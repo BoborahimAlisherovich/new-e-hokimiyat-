@@ -494,6 +494,7 @@ export interface RecurringTaskInput {
   description: string
   frequency: string
   priority: string
+  category: string
   deadline_days: number
   organizations: string[]
   start_date: string
@@ -507,6 +508,7 @@ export interface RecurringTaskResponse {
   frequency: string
   frequency_display: string
   priority: string
+  category: string
   deadline_days: number
   organizations: string[]
   organizations_count: number

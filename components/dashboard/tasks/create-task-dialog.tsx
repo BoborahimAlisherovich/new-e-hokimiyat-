@@ -477,6 +477,7 @@ export function CreateTaskDialog({
           description: form.description,
           frequency: form.frequency,
           priority: form.priority,
+          category: form.category,
           deadline_days: form.deadline_days,
           organizations: form.organization_ids,
           start_date: form.start_date,
