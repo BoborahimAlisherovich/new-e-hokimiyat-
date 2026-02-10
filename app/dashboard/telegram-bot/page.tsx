@@ -60,13 +60,6 @@ interface BotSettings {
 }
 
 interface BotStats {
-  type WebhookInfo = {
-    url?: string;
-    pending_update_count?: number;
-    last_error_date?: number;
-    last_error_message?: string;
-    max_connections?: number;
-  }
   total_users: number;
   registered_users: number;
   total_appeals: number;
@@ -77,6 +70,14 @@ interface BotStats {
   today_appeals: number;
   this_week_appeals: number;
   this_month_appeals: number;
+}
+
+type WebhookInfo = {
+  url?: string;
+  pending_update_count?: number;
+  last_error_date?: number;
+  last_error_message?: string;
+  max_connections?: number;
 }
 
 export default function TelegramBotPage() {
