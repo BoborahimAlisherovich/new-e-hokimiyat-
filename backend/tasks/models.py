@@ -572,6 +572,12 @@ class RecurringTask(BaseModel):
         default='ODDIY',
         verbose_name='Muhimlik darajasi'
     )
+    category = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Kategoriya'
+    )
     deadline_days = models.PositiveIntegerField(
         default=7,
         verbose_name='Muddat (kun)'
@@ -657,6 +663,7 @@ class RecurringTask(BaseModel):
             title=f"{self.title} - {timezone.now().strftime('%d.%m.%Y')}",
             description=self.description,
             priority=self.priority,
+            category=self.category,
             deadline=timezone.now() + timedelta(days=self.deadline_days),
             created_by=self.created_by,
             source='RECURRING',
