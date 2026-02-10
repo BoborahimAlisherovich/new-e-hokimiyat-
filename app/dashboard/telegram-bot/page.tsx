@@ -101,7 +101,6 @@ export default function TelegramBotPage() {
     pid: number | null;
   } | null>(null);
 
-  const loadData = useCallback(async () => {
   const loadStatus = useCallback(async () => {
     const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>(
       "/telegram-bot/settings/bot_status/"
@@ -190,7 +189,7 @@ export default function TelegramBotPage() {
     } finally {
       setStarting(false);
     }
-  }, [toast]);
+  }, [loadStatus, toast]);
 
   const switchToPolling = useCallback(async () => {
     try {
@@ -204,8 +203,7 @@ export default function TelegramBotPage() {
           title: "Muvaffaqiyat",
           description: "Webhook o'chirildi va polling ishga tushdi"
         });
-        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
-        setBotStatus(statusRes.data);
+        await loadStatus();
         setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
       } else {
         toast({
@@ -223,7 +221,7 @@ export default function TelegramBotPage() {
     } finally {
       setStarting(false);
     }
-  }, [toast]);
+  }, [loadStatus, toast]);
 
   const stopBot = useCallback(async () => {
     try {
@@ -235,10 +233,7 @@ export default function TelegramBotPage() {
           title: "Muvaffaqiyat",
           description: "Bot to'xtatildi"
         });
-        // Statusni yangilash
-        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
-        setBotStatus(statusRes.data);
-        setSettings(prev => prev ? { ...prev, use_webhook: statusRes.data.use_webhook, is_active: statusRes.data.is_active } : null);
+        await loadStatus();
       }
     } catch (err) {
       toast({
@@ -249,7 +244,7 @@ export default function TelegramBotPage() {
     } finally {
       setStopping(false);
     }
-  }, [toast]);
+  }, [loadStatus, toast]);
 
   const saveSettings = useCallback(async () => {
     if (!settings) return;
