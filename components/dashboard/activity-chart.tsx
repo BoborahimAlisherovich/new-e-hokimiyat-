@@ -132,17 +132,18 @@ export function ActivityChart() {
               <XAxis 
                 dataKey="period" 
                 stroke="hsl(220, 9%, 46%)" 
-                fontSize={12} 
+                fontSize={13} 
                 tickLine={false}
-                tick={{ fill: 'hsl(220, 9%, 46%)' }}
+                tick={{ fill: 'hsl(220, 9%, 46%)', fontWeight: 600 }}
               />
               
               <YAxis 
                 stroke="hsl(220, 9%, 46%)" 
-                fontSize={12} 
+                fontSize={13} 
                 tickLine={false} 
                 axisLine={false}
-                tick={{ fill: 'hsl(220, 9%, 46%)' }}
+                tick={{ fill: 'hsl(220, 9%, 46%)', fontWeight: 600 }}
+                allowDecimals={false}
               />
               
               <Tooltip
