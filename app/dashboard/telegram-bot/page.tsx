@@ -298,9 +298,6 @@ export default function TelegramBotPage() {
           variant: "destructive"
         });
       }
-      }, [loadStatus, toast]);
-      }, [loadStatus, toast]);
-      }, [loadStatus, toast]);
     } catch (err) {
       toast({
         title: "Xato",
@@ -310,7 +307,7 @@ export default function TelegramBotPage() {
     } finally {
       setTesting(false);
     }
-  }, [toast]);
+  }, [loadStatus, toast]);
 
   const testAIConnection = useCallback(async () => {
     try {
