@@ -206,6 +206,64 @@ export async function getAnalyticsDashboard(): Promise<DashboardStats> {
 }
 
 /**
+ * Tashkilot rahbari/mas'uli uchun maxsus dashboard ma'lumotlarini oladi
+ */
+export interface OrgDashboardData {
+  organization: {
+    id: string
+    name: string
+    short_name: string
+    sector: string | null
+    director_name: string
+    address: string
+    phone: string
+  }
+  tasks: {
+    total: number
+    new: number
+    in_progress: number
+    in_review: number
+    completed: number
+    overdue: number
+    resubmitted: number
+    completion_rate: number
+    recent: Array<{
+      id: string
+      title: string
+      priority: string
+      status: string
+      deadline: string | null
+      created_at: string
+      assigned_to: string | null
+    }>
+  }
+  appeals: {
+    total: number
+    pending: number
+    approved: number
+    responded: number
+    resolved: number
+    recent: Array<{
+      id: number
+      appeal_number: string
+      text: string
+      status: string
+      priority: string
+      created_at: string
+      user_name: string
+      category_name: string | null
+    }>
+  }
+  employees: {
+    count: number
+  }
+}
+
+export async function getOrgDashboard(): Promise<OrgDashboardData> {
+  return fetchApi<OrgDashboardData>('/analytics/org-dashboard/')
+}
+
+/**
  * Tashkilotlar analitikasini oladi
  */
 export async function getAnalyticsOrganizations(): Promise<OrganizationAnalytics[]> {

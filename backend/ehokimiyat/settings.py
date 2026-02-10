@@ -179,7 +179,7 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://192.168.200.86:3000,http://192.168.200.86:3001,http://10.185.6.214:3000,http://10.185.6.214:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://192.168.200.86:3000,http://192.168.200.86:3001,http://10.185.6.214:3000,http://10.185.6.214:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
 ).split(',')
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.ngrok-free\.app$",
@@ -211,7 +211,7 @@ CORS_ALLOW_METHODS = [
 
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
-    'https://gameroom.uz,https://api.gameroom.uz'
+    'https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
 ).split(',')
 
 # File Upload Settings

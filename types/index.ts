@@ -2,7 +2,7 @@
 
 // ==================== Enums ====================
 
-export type UserRole = 'HOKIM' | 'HOKIM_YORDAMCHISI' | 'HOKIMLIK_MASUL' | 'TASHKILOT_RAHBAR' | 'TASHKILOT_MASUL' | 'ADMIN'
+export type UserRole = 'HOKIM' | 'HOKIM_YORDAMCHISI' | 'HOKIMLIK_MASUL' | 'TASHKILOT_RAHBAR' | 'TASHKILOT_RAHBARI' | 'TASHKILOT_MASUL' | 'ADMIN'
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED'
 

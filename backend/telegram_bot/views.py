@@ -903,22 +903,12 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
 
-        # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga va sohasiga tegishlilarni ko'radi
+        # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga biriktirilgan murojaatlarni ko'radi
         if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
             if not user.organization:
                 return queryset.none()
 
             queryset = queryset.filter(assigned_organizations=user.organization)
-
-            org_sector = getattr(user.organization, 'sector', None)
-            if not org_sector:
-                return queryset.none()
-
-            queryset = queryset.filter(
-                Q(category__name_uz__iexact=org_sector.name)
-                | Q(category__name_ru__iexact=org_sector.name)
-                | Q(category__name_en__iexact=org_sector.name)
-            )
 
         return queryset
     

@@ -84,6 +84,16 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/chat',
     '/dashboard/settings',
   ],
+  // Backend sends TASHKILOT_RAHBARI — alias for TASHKILOT_RAHBAR
+  TASHKILOT_RAHBARI: [
+    '/dashboard',
+    '/dashboard/tasks',
+    '/dashboard/users',
+    '/dashboard/notifications',
+    '/dashboard/appeals',
+    '/dashboard/chat',
+    '/dashboard/settings',
+  ],
   // Tashkilot mas'uli - can only execute tasks and upload reports
   TASHKILOT_MASUL: [
     '/dashboard',
@@ -184,6 +194,7 @@ export function Sidebar() {
     HOKIM_YORDAMCHISI: t.roles.HOKIM_YORDAMCHISI,
     HOKIMLIK_MASUL: t.roles.HOKIMLIK_MASUL,
     TASHKILOT_RAHBAR: t.roles.TASHKILOT_RAHBAR,
+    TASHKILOT_RAHBARI: t.roles.TASHKILOT_RAHBAR,
     TASHKILOT_MASUL: t.roles.TASHKILOT_MASUL,
     ADMIN: t.roles.ADMIN,
   }

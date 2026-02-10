@@ -265,6 +265,7 @@ export {
   
   // Analytics
   getAnalyticsDashboard,
+  getOrgDashboard,
   getAnalyticsOrganizations,
   getAnalyticsUsers,
   getAnalyticsTrends,
@@ -285,6 +286,7 @@ export {
 
 export type {
   AuditLogFilters,
+  OrgDashboardData,
   UserAnalytics,
   AnalyticsPeriod,
   ExportFormat,

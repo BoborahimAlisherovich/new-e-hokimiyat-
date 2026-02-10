@@ -33,7 +33,8 @@ import {
   Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { API_BASE, getAccessToken } from "@/lib/api/client";
+import { API_BASE, getAccessToken, getRefreshToken, setAccessToken } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { uz } from "date-fns/locale";
 import { useAudioRecorder, formatTime } from "@/hooks/use-audio-recorder";
@@ -91,12 +92,14 @@ interface AIStats {
 
 export default function AIAssistantPage() {
   const pageRef = useGSAPPageEntrance();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<AIConversation | null>(null);
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
   const [statsCollapsed, setStatsCollapsed] = useState(true);
   const [stats, setStats] = useState<AIStats | null>(null);
   const [speechText, setSpeechText] = useState("");
@@ -387,24 +390,81 @@ export default function AIAssistantPage() {
   };
 
   const downloadReportPdfById = async (reportId: string) => {
+    setDownloadingReportId(reportId);
     const url = `${API_BASE}/ai/reports/${reportId}/download/`;
-    try {
-      const token = getAccessToken();
-      const response = await fetch(url, {
+    
+    const doFetch = async (token: string | null) => {
+      return fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    };
+
+    try {
+      let token = getAccessToken();
+      let response = await doFetch(token);
+
+      // Token muddati tugagan bo'lsa, yangilashga harakat qilamiz
+      if (response.status === 401) {
+        const refreshToken = getRefreshToken();
+        if (refreshToken) {
+          try {
+            const refreshRes = await fetch(`${API_BASE}/auth/token/refresh/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh: refreshToken }),
+            });
+            if (refreshRes.ok) {
+              const data = await refreshRes.json();
+              setAccessToken(data.access);
+              token = data.access;
+              response = await doFetch(token);
+            }
+          } catch {
+            // refresh failed, continue with original 401 response
+          }
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(
+          response.status === 401
+            ? "Sessiya muddati tugadi. Sahifani yangilang."
+            : response.status === 404
+            ? "Hisobot topilmadi."
+            : `Yuklab olish xatosi (${response.status}): ${errorText || "Server xatosi"}`
+        );
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/pdf')) {
+        throw new Error("Server PDF qaytarmadi. Iltimos, qayta urinib ko'ring.");
+      }
+
       const blob = await response.blob();
       const link = document.createElement("a");
       const objectUrl = URL.createObjectURL(blob);
       link.href = objectUrl;
-      link.download = `report-${reportId}.pdf`;
+      link.download = `hisobot-${reportId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
+      // URL ni kechiktirib tozalaymiz, brauzer yuklab olishni boshlashi uchun
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Hisobot muvaffaqiyatli yuklandi",
+      });
+    } catch (err: any) {
       console.error("PDF download error:", err);
+      toast({
+        title: "Xatolik",
+        description: err?.message || "PDF yuklab olishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingReportId(null);
     }
   };
 
@@ -597,11 +657,16 @@ export default function AIAssistantPage() {
                               <div className="mt-3">
                                 <button
                                   type="button"
+                                  disabled={downloadingReportId === extractReportId(message.content)}
                                   onClick={() => downloadReportPdfById(extractReportId(message.content)!)}
-                                  className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-100"
+                                  className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <FileText className="h-3.5 w-3.5" />
-                                  PDF yuklab olish
+                                  {downloadingReportId === extractReportId(message.content) ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <FileText className="h-3.5 w-3.5" />
+                                  )}
+                                  {downloadingReportId === extractReportId(message.content) ? "Yuklanmoqda..." : "PDF yuklab olish"}
                                 </button>
                               </div>
                             )}

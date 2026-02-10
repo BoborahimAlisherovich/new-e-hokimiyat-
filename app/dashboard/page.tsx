@@ -1,5 +1,6 @@
 "use client"
 // @ts-nocheck
+import React, { useEffect, useState } from "react"
 import { Header } from "@/components/layout/header"
 import { StatsCards } from "@/components/dashboard/stats-cards" // TaskSummary (KPI)
 import { RecentTasks as AttentionRequired } from "@/components/dashboard/recent-tasks" // Attention section
@@ -8,13 +9,60 @@ import { SectorOverview } from "@/components/dashboard/sector-overview"
 import AnalyticsSection from "@/components/dashboard/analytics-section"
 import DeadlineCriticalTasks from "@/components/dashboard/deadline-critical-tasks"
 import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics-charts"
+import OrgDashboard from "@/components/dashboard/org-dashboard"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { getCurrentUser } from "@/lib/api"
+
+const ORG_ROLES = ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL', 'TASHKILOT_RAHBAR']
 
 export default function DashboardPage() {
   const t = useTranslation()
   const pageRef = useGSAPPageEntrance()
-  
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => setUserRole(user?.role || null))
+      .catch(() => setUserRole(null))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const isOrgUser = ORG_ROLES.includes(userRole || '')
+
+  if (loading) {
+    return (
+      <>
+        <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />
+        <div className="p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-32 bg-white/50 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Tashkilot rahbari/mas'uli uchun maxsus dashboard
+  if (isOrgUser) {
+    return (
+      <>
+        <Header
+          title="Mening tashkilotim"
+          description="Tashkilotingizga tegishli topshiriqlar va murojaatlar"
+        />
+        <div ref={pageRef} className="p-6">
+          <OrgDashboard />
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />

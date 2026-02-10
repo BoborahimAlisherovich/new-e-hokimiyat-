@@ -77,13 +77,39 @@ async function proxyRequest(
       body,
     })
 
+    const responseContentType = response.headers.get('content-type') || 'application/json'
+    
+    // Binary javoblar uchun (PDF, Excel, rasmlar va h.k.)
+    const isBinary = responseContentType.includes('application/pdf') ||
+      responseContentType.includes('application/octet-stream') ||
+      responseContentType.includes('application/vnd') ||
+      responseContentType.includes('image/') ||
+      responseContentType.includes('audio/') ||
+      responseContentType.includes('video/')
+    
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': responseContentType,
+    }
+    
+    // Content-Disposition header ni saqlaymiz (yuklab olish uchun kerak)
+    const contentDisposition = response.headers.get('content-disposition')
+    if (contentDisposition) {
+      responseHeaders['Content-Disposition'] = contentDisposition
+    }
+
+    if (isBinary) {
+      const buffer = await response.arrayBuffer()
+      return new NextResponse(buffer, {
+        status: response.status,
+        headers: responseHeaders,
+      })
+    }
+
     const data = await response.text()
     
     return new NextResponse(data, {
       status: response.status,
-      headers: {
-        'Content-Type': response.headers.get('content-type') || 'application/json',
-      },
+      headers: responseHeaders,
     })
   } catch (error) {
     console.error('Proxy error:', error)
