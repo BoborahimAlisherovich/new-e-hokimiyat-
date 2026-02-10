@@ -173,8 +173,7 @@ export default function TelegramBotPage() {
           description: "Bot muvaffaqiyatli ishga tushirildi"
         });
         // Statusni yangilash
-        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
-        setBotStatus(statusRes.data);
+        await loadStatus();
       } else {
         toast({
           title: "Xato",
@@ -374,9 +373,7 @@ export default function TelegramBotPage() {
         variant: "destructive"
       });
     }
-  }, [settings?.webhook_url, toast]);
   }, [loadStatus, settings?.webhook_url, toast]);
-  }, [loadStatus, toast]);
 
   const deleteWebhook = useCallback(async () => {
     try {
@@ -388,8 +385,7 @@ export default function TelegramBotPage() {
           description: "Webhook o'chirildi"
         });
         setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
-        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
-        setBotStatus(statusRes.data);
+        await loadStatus();
       }
     } catch (err) {
       toast({
@@ -398,7 +394,7 @@ export default function TelegramBotPage() {
         variant: "destructive"
       });
     }
-  }, [toast]);
+  }, [loadStatus, toast]);
 
   if (loading) {
     return (
