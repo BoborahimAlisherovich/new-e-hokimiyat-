@@ -15,6 +15,7 @@ import {
   LineChart,
   Line,
   Legend,
+  LabelList,
 } from "recharts"
 import { useMemo } from "react"
 
@@ -58,6 +59,9 @@ const GRADIENT_COLORS = {
   category: { start: "#f59e0b", end: "#ef4444" },
   trend: { start: "#8b5cf6", end: "#ec4899" }
 }
+
+const AXIS_TICK = { fill: "#475569", fontSize: 12, fontWeight: 600 }
+const VALUE_LABEL = { fill: "#334155", fontSize: 12, fontWeight: 600 }
 
 interface AnalyticsChartsProps {
   tasks: any[]
@@ -238,10 +242,12 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} interval={0} angle={-15} height={60} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-15} height={60} />
+                <YAxis tick={AXIS_TICK} allowDecimals={false} />
                 <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#statusGradient)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill="url(#statusGradient)" radius={[8, 8, 0, 0]}>
+                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -254,7 +260,18 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={priorityData} dataKey="value" nameKey="name" outerRadius={110} innerRadius={65} paddingAngle={4} animationBegin={0} animationDuration={800}>
+                <Pie
+                  data={priorityData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={110}
+                  innerRadius={65}
+                  paddingAngle={4}
+                  animationBegin={0}
+                  animationDuration={800}
+                  label={({ name, value }) => `${name} ${value}`}
+                  labelLine={false}
+                >
                   {priorityData.map((_, index) => (
                     <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
@@ -279,10 +296,12 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} interval={0} angle={-10} height={50} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
+                <YAxis tick={AXIS_TICK} allowDecimals={false} />
                 <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#categoryGradient)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill="url(#categoryGradient)" radius={[8, 8, 0, 0]}>
+                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -302,8 +321,8 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 12 }} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+                <XAxis dataKey="date" tick={AXIS_TICK} />
+                <YAxis tick={AXIS_TICK} allowDecimals={false} />
                 <Tooltip cursor={{ stroke: "#e2e8f0" }} />
                 <Line type="monotone" dataKey="value" stroke="url(#trendGradient)" strokeWidth={3} dot={{ r: 4, fill: "#8b5cf6" }} />
               </LineChart>
@@ -317,7 +336,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={orgData} layout="vertical" margin={{ left: 40, right: 20, top: 8, bottom: 8 }}>
+              <BarChart data={orgData} layout="vertical" margin={{ left: 40, right: 36, top: 8, bottom: 8 }}>
                 <defs>
                   <linearGradient id="orgGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -325,10 +344,12 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis type="number" tick={{ fill: "#64748b", fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} width={180} />
+                <XAxis type="number" tick={AXIS_TICK} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" tick={AXIS_TICK} width={180} />
                 <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#orgGradient)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="value" fill="url(#orgGradient)" radius={[0, 8, 8, 0]}>
+                  <LabelList dataKey="value" position="right" {...VALUE_LABEL} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -353,7 +374,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                   outerRadius={100} 
                   innerRadius={60}
                   paddingAngle={0}
-                  label={({ cx, cy, index, name, percent, fill }) => {
+                  label={({ cx, cy, index, name, percent, value, fill }) => {
                     // Erkak (index 0) chap tomonda, Ayol (index 1) o'ng tomonda
                     const x = index === 0 ? cx - 140 : cx + 140
                     const y = cy
@@ -365,9 +386,9 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                         fill={fill}
                         textAnchor={index === 0 ? 'end' : 'start'} 
                         dominantBaseline="middle"
-                        style={{ fontSize: '15px', fontWeight: 700 }}
+                        style={{ fontSize: '16px', fontWeight: 700 }}
                       >
-                        {`${name} ${(percent * 100).toFixed(0)}%`}
+                        {`${name} ${value} (${(percent * 100).toFixed(0)}%)`}
                       </text>
                     )
                   }}
@@ -392,13 +413,14 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={appealStatusData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} interval={0} angle={-10} height={50} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
+                <YAxis tick={AXIS_TICK} allowDecimals={false} />
                 <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {appealStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
+                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
