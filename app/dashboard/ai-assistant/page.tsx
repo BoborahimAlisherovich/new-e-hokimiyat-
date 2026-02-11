@@ -168,11 +168,11 @@ export default function AIAssistantPage() {
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
-    if (!isRecording && speechText.trim() && audioBlob) {
+    // Faqat audio yozuvi bo'lmagan holatda speech text ni inputga qo'yamiz
+    if (!isRecording && speechText.trim() && !audioBlob) {
       setInputMessage(speechText.trim());
-      resetRecording();
     }
-  }, [isRecording, speechText, audioBlob, resetRecording]);
+  }, [isRecording, speechText, audioBlob]);
 
   const loadConversationMessages = useCallback(async (conversationId: string) => {
     setIsLoading(true);
@@ -297,6 +297,15 @@ export default function AIAssistantPage() {
     setIsTranscribing(false);
   };
 
+  const getAudioFilename = (blob: Blob) => {
+    const mime = blob.type || "audio/webm";
+    if (mime.includes("mp4")) return "audio.mp4";
+    if (mime.includes("ogg")) return "audio.ogg";
+    if (mime.includes("mpeg") || mime.includes("mp3")) return "audio.mp3";
+    if (mime.includes("wav")) return "audio.wav";
+    return "audio.webm";
+  };
+
   const sendAudioMessage = async () => {
     if (!audioBlob || !currentConversation) return;
     setIsSending(true);
@@ -313,7 +322,10 @@ export default function AIAssistantPage() {
 
     try {
       const formData = new FormData();
-      formData.append("audio", audioBlob, "audio.webm");
+      formData.append("audio", audioBlob, getAudioFilename(audioBlob));
+      if (speechText.trim()) {
+        formData.append("transcript", speechText.trim());
+      }
       const response = await api.postFormData<{ user_message: AIMessage; ai_message: AIMessage; transcription: string }>(
         `/ai/conversations/${currentConversation.id}/send_audio/`,
         formData
@@ -325,6 +337,8 @@ export default function AIAssistantPage() {
         response.data.ai_message,
       ]);
       resetRecording();
+      setSpeechText("");
+      setInputMessage("");
     } catch (error) {
       console.error("Error sending audio:", error);
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id));
@@ -335,11 +349,12 @@ export default function AIAssistantPage() {
 
   const handleRecordToggle = async () => {
     if (isRecording) {
-      stopRecording();
       stopSpeechRecognition();
-      resetRecording();
+      stopRecording();
     } else {
+      resetRecording();
       setSpeechText("");
+      setInputMessage("");
       await startRecording();
       startSpeechRecognition();
     }

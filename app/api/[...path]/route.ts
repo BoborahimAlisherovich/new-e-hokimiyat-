@@ -48,26 +48,28 @@ async function proxyRequest(
   method: string
 ) {
   const path = pathSegments.join('/')
+  const search = request.nextUrl.search || ''
   // Django requires trailing slash for POST requests
-  const url = `${API_BASE}/api/${path}${path.endsWith('/') ? '' : '/'}`
+  const url = `${API_BASE}/api/${path}${path.endsWith('/') ? '' : '/'}${search}`
   
   // Get headers from original request
   const headers: Record<string, string> = {}
   request.headers.forEach((value, key) => {
-    // Skip host header
-    if (key.toLowerCase() !== 'host') {
+    // Hop-by-hop and computed headers should not be forwarded
+    const lower = key.toLowerCase()
+    if (!['host', 'content-length', 'connection'].includes(lower)) {
       headers[key] = value
     }
   })
 
   try {
-    let body = undefined
+    let body: BodyInit | undefined = undefined
     if (method !== 'GET' && method !== 'DELETE') {
       const contentType = request.headers.get('content-type')
       if (contentType?.includes('application/json')) {
         body = JSON.stringify(await request.json())
       } else {
-        body = await request.text()
+        body = await request.arrayBuffer()
       }
     }
 
@@ -95,6 +97,10 @@ async function proxyRequest(
     const contentDisposition = response.headers.get('content-disposition')
     if (contentDisposition) {
       responseHeaders['Content-Disposition'] = contentDisposition
+    }
+    const setCookie = response.headers.get('set-cookie')
+    if (setCookie) {
+      responseHeaders['Set-Cookie'] = setCookie
     }
 
     if (isBinary) {

@@ -168,7 +168,7 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             ]
 
             # Intent aniqlash
-            intent_result = ai_service.detect_intent(message_text)
+            intent_result = ai_service.detect_intent(message_text, request.user)
 
             query_intents = {
                 'STATUS_CHECK',
@@ -299,16 +299,33 @@ class AIConversationViewSet(viewsets.ModelViewSet):
     def send_audio(self, request, pk=None):
         """Audio xabar yuborish"""
         conversation = self.get_object()
-        
+
         if 'audio' not in request.FILES:
             return Response({'error': 'Audio fayl kerak'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         audio_file = request.FILES['audio']
-        
-        # Audio transkripsiya
+        transcript_fallback = (request.data.get('transcript') or '').strip()
+
         ai_service = AIService()
-        transcription = ai_service.transcribe_audio(audio_file)
-        
+        transcription = ai_service.transcribe_audio(audio_file).strip()
+
+        # Browser SpeechRecognition transkripti bilan fallback
+        if (
+            (not transcription or transcription.startswith('Xatolik:') or transcription.startswith('Audio transkripsiya'))
+            and transcript_fallback
+        ):
+            transcription = transcript_fallback
+
+        if not transcription:
+            return Response({'error': 'Audio transkripsiya qilinmadi'}, status=status.HTTP_400_BAD_REQUEST)
+        if transcription.startswith('Xatolik:'):
+            return Response({'error': transcription}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            audio_file.seek(0)
+        except Exception:
+            pass
+
         # Foydalanuvchi xabarini saqlash
         user_message = AIMessage.objects.create(
             conversation=conversation,
@@ -317,28 +334,188 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             audio_file=audio_file,
             is_audio_message=True
         )
-        
-        # AI javobini olish
+
+        pending_action = AIAction.objects.filter(
+            conversation=conversation,
+            status='PENDING'
+        ).order_by('-created_at').first()
+        normalized = transcription.strip().lower()
+        yes_words = {'ha', 'xa', 'yes', 'ok', 'okay', 'mayli', 'tasdiq', 'tasdiqlayman', 'bajar', 'bajaring'}
+        no_words = {'yoq', "yo'q", 'no', 'bekor', 'cancel', 'rad', 'rad et', 'kerak emas'}
+
+        if pending_action and (normalized in yes_words or normalized in no_words):
+            if normalized in no_words:
+                pending_action.status = 'CANCELLED'
+                pending_action.save()
+                ai_message = AIMessage.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content='Bekor qilindi. Agar boshqa topshiriq bo‘lsa, yozing.'
+                )
+            else:
+                result = ai_service.execute_action(pending_action)
+                pending_action.status = 'COMPLETED' if result.get('success') else 'FAILED'
+                pending_action.result = result
+                pending_action.executed_at = timezone.now()
+                pending_action.save()
+
+                if result.get('success'):
+                    extra_lines = []
+                    if result.get('report_id'):
+                        extra_lines.append(f"[REPORT_ID:{result.get('report_id')}] ")
+                    if result.get('summary'):
+                        extra_lines.append(f"\n{result.get('summary')}")
+                    extra_text = f"\n\n" + "\n".join(extra_lines) if extra_lines else ""
+                    ai_message = AIMessage.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content=f"✅ {result.get('message', 'Bajarildi')}" + extra_text
+                    )
+                else:
+                    ai_message = AIMessage.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content=f"❌ Xatolik: {result.get('error', 'Noma\'lum xatolik')}"
+                    )
+
+            conversation.updated_at = timezone.now()
+            conversation.save()
+            return Response({
+                'transcription': transcription,
+                'user_message': AIMessageSerializer(user_message).data,
+                'ai_message': AIMessageSerializer(ai_message).data,
+                'detected_intent': {'intent': 'CONFIRM_ACTION'}
+            })
+
+        # Suhbat tarixini olish
         messages = [
             {"role": msg.role, "content": msg.content}
             for msg in conversation.messages.order_by('created_at')
         ]
-        
-        ai_response = ai_service.chat(messages, request.user)
-        intent_result = ai_service.detect_intent(transcription)
-        
-        # AI xabarini saqlash
+
+        # Intent aniqlash (audio uchun AI fallback bilan)
+        intent_result = ai_service.detect_intent(transcription, request.user, prefer_ai=True)
+
+        query_intents = {
+            'STATUS_CHECK',
+            'ORGANIZATION_STATUS',
+            'USERS_STATUS',
+            'APPEALS_STATUS',
+            'TASKS_STATUS',
+            'NOTIFICATIONS_STATUS',
+            'TELEGRAM_STATUS',
+            'LIST_ORGANIZATIONS',
+            'LIST_USERS',
+            'ANALYTICS_QUERY',
+        }
+
+        ai_content = ""
+        intent_name = intent_result.get('intent')
+        intent_conf = float(intent_result.get('confidence', 0) or 0)
+        params = intent_result.get('parameters', {})
+
+        should_create_action = (
+            intent_name not in ['UNKNOWN', 'STATUS_CHECK']
+            and intent_name not in query_intents
+            and intent_conf > 0.7
+        )
+
+        if should_create_action:
+            action = AIAction.objects.create(
+                conversation=conversation,
+                action_type=intent_name,
+                parameters=params,
+                initiated_by=request.user,
+                status='PENDING'
+            )
+
+            auto_execute = (
+                intent_name in {'CREATE_TASK', 'CREATE_RECURRING_TASK'}
+                and request.user.role in {'HOKIM', 'HOKIMLIK_MASUL', 'HOKIM_YORDAMCHISI', 'ADMIN'}
+                and intent_conf >= 0.75
+            )
+
+            if auto_execute:
+                action.status = 'IN_PROGRESS'
+                action.save()
+
+                result = ai_service.execute_action(action)
+                action.status = 'COMPLETED' if result.get('success') else 'FAILED'
+                action.result = result
+                action.executed_at = timezone.now()
+                action.save()
+
+                if result.get('success'):
+                    extra_lines = []
+                    if result.get('report_id'):
+                        extra_lines.append(f"[REPORT_ID:{result.get('report_id')}] ")
+                    if result.get('summary'):
+                        extra_lines.append(f"\n{result.get('summary')}")
+                    extra_text = f"\n\n" + "\n".join(extra_lines) if extra_lines else ""
+                    ai_content = f"✅ {result.get('message', 'Bajarildi')}" + extra_text
+                else:
+                    ai_content = f"❌ Xatolik: {result.get('error', 'Noma\'lum xatolik')}"
+            else:
+                preview_lines = []
+                if intent_name == 'CREATE_TASK':
+                    if params.get('title'):
+                        preview_lines.append(f"Topshiriq nomi: {params.get('title')}")
+                    if params.get('description'):
+                        preview_lines.append(f"Topshiriq tavsifi: {params.get('description')}")
+                    if params.get('deadline_days'):
+                        preview_lines.append(f"Muddat: {params.get('deadline_days')} kun")
+                    org_names = params.get('organization_names') or []
+                    if org_names:
+                        preview_lines.append(f"Tayinlanadigan tashkilotlar: {', '.join(org_names)}")
+                    if params.get('assign_all'):
+                        preview_lines.append("Tayinlash: barchaga")
+                elif intent_name == 'CREATE_RECURRING_TASK':
+                    if params.get('title'):
+                        preview_lines.append(f"Takrorlanuvchi topshiriq: {params.get('title')}")
+                    if params.get('description'):
+                        preview_lines.append(f"Tavsif: {params.get('description')}")
+                    if params.get('frequency'):
+                        preview_lines.append(f"Takrorlanish: {params.get('frequency')}")
+                    if params.get('start_date'):
+                        preview_lines.append(f"Boshlanish: {params.get('start_date')}")
+                    if params.get('end_date'):
+                        preview_lines.append(f"Tugash: {params.get('end_date')}")
+                    if params.get('deadline_days'):
+                        preview_lines.append(f"Muddat: {params.get('deadline_days')} kun")
+                    if params.get('assign_all'):
+                        preview_lines.append("Tayinlash: barchaga")
+                elif intent_name == 'EXPORT_ANALYTICS':
+                    preview_lines.append(f"Format: {params.get('format', 'xlsx')}")
+
+                preview_text = "\n".join(preview_lines)
+                ai_content = (
+                    "Buyruq bajarilishi uchun tasdiq kerak. "
+                    "Tasdiqlash uchun 'ha', bekor qilish uchun 'yo‘q' deb yozing."
+                )
+                if preview_text:
+                    ai_content += f"\n\n{preview_text}"
+                ai_content += f"\n\n⚡ {intent_name} buyrug'ini bajarishni xohlaysizmi?"
+        else:
+            if intent_name in query_intents:
+                ai_content = ai_service.handle_query(
+                    intent_name,
+                    params,
+                    request.user,
+                )
+            else:
+                ai_content = ai_service.chat(messages, request.user)
+
         ai_message = AIMessage.objects.create(
             conversation=conversation,
             role='assistant',
-            content=ai_response,
-            detected_intent=intent_result.get('intent'),
-            intent_confidence=intent_result.get('confidence', 0)
+            content=ai_content,
+            detected_intent=intent_name,
+            intent_confidence=intent_conf
         )
-        
+
         conversation.updated_at = timezone.now()
         conversation.save()
-        
+
         return Response({
             'transcription': transcription,
             'user_message': AIMessageSerializer(user_message).data,

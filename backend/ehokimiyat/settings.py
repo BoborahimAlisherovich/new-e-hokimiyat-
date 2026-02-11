@@ -5,6 +5,7 @@ Django settings for E-Hokimiyat project.
 from pathlib import Path
 from datetime import timedelta
 import os
+from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -13,13 +14,60 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env
 load_dotenv(BASE_DIR / '.env')
 
+
+def env_bool(name: str, default: bool = False) -> bool:
+    """Read boolean env values safely."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_csv(name: str, default: str = '') -> list[str]:
+    """Read comma separated env values."""
+    raw = os.environ.get(name, default)
+    return [item.strip() for item in raw.split(',') if item.strip()]
+
+
+def parse_database_url(url: str) -> dict:
+    """Convert DATABASE_URL into Django DATABASES['default'] config."""
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+
+    if scheme in {'sqlite', 'sqlite3'}:
+        db_path = parsed.path or '/db.sqlite3'
+        # sqlite:///relative/path or sqlite:////abs/path
+        if db_path.startswith('//'):
+            db_name = db_path[1:]
+        else:
+            db_name = db_path
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': db_name,
+        }
+
+    if scheme in {'postgres', 'postgresql', 'pgsql'}:
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': (parsed.path or '/').lstrip('/'),
+            'USER': unquote(parsed.username or ''),
+            'PASSWORD': unquote(parsed.password or ''),
+            'HOST': parsed.hostname or 'localhost',
+            'PORT': str(parsed.port or 5432),
+        }
+
+    raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed.scheme}")
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-this-in-production-ehokimiyat-2026')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = env_bool('DJANGO_DEBUG', env_bool('DEBUG', False))
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env_csv(
+    'ALLOWED_HOSTS',
+    os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0')
+)
 
 # Application definition
 INSTALLED_APPS = [
@@ -86,8 +134,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ehokimiyat.wsgi.application'
 
-# Database - SQLite for development, PostgreSQL for production
-if os.environ.get('USE_POSTGRES', 'false').lower() == 'true':
+# Database - DATABASE_URL first, then USE_POSTGRES fallback
+database_url = os.environ.get('DATABASE_URL', '').strip()
+use_postgres = env_bool('USE_POSTGRES', False)
+
+if database_url:
+    DATABASES = {
+        'default': parse_database_url(database_url)
+    }
+elif use_postgres:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -177,10 +232,10 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = os.environ.get(
+CORS_ALLOWED_ORIGINS = env_csv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://192.168.200.86:3000,http://192.168.200.86:3001,http://10.185.6.214:3000,http://10.185.6.214:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
-).split(',')
+)
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.ngrok-free\.app$",
     r"^https://.*\.ngrok\.io$",
@@ -209,10 +264,10 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-CSRF_TRUSTED_ORIGINS = os.environ.get(
+CSRF_TRUSTED_ORIGINS = env_csv(
     'CSRF_TRUSTED_ORIGINS',
     'https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
-).split(',')
+)
 
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -225,7 +280,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(os.environ.get('REDIS_HOST', 'localhost'), 6379)],
+            'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379/0')],
         },
     },
 }

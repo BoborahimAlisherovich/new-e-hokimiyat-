@@ -13,6 +13,7 @@ Bu modul quyidagi funksiyalarni bajaradi:
 import os
 import re
 import json
+import io
 import logging
 from typing import Optional, Dict, Any, List, Union, cast
 from datetime import datetime, timedelta
@@ -185,7 +186,7 @@ Murojaatlar:
         
         return "\n".join(context_parts)
     
-    def detect_intent(self, text: str) -> Dict[str, Any]:
+    def detect_intent(self, text: str, user: Any = None, prefer_ai: bool = True) -> Dict[str, Any]:
         """
         Matndan maqsadni aniqlash.
         
@@ -196,6 +197,13 @@ Murojaatlar:
                 "parameters": {...}
             }
         """
+        text = (text or "").strip()
+        if not text:
+            return {
+                "intent": "UNKNOWN",
+                "confidence": 0.0,
+                "parameters": {}
+            }
         text_lower = text.lower()
         
         # Oddiy keyword matching
@@ -245,25 +253,273 @@ Murojaatlar:
         for intent, keywords in intents.items():
             for keyword in keywords:
                 if keyword in text_lower:
+                    params = self._extract_parameters(text, intent)
+                    confidence = 0.8
+
+                    # Task buyruqlari uchun AI bilan parametrlarni boyitish
+                    if prefer_ai and intent in {'CREATE_TASK', 'CREATE_RECURRING_TASK'}:
+                        ai_result = self._infer_task_intent_with_ai(text, user=user)
+                        ai_intent = ai_result.get('intent')
+                        ai_conf = float(ai_result.get('confidence', 0.0) or 0.0)
+                        ai_params = ai_result.get('parameters') or {}
+
+                        if ai_intent in {'CREATE_TASK', 'CREATE_RECURRING_TASK'}:
+                            intent = ai_intent
+                            params = self._merge_task_params(params, ai_params)
+                            confidence = max(confidence, ai_conf)
+
                     return {
                         "intent": intent,
-                        "confidence": 0.8,
-                        "parameters": self._extract_parameters(text, intent)
+                        "confidence": confidence,
+                        "parameters": params
                     }
-        
+
+        # Audio transkripsiya matnlarida keyword bo'lmasa ham topshiriq bo'lishi mumkin
+        if prefer_ai and self._is_likely_task_command(text_lower):
+            ai_result = self._infer_task_intent_with_ai(text, user=user)
+            if ai_result.get('intent') in {'CREATE_TASK', 'CREATE_RECURRING_TASK'}:
+                ai_conf = float(ai_result.get('confidence', 0.0) or 0.0)
+                if ai_conf >= 0.55:
+                    return ai_result
+
         return {
             "intent": "UNKNOWN",
             "confidence": 0.0,
             "parameters": {}
         }
+
+    def _is_likely_task_command(self, text_lower: str) -> bool:
+        """Matn buyruq-topshiriqqa o'xshaydimi."""
+        action_patterns = [
+            r'\bbajar(?:ilsin|ish|ing|sin|amiz|aylik)?\b',
+            r"\bta[`']?minla(?:ng|sin|sh)?\b",
+            r'\btekshir(?:ilsin|ing|sin|uv)?\b',
+            r'\bnazorat(?:ga)?\s+ol(?:insin|ing)?\b',
+            r'\btashkil\s+qil(?:ing|insin)?\b',
+            r'\btopshir(?:iq|iqni|ilsin|ing)?\b',
+            r'\byubor(?:ilsin|ing)?\b',
+            r'\bhal\s+qil(?:ing|insin)?\b',
+            r"\bchoralar\s+ko[`']r(?:ing|ilsin)?\b",
+            r'\brasmiylashtir(?:ing|ilsin)?\b',
+        ]
+        query_patterns = [
+            r'\bnechta\b',
+            r'\bqancha\b',
+            r'\bqanday\b',
+            r'\bholat\b',
+            r'\bstatistika\b',
+            r"\bro[`']yxat\b",
+            r'\bstatus\b',
+        ]
+        has_action = any(re.search(pattern, text_lower) for pattern in action_patterns)
+        is_query = any(re.search(pattern, text_lower) for pattern in query_patterns)
+        return has_action and not is_query
+
+    def _merge_task_params(self, base_params: Dict[str, Any], ai_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Regex va AI orqali olingan parametrlarni birlashtirish."""
+        merged = dict(base_params or {})
+        for key, value in (ai_params or {}).items():
+            if value is None:
+                continue
+            if key in {'title', 'description', 'organization_name'} and isinstance(value, str):
+                if value.strip():
+                    merged[key] = value.strip()
+                continue
+            if key in {'organization_ids', 'organization_names'} and isinstance(value, list):
+                if value:
+                    merged[key] = value
+                continue
+            if key == 'assign_all' and value is True:
+                merged[key] = True
+                continue
+            if key == 'confidence':
+                continue
+            if value != "":
+                merged[key] = value
+        return merged
+
+    def _extract_json_object(self, raw_text: str) -> Dict[str, Any]:
+        """LLM javobidan JSON obyektni xavfsiz ajratib olish."""
+        if not raw_text:
+            return {}
+        try:
+            parsed = json.loads(raw_text)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+
+        match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+        if not match:
+            return {}
+
+        try:
+            parsed = json.loads(match.group())
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+
+    def _infer_task_intent_with_ai(self, text: str, user: Any = None) -> Dict[str, Any]:
+        """
+        LLM yordamida topshiriq yaratish intentini aniqlash va parametrlarni to'ldirish.
+        """
+        client = self.get_client()
+        if not client:
+            return {"intent": "UNKNOWN", "confidence": 0.0, "parameters": {}}
+
+        from organizations.models import Organization
+        orgs = list(
+            Organization.objects.filter(is_active=True)
+            .values('id', 'name', 'sector__name')
+        )
+        org_map = {str(o['id']): o for o in orgs}
+        org_list = "\n".join(
+            f"- {o['name']} (ID: {o['id']}, soha: {o.get('sector__name') or 'Noma`lum'})"
+            for o in orgs
+        ) or "- Tashkilotlar mavjud emas"
+
+        prompt = f"""
+Foydalanuvchi yuborgan matn (ko'pincha audio transkripsiya):
+\"\"\"{text}\"\"\"
+
+Mavjud tashkilotlar:
+{org_list}
+
+Vazifa:
+1) Bu matn topshiriq yaratish buyrug'imi, aniqlang.
+2) Agar topshiriq bo'lsa, maydonlarni to'ldiring.
+3) Agar takrorlanuvchi topshiriq bo'lsa, intentni CREATE_RECURRING_TASK qiling.
+
+Faqat JSON qaytaring:
+{{
+  "intent": "CREATE_TASK|CREATE_RECURRING_TASK|UNKNOWN",
+  "confidence": 0.0,
+  "title": "",
+  "description": "",
+  "priority": "PAST|ODDIY|YUQORI|FAVQULODDA",
+  "category": "IJTIMOIY|IQTISODIY|HUQUQIY|INFRASTRUKTURA|TA_LIM|SOG_LIQNI_SAQLASH|BOSHQA",
+  "deadline_days": 5,
+  "organization_ids": ["UUID"],
+  "organization_names": ["nomlar"],
+  "assign_all": false,
+  "frequency": "DAILY|WEEKLY|BIWEEKLY|MONTHLY|QUARTERLY|YEARLY|CUSTOM|null",
+  "start_date": "YYYY-MM-DD|null",
+  "end_date": "YYYY-MM-DD|null"
+}}
+"""
+
+        try:
+            if self.provider == 'openai':
+                response = client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "Sen hokimlik uchun topshiriq buyruqlarini aniqlovchi tizimsan. "
+                                "Faqat JSON qaytar."
+                            ),
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.1,
+                    response_format={"type": "json_object"},
+                )
+                raw = response.choices[0].message.content or "{}"
+            elif self.provider == 'anthropic':
+                response = client.messages.create(
+                    model=self.model,
+                    max_tokens=1200,
+                    messages=[{"role": "user", "content": prompt}],  # type: ignore[list-item]
+                )
+                raw = getattr(response.content[0], 'text', '{}')
+            else:
+                return {"intent": "UNKNOWN", "confidence": 0.0, "parameters": {}}
+
+            parsed = self._extract_json_object(str(raw))
+            intent = str(parsed.get('intent', 'UNKNOWN')).upper()
+            if intent not in {'CREATE_TASK', 'CREATE_RECURRING_TASK', 'UNKNOWN'}:
+                intent = 'UNKNOWN'
+
+            try:
+                confidence = float(parsed.get('confidence', 0.0) or 0.0)
+            except (TypeError, ValueError):
+                confidence = 0.0
+            confidence = max(0.0, min(1.0, confidence))
+
+            allowed_priorities = {'PAST', 'ODDIY', 'YUQORI', 'FAVQULODDA'}
+            allowed_categories = {
+                'IJTIMOIY', 'IQTISODIY', 'HUQUQIY', 'INFRASTRUKTURA',
+                'TA_LIM', 'SOG_LIQNI_SAQLASH', 'BOSHQA'
+            }
+            allowed_freq = {'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'}
+
+            org_ids: List[str] = []
+            for oid in parsed.get('organization_ids', []) or []:
+                if str(oid) in org_map:
+                    org_ids.append(str(oid))
+
+            org_names = [str(name).strip() for name in (parsed.get('organization_names') or []) if str(name).strip()]
+            if not org_ids and org_names:
+                for org in orgs:
+                    org_name_lower = (org.get('name') or '').lower()
+                    if any(name.lower() in org_name_lower or org_name_lower in name.lower() for name in org_names):
+                        org_ids.append(str(org['id']))
+
+            params: Dict[str, Any] = {
+                'title': str(parsed.get('title', '')).strip(),
+                'description': str(parsed.get('description', '')).strip(),
+                'priority': str(parsed.get('priority', 'ODDIY')).upper(),
+                'category': str(parsed.get('category', 'BOSHQA')).upper(),
+                'organization_ids': list(dict.fromkeys(org_ids)),
+                'organization_names': org_names,
+                'assign_all': bool(parsed.get('assign_all', False)),
+            }
+
+            try:
+                params['deadline_days'] = int(parsed.get('deadline_days', 5) or 5)
+            except (TypeError, ValueError):
+                params['deadline_days'] = 5
+
+            frequency_raw = parsed.get('frequency')
+            frequency = str(frequency_raw).upper() if frequency_raw else None
+            if frequency in allowed_freq:
+                params['frequency'] = frequency
+
+            for date_key in ('start_date', 'end_date'):
+                date_value = parsed.get(date_key)
+                if isinstance(date_value, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', date_value):
+                    params[date_key] = date_value
+
+            if params['priority'] not in allowed_priorities:
+                params['priority'] = 'ODDIY'
+            if params['category'] not in allowed_categories:
+                params['category'] = 'BOSHQA'
+            params['deadline_days'] = min(max(params['deadline_days'], 1), 365)
+
+            if intent == 'CREATE_TASK' and params.get('frequency') in {'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'}:
+                intent = 'CREATE_RECURRING_TASK'
+
+            if intent == 'CREATE_RECURRING_TASK' and 'frequency' not in params:
+                params['frequency'] = 'WEEKLY'
+
+            return {
+                'intent': intent,
+                'confidence': confidence,
+                'parameters': params,
+            }
+        except Exception as e:
+            logger.error(f"Task intent AI tahlil xatosi: {e}")
+            return {"intent": "UNKNOWN", "confidence": 0.0, "parameters": {}}
     
     def _extract_parameters(self, text: str, intent: str) -> Dict:
         """Matndan parametrlarni ajratib olish"""
         params = {}
+        normalized_text = (text or "").strip()
         
         # Raqamlarni topish (topshiriq/murojaat ID)
         import re
-        numbers = re.findall(r'#?(\d+)', text)
+        numbers = re.findall(r'#?(\d+)', normalized_text)
         if numbers:
             params['id'] = int(numbers[0])
         
@@ -272,32 +528,48 @@ Murojaatlar:
             r'(?:ga|ning)\s+(.+?)(?:\s+ga|\s+ni|\s*$)',
         ]
         for pattern in org_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+            match = re.search(pattern, normalized_text, re.IGNORECASE)
             if match:
                 params['organization_name'] = match.group(1).strip()
                 break
+
+        matched_orgs = self._match_org_ids_from_text(normalized_text)
+        if matched_orgs:
+            params['organization_ids'] = [item['id'] for item in matched_orgs]
+            params['organization_names'] = [item['name'] for item in matched_orgs]
         
         # Muddat
         deadline_patterns = {
+            r'(\d+)\s*soat': 'hours',
             r'(\d+)\s*kun': 'days',
             r'(\d+)\s*hafta': 'weeks',
             r'(\d+)\s*oy': 'months',
         }
         for pattern, unit in deadline_patterns.items():
-            match = re.search(pattern, text)
+            match = re.search(pattern, normalized_text, re.IGNORECASE)
             if match:
                 params['deadline'] = {
                     'value': int(match.group(1)),
                     'unit': unit
                 }
                 value = int(match.group(1))
-                if unit == 'days':
+                if unit == 'hours':
+                    params['deadline_days'] = max(1, (value + 23) // 24)
+                elif unit == 'days':
                     params['deadline_days'] = value
                 elif unit == 'weeks':
                     params['deadline_days'] = value * 7
                 elif unit == 'months':
                     params['deadline_days'] = value * 30
                 break
+
+        if 'deadline_days' not in params:
+            if re.search(r'\b(ertaga|ertasiga|tomorrow)\b', normalized_text, re.IGNORECASE):
+                params['deadline_days'] = 1
+            elif re.search(r'\b(indin|indinga|2\s*kundan\s*keyin)\b', normalized_text, re.IGNORECASE):
+                params['deadline_days'] = 2
+            elif re.search(r'\bbugun\b', normalized_text, re.IGNORECASE):
+                params['deadline_days'] = 1
 
         def parse_date(date_text: str) -> str | None:
             date_text = date_text.strip()
@@ -308,6 +580,10 @@ Murojaatlar:
                     continue
             return None
 
+        guessed_priority = self._guess_priority_from_text(normalized_text)
+        if guessed_priority:
+            params['priority'] = guessed_priority
+
         if intent == 'CREATE_TASK':
             # Topshiriq nomi
             title_patterns = [
@@ -315,7 +591,7 @@ Murojaatlar:
                 r'sarlavha\s*[:\-]?\s*(.+?)(?=\s+(tavsif|muddat|barchaga|hamma|$))',
             ]
             for pattern in title_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
+                match = re.search(pattern, normalized_text, re.IGNORECASE)
                 if match:
                     params['title'] = match.group(1).strip()
                     break
@@ -326,14 +602,25 @@ Murojaatlar:
                 r'tavsif\s*[:\-]?\s*(.+?)(?=\s+(muddat|barchaga|hamma|$))',
             ]
             for pattern in description_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
+                match = re.search(pattern, normalized_text, re.IGNORECASE)
                 if match:
                     params['description'] = match.group(1).strip()
                     break
 
             # Barchaga tayinlash
-            if re.search(r'\b(barchaga|hamma|hammasiga)\b', text, re.IGNORECASE):
+            if re.search(r'\b(barchaga|hamma|hammasiga)\b', normalized_text, re.IGNORECASE):
                 params['assign_all'] = True
+
+            # Fallback maydonlar
+            if not params.get('description'):
+                params['description'] = normalized_text
+            if not params.get('title'):
+                params['title'] = self._build_task_title(normalized_text)
+            if not params.get('deadline_days'):
+                priority = params.get('priority', 'ODDIY')
+                params['deadline_days'] = self._default_deadline_days_for_priority(priority)
+            if not params.get('organization_ids') and params.get('organization_name'):
+                params['organization_names'] = [params['organization_name']]
 
         if intent == 'CREATE_RECURRING_TASK':
             # Title
@@ -342,7 +629,7 @@ Murojaatlar:
                 r'sarlavha\s*[:\-]?\s*(.+?)(?=\s+(tavsif|takror|muddat|boshlanish|tugash|$))',
             ]
             for pattern in title_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
+                match = re.search(pattern, normalized_text, re.IGNORECASE)
                 if match:
                     params['title'] = match.group(1).strip()
                     break
@@ -353,45 +640,53 @@ Murojaatlar:
                 r'izoh\s*[:\-]?\s*(.+?)(?=\s+(takror|muddat|boshlanish|tugash|$))',
             ]
             for pattern in description_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
+                match = re.search(pattern, normalized_text, re.IGNORECASE)
                 if match:
                     params['description'] = match.group(1).strip()
                     break
 
             # Frequency
-            if re.search(r'ikki\s*hafta|2\s*hafta', text, re.IGNORECASE):
+            if re.search(r'ikki\s*hafta|2\s*hafta', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'BIWEEKLY'
-            elif re.search(r'har\s*kuni|kunlik', text, re.IGNORECASE):
+            elif re.search(r'har\s*kuni|kunlik', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'DAILY'
-            elif re.search(r'har\s*hafta|haftalik', text, re.IGNORECASE):
+            elif re.search(r'har\s*hafta|haftalik', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'WEEKLY'
-            elif re.search(r'har\s*oy|oylik', text, re.IGNORECASE):
+            elif re.search(r'har\s*oy|oylik', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'MONTHLY'
-            elif re.search(r'har\s*chorak|choraklik', text, re.IGNORECASE):
+            elif re.search(r'har\s*chorak|choraklik', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'QUARTERLY'
-            elif re.search(r'har\s*yil|yillik', text, re.IGNORECASE):
+            elif re.search(r'har\s*yil|yillik', normalized_text, re.IGNORECASE):
                 params['frequency'] = 'YEARLY'
 
-            cron_match = re.search(r'cron\s*[:\-]?\s*([\w\s*/,-]+)', text, re.IGNORECASE)
+            cron_match = re.search(r'cron\s*[:\-]?\s*([\w\s*/,-]+)', normalized_text, re.IGNORECASE)
             if cron_match:
                 params['frequency'] = 'CUSTOM'
                 params['cron_expression'] = cron_match.group(1).strip()
 
             # Start/end dates
-            start_match = re.search(r'(?:boshlanish|boshlanadi|start)\s*[:\-]?\s*([0-9./-]+)', text, re.IGNORECASE)
+            start_match = re.search(r'(?:boshlanish|boshlanadi|start)\s*[:\-]?\s*([0-9./-]+)', normalized_text, re.IGNORECASE)
             if start_match:
                 parsed = parse_date(start_match.group(1))
                 if parsed:
                     params['start_date'] = parsed
 
-            end_match = re.search(r'(?:tugash|yakun|end|gacha)\s*[:\-]?\s*([0-9./-]+)', text, re.IGNORECASE)
+            end_match = re.search(r'(?:tugash|yakun|end|gacha)\s*[:\-]?\s*([0-9./-]+)', normalized_text, re.IGNORECASE)
             if end_match:
                 parsed = parse_date(end_match.group(1))
                 if parsed:
                     params['end_date'] = parsed
 
-            if re.search(r'\b(barchaga|hamma|hammasiga)\b', text, re.IGNORECASE):
+            if re.search(r'\b(barchaga|hamma|hammasiga)\b', normalized_text, re.IGNORECASE):
                 params['assign_all'] = True
+
+            if not params.get('title'):
+                params['title'] = self._build_task_title(normalized_text)
+            if not params.get('description'):
+                params['description'] = normalized_text
+            if not params.get('deadline_days'):
+                priority = params.get('priority', 'ODDIY')
+                params['deadline_days'] = self._default_deadline_days_for_priority(priority)
 
         if intent == 'EXPORT_ANALYTICS':
             if re.search(r'\bpdf\b', text, re.IGNORECASE):
@@ -444,6 +739,71 @@ Murojaatlar:
                     params['report_type'] = 'WEEKLY_SUMMARY'
         
         return params
+
+    def _default_deadline_days_for_priority(self, priority: str) -> int:
+        priority_map = {
+            'FAVQULODDA': 1,
+            'YUQORI': 3,
+            'ODDIY': 5,
+            'PAST': 7,
+        }
+        return priority_map.get(str(priority).upper(), 5)
+
+    def _guess_priority_from_text(self, text: str) -> str | None:
+        text_lower = text.lower()
+        if re.search(r'\b(shoshilinch|zudlik bilan|tezkor|favqulodda|darhol)\b', text_lower):
+            return 'FAVQULODDA'
+        if re.search(r'\b(muhim|kechiktirmay|zarur|ustuvor)\b', text_lower):
+            return 'YUQORI'
+        if re.search(r'\b(shoshilinch emas|oddiy|odatiy)\b', text_lower):
+            return 'ODDIY'
+        if re.search(r'\b(shart emas|ikkinchi daraja|past)\b', text_lower):
+            return 'PAST'
+        return None
+
+    def _build_task_title(self, text: str) -> str:
+        cleaned = re.sub(r'\s+', ' ', text).strip(" \n\t-:;,.")
+        if not cleaned:
+            return 'AI tomonidan yaratilgan topshiriq'
+
+        # Birinchi jumladan sarlavha yasash
+        sentence = re.split(r'[.!?\n]', cleaned)[0].strip()
+        sentence = re.sub(r'^(iltimos[, ]+)?', '', sentence, flags=re.IGNORECASE)
+        if len(sentence) > 120:
+            sentence = sentence[:117].rstrip() + "..."
+        return sentence or 'AI tomonidan yaratilgan topshiriq'
+
+    def _match_org_ids_from_text(self, text: str) -> List[Dict[str, str]]:
+        """Matndan tashkilot nomlarini topish (oddiy fuzzy matching)."""
+        from organizations.models import Organization
+
+        normalized = (text or '').lower()
+        if not normalized:
+            return []
+
+        results: List[Dict[str, str]] = []
+        orgs = Organization.objects.filter(is_active=True).values('id', 'name')
+
+        for org in orgs:
+            org_name = str(org.get('name') or '')
+            org_name_lower = org_name.lower()
+            if not org_name_lower:
+                continue
+
+            # To'liq yoki asosiy tokenlar bo'yicha moslik
+            if org_name_lower in normalized:
+                results.append({'id': str(org['id']), 'name': org_name})
+                continue
+
+            tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_name_lower) if len(tok) >= 4]
+            if tokens and sum(1 for token in tokens if token in normalized) >= max(1, len(tokens) // 2):
+                results.append({'id': str(org['id']), 'name': org_name})
+
+        # Dublikatlarni olib tashlash
+        unique: Dict[str, Dict[str, str]] = {}
+        for item in results:
+            unique[item['id']] = item
+        return list(unique.values())[:5]
     
     def execute_action(self, action) -> Dict:
         """AI harakatini bajarish"""
@@ -627,38 +987,84 @@ Murojaatlar:
         """Topshiriq yaratish"""
         from tasks.models import Task, TaskOrganization
         from organizations.models import Organization
-        
-        title = params.get('title', 'AI tomonidan yaratilgan topshiriq')
-        description = params.get('description', '')
-        priority = params.get('priority', 'ODDIY')
-        deadline_days = params.get('deadline_days', 7)
-        org_ids = params.get('organization_ids', [])
-        assign_all = params.get('assign_all', False)
-        
+
+        title = str(params.get('title') or 'AI tomonidan yaratilgan topshiriq').strip()
+        description = str(params.get('description') or '').strip()
+        if not description:
+            description = title
+
+        priority = str(params.get('priority', 'ODDIY')).upper()
+        if priority not in {'PAST', 'ODDIY', 'YUQORI', 'FAVQULODDA'}:
+            priority = 'ODDIY'
+
+        category = str(params.get('category', 'BOSHQA')).upper()
+        allowed_categories = {
+            'IJTIMOIY', 'IQTISODIY', 'HUQUQIY', 'INFRASTRUKTURA',
+            'TA_LIM', 'SOG_LIQNI_SAQLASH', 'BOSHQA'
+        }
+        if category not in allowed_categories:
+            category = 'BOSHQA'
+
+        try:
+            deadline_days = int(params.get('deadline_days', self._default_deadline_days_for_priority(priority)) or 5)
+        except (TypeError, ValueError):
+            deadline_days = self._default_deadline_days_for_priority(priority)
+        deadline_days = min(max(deadline_days, 1), 365)
+
+        org_ids = [str(oid) for oid in (params.get('organization_ids') or []) if oid]
+        org_names = [str(name).strip() for name in (params.get('organization_names') or []) if str(name).strip()]
+        org_name = str(params.get('organization_name') or '').strip()
+        assign_all = bool(params.get('assign_all', False))
+
+        if assign_all:
+            org_ids = list(
+                Organization.objects.filter(is_active=True).values_list('id', flat=True)
+            )
+            org_ids = [str(oid) for oid in org_ids]
+
+        if not org_ids and org_names:
+            matched = Organization.objects.filter(
+                is_active=True,
+                name__iregex='|'.join(re.escape(name) for name in org_names[:10])
+            ).values_list('id', flat=True)
+            org_ids = [str(oid) for oid in matched]
+
+        if not org_ids and org_name:
+            org_ids = [
+                str(oid) for oid in
+                Organization.objects.filter(name__icontains=org_name, is_active=True).values_list('id', flat=True)
+            ]
+
+        if not org_ids:
+            text_for_match = f"{title} {description}".strip()
+            guessed = self._match_org_ids_from_text(text_for_match)
+            org_ids = [item['id'] for item in guessed]
+
+        valid_orgs = list(Organization.objects.filter(id__in=org_ids, is_active=True))
+        if not valid_orgs:
+            return {
+                'success': False,
+                'error': "Topshiriq uchun mos tashkilot aniqlanmadi. Tashkilot nomini aniqroq ayting."
+            }
+
         task = Task.objects.create(
             title=title,
             description=description,
             priority=priority,
+            category=category,
             deadline=timezone.now() + timedelta(days=deadline_days),
             created_by=user,
             source='AI'
         )
-        
-        if assign_all:
-            org_ids = list(Organization.objects.values_list('id', flat=True))
 
-        for org_id in org_ids:
-            try:
-                org = Organization.objects.get(id=org_id)
-                TaskOrganization.objects.create(task=task, organization=org)
-            except Organization.DoesNotExist:
-                pass
-        
+        for org in valid_orgs:
+            TaskOrganization.objects.create(task=task, organization=org)
+
         task_id = str(task.id)
         return {
             'success': True,
             'task_id': task_id,
-            'message': f"Topshiriq #{task_id} yaratildi"
+            'message': f"Topshiriq #{task_id} yaratildi ({len(valid_orgs)} ta tashkilotga biriktirildi)"
         }
 
     def _create_recurring_task(self, params: Dict, user) -> Dict:
@@ -1011,11 +1417,24 @@ Murojaatlar:
     def transcribe_audio(self, audio_file) -> str:
         """Audio faylni matnga aylantirish (Whisper)"""
         client = self.get_client()
-        if not client or self.provider != 'openai':
-            return "Audio transkripsiya faqat OpenAI bilan ishlaydi"
-        
+        openai_client = None
+
+        # Chat provider Anthropic bo'lsa ham transkripsiya uchun OpenAI kalitidan foydalanamiz
+        if self.provider == 'openai':
+            openai_client = client
+        else:
+            openai_api_key = getattr(settings, 'OPENAI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
+            if openai_api_key:
+                try:
+                    from openai import OpenAI
+                    openai_client = OpenAI(api_key=openai_api_key)
+                except Exception as e:
+                    logger.error(f"OpenAI transcription client xatosi: {e}")
+
+        if not openai_client:
+            return "Audio transkripsiya uchun OpenAI API kaliti topilmadi"
+
         try:
-            # Read bytes to ensure compatible file type for OpenAI SDK
             try:
                 audio_file.seek(0)
             except Exception:
@@ -1024,25 +1443,46 @@ Murojaatlar:
                 except Exception:
                     pass
 
-            file_name = getattr(audio_file, 'name', 'audio.webm')
-            file_bytes = audio_file.read() if hasattr(audio_file, 'read') else None
+            file_name = getattr(audio_file, 'name', 'audio.webm') or 'audio.webm'
+            file_bytes = audio_file.read() if hasattr(audio_file, 'read') else b''
             if not file_bytes and hasattr(audio_file, 'file'):
                 file_bytes = audio_file.file.read()
 
-            transcription_params = {
+            if not file_bytes:
+                return "Xatolik: Audio fayl bo'sh"
+
+            # OpenAI SDK file-like obyektni yaxshi qabul qiladi
+            file_obj = io.BytesIO(file_bytes)
+            file_obj.name = file_name
+
+            transcription_params: Dict[str, Any] = {
                 "model": "whisper-1",
-                "file": (file_name, file_bytes or b""),
+                "file": file_obj,
             }
 
             language = getattr(settings, "AI_TRANSCRIPTION_LANGUAGE", "auto")
             if language and language != "auto":
                 transcription_params["language"] = language
 
-            transcription = client.audio.transcriptions.create(
+            transcription = openai_client.audio.transcriptions.create(
                 **transcription_params,
                 prompt="Transcribe in Uzbek (Latin). If unclear, keep proper names as is."
             )
-            return transcription.text
+
+            text = (getattr(transcription, 'text', '') or '').strip()
+            if not text:
+                return "Xatolik: Audio transkripsiya bo'sh qaytdi"
+
+            # Keyingi saqlash/yuborishlar uchun pointerni tiklaymiz
+            try:
+                audio_file.seek(0)
+            except Exception:
+                try:
+                    audio_file.file.seek(0)
+                except Exception:
+                    pass
+
+            return text
         except Exception as e:
             logger.error(f"Transcription error: {e}")
             return f"Xatolik: {str(e)}"
