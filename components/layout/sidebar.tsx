@@ -62,7 +62,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/ai-assistant',
     '/dashboard/settings',
   ],
-  // Hokimlik mas'uli - can add users, orgs, create tasks (NO AI Assistant)
+  // Hokimlik mas'uli - can add users, orgs, create tasks (+ AI Assistant)
   HOKIMLIK_MASUL: [
     '/dashboard',
     '/dashboard/tasks',
@@ -72,6 +72,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/dashboard/appeals',
     '/dashboard/analytics',
     '/dashboard/chat',
+    '/dashboard/ai-assistant',
     '/dashboard/settings',
   ],
   // Tashkilot rahbari - can add tashkilot mas'uli, view tasks, upload reports
@@ -255,7 +256,7 @@ export function Sidebar() {
       href: "/dashboard/ai-assistant",
       icon: Sparkles,
       section: "analytics",
-      requiresRole: ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'] // Only for Hokim, Hokim yordamchisi, and Admin
+      requiresRole: ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'ADMIN']
     },
     {
       title: t.navigation.analytics,

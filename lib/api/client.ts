@@ -410,30 +410,12 @@ export const api = {
   },
 
   async postFormData<T = unknown>(url: string, formData: FormData): Promise<{ data: T }> {
-    const token = getAccessToken()
-    const headers: HeadersInit = {}
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    
-    const response = await fetch(`${API_BASE}${url}`, {
+    const data = await fetchApi<T>(url, {
       method: 'POST',
-      headers,
       body: formData,
       credentials: 'include',
     })
-    
-    if (!response.ok) {
-      const errorData = await parseResponseBody(response)
-      throw new ApiError(
-        extractErrorMessage(errorData, response.status),
-        response.status,
-        errorData
-      )
-    }
-    
-    const data: T = await response.json()
+
     return { data }
   },
 } as const
