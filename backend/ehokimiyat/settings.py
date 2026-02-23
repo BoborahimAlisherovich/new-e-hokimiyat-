@@ -66,7 +66,7 @@ DEBUG = env_bool('DJANGO_DEBUG', env_bool('DEBUG', False))
 
 ALLOWED_HOSTS = env_csv(
     'ALLOWED_HOSTS',
-    os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0')
+    os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,api.ehokimiyat.uz,ehokimiyat.uz,www.ehokimiyat.uz')
 )
 
 # Application definition
@@ -231,16 +231,17 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS Settings
+# CORS Settings - E-Hokimiyat Production
 CORS_ALLOWED_ORIGINS = env_csv(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://192.168.200.86:3000,http://192.168.200.86:3001,http://10.185.6.214:3000,http://10.185.6.214:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:5173,http://127.0.0.1:5173,http://192.168.200.86:3000,http://192.168.200.86:3001,http://10.185.6.214:3000,http://10.185.6.214:3001,https://be80eeee622c.ngrok-free.app,https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz,https://ehokimiyat.uz,https://api.ehokimiyat.uz,https://www.ehokimiyat.uz'
 )
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.ngrok-free\.app$",
     r"^https://.*\.ngrok\.io$",
     r"^http://192\.168\.\d+\.\d+:\d+$",  # Local network IPs
     r"^http://10\.\d+\.\d+\.\d+:\d+$",  # 10.x.x.x network IPs
+    r"^https://.*\.ehokimiyat\.uz$",  # E-Hokimiyat subdomains
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -266,7 +267,7 @@ CORS_ALLOW_METHODS = [
 
 CSRF_TRUSTED_ORIGINS = env_csv(
     'CSRF_TRUSTED_ORIGINS',
-    'https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz'
+    'https://gameroom.uz,https://api.gameroom.uz,https://pytech.uz,https://www.pytech.uz,https://api.pytech.uz,https://ehokimiyat.uz,https://api.ehokimiyat.uz,https://www.ehokimiyat.uz'
 )
 
 # File Upload Settings
