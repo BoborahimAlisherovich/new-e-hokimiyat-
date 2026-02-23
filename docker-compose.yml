@@ -44,10 +44,11 @@ services:
     environment:
       - DJANGO_DEBUG=False
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=api.ehokimiyat.uz,ehokimiyat.uz,www.ehokimiyat.uz,localhost,127.0.0.1
       - DATABASE_URL=postgres://postgres:${DB_PASSWORD:-postgres}@db:5432/ehokimiyat
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://ehokimiyat.uz,https://api.ehokimiyat.uz,http://localhost:3000,http://localhost:5173}
     volumes:
       - backend_media:/app/media
       - backend_static:/app/staticfiles
@@ -110,8 +111,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
-        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:8000/ws}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.ehokimiyat.uz/api}
+        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-wss://api.ehokimiyat.uz/ws}
     container_name: ehokimiyat-frontend
     ports:
       - "3000:3000"
