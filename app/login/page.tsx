@@ -163,8 +163,45 @@ export default function LoginPage() {
     }
   }
 
-  const handleOneIdLogin = () => {
-    handlePnflCheck()
+  const handleOneIdLogin = async () => {
+    if (!/^\d{14}$/.test(pnfl)) {
+      setError("PNFL 14 ta raqamdan iborat bo'lishi kerak")
+      return
+    }
+
+    setError("")
+    setStep("checking")
+
+    try {
+      // OneID login boshlash
+      const { oneidLogin, buildOneIDCallbackUrl, storeOneIDSession } = await import("@/lib/api/oneid")
+      
+      const callbackUrl = buildOneIDCallbackUrl()
+      const response = await oneidLogin({
+        pnfl: pnfl,
+        redirect_uri: callbackUrl
+      })
+
+      if (response.success && response.authorization_url) {
+        // Sessiya ma'lumotlarini saqlash
+        if (response.session_id && response.state) {
+          storeOneIDSession({
+            session_id: response.session_id,
+            state: response.state,
+            pnfl: pnfl
+          })
+        }
+        
+        // OneID ga yo'naltirish
+        setStep("oneid_redirect")
+        window.location.href = response.authorization_url
+      } else {
+        throw new Error(response.error || "OneID login xatolik")
+      }
+    } catch (err: any) {
+      setStep("error")
+      setError(err.message || "OneID orqali kirishda xatolik yuz berdi")
+    }
   }
 
   const resetForm = () => {
