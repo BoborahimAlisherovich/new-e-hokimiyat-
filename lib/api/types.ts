@@ -102,6 +102,12 @@ export interface ChatMessage {
   content: string
   is_read: boolean
   created_at: string
+  attachment?: {
+    type: string
+    url: string
+    name?: string
+    size?: string
+  }
 }
 
 /** Chat suhbati */

@@ -35,7 +35,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T {
-  const lastRun = useRef(Date.now())
+  const lastRun = useRef(0)
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   
   return useCallback((...args: Parameters<T>) => {
@@ -93,12 +93,13 @@ export function useLocalStorage<T>(
 
 // Media query hook
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false)
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(query).matches
+  })
 
   useEffect(() => {
     const media = window.matchMedia(query)
-    setMatches(media.matches)
-    
     const listener = (e: MediaQueryListEvent) => setMatches(e.matches)
     media.addEventListener('change', listener)
     

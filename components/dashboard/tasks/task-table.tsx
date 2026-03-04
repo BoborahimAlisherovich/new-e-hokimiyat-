@@ -113,7 +113,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                   )}>
                     {isOverdue && <AlertTriangle className="h-3.5 w-3.5" />}
                     {(task.deadline || task.due_date) 
-                      ? new Date(task.deadline || task.due_date).toLocaleDateString("uz-UZ", {
+                      ? new Date(task.deadline || task.due_date || '').toLocaleDateString("uz-UZ", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric"

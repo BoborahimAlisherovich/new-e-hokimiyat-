@@ -33,15 +33,15 @@ export function Header({ title, description }: HeaderProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [recentNotifications, setRecentNotifications] = useState<any[]>([])
-  const [mounted, setMounted] = useState(false)
-  const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+ const [recentNotifications, setRecentNotifications] = useState<any[]>([])
+ const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+
   const { language, setLanguage } = useI18n()
   const t = useTranslation()
 
-  useEffect(() => {
-    setMounted(true)
-    let isMounted = true
+ useEffect(() => {
+ let isMounted = true
+
     
     // Fetch current user
     getCurrentUser()
@@ -138,9 +138,9 @@ export function Header({ title, description }: HeaderProps) {
           <Menu className="h-5 w-5 text-slate-600" />
         </Button>
 
-        {/* Language Selector */}
-        {mounted && (
-          <DropdownMenu>
+ {/* Language Selector */}
+ <DropdownMenu>
+
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
@@ -181,14 +181,13 @@ export function Header({ title, description }: HeaderProps) {
                 <span className="mr-2">🇬🇧</span>
                 <span>{t.settings.languageEn}</span>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+ </DropdownMenuContent>
+ </DropdownMenu>
 
 
-        {/* Notifications */}
-        {mounted && (
-          <DropdownMenu>
+ {/* Notifications */}
+ <DropdownMenu>
+
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
@@ -255,13 +254,12 @@ export function Header({ title, description }: HeaderProps) {
                 <p className="text-xs text-slate-500">{t.notifications.emptyDescription}</p>
               </div>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        )}
+ </DropdownMenuContent>
+ </DropdownMenu>
 
-        {/* User Menu */}
-        {mounted && (
-          <DropdownMenu>
+ {/* User Menu */}
+ <DropdownMenu>
+
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
@@ -310,9 +308,9 @@ export function Header({ title, description }: HeaderProps) {
               <X className="w-4 h-4 text-red-500 mr-2" />
               <span className="text-sm text-red-600 font-medium">{t.common.logout}</span>
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        )}
+ </DropdownMenuContent>
+ </DropdownMenu>
+
       </motion.div>
 
       {/* User Chat Dialog */}

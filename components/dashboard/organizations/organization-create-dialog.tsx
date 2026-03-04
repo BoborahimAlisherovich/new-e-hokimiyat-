@@ -25,28 +25,34 @@ interface OrganizationCreateDialogProps {
 }
 
 export function OrganizationCreateDialog({ 
-  open, 
-  onOpenChange,
-  formData = { name: '', servicePhone: '', address: '', sector_id: '' },
-  onChange = () => {},
-  onSubmit = () => {},
-  loading = false
+ open, 
+ onOpenChange,
+ formData = { name: '', servicePhone: '', address: '', sector_id: '' },
+ onChange = () => {},
+ onSubmit = () => {},
+ loading = false
 }: OrganizationCreateDialogProps) {
-  const [sectors, setSectors] = useState<Sector[]>([])
-  const [loadingSectors, setLoadingSectors] = useState(false)
+ const [sectors, setSectors] = useState<Sector[]>([])
+ const [loadingSectors, setLoadingSectors] = useState(false)
 
-  useEffect(() => {
-    if (open) {
-      setLoadingSectors(true)
-      getSectors()
-        .then(setSectors)
-        .catch(console.error)
-        .finally(() => setLoadingSectors(false))
-    }
-  }, [open])
+ const handleOpenChange = (nextOpen: boolean) => {
+ if (nextOpen) {
+ setLoadingSectors(true)
+ }
+ onOpenChange(nextOpen)
+ }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+ useEffect(() => {
+ if (!open || !loadingSectors) return
+
+ getSectors()
+ .then(setSectors)
+ .catch(console.error)
+ .finally(() => setLoadingSectors(false))
+ }, [open, loadingSectors])
+
+ return (
+ <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-indigo-50/30 shadow-2xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">

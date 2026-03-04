@@ -37,12 +37,8 @@ export default function OrganizationsPage() {
         getOrganizations(),
         getUsers()
       ])
-      const orgItems = Array.isArray(orgsList)
-        ? orgsList
-        : orgsList?.results || []
-      const userItems = Array.isArray(usersList)
-        ? usersList
-        : usersList?.results || []
+ const orgItems = Array.isArray(orgsList) ? orgsList : []
+ const userItems = Array.isArray(usersList) ? usersList : []
       setOrganizations(orgItems)
       setUsers(userItems)
       setError(null)

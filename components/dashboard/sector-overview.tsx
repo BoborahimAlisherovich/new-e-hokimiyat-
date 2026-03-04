@@ -12,6 +12,22 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
+function getCategoryLabel(category: string, t: any): string {
+  const labels: Record<string, string> = {
+    'IJTIMOIY': 'Ijtimoiy',
+    'IQTISODIY': 'Iqtisodiy',
+    'INFRASTRUKTURA': 'Infrastruktura',
+    'MADANIYAT': 'Madaniyat',
+    'SPORT': 'Sport',
+    'TALIM': "Ta'lim",
+    'HUQUQIY': 'Huquqiy',
+    'SOG_LIQNI_SAQLASH': "Sog'liqni saqlash",
+    'QISHLOQ_XOJALIGI': "Qishloq xo'jaligi",
+    'BOSHQA': 'Boshqa',
+  }
+  return labels[category] || category || t.common.unknown
+}
+
 export function SectorOverview() {
   const t = useTranslation()
   const [sectorStats, setSectorStats] = React.useState<any[]>([])
@@ -47,23 +63,6 @@ export function SectorOverview() {
       mounted = false
     }
   }, [])
-
-  // Kategoriya labellarini olish
-  function getCategoryLabel(category: string, t: any): string {
-    const labels: Record<string, string> = {
-      'IJTIMOIY': 'Ijtimoiy',
-      'IQTISODIY': 'Iqtisodiy',
-      'INFRASTRUKTURA': 'Infrastruktura',
-      'MADANIYAT': 'Madaniyat',
-      'SPORT': 'Sport',
-      'TALIM': "Ta'lim",
-      'HUQUQIY': 'Huquqiy',
-      'SOG_LIQNI_SAQLASH': "Sog'liqni saqlash",
-      'QISHLOQ_XOJALIGI': "Qishloq xo'jaligi",
-      'BOSHQA': 'Boshqa',
-    }
-    return labels[category] || category || t.common.unknown
-  }
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 80) return "from-emerald-500 to-emerald-600"
