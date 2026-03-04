@@ -33,7 +33,7 @@ import { TOKEN_KEYS } from './types'
 export async function getUsers(
   filters?: UserFilters,
   page = 1,
-  pageSize = 500
+  pageSize = 100
 ): Promise<User[]> {
   const params = { 
     ...filters, 

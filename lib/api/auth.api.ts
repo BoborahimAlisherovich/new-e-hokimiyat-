@@ -43,7 +43,7 @@ export async function login(
 ): Promise<LoginResponse> {
   const payload: LoginRequest =
     typeof pnflOrData === 'string'
-      ? { pnfl: pnflOrData, password }
+      ? { login: pnflOrData, password }
       : pnflOrData
 
   const response = await fetchApi<LoginResponse>('/auth/login/', {

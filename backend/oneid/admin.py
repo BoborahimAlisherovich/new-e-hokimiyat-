@@ -44,7 +44,7 @@ class OneIDSessionAdmin(admin.ModelAdmin):
     
     list_display = [
         'session_id', 'user', 'pnfl', 'status', 'ip_address', 
-        'created_at', 'expires_at'
+        'created_at'
     ]
     list_filter = ['status', 'created_at', 'ip_address']
     search_fields = [

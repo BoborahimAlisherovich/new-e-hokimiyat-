@@ -168,48 +168,37 @@ class LoginSerializer(serializers.Serializer):
     Login serializer for mock authentication.
     In production, this would be replaced with OneID.
     """
-    pnfl = serializers.CharField(max_length=14)
-    password = serializers.CharField(write_only=True, required=False)
+    login = serializers.CharField(max_length=14, required=False)
+    pnfl = serializers.CharField(max_length=14, required=False)
+    password = serializers.CharField(write_only=True)
     
     def validate(self, attrs):
-        pnfl = attrs.get('pnfl')
-        password = attrs.get('password', '')
+        login = attrs.get('login') or attrs.get('pnfl')
+        if not login:
+            raise serializers.ValidationError("Login kiritilishi shart")
+        password = attrs.get('password')
         
-        # For mock auth, just check if user exists and is active
+        # Foydalanuvchi mavjudligini tekshirish
         try:
-            user = User.objects.get(pnfl=pnfl)
+            user = User.objects.get(pnfl=login)
         except User.DoesNotExist:
-            # Dev mode: auto-create demo user for any PNFL
-            if getattr(settings, 'DEBUG', False) or getattr(settings, 'ALLOW_DEV_LOGIN', False):
-                user = User.objects.create_user(
-                    pnfl=pnfl,
-                    password=password or None,
-                    first_name='Demo',
-                    last_name='User',
-                    role='ADMIN',
-                    status='FAOL',
-                    is_staff=True
-                )
-            else:
-                raise serializers.ValidationError("Siz tizimga oldindan kiritilmagansiz")
+            raise serializers.ValidationError("Siz tizimga oldindan kiritilmagansiz")
         
         if user.status == 'ARXIV':
             raise serializers.ValidationError("Bu hisob arxivlangan")
         
         if user.status == 'BLOKLANGAN':
             raise serializers.ValidationError("Bu hisob bloklangan")
+
+        if user.status != 'FAOL':
+            raise serializers.ValidationError("Bu hisob aktiv emas")
         
-        # For mock auth with password (development only)
-        if password:
-            user = authenticate(pnfl=pnfl, password=password)
-            if not user:
-                raise serializers.ValidationError("Login yoki parol noto'g'ri")
+        # PNFL USERNAME_FIELD bo'lgani uchun authenticate(username=pnfl) ishlatiladi
+        auth_user = authenticate(username=login, password=password)
+        if not auth_user:
+            raise serializers.ValidationError("Login yoki parol noto'g'ri")
         
-        # Activate user if not already active
-        if user.status == 'KUTILMOQDA':
-            user.activate()
-        
-        attrs['user'] = user
+        attrs['user'] = auth_user
         return attrs
 
 
