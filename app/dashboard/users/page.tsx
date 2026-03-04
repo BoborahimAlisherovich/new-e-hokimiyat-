@@ -40,12 +40,12 @@ export default function UsersPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
-      const [usersData, orgsData] = await Promise.all([
-        getUsers(),
-        getOrganizations()
-      ])
-      setUsers(usersData || [])
-      setOrganizations(orgsData || [])
+ const [usersData, orgsData] = await Promise.all([
+ getUsers(),
+ getOrganizations()
+ ])
+ setUsers(Array.isArray(usersData) ? usersData : [])
+ setOrganizations(Array.isArray(orgsData) ? orgsData : [])
     } catch (error) {
       console.error("Error loading data:", error)
       setUsers([])

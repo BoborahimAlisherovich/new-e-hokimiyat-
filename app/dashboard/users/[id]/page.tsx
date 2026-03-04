@@ -89,8 +89,8 @@ export default function UserDetailPage() {
     if (!user) return
     try {
       setActionLoading(true)
-      await blockUser(user.id)
-      setUser(prev => prev ? { ...prev, status: "BLOKLANGAN" } : null)
+ const updated = await blockUser(user.id)
+ setUser(updated)
     } catch (error) {
       console.error("Error blocking user:", error)
     } finally {
@@ -102,8 +102,8 @@ export default function UserDetailPage() {
     if (!user) return
     try {
       setActionLoading(true)
-      await unblockUser(user.id)
-      setUser(prev => prev ? { ...prev, status: "FAOL" } : null)
+ const updated = await unblockUser(user.id)
+ setUser(updated)
     } catch (error) {
       console.error("Error unblocking user:", error)
     } finally {
@@ -115,8 +115,8 @@ export default function UserDetailPage() {
     if (!user) return
     try {
       setActionLoading(true)
-      await archiveUser(user.id)
-      setUser(prev => prev ? { ...prev, status: "ARXIV" } : null)
+ const updated = await archiveUser(user.id)
+ setUser(updated)
     } catch (error) {
       console.error("Error archiving user:", error)
     } finally {

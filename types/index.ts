@@ -4,7 +4,7 @@
 
 export type UserRole = 'HOKIM' | 'HOKIM_YORDAMCHISI' | 'HOKIMLIK_MASUL' | 'TASHKILOT_RAHBAR' | 'TASHKILOT_RAHBARI' | 'TASHKILOT_MASUL' | 'ADMIN'
 
-export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED'
+export type UserStatus = 'DRAFT' | 'KUTILMOQDA' | 'FAOL' | 'BLOKLANGAN' | 'ARXIV' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED'
 
 export type OrganizationType = 'HOKIMIYAT' | 'MAKTAB' | 'BOLALAR_BOG' | 'SHIFOXONA' | 'POLIKLINIKA' | 'BOSHQA'
 
@@ -39,10 +39,11 @@ export interface User extends BaseModel {
   phone?: string
   role: UserRole
   status: UserStatus
-  position?: string
-  organization?: Organization
-  organization_id?: number
-  district?: District
+ position?: string
+ organization?: Organization
+ organization_id?: number
+ organization_name?: string
+ district?: District
   district_id?: number
   last_login?: string
   avatar?: string
@@ -78,24 +79,29 @@ export interface District extends BaseModel {
 // ==================== Organization Interfaces ====================
 
 export interface Organization extends BaseModel {
-  name: string
-  type: OrganizationType
-  inn?: string
-  address?: string
-  phone?: string
-  email?: string
-  website?: string
-  district: District
-  district_id: number
-  parent?: Organization
-  parent_id?: number
-  director?: User
-  director_id?: number
-  status: OrganizationStatus
-  employee_count?: number
-  description?: string
-  children?: Organization[]
-  statistics?: OrganizationStatistics
+ name: string
+ type?: OrganizationType
+ inn?: string
+ address?: string
+ phone?: string
+ email?: string
+ website?: string
+ district?: District
+ district_id?: number
+ parent?: Organization
+ parent_id?: number
+ director?: User
+ director_id?: number
+ status?: OrganizationStatus
+ is_active?: boolean
+ isActive?: boolean
+ sector?: string
+ head?: string
+ rating?: number
+ employee_count?: number
+ description?: string
+ children?: Organization[]
+ statistics?: OrganizationStatistics
 }
 
 export interface OrganizationStatistics {
@@ -127,7 +133,7 @@ export interface Task extends BaseModel {
   organization?: Organization
   organization_id?: number
   
-  due_date: string
+  due_date?: string
   started_at?: string
   completed_at?: string
   
@@ -139,9 +145,12 @@ export interface Task extends BaseModel {
   chat_messages?: TaskChatMessage[]
   history?: TaskHistory[]
   
-  is_overdue: boolean
-  days_remaining?: number
-  progress_percentage: number
+ is_overdue: boolean
+ days_remaining?: number
+ progress_percentage: number
+ deadline?: string
+ assigned_organizations?: (Organization | number)[]
+ organizations?: (Organization | number)[]
 }
 
 export interface TaskAttachment extends BaseModel {
@@ -165,11 +174,13 @@ export interface TaskExecution extends BaseModel {
 }
 
 export interface TaskChatMessage extends BaseModel {
+  id: number
   task_id: number
   sender: User
   sender_id: number
   message: string
   attachments?: TaskAttachment[]
+  attachment?: TaskAttachment[]
   is_system_message: boolean
 }
 
@@ -346,7 +357,7 @@ export interface TaskCreateInput {
   priority: TaskPriority
   assigned_to_id?: number
   organization_id?: number
-  due_date: string
+  due_date?: string
   parent_task_id?: number
   source?: string
   source_document_number?: string
@@ -390,7 +401,8 @@ export interface OrganizationCreateInput {
 }
 
 export interface OrganizationUpdateInput extends Partial<OrganizationCreateInput> {
-  status?: OrganizationStatus
+ status?: OrganizationStatus
+ is_active?: boolean
 }
 
 // ==================== Legacy Compatibility (for existing components) ====================
@@ -404,7 +416,7 @@ export interface Appeal {
   description: string
   category: string
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'low' | 'medium' | 'high' | 'urgent'
-  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED' | 'pending_ai' | 'pending_review' | 'approved' | 'rejected' | 'responded' | 'forwarded' | 'resolved'
+  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED' | 'pending_ai' | 'pending_review' | 'approved' | 'rejected' | 'responded' | 'forwarded' | 'resolved' | 'OVERDUE' | 'overdue'
   assignedTo?: User
   organization?: Organization
   district: string

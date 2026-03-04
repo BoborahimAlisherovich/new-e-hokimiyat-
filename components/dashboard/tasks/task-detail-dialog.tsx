@@ -40,7 +40,7 @@ export function TaskDetailDialog({ task, onClose }: TaskDetailDialogProps) {
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Muddat</Label>
-                <p className="font-medium">{(task.deadline || task.due_date) ? new Date(task.deadline || task.due_date).toLocaleDateString("uz-UZ") : '—'}</p>
+                <p className="font-medium">{(task.deadline || task.due_date) ? new Date(task.deadline || task.due_date || '').toLocaleDateString("uz-UZ") : '—'}</p>
               </div>
             </div>
 

@@ -1,0 +1,22 @@
+import coreWebVitals from 'eslint-config-next/core-web-vitals'
+
+const config = [
+  {
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      'out/**',
+      'dist/**',
+      'coverage/**',
+      'backend/**',
+    ],
+  },
+  ...coreWebVitals,
+  {
+    rules: {
+      'react/no-unescaped-entities': 'off',
+    },
+  },
+]
+
+export default config

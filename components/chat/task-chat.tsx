@@ -73,7 +73,7 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
   }
 
   // Group messages by date
-  const groupedMessages = messages.reduce(
+  const groupedMessages = (messages || []).reduce<Record<string, ChatMessage[]>>(
     (groups, message) => {
       const date = new Date(message.created_at).toLocaleDateString("uz-UZ")
       if (!groups[date]) {
@@ -174,7 +174,7 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
                               )}
                             >
                               <File className="h-4 w-4" />
-                              <span className="truncate">{msg.attachment}</span>
+                              <span className="truncate">{msg.attachment?.name || 'Fayl'}</span>
                             </div>
                           </div>
                         )}

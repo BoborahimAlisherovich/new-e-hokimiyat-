@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, ReactNode } from 'react'
 import type { Language, Translations } from './types'
 export type { Language, Translations } from './types'
 import { uzTranslations } from './uz'
@@ -30,17 +30,14 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, defaultLanguage = 'uz' }: I18nProviderProps) {
-  const [language, setLanguageState] = useState<Language>(defaultLanguage)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Load language from localStorage on mount
-  useEffect(() => {
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window === 'undefined') return defaultLanguage
     const savedLanguage = localStorage.getItem('language') as Language
     if (savedLanguage && ['uz', 'uz-cyrl', 'ru', 'en'].includes(savedLanguage)) {
-      setLanguageState(savedLanguage)
+      return savedLanguage
     }
-    setIsLoading(false)
-  }, [])
+    return defaultLanguage
+  })
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
@@ -51,7 +48,7 @@ export function I18nProvider({ children, defaultLanguage = 'uz' }: I18nProviderP
     language,
     setLanguage,
     t: translations[language],
-    isLoading,
+    isLoading: false,
   }
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>

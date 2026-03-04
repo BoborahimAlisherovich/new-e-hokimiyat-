@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header"
 import { Tabs } from "@/components/ui/tabs"
 import { useState, useEffect, useCallback } from "react"
-import { useI18n, useTranslation } from "@/lib/i18n/context"
+import { useI18n, useTranslation, type Language } from "@/lib/i18n/context"
 import { getCurrentUser } from "@/lib/api"
 import { User } from "@/types"
 import { SettingsTabs } from "@/components/dashboard/settings/settings-tabs"
@@ -213,7 +213,7 @@ export default function SettingsPage() {
               saving={saving}
             />
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
-            <SettingsAppearanceTab t={t} language={language} onLanguageChange={setLanguage} onSave={saveSettings} saving={saving} />
+            <SettingsAppearanceTab t={t} language={language} onLanguageChange={(value) => setLanguage(value as Language)} onSave={saveSettings} saving={saving} />
             
             {/* Admin-only tabs */}
             {showAdminTabs && (
