@@ -59,7 +59,8 @@ export interface PaginatedApiResponse<T> {
 
 /** Login so'rovi */
 export interface LoginRequest {
-  pnfl: string
+  login: string
+  pnfl?: string
   password?: string
 }
 

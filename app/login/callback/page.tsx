@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
 import { setAccessToken, setRefreshToken } from "@/lib/api"
 import { parseOneIDCallback } from "@/lib/api/oneid"
 
-export default function LoginCallbackPage() {
+function LoginCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -162,5 +162,19 @@ export default function LoginCallbackPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-violet-50">
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
+        </div>
+      }
+    >
+      <LoginCallbackInner />
+    </Suspense>
   )
 }

@@ -37,6 +37,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [step, setStep] = useState<LoginStep>("initial")
   const [pnfl, setPnfl] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
   
@@ -135,11 +136,16 @@ export default function LoginPage() {
       return
     }
 
+    if (!password) {
+      setError("Parolni kiriting")
+      return
+    }
+
     setError("")
     setStep("checking")
 
     try {
-      const response = await login({ pnfl })
+      const response = await login({ login: pnfl, password })
       setAccessToken(response.access)
       setRefreshToken(response.refresh)
       
@@ -207,6 +213,7 @@ export default function LoginPage() {
   const resetForm = () => {
     setStep("initial")
     setPnfl("")
+    setPassword("")
     setError("")
   }
 
@@ -323,10 +330,24 @@ export default function LoginPage() {
                   </div>
                 </div>
 
+                <div className="space-y-3">
+                  <Label htmlFor="password" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                    Parol
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Parol"
+                    className="h-14 bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300"
+                  />
+                </div>
+
                 <Button
                   className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-500 group"
                   onClick={handlePnflCheck}
-                  disabled={pnfl.length !== 14}
+                  disabled={pnfl.length !== 14 || !password}
                 >
                   <span>Tizimga kirish</span>
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -341,7 +362,8 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <Button
+                {/* OneID tugmasi vaqtincha o'chirilgan */}
+                {/* <Button
                   variant="outline"
                   className="w-full h-14 text-base font-medium border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-300 group"
                   onClick={() => setStep("oneid_redirect")}
@@ -350,7 +372,7 @@ export default function LoginPage() {
                   <Image src="/oneid-logo.svg" alt="OneID" width={20} height={20} className="mr-2" onError={(e) => e.currentTarget.style.display = 'none'} />
                   <span>OneID orqali kirish</span>
                   <ExternalLink className="ml-2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                </Button>
+                </Button> */}
 
                 <p
                   className="text-xs text-gray-400 text-center leading-relaxed pt-2"
