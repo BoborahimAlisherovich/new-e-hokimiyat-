@@ -99,10 +99,10 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
               </div>
 
               {/* Messages */}
-              {dayMessages.map((msg) => {
-                const senderId = typeof msg.sender === 'object' ? msg.sender.id : (msg as any).senderId
+              {dayMessages.map((msg: any) => {
+                const senderId = typeof msg.sender === 'object' ? msg.sender.id : msg.senderId
                 const sender = usersMap[senderId]
-                const isSystem = (msg as any).type === "system"
+                const isSystem = msg.type === "system"
                 const isCurrentUser = senderId === currentUserId
 
                 if (isSystem) {
@@ -194,13 +194,13 @@ export function TaskChat({ messages = [], currentUserId = "1", onSendMessage }: 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Reply className="h-4 w-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Javob: {usersMap[typeof replyTo.sender === 'object' ? replyTo.sender.id : (replyTo as any).senderId]?.firstName}</span>
+              <span className="text-sm text-muted-foreground">Javob: {usersMap[typeof replyTo.sender === 'object' ? (replyTo.sender as any).id : (replyTo as any).senderId]?.firstName}</span>
             </div>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-sm text-foreground truncate">{replyTo.content}</p>
+          <p className="text-sm text-foreground truncate">{(replyTo as any).content}</p>
         </div>
       )}
 
