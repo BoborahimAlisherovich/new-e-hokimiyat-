@@ -88,18 +88,18 @@ python populate_data.py
 
 ### Login Process
 1. Navigate to `http://localhost:3000`
-2. Enter PNFL (Personal Number) of test user
+2. Enter login and password of test user
 3. System generates JWT tokens
 4. Tokens are stored in localStorage
 5. Automatically attached to all API requests
 
 ### Test Credentials
-Available test users (use any PNFL to login):
-- `12345678901234` - Hokim
-- `12345678901235` - Hokimlik Mas'uli
-- `12345678901236` - Tashkilot Rahbari
-- `12345678901237` - Tashkilot Mas'uli
-- `12345678901238` - Ijrochi
+Available test users:
+- `admin / admin123` - Admin
+- `hokim / hokim123` - Hokim
+- `masul / masul123` - Hokimlik Mas'uli
+- `rahbar / rahbar123` - Tashkilot Rahbari
+- `tashkilot-masul / tash123` - Tashkilot Mas'uli
 
 ## 📱 Available Pages
 

@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getUserById, updateUser, getOrganizations } from "@/lib/api"
-import { ensureDevAuth } from "@/lib/dev-auth"
 import { User, Organization } from "@/types"
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
@@ -43,12 +42,14 @@ export default function UserEditPage() {
   
   // Form state
   const [formData, setFormData] = useState({
+    login: "",
     first_name: "",
     last_name: "",
     middle_name: "",
     phone: "",
     email: "",
     position: "",
+    password: "",
     role: "",
     status: "",
     organization: "",
@@ -57,7 +58,6 @@ export default function UserEditPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await ensureDevAuth()
         const [userData, orgsData] = await Promise.all([
           getUserById(userId),
           getOrganizations()
@@ -72,12 +72,14 @@ export default function UserEditPage() {
           : (userData.organization || (userData as any).organization_id || "")
         
         setFormData({
+          login: userData.login || "",
           first_name: userData.first_name || "",
           last_name: userData.last_name || "",
           middle_name: userData.middle_name || "",
           phone: userData.phone || "",
           email: userData.email || "",
           position: userData.position || "",
+          password: "",
           role: userData.role || "",
           status: userData.status || "",
           organization: orgId,
@@ -103,6 +105,7 @@ export default function UserEditPage() {
     
     try {
       const updateData: any = {
+        login: formData.login.trim(),
         first_name: formData.first_name,
         last_name: formData.last_name,
         middle_name: formData.middle_name,
@@ -111,6 +114,10 @@ export default function UserEditPage() {
         position: formData.position,
         role: formData.role,
         status: formData.status,
+      }
+
+      if (formData.password.trim()) {
+        updateData.password = formData.password
       }
       
       if (formData.organization) {
@@ -185,6 +192,27 @@ export default function UserEditPage() {
                 <CardDescription>Foydalanuvchining asosiy ma'lumotlari</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="login">Login</Label>
+                    <Input
+                      id="login"
+                      value={formData.login}
+                      onChange={(e) => handleChange("login", e.target.value)}
+                      placeholder="Loginni kiriting"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Yangi parol</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleChange("password", e.target.value)}
+                      placeholder="O'zgartirilmasa bo'sh qoldiring"
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="last_name">Familiya</Label>

@@ -39,7 +39,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 interface Message {
   id: string
-  senderId: number
+  senderId: number | string
   senderName: string
   content: string
   attachment?: {
@@ -53,7 +53,7 @@ interface Message {
 }
 
 interface ChatUser {
-  id: number
+  id: number | string
   first_name: string
   last_name: string
   email?: string
@@ -78,8 +78,8 @@ interface UserChatDialogProps {
 export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
   const router = useRouter()
   const [users, setUsers] = useState<ChatUser[]>([])
-  const [conversations, setConversations] = useState<Map<number, Conversation>>(new Map())
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
+  const [conversations, setConversations] = useState<Map<string | number, Conversation>>(new Map())
+  const [selectedUserId, setSelectedUserId] = useState<string | number | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [currentUser, setCurrentUser] = useState<ChatUser | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -121,7 +121,7 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
       setUsers(processedUsers)
       
       // Demo conversations
-      const demoConversations = new Map<number, Conversation>()
+      const demoConversations = new Map<string | number, Conversation>()
       if (processedUsers.length > 0) {
         const firstUser = processedUsers[0]
         demoConversations.set(firstUser.id, {
@@ -196,7 +196,7 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
     setTimeout(() => updateMessageStatus(selectedUserId, message.id, "read"), 3000)
   }
 
-  const updateMessageStatus = (userId: number, msgId: string, status: Message["status"]) => {
+  const updateMessageStatus = (userId: number | string, msgId: string, status: Message["status"]) => {
     setConversations(prev => {
       const newMap = new Map(prev)
       const conv = newMap.get(userId)
@@ -246,7 +246,7 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
     return new Date(timestamp).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })
   }
 
-  const getLastMessage = (userId: number): { text: string; time: string } | null => {
+  const getLastMessage = (userId: number | string): { text: string; time: string } | null => {
     const conv = conversations.get(userId)
     if (!conv || conv.messages.length === 0) return null
     const lastMsg = conv.messages[conv.messages.length - 1]
@@ -271,7 +271,7 @@ export function UserChatDialog({ open, onOpenChange }: UserChatDialogProps) {
     return 0
   })
 
-  const handleSelectUser = (userId: number) => {
+  const handleSelectUser = (userId: number | string) => {
     setSelectedUserId(userId)
     if (!conversations.has(userId)) {
       const user = users.find(u => u.id === userId)!

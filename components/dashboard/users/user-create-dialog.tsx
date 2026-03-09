@@ -11,6 +11,7 @@ import { createUser } from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
 interface CreateUserFormData {
+  login: string
   firstName: string
   lastName: string
   middleName: string
@@ -18,6 +19,7 @@ interface CreateUserFormData {
   phone: string
   pnfl: string
   position: string
+  password: string
   role: User["role"]
   organizationId: string
 }
@@ -48,11 +50,16 @@ export function UserCreateDialog({
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
+    if (!formData.login.trim()) newErrors.login = "Login majburiy"
     if (!formData.firstName.trim()) newErrors.firstName = "Ism majburiy"
     if (!formData.lastName.trim()) newErrors.lastName = "Familiya majburiy"
     if (!formData.phone.trim()) newErrors.phone = "Telefon majburiy"
+    if (!formData.password.trim()) newErrors.password = "Parol majburiy"
+    if (formData.password && formData.password.length < 6) newErrors.password = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
     if (formData.pnfl && formData.pnfl.length !== 14) newErrors.pnfl = "PNFL 14 ta raqamdan iborat bo'lishi kerak"
-    if (!formData.organizationId) newErrors.organizationId = "Tashkilot tanlang"
+    if (["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role) && !formData.organizationId) {
+      newErrors.organizationId = "Tashkilot tanlang"
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -63,6 +70,7 @@ export function UserCreateDialog({
     setIsSubmitting(true)
     try {
       await createUser({
+        login: formData.login.trim(),
         first_name: formData.firstName,
         last_name: formData.lastName,
         middle_name: formData.middleName,
@@ -70,8 +78,9 @@ export function UserCreateDialog({
         phone: formData.phone,
         pnfl: formData.pnfl,
         position: formData.position || undefined,
+        password: formData.password,
         role: formData.role,
-        organization: formData.organizationId,
+        organization: formData.organizationId || undefined,
       })
       onSubmit()
     } catch (error: any) {
@@ -83,6 +92,7 @@ export function UserCreateDialog({
       if (error.data && typeof error.data === 'object') {
         // Map backend field names to frontend field names
         const fieldMap: Record<string, string> = {
+          'login': 'login',
           'first_name': 'firstName',
           'last_name': 'lastName',
           'middle_name': 'middleName',
@@ -92,6 +102,7 @@ export function UserCreateDialog({
           'email': 'email',
           'role': 'role',
           'position': 'position',
+          'password': 'password',
         }
         
         for (const [field, errors] of Object.entries(error.data)) {
@@ -127,6 +138,17 @@ export function UserCreateDialog({
             </div>
           )}
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="login">Login <span className="text-red-500">*</span></Label>
+              <Input
+                id="login"
+                value={formData.login}
+                onChange={(e) => onChange("login", e.target.value)}
+                placeholder="Masalan: admin-user"
+                className={errors.login ? "border-red-500" : ""}
+              />
+              {errors.login && <p className="text-xs text-red-500">{errors.login}</p>}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Familiya <span className="text-red-500">*</span></Label>
               <Input
@@ -192,6 +214,18 @@ export function UserCreateDialog({
               {errors.pnfl && <p className="text-xs text-red-500">{errors.pnfl}</p>}
             </div>
             <div className="space-y-2">
+              <Label htmlFor="password">Parol <span className="text-red-500">*</span></Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => onChange("password", e.target.value)}
+                placeholder="Kamida 6 ta belgi"
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="position">Lavozim</Label>
               <Input
                 id="position"
@@ -217,7 +251,9 @@ export function UserCreateDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="organizationId">Tashkilot <span className="text-red-500">*</span></Label>
+            <Label htmlFor="organizationId">
+              Tashkilot {["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role) && <span className="text-red-500">*</span>}
+            </Label>
             <Select value={formData.organizationId} onValueChange={(value) => onChange("organizationId", value)}>
               <SelectTrigger className={errors.organizationId ? "border-red-500" : ""}>
                 <SelectValue placeholder="Tashkilotni tanlang" />

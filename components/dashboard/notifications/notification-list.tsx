@@ -11,8 +11,8 @@ import { useTranslation } from "@/lib/i18n/context"
 
 interface NotificationListProps {
   notifications: Notification[]
-  onMarkAsRead: (id: number) => void
-  onDelete: (id: number) => void
+  onMarkAsRead: (id: number | string) => void
+  onDelete: (id: number | string) => void
 }
 
 export function NotificationList({ notifications, onMarkAsRead, onDelete }: NotificationListProps) {

@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, List, Type
 
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -60,8 +61,7 @@ if TYPE_CHECKING:
 class AuthViewSet(viewsets.ViewSet):
     """Autentifikatsiya endpointlari.
     
-    Development uchun: Mock autentifikatsiya PNFL bilan
-    Production uchun: OneID OAuth integratsiyasi
+    Login/parol asosidagi autentifikatsiya endpointlari.
     
     Endpointlar:
         - login: Tizimga kirish
@@ -76,12 +76,10 @@ class AuthViewSet(viewsets.ViewSet):
     def login(self, request: Request) -> Response:
         """Tizimga kirish.
         
-        Mock login endpoint - development uchun.
-        
         Args:
             request: HTTP so'rov
-                - pnfl: 14 raqamli JSHSHR
-                - password: Parol (ixtiyoriy)
+                - login: foydalanuvchi logini
+                - password: foydalanuvchi paroli
         
         Returns:
             Response: JWT tokenlar va foydalanuvchi ma'lumotlari
@@ -93,6 +91,20 @@ class AuthViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         
         user = serializer.validated_data['user']
+
+        update_fields: list[str] = []
+        now = timezone.now()
+        if not user.first_login_at:
+            user.first_login_at = now
+            update_fields.append('first_login_at')
+        if not user.activated_at:
+            user.activated_at = now
+            update_fields.append('activated_at')
+        if user.status != 'FAOL':
+            user.status = 'FAOL'
+            update_fields.append('status')
+        if update_fields:
+            user.save(update_fields=update_fields)
         
         # JWT tokenlar generatsiya qilish
         refresh = RefreshToken.for_user(user)
@@ -198,7 +210,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, CanManageUsers]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['role', 'status', 'organization']
-    search_fields = ['first_name', 'last_name', 'middle_name', 'position']
+    search_fields = ['login', 'pnfl', 'first_name', 'last_name', 'middle_name', 'email', 'position']
     ordering_fields = ['created_at', 'last_name', 'first_name']
     ordering = ['-created_at']
     
@@ -248,6 +260,7 @@ class UserViewSet(viewsets.ModelViewSet):
             entity_id=user.id,
             description=f"{self.request.user.full_name} yangi foydalanuvchi yaratdi: {user.full_name}",
             new_values={
+                'login': user.login,
                 'pnfl': user.masked_pnfl,
                 'role': user.role,
                 'organization': str(user.organization_id) if user.organization else None

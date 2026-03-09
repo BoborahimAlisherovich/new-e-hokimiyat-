@@ -1,7 +1,5 @@
 """
 User models for E-Hokimiyat platform.
-
-Based on PNFL (JSHSHR) + OneID authentication model.
 """
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -12,26 +10,32 @@ import uuid
 
 class UserManager(BaseUserManager):
     """
-    Custom user manager for PNFL-based authentication.
+    Custom user manager for login/password authentication.
     """
     
-    def create_user(self, pnfl, password=None, **extra_fields):
+    def create_user(self, login, password=None, **extra_fields):
+        pnfl = extra_fields.pop('pnfl', None)
+        if not login:
+            login = pnfl
+        if not login:
+            raise ValueError('Login majburiy')
         if not pnfl:
             raise ValueError('PNFL majburiy')
+        login = str(login).strip()
         
-        user = self.model(pnfl=pnfl, **extra_fields)
+        user = self.model(login=login, pnfl=pnfl, **extra_fields)
         if password:
             user.set_password(password)
         user.save(using=self._db)
         return user
     
-    def create_superuser(self, pnfl, password=None, **extra_fields):
+    def create_superuser(self, login, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'ADMIN')
         extra_fields.setdefault('status', 'FAOL')
         
-        return self.create_user(pnfl, password, **extra_fields)
+        return self.create_user(login, password, **extra_fields)
 
 
 class Role(models.Model):
@@ -61,11 +65,11 @@ class Role(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Custom User model based on PNFL (JSHSHR) identification.
+    Custom User model with dedicated login and password authentication.
     
     User Lifecycle:
-    - DRAFT: PNFL entered, not yet activated
-    - KUTILMOQDA: Waiting for OneID login
+    - DRAFT: Draft user
+    - KUTILMOQDA: Created, but not fully activated yet
     - FAOL: Active user
     - BLOKLANGAN: Temporarily blocked
     - ARXIV: Archived (left the position)
@@ -89,7 +93,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    # PNFL - Primary identifier (14 digits)
+    login = models.CharField(
+        max_length=150,
+        unique=True,
+        db_index=True,
+        verbose_name='Login'
+    )
+
+    # PNFL - official identifier (14 digits)
     pnfl = models.CharField(
         max_length=14, 
         unique=True, 
@@ -126,14 +137,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     position = models.CharField(max_length=200, blank=True, verbose_name='Lavozim')
     
-    # Status and OneID
+    # Status
     status = models.CharField(
         max_length=20, 
         choices=STATUS_CHOICES, 
-        default='KUTILMOQDA',
+        default='FAOL',
         verbose_name='Holat'
     )
-    oneid_connected = models.BooleanField(default=False, verbose_name='OneID ulangan')
     
     # Tracking
     created_by = models.ForeignKey(
@@ -156,8 +166,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     objects = UserManager()
     
-    USERNAME_FIELD = 'pnfl'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
+    USERNAME_FIELD = 'login'
+    REQUIRED_FIELDS = ['pnfl', 'first_name', 'last_name', 'role']
     
     class Meta:
         verbose_name = 'Foydalanuvchi'
@@ -214,14 +224,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         return target_role in hierarchy.get(self.role, [])
     
     def activate(self):
-        """Activate user after OneID login."""
+        """Activate user."""
         from django.utils import timezone
         self.status = 'FAOL'
-        self.oneid_connected = True
-        self.activated_at = timezone.now()
-        if not self.first_login_at:
-            self.first_login_at = timezone.now()
-        self.save()
+        if not self.activated_at:
+            self.activated_at = timezone.now()
+        self.save(update_fields=['status', 'activated_at'])
     
     def block(self):
         """Block user temporarily."""

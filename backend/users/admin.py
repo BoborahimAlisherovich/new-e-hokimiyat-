@@ -9,23 +9,23 @@ from .models import User, Role, UserAssignment
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ['pnfl', 'full_name', 'role', 'organization', 'status', 'created_at']
+    list_display = ['login', 'pnfl', 'full_name', 'role', 'organization', 'status', 'created_at']
     list_filter = ['role', 'status', 'organization']
-    search_fields = ['pnfl', 'first_name', 'last_name', 'email']
+    search_fields = ['login', 'pnfl', 'first_name', 'last_name', 'email']
     ordering = ['-created_at']
     
     fieldsets = (
-        (None, {'fields': ('pnfl', 'password')}),
+        (None, {'fields': ('login', 'pnfl', 'password')}),
         ('Shaxsiy ma\'lumotlar', {'fields': ('first_name', 'last_name', 'middle_name', 'phone', 'email')}),
         ('Rol va tashkilot', {'fields': ('role', 'organization', 'position')}),
-        ('Holat', {'fields': ('status', 'oneid_connected', 'is_active', 'is_staff')}),
+        ('Holat', {'fields': ('status', 'is_active', 'is_staff')}),
         ('Muhim sanalar', {'fields': ('created_at', 'activated_at', 'first_login_at')}),
     )
     
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('pnfl', 'first_name', 'last_name', 'role', 'organization', 'password1', 'password2'),
+            'fields': ('login', 'pnfl', 'first_name', 'last_name', 'role', 'organization', 'password1', 'password2'),
         }),
     )
     

@@ -50,7 +50,7 @@ export function UserDetailDialog({ user, onClose }: UserDetailDialogProps) {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>ПНФЛ</Label>
-                <p className="font-mono">{maskPnfl(user.pnfl)}</p>
+                <p className="font-mono">{user.masked_pnfl || maskPnfl(user.pnfl || "")}</p>
               </div>
               <div className="space-y-2">
                 <Label>Телефон</Label>

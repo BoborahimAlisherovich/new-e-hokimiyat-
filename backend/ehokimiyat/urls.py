@@ -21,7 +21,6 @@ urlpatterns = [
     path('api/notifications/', include('notifications.urls')),
     path('api/chat/', include('chat.urls')),
     path('api/telegram-bot/', include('telegram_bot.urls')),
-    # path('api/oneid/', include('oneid.urls')),  # Vaqtincha o'chirilgan
     
     # AI Chat API
     path('api/ai/', include('core.urls_ai')),

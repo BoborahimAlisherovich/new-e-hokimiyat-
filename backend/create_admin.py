@@ -11,20 +11,17 @@ django.setup()
 from users.models import User
 
 def create_admin_user():
+    LOGIN = "admin"
     PNFL = "11111111111111"
-    PASSWORD = "1"  # Simple password for dev, user can change later
+    PASSWORD = "admin123"
     
-    if User.objects.filter(pnfl=PNFL).exists():
-        print(f"❌ Foydalanuvchi (PNFL: {PNFL}) allaqachon mavjud.")
-        # Optional: Reset password if needed
-        # user = User.objects.get(pnfl=PNFL)
-        # user.set_password(PASSWORD)
-        # user.save()
-        # print("Parol yangilandi.")
+    if User.objects.filter(login=LOGIN).exists() or User.objects.filter(pnfl=PNFL).exists():
+        print(f"❌ Foydalanuvchi (login: {LOGIN}, PNFL: {PNFL}) allaqachon mavjud.")
     else:
         print(f"🛠 Superuser yaratilmoqda...")
         try:
             User.objects.create_superuser(
+                login=LOGIN,
                 pnfl=PNFL,
                 password=PASSWORD,
                 first_name="Muslim",
@@ -32,7 +29,8 @@ def create_admin_user():
                 role="ADMIN"  # We use the correct key here
             )
             print(f"✅ Superuser muvaffaqiyatli yaratildi!")
-            print(f"👤 Login (PNFL): {PNFL}")
+            print(f"👤 Login: {LOGIN}")
+            print(f"🪪 PNFL: {PNFL}")
             print(f"🔑 Parol: {PASSWORD}")
             print(f"ℹ️  Admin panelga kirish uchun: http://localhost:8000/admin")
         except Exception as e:

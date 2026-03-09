@@ -3,7 +3,6 @@ User serializers for E-Hokimiyat API.
 """
 
 from rest_framework import serializers
-from django.conf import settings
 from django.contrib.auth import authenticate
 from .models import User, UserAssignment
 
@@ -52,13 +51,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'pnfl', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
+            'id', 'login', 'pnfl', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
-            'position', 'status', 'oneid_connected', 'cabinet_type',
+            'position', 'status', 'cabinet_type',
             'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen',
             'avatar', 'avatar_url'
         ]
-        read_only_fields = ['id', 'oneid_connected', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
+        read_only_fields = ['id', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
         extra_kwargs = {
             'pnfl': {'write_only': True},
             'avatar': {'write_only': True, 'required': False}
@@ -70,15 +69,26 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer for creating new users (PNFL-based).
+    Serializer for creating new users.
     """
+    password = serializers.CharField(write_only=True, min_length=6)
     
     class Meta:
         model = User
         fields = [
-            'pnfl', 'first_name', 'last_name', 'middle_name',
-            'phone', 'email', 'role', 'organization', 'position'
+            'login', 'pnfl', 'first_name', 'last_name', 'middle_name',
+            'phone', 'email', 'role', 'organization', 'position', 'password'
         ]
+
+    def validate_login(self, value):
+        login = value.strip()
+        if not login:
+            raise serializers.ValidationError("Login kiritilishi shart")
+        if User.objects.filter(login__iexact=login).exists():
+            raise serializers.ValidationError("Bu login allaqachon band")
+        if User.objects.filter(pnfl=login).exists():
+            raise serializers.ValidationError("Bu login boshqa foydalanuvchining PNFL qiymati bilan to'qnashadi")
+        return login
     
     def validate_pnfl(self, value):
         """Validate PNFL format (14 digits)."""
@@ -109,12 +119,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        """Create user with KUTILMOQDA status."""
+        """Create user with active login/password access."""
+        from django.utils import timezone
+
         request = self.context.get('request')
-        validated_data['status'] = 'KUTILMOQDA'
+        password = validated_data.pop('password')
+        validated_data['status'] = 'FAOL'
         validated_data['created_by'] = request.user if request else None
-        
-        user = User.objects.create(**validated_data)
+        validated_data['activated_at'] = timezone.now()
+
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
         
         # Create assignment record
         if request and request.user:
@@ -131,14 +147,25 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating users.
     """
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
     
     class Meta:
         model = User
         fields = [
+            'login',
             'first_name', 'last_name', 'middle_name',
             'phone', 'email', 'position',
-            'role', 'status', 'organization'
+            'role', 'status', 'organization', 'password'
         ]
+
+    def validate_login(self, value):
+        login = value.strip()
+        instance = getattr(self, 'instance', None)
+        if User.objects.filter(login__iexact=login).exclude(pk=getattr(instance, 'pk', None)).exists():
+            raise serializers.ValidationError("Bu login allaqachon band")
+        if User.objects.filter(pnfl=login).exclude(pk=getattr(instance, 'pk', None)).exists():
+            raise serializers.ValidationError("Bu login boshqa foydalanuvchining PNFL qiymati bilan to'qnashadi")
+        return login
 
     def validate(self, attrs):
         """Validate role hierarchy and organization assignment."""
@@ -162,26 +189,45 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def update(self, instance, validated_data):
+        from django.utils import timezone
+
+        password = validated_data.pop('password', None)
+        status_value = validated_data.get('status')
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if status_value == 'FAOL' and not instance.activated_at:
+            instance.activated_at = timezone.now()
+
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
+
 
 class LoginSerializer(serializers.Serializer):
     """
-    Login serializer for mock authentication.
-    In production, this would be replaced with OneID.
+    Login serializer for login/password authentication.
     """
-    login = serializers.CharField(max_length=14, required=False)
+    login = serializers.CharField(max_length=150, required=False)
     pnfl = serializers.CharField(max_length=14, required=False)
     password = serializers.CharField(write_only=True)
     
     def validate(self, attrs):
-        login = attrs.get('login') or attrs.get('pnfl')
-        if not login:
+        identifier = (attrs.get('login') or attrs.get('pnfl') or '').strip()
+        if not identifier:
             raise serializers.ValidationError("Login kiritilishi shart")
         password = attrs.get('password')
         
         # Foydalanuvchi mavjudligini tekshirish
-        try:
-            user = User.objects.get(pnfl=login)
-        except User.DoesNotExist:
+        user = User.objects.filter(login__iexact=identifier).first()
+        if not user:
+            user = User.objects.filter(pnfl=identifier).first()
+
+        if not user:
             raise serializers.ValidationError("Siz tizimga oldindan kiritilmagansiz")
         
         if user.status == 'ARXIV':
@@ -193,8 +239,7 @@ class LoginSerializer(serializers.Serializer):
         if user.status != 'FAOL':
             raise serializers.ValidationError("Bu hisob aktiv emas")
         
-        # PNFL USERNAME_FIELD bo'lgani uchun authenticate(username=pnfl) ishlatiladi
-        auth_user = authenticate(username=login, password=password)
+        auth_user = authenticate(username=user.login, password=password)
         if not auth_user:
             raise serializers.ValidationError("Login yoki parol noto'g'ri")
         
@@ -216,7 +261,7 @@ class UserMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
+            'id', 'login', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
             'position', 'status', 'cabinet_type', 'permissions',
             'avatar', 'avatar_url'

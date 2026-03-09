@@ -63,7 +63,7 @@ npm run dev
 
 1. **Frontend**: http://localhost:3000 yoki http://localhost:3001
 2. **Login ma'lumotlari**:
-   - PNFL: `12345678901234`
+   - Login: `admin`
    - Parol: `admin123`
 
 ---

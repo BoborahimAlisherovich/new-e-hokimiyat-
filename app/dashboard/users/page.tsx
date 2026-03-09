@@ -4,7 +4,6 @@ import { Header } from "@/components/layout/header"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { User, Organization } from "@/types"
 import { getUsers, getOrganizations } from "@/lib/api"
-import { ensureDevAuth } from "@/lib/dev-auth"
 import { UserStats } from "@/components/dashboard/users/user-stats"
 import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
@@ -25,6 +24,7 @@ export default function UsersPage() {
   const [organizationFilter, setOrganizationFilter] = useState<string>("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [createFormData, setCreateFormData] = useState({
+    login: "",
     firstName: "",
     lastName: "",
     middleName: "",
@@ -32,6 +32,7 @@ export default function UsersPage() {
     phone: "",
     pnfl: "",
     position: "",
+    password: "",
     role: "TASHKILOT_MASUL" as User["role"],
     organizationId: "",
   })
@@ -57,20 +58,19 @@ export default function UsersPage() {
 
   // Effects
   useEffect(() => {
-    const initAuth = async () => {
-      await ensureDevAuth()
-      loadData()
-    }
-    initAuth()
+    loadData()
   }, [loadData])
 
   // Filtered users
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = (user.first_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (user.last_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (user.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (user.phone || '').includes(searchQuery)
+      const normalizedQuery = searchQuery.toLowerCase()
+      const matchesSearch = (user.login || "").toLowerCase().includes(normalizedQuery) ||
+             (user.first_name || "").toLowerCase().includes(normalizedQuery) ||
+             (user.last_name || "").toLowerCase().includes(normalizedQuery) ||
+             (user.email || '').toLowerCase().includes(normalizedQuery) ||
+             (user.phone || '').includes(searchQuery) ||
+             (user.pnfl || '').includes(searchQuery)
       
       const matchesRole = roleFilter === "all" || user.role === roleFilter
       const matchesStatus = statusFilter === "all" || user.status === statusFilter
@@ -90,6 +90,7 @@ export default function UsersPage() {
       // API call to create user
       setIsCreateDialogOpen(false)
       setCreateFormData({
+        login: "",
         firstName: "",
         lastName: "",
         middleName: "",
@@ -97,6 +98,7 @@ export default function UsersPage() {
         phone: "",
         pnfl: "",
         position: "",
+        password: "",
         role: "TASHKILOT_MASUL",
         organizationId: "",
       })

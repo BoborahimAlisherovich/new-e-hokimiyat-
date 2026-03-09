@@ -47,7 +47,7 @@ export default function NotificationsPage() {
 
   const filteredNotifications = filter === "all" ? notifications : notifications.filter((n) => !n.is_read)
 
-  const markAsRead = async (id: number) => {
+  const markAsRead = async (id: number | string) => {
     const previous = notifications
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)))
     try {
@@ -80,7 +80,7 @@ export default function NotificationsPage() {
     }
   }
 
-  const handleDeleteNotification = async (id: number) => {
+  const handleDeleteNotification = async (id: number | string) => {
     const previous = notifications
     setNotifications((prev) => prev.filter((n) => n.id !== id))
     try {

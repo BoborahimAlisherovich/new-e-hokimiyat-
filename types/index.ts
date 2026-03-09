@@ -23,7 +23,7 @@ export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 
 // ==================== Base Interfaces ====================
 
 export interface BaseModel {
-  id: number
+  id: number | string
   created_at: string
   updated_at: string
 }
@@ -31,7 +31,9 @@ export interface BaseModel {
 // ==================== User Interfaces ====================
 
 export interface User extends BaseModel {
-  pnfl: string
+  login: string
+  pnfl?: string
+  masked_pnfl?: string
   first_name: string
   last_name: string
   middle_name?: string
@@ -369,6 +371,7 @@ export interface TaskUpdateInput extends Partial<TaskCreateInput> {
 }
 
 export interface UserCreateInput {
+  login: string
   pnfl: string
   first_name: string
   last_name: string
@@ -377,6 +380,7 @@ export interface UserCreateInput {
   phone?: string
   role: UserRole
   position?: string
+  password: string
   organization?: string  // UUID string
   district_id?: string   // UUID string
 }
