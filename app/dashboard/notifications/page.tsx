@@ -8,21 +8,25 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/api"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NotificationActions } from "@/components/dashboard/notifications/notification-actions"
 import { NotificationList } from "@/components/dashboard/notifications/notification-list"
 import { useToast } from "@/hooks/use-toast"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { useTranslation } from "@/lib/i18n/context"
+import { useAudioAlert } from "@/hooks/use-audio-alert"
 
 export default function NotificationsPage() {
   const t = useTranslation()
+  const playAlert = useAudioAlert()
   const { toast } = useToast()
   const pageRef = useGSAPPageEntrance()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<"all" | "unread">("all")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const seenIdsRef = useRef<Set<number | string>>(new Set())
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -44,6 +48,24 @@ export default function NotificationsPage() {
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (notifications.length === 0) {
+      seenIdsRef.current.clear()
+      return
+    }
+
+    const unseen = notifications.filter((notif) => !seenIdsRef.current.has(notif.id))
+    notifications.forEach((notif) => seenIdsRef.current.add(notif.id))
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      return
+    }
+
+    if (unseen.length > 0) {
+      playAlert(660, 0.18)
+    }
+  }, [notifications, playAlert])
 
   const filteredNotifications = filter === "all" ? notifications : notifications.filter((n) => !n.is_read)
 
