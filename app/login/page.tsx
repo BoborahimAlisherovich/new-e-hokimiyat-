@@ -6,14 +6,10 @@ import Image from "next/image"
 import gsap from "gsap"
 import {
   Shield,
-  ExternalLink,
   Loader2,
   CheckCircle2,
   XCircle,
-  Info,
-  MapPin,
   Building2,
-  Sparkles,
   ArrowRight,
   Fingerprint,
 } from "lucide-react"
@@ -21,14 +17,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTranslation } from "@/lib/i18n/context"
 import { login, setAccessToken, setRefreshToken } from "@/lib/api"
 
 type LoginStep =
   | "initial"
   | "checking"
-  | "oneid_redirect"
   | "success"
   | "error"
 
@@ -36,10 +30,9 @@ export default function LoginPage() {
   const t = useTranslation()
   const router = useRouter()
   const [step, setStep] = useState<LoginStep>("initial")
-  const [pnfl, setPnfl] = useState("")
+  const [loginValue, setLoginValue] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [mounted, setMounted] = useState(false)
   
   // GSAP refs
   const pageRef = useRef<HTMLDivElement>(null)
@@ -50,13 +43,9 @@ export default function LoginPage() {
   const footerRef = useRef<HTMLDivElement>(null)
   const orbsRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   // GSAP entrance animation
   useEffect(() => {
-    if (!mounted || !pageRef.current) return
+    if (!pageRef.current) return
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
@@ -128,11 +117,11 @@ export default function LoginPage() {
     }, pageRef)
 
     return () => ctx.revert()
-  }, [mounted])
+  }, [])
 
-  const handlePnflCheck = async () => {
-    if (!/^\d{14}$/.test(pnfl)) {
-      setError("PNFL 14 ta raqamdan iborat bo'lishi kerak")
+  const handleLogin = async () => {
+    if (!loginValue.trim()) {
+      setError("Loginni kiriting")
       return
     }
 
@@ -145,7 +134,7 @@ export default function LoginPage() {
     setStep("checking")
 
     try {
-      const response = await login({ login: pnfl, password })
+      const response = await login({ login: loginValue.trim(), password })
       setAccessToken(response.access)
       setRefreshToken(response.refresh)
       
@@ -169,50 +158,9 @@ export default function LoginPage() {
     }
   }
 
-  const handleOneIdLogin = async () => {
-    if (!/^\d{14}$/.test(pnfl)) {
-      setError("PNFL 14 ta raqamdan iborat bo'lishi kerak")
-      return
-    }
-
-    setError("")
-    setStep("checking")
-
-    try {
-      // OneID login boshlash
-      const { oneidLogin, buildOneIDCallbackUrl, storeOneIDSession } = await import("@/lib/api/oneid")
-      
-      const callbackUrl = buildOneIDCallbackUrl()
-      const response = await oneidLogin({
-        pnfl: pnfl,
-        redirect_uri: callbackUrl
-      })
-
-      if (response.success && response.authorization_url) {
-        // Sessiya ma'lumotlarini saqlash
-        if (response.session_id && response.state) {
-          storeOneIDSession({
-            session_id: response.session_id,
-            state: response.state,
-            pnfl: pnfl
-          })
-        }
-        
-        // OneID ga yo'naltirish
-        setStep("oneid_redirect")
-        window.location.href = response.authorization_url
-      } else {
-        throw new Error(response.error || "OneID login xatolik")
-      }
-    } catch (err: any) {
-      setStep("error")
-      setError(err.message || "OneID orqali kirishda xatolik yuz berdi")
-    }
-  }
-
   const resetForm = () => {
     setStep("initial")
-    setPnfl("")
+    setLoginValue("")
     setPassword("")
     setError("")
   }
@@ -282,7 +230,7 @@ export default function LoginPage() {
               Xush kelibsiz!
             </h1>
             <p className="text-gray-500 text-base">
-              Tizimga kirish uchun PNFL raqamingizni kiriting
+              Tizimga kirish uchun login va parolni kiriting
             </p>
           </div>
 
@@ -291,22 +239,19 @@ export default function LoginPage() {
             {step === "initial" && (
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <Label htmlFor="pnfl" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Label htmlFor="login" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                     <Fingerprint className="h-4 w-4 text-blue-600" />
-                    PNFL (Shaxsiy raqam)
+                    Login
                   </Label>
                   <div className="relative">
                     <Input
-                      id="pnfl"
-                      value={pnfl}
-                      onChange={(e) =>
-                        setPnfl(e.target.value.replace(/\D/g, "").slice(0, 14))
-                      }
-                      maxLength={14}
-                      placeholder="• • • • • • • • • • • • • •"
-                      className="h-14 text-center text-xl tracking-[0.3em] font-mono bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-[0.2em]"
+                      id="login"
+                      value={loginValue}
+                      onChange={(e) => setLoginValue(e.target.value)}
+                      placeholder="Masalan: admin"
+                      className="h-14 text-center text-xl font-medium bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300"
                     />
-                    {pnfl.length === 14 && (
+                    {loginValue.trim() && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
                         <CheckCircle2 className="h-5 w-5 text-blue-500 animate-in zoom-in duration-200" />
                       </div>
@@ -314,7 +259,7 @@ export default function LoginPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-gray-400">
-                      {pnfl.length}/14 ta raqam
+                      Login admin tomonidan beriladi
                     </p>
                     {error && (
                       <p className="text-xs text-red-500 font-medium">{error}</p>
@@ -322,10 +267,10 @@ export default function LoginPage() {
                   </div>
                   
                   {/* Progress bar */}
-                    <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
-                      style={{ width: `${(pnfl.length / 14) * 100}%` }}
+                      style={{ width: `${Math.min((loginValue.trim().length / 12) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -346,33 +291,12 @@ export default function LoginPage() {
 
                 <Button
                   className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-500 group"
-                  onClick={handlePnflCheck}
-                  disabled={pnfl.length !== 14 || !password}
+                  onClick={handleLogin}
+                  disabled={!loginValue.trim() || !password}
                 >
                   <span>Tizimga kirish</span>
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
-
-                <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-200" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-white px-4 text-xs text-gray-400 uppercase tracking-wider">yoki</span>
-                  </div>
-                </div>
-
-                {/* OneID tugmasi vaqtincha o'chirilgan */}
-                {/* <Button
-                  variant="outline"
-                  className="w-full h-14 text-base font-medium border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-300 group"
-                  onClick={() => setStep("oneid_redirect")}
-                  disabled={pnfl.length !== 14}
-                >
-                  <Image src="/oneid-logo.svg" alt="OneID" width={20} height={20} className="mr-2" onError={(e) => e.currentTarget.style.display = 'none'} />
-                  <span>OneID orqali kirish</span>
-                  <ExternalLink className="ml-2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                </Button> */}
 
                 <p
                   className="text-xs text-gray-400 text-center leading-relaxed pt-2"
@@ -395,36 +319,6 @@ export default function LoginPage() {
                 <p className="mt-2 text-sm text-gray-400">
                   Iltimos, biroz kuting
                 </p>
-              </div>
-            )}
-
-            {step === "oneid_redirect" && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-200">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-indigo-800 font-medium text-sm">PNFL tasdiqlandi</p>
-                    <p className="text-indigo-600 text-xs">OneID tizimiga yo'naltirilmoqdasiz</p>
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300"
-                  onClick={handleOneIdLogin}
-                >
-                  <ExternalLink className="mr-2 h-5 w-5" />
-                  OneID ga o'tish
-                </Button>
-
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-gray-500 hover:text-gray-700 rounded-xl" 
-                  onClick={resetForm}
-                >
-                  ← Orqaga qaytish
-                </Button>
               </div>
             )}
 

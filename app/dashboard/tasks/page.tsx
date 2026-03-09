@@ -10,7 +10,6 @@ import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
 import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
-import { ensureDevAuth } from "@/lib/dev-auth"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 
@@ -93,11 +92,7 @@ export default function TasksPage() {
   }, [buildTaskFilters, page, pageSize])
 
   useEffect(() => {
-    const init = async () => {
-      await ensureDevAuth()
-      await loadData()
-    }
-    init()
+    loadData()
   }, [loadData])
 
   useEffect(() => {

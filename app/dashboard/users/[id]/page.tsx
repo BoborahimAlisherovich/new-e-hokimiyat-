@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { getUserById, blockUser, unblockUser, archiveUser } from "@/lib/api"
-import { ensureDevAuth } from "@/lib/dev-auth"
 import { cn } from "@/lib/utils"
 import { User } from "@/types"
 import { 
@@ -73,7 +72,6 @@ export default function UserDetailPage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        await ensureDevAuth()
         const userData = await getUserById(userId)
         setUser(userData)
       } catch (error) {
@@ -209,8 +207,18 @@ export default function UserDetailPage() {
                       <UserIcon className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
+                      <p className="text-sm text-muted-foreground">Login</p>
+                      <p className="font-medium">{user.login || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <UserIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
                       <p className="text-sm text-muted-foreground">PNFL</p>
-                      <p className="font-mono">{(user as any).masked_pnfl || user.pnfl || "—"}</p>
+                      <p className="font-mono">{user.masked_pnfl || user.pnfl || "—"}</p>
                     </div>
                   </div>
                   

@@ -145,14 +145,16 @@ export default function SettingsPage() {
 
   const userForProfile = currentUser ? {
     id: currentUser.id,
+    login: currentUser.login || "",
     firstName: currentUser.first_name || "",
     lastName: currentUser.last_name || "",
     middleName: currentUser.middle_name || "",
     phone: currentUser.phone || "",
-    pnfl: currentUser.pnfl || "",
+    pnfl: currentUser.masked_pnfl || currentUser.pnfl || "",
     role: currentUser.role || "USER",
     avatar_url: currentUser.avatar_url || null,
   } : {
+    login: "",
     firstName: "",
     lastName: "",
     middleName: "",

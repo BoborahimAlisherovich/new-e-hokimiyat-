@@ -7,6 +7,7 @@ import { useTranslation } from "@/lib/i18n/context"
 type Translation = ReturnType<typeof useTranslation>
 
 interface CurrentUser {
+  login?: string
   pnfl?: string
 }
 
@@ -33,6 +34,16 @@ export function SettingsSecurityTab({ t, currentUser }: SettingsSecurityTabProps
               <Badge variant="outline" className="bg-accent/10 text-accent border-accent/30">
                 {t.settings.active}
               </Badge>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Login</h4>
+                <p className="text-sm text-muted-foreground mt-1">Tizimga kirish uchun foydalaniladigan login</p>
+              </div>
+              <code className="rounded bg-muted px-3 py-1 font-mono text-sm">{currentUser.login || "—"}</code>
             </div>
           </div>
 

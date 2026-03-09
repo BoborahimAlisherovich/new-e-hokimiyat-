@@ -52,7 +52,7 @@ export function UserTable({ users }: UserTableProps) {
         <TableHeader>
           <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
             <TableHead className="font-bold text-slate-800 py-4 text-sm">FIO</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 text-sm">PNFL</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 text-sm">Login</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">Lavozim</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">Tashkilot</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">Rol</TableHead>
@@ -86,9 +86,14 @@ export function UserTable({ users }: UserTableProps) {
                 </div>
               </TableCell>
               <TableCell className="py-4">
-                <code className="rounded-lg bg-gradient-to-r from-indigo-50/30 to-indigo-50/20 border border-indigo-100/40 px-3 py-1.5 text-sm font-mono font-medium text-slate-700">
-                  {(user as any).masked_pnfl || maskPnfl(user.pnfl || '')}
-                </code>
+                <div className="space-y-1">
+                  <code className="rounded-lg bg-gradient-to-r from-indigo-50/30 to-indigo-50/20 border border-indigo-100/40 px-3 py-1.5 text-sm font-mono font-medium text-slate-700 inline-block">
+                    {user.login || "—"}
+                  </code>
+                  <div className="text-xs text-slate-500">
+                    PNFL: {user.masked_pnfl || maskPnfl(user.pnfl || '')}
+                  </div>
+                </div>
               </TableCell>
               <TableCell className="py-4 text-slate-700 text-sm font-medium">{user.position || "—"}</TableCell>
               <TableCell className="py-4 text-slate-700 text-sm font-medium max-w-[200px] truncate">{user.organization?.name || user.organization_name || "Belgilanmagan"}</TableCell>

@@ -2,7 +2,6 @@
 
 import { Header } from "@/components/layout/header"
 import { getOrganizations, createOrganization, getUsers, deleteOrganization, updateOrganization } from "@/lib/api"
-import { ensureDevAuth } from "@/lib/dev-auth"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { OrganizationFilters } from "@/components/dashboard/organizations/organization-filters"
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
@@ -50,9 +49,8 @@ export default function OrganizationsPage() {
 
   useEffect(() => {
     let mounted = true
-    const initAuth = async () => {
+    const initData = async () => {
       try {
-        await ensureDevAuth()
         await loadOrganizations()
       } catch (err) {
         console.error("Tashkilotlarni yuklashda xatolik:", err)
@@ -61,7 +59,7 @@ export default function OrganizationsPage() {
         if (mounted) setLoading(false)
       }
     }
-    initAuth()
+    initData()
     return () => {
       mounted = false
     }

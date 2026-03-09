@@ -41,7 +41,7 @@ fi
 if [ ! -f ".env" ]; then
     echo "📝 Creating .env file..."
     cp env.example .env
-    echo "⚠️  Please update .env file with your OneID credentials!"
+    echo "ℹ️  Kerak bo'lsa .env faylini lokal muhitga moslab tahrirlang."
 fi
 
 # Run migrations

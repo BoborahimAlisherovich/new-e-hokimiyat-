@@ -22,6 +22,7 @@ class Command(BaseCommand):
 
         demo_users = [
             {
+                'login': 'admin',
                 'pnfl': '12345678901234',
                 'first_name': 'Admin',
                 'last_name': 'User',
@@ -32,6 +33,7 @@ class Command(BaseCommand):
                 'password': 'admin123',
             },
             {
+                'login': 'hokim',
                 'pnfl': '30000000000001',
                 'first_name': 'Hokim',
                 'last_name': 'Demo',
@@ -42,6 +44,7 @@ class Command(BaseCommand):
                 'password': 'hokim123',
             },
             {
+                'login': 'masul',
                 'pnfl': '30000000000002',
                 'first_name': 'Masul',
                 'last_name': 'Demo',
@@ -52,6 +55,7 @@ class Command(BaseCommand):
                 'password': 'masul123',
             },
             {
+                'login': 'rahbar',
                 'pnfl': '30000000000003',
                 'first_name': 'Rahbar',
                 'last_name': 'Demo',
@@ -62,6 +66,7 @@ class Command(BaseCommand):
                 'password': 'rahbar123',
             },
             {
+                'login': 'tashkilot-masul',
                 'pnfl': '30000000000004',
                 'first_name': 'Tashkilot',
                 'last_name': 'Masul',
@@ -76,19 +81,21 @@ class Command(BaseCommand):
         # Extra demo users (bulk) - unique PNFL, role distribution
         # PNFL format: 30000000000XYZ where XYZ is sequence
         role_templates = [
-            ('HOKIM', 'Hokim', 'Demo', 'hokim123'),
-            ('HOKIMLIK_MASUL', 'Masul', 'Demo', 'masul123'),
-            ('TASHKILOT_RAHBARI', 'Rahbar', 'Demo', 'rahbar123'),
-            ('TASHKILOT_MASUL', 'Tashkilot', 'Masul', 'tash123'),
+            ('HOKIM', 'hokim', 'Hokim', 'Demo', 'hokim123'),
+            ('HOKIMLIK_MASUL', 'masul', 'Masul', 'Demo', 'masul123'),
+            ('TASHKILOT_RAHBARI', 'rahbar', 'Rahbar', 'Demo', 'rahbar123'),
+            ('TASHKILOT_MASUL', 'tash-masul', 'Tashkilot', 'Masul', 'tash123'),
         ]
 
         seq = 10
-        for role, first_name, last_name, password in role_templates:
+        for role, login_prefix, first_name, last_name, password in role_templates:
             for _ in range(count):
-                pnfl = f"30000000000{seq:03d}"  # 14 digits
+                current_seq = seq
+                pnfl = f"30000000000{current_seq:03d}"  # 14 digits
                 seq += 1
                 demo_users.append(
                     {
+                        'login': f"{login_prefix}{current_seq}",
                         'pnfl': pnfl,
                         'first_name': first_name,
                         'last_name': last_name,
@@ -132,11 +139,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Demo users created/updated successfully.'))
         self.stdout.write(f'Created: {created}, Updated: {updated}')
         self.stdout.write('\nLogin credentials:')
-        self.stdout.write('  - login: 12345678901234 | password: admin123 (ADMIN)')
-        self.stdout.write('  - login: 30000000000001 | password: hokim123 (HOKIM)')
-        self.stdout.write('  - login: 30000000000002 | password: masul123 (HOKIMLIK_MASUL)')
-        self.stdout.write('  - login: 30000000000003 | password: rahbar123 (TASHKILOT_RAHBARI)')
-        self.stdout.write('  - login: 30000000000004 | password: tash123 (TASHKILOT_MASUL)')
+        self.stdout.write('  - login: admin | password: admin123 (ADMIN)')
+        self.stdout.write('  - login: hokim | password: hokim123 (HOKIM)')
+        self.stdout.write('  - login: masul | password: masul123 (HOKIMLIK_MASUL)')
+        self.stdout.write('  - login: rahbar | password: rahbar123 (TASHKILOT_RAHBARI)')
+        self.stdout.write('  - login: tashkilot-masul | password: tash123 (TASHKILOT_MASUL)')
         if count:
             self.stdout.write(f"\nBulk demo users created: {len(role_templates) * count} ta (har rol uchun {count} tadan)")
             self.stdout.write('Bulk userlar uchun parollar roli bo\'yicha bir xil:')

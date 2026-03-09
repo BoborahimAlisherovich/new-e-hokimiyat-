@@ -29,21 +29,25 @@ import { TOKEN_KEYS } from './types'
 /**
  * Foydalanuvchini tizimga kiritadi
  * 
- * @param pnfl - Foydalanuvchi PNFL
+ * @param pnflOrData - Login yoki login payload
  * @param password - Parol
  * @returns Login javobi (tokenlar va foydalanuvchi)
  * @throws {ApiError} - Login muvaffaqiyatsiz
  * 
  * @example
- * const { user, access } = await login('12345678901234', 'password123')
+ * const { user, access } = await login('admin', 'password123')
  */
 export async function login(
   pnflOrData: string | LoginRequest,
   password?: string
 ): Promise<LoginResponse> {
+  if (typeof pnflOrData === 'string' && !password) {
+    throw new Error('Parol kiritilishi shart')
+  }
+
   const payload: LoginRequest =
     typeof pnflOrData === 'string'
-      ? { login: pnflOrData, password }
+      ? { login: pnflOrData, password: password as string }
       : pnflOrData
 
   const response = await fetchApi<LoginResponse>('/auth/login/', {
@@ -117,7 +121,7 @@ export async function refreshToken(): Promise<TokenRefreshResponse> {
     throw new Error('Refresh token mavjud emas')
   }
   
-  const response = await fetch(`${API_BASE}/auth/token/refresh/`, {
+  const response = await fetch(`${API_BASE}/auth/refresh/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh }),

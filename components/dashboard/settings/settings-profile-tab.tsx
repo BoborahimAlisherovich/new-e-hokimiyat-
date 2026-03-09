@@ -16,6 +16,7 @@ type Translation = ReturnType<typeof useTranslation>
 
 interface CurrentUser {
   id?: number | string
+  login?: string
   firstName: string
   lastName: string
   middleName?: string
@@ -93,12 +94,6 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
     } finally {
       setSaving(false)
     }
-  }
-
-  const getInitials = () => {
-    const first = firstName?.[0] || ""
-    const last = lastName?.[0] || ""
-    return (first + last).toUpperCase() || "ФИ"
   }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,7 +243,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
                   <UserCheck className="mr-1 h-3 w-3" />
-                  {t.settings.oneIDConnected}
+                  Login faollashtirilgan
                 </Badge>
                 {avatarUrl && (
                   <Button
@@ -300,6 +295,14 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+998 XX XXX XX XX"
                 className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Login</Label>
+              <Input
+                value={currentUser.login || ""}
+                disabled
+                className="h-11 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
               />
             </div>
             <div className="space-y-2">

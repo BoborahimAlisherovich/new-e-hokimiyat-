@@ -98,7 +98,6 @@ INSTALLED_APPS = [
     'notifications',
     'chat',
     'telegram_bot',
-    # 'oneid',  # Vaqtincha o'chirilgan
 ]
 
 MIDDLEWARE = [
@@ -526,38 +525,3 @@ AI_MODEL = os.environ.get('AI_MODEL', 'gpt-4o-mini')
 
 # Whisper transkripsiya uchun til ('auto' bo'lsa avtomatik aniqlanadi)
 AI_TRANSCRIPTION_LANGUAGE = os.environ.get('AI_TRANSCRIPTION_LANGUAGE', 'auto')
-
-
-# ==============================================================================
-# ONEID INTEGRATSIYA SOZLAMALARI
-# ==============================================================================
-
-# OneID OAuth 2.0 sozlamalari
-ONEID_CLIENT_ID = os.environ.get('ONEID_CLIENT_ID', '')
-ONEID_CLIENT_SECRET = os.environ.get('ONEID_CLIENT_SECRET', '')
-ONEID_REDIRECT_URI = os.environ.get('ONEID_REDIRECT_URI', 'https://api.ehokimiyat.uz/api/oneid/auth/callback/')
-ONEID_SCOPE = os.environ.get('ONEID_SCOPE', 'ehokimiyat')
-
-# OneID redirect URI lar (ko'p URI lar uchun)
-ONEID_REDIRECT_URIS = [
-    'https://api.ehokimiyat.uz/api/oneid/auth/callback/',
-    'https://ehokimiyat.uz/login/callback',
-    'http://localhost:8000/api/oneid/auth/callback/',
-    'http://localhost:3000/login/callback',
-]
-
-# Frontend URL (callback uchun)
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://ehokimiyat.uz')
-
-# OneID endpointlari (production)
-ONEID_AUTH_URL = "https://sso.egov.uz/sso/oauth/Authorization.do"
-ONEID_TOKEN_URL = "https://sso.egov.uz/sso/oauth/AccessToken.do"
-ONEID_USER_INFO_URL = "https://sso.egov.uz/sso/oauth/Authorization.do"
-ONEID_LOGOUT_URL = "https://sso.egov.uz/sso/oauth/Authorization.do"
-
-# OneID sozlamalari (development uchun)
-if DEBUG:
-    ONEID_CLIENT_ID = os.environ.get('ONEID_CLIENT_ID', 'dev_client_id')
-    ONEID_CLIENT_SECRET = os.environ.get('ONEID_CLIENT_SECRET', 'dev_client_secret')
-    ONEID_REDIRECT_URI = os.environ.get('ONEID_REDIRECT_URI', 'http://localhost:8000/api/oneid/auth/callback/')
-    FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')

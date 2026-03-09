@@ -61,7 +61,7 @@ export interface PaginatedApiResponse<T> {
 export interface LoginRequest {
   login: string
   pnfl?: string
-  password?: string
+  password: string
 }
 
 /** Login javobi */
@@ -73,8 +73,10 @@ export interface LoginResponse {
 
 /** Autentifikatsiyalangan foydalanuvchi */
 export interface AuthUser {
-  id: number
-  pnfl: string
+  id: number | string
+  login: string
+  pnfl?: string
+  masked_pnfl?: string
   first_name: string
   last_name: string
   middle_name?: string
