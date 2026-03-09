@@ -839,7 +839,7 @@ export default function ChatPage() {
                 <ScrollArea className="flex-1 min-h-0 p-4 bg-gradient-to-b from-transparent to-muted/30">
                   <div className="space-y-4">
                     {selectedConversation?.messages.map((msg) => {
-                      const isCurrentUser = currentUser && msg.senderId === currentUser.id
+                      const isCurrentUser = Boolean(currentUser && msg.senderId === currentUser.id)
 
                       return (
                         <div key={msg.id} className={cn("flex gap-2 sm:gap-3 group", isCurrentUser && "flex-row-reverse")}>
