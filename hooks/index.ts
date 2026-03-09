@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 // Re-export audio recorder hook
 export { useAudioRecorder, formatTime } from './use-audio-recorder'
+export { useAudioAlert } from './use-audio-alert'
 
 // Re-export GSAP hooks
 export {

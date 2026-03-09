@@ -31,6 +31,7 @@ import {
 import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { useAudioAlert } from "@/hooks/use-audio-alert"
 import { toast } from "sonner"
 
 // Maksimal fayl hajmi (50MB)
@@ -117,6 +118,8 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [showUserList, setShowUserList] = useState(true)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const lastMessageIdsRef = useRef<Record<string, string | undefined>>({})
+  const playChatAlert = useAudioAlert()
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -240,6 +243,36 @@ export default function ChatPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (!currentUser) return
+
+    let shouldPlay = false
+    const updatedIds: Record<string, string | undefined> = { ...lastMessageIdsRef.current }
+
+    conversations.forEach((conv, userId) => {
+      const lastMessage = conv.messages[conv.messages.length - 1]
+      if (!lastMessage?.id) return
+
+      const previousId = lastMessageIdsRef.current[userId]
+      if (
+        previousId &&
+        previousId !== lastMessage.id &&
+        lastMessage.senderId &&
+        lastMessage.senderId !== currentUser.id
+      ) {
+        shouldPlay = true
+      }
+
+      updatedIds[userId] = lastMessage.id
+    })
+
+    lastMessageIdsRef.current = updatedIds
+
+    if (shouldPlay) {
+      playChatAlert(640, 0.18)
+    }
+  }, [conversations, currentUser, playChatAlert])
 
   // Scroll to bottom when user is selected or messages change
   const scrollToBottom = () => {

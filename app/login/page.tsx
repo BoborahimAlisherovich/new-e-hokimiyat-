@@ -248,7 +248,7 @@ export default function LoginPage() {
                       id="login"
                       value={loginValue}
                       onChange={(e) => setLoginValue(e.target.value)}
-                      placeholder="Masalan: admin"
+                    placeholder="Login"
                       className="h-14 text-center text-xl font-medium bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300 placeholder:text-gray-300"
                     />
                     {loginValue.trim() && (
@@ -257,10 +257,7 @@ export default function LoginPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-400">
-                      Login admin tomonidan beriladi
-                    </p>
+                  <div className="flex justify-end items-center">
                     {error && (
                       <p className="text-xs text-red-500 font-medium">{error}</p>
                     )}

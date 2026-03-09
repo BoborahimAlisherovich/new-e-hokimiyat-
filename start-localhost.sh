@@ -48,6 +48,10 @@ fi
 echo "🗄️  Running migrations..."
 python manage.py migrate
 
+# Ensure admin user exists
+echo "🛡️  Ensuring admin user exists..."
+python create_admin.py
+
 # Start Django development server
 echo "🚀 Starting Django server on http://localhost:8000"
 python manage.py runserver 0.0.0.0:8000 &

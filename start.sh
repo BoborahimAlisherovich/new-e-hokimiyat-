@@ -38,11 +38,26 @@ fi
 # Activate virtual environment
 source venv/bin/activate
 
+# Ensure dotenv file exists for default credentials
+if [ ! -f ".env" ]; then
+    echo "📝 .env fayli topilmadi, env.example nusxasi asosida yaratilmoqda..."
+    cp env.example .env
+    echo "ℹ️  Yaratilgan .env faylni joylashuvga moslab o'zgartiring."
+fi
+
 # Install dependencies if needed
 if [ ! -f "venv/pyvenv.cfg" ] || ! pip list | grep -q "daphne"; then
     echo "📦 Installing dependencies..."
     pip install -r requirements.txt
 fi
+
+# Run migrations
+echo "🗄️  Running migrations..."
+python manage.py migrate
+
+# Ensure admin user exists with configured credentials
+echo "🛡️  Ensuring admin user exists..."
+python create_admin.py
 
 # Start Daphne server
 python -m daphne -b 0.0.0.0 -p 8000 ehokimiyat.asgi:application > /tmp/daphne.log 2>&1 &

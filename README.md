@@ -14,6 +14,7 @@ Xatirchi tumani hokimligi uchun topshiriqlar, tashkilotlar, foydalanuvchilar, ch
 - OneID ishlatilmaydi.
 - Tizimga kirish `login + password` orqali amalga oshiriladi.
 - Foydalanuvchilar Django admin panel yoki dashboarddagi foydalanuvchi boshqaruvi orqali yaratiladi.
+- Start skriptlari (`./start.sh`, `./start-localhost.sh`) `backend/create_admin.py` ni chaqiradi va `ADMIN_LOGIN`, `ADMIN_PASSWORD`, `ADMIN_PNFL`, `ADMIN_FIRST_NAME`, `ADMIN_LAST_NAME` muhit o'zgaruvchilar orqali administratorni qayta sozlash imkonini beradi.
 
 ## Lokal ishga tushirish
 
