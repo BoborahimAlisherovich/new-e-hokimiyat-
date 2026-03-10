@@ -605,6 +605,7 @@ export default function AIAssistantPage() {
         
             {/* Left sidebar - Conversations */}
             <div className="min-h-[220px] xl:h-full xl:min-h-0">
+          <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
           <Card data-gsap-card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="py-2.5 px-3 border-b border-indigo-100/40 shrink-0">
               <div className="flex items-center justify-between">
@@ -1095,6 +1096,7 @@ export default function AIAssistantPage() {
 
       {/* Bottom FAQ section */}
       <section data-gsap-section>
+      <Card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
       <Card data-gsap-card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
         <CardHeader className="py-3 border-b border-indigo-100/40">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-800">
