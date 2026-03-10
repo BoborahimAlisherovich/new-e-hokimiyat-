@@ -2,21 +2,46 @@
 AI Serializers.
 """
 
+import mimetypes
+
 from rest_framework import serializers
 from core.models import AIConversation, AIMessage, AIAction, AIReport, AITaskMonitor
 
 
 class AIMessageSerializer(serializers.ModelSerializer):
     """AI Message Serializer"""
+    attachment_url = serializers.SerializerMethodField()
+    attachment_name = serializers.SerializerMethodField()
+    attachment_content_type = serializers.SerializerMethodField()
     
     class Meta:
         model = AIMessage
         fields = [
             'id', 'role', 'content', 'is_audio_message',
+            'attachment_url', 'attachment_name', 'attachment_content_type',
             'detected_intent', 'intent_confidence',
             'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_attachment_url(self, obj):
+        if not obj.audio_file:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.audio_file.url)
+        return obj.audio_file.url
+
+    def get_attachment_name(self, obj):
+        if not obj.audio_file:
+            return None
+        return obj.audio_file.name.split('/')[-1]
+
+    def get_attachment_content_type(self, obj):
+        if not obj.audio_file:
+            return None
+        content_type, _ = mimetypes.guess_type(obj.audio_file.name)
+        return content_type or 'application/octet-stream'
 
 
 class AIConversationSerializer(serializers.ModelSerializer):
@@ -110,7 +135,13 @@ class AITaskMonitorSerializer(serializers.ModelSerializer):
 
 class ChatInputSerializer(serializers.Serializer):
     """Chat input validation"""
-    message = serializers.CharField(max_length=5000, required=True)
+    message = serializers.CharField(max_length=5000, required=False, allow_blank=True)
+    attachment = serializers.FileField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get('message') and not attrs.get('attachment'):
+            raise serializers.ValidationError("Xabar yoki fayl yuborilishi kerak")
+        return attrs
 
 
 class AudioInputSerializer(serializers.Serializer):

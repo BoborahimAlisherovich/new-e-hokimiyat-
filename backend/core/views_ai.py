@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.db import transaction
 import logging
 import json
+import mimetypes
 
 from core.models import AIConversation, AIMessage, AIAction, AIReport, AITaskMonitor
 from core.ai_service import AIService
@@ -28,6 +29,23 @@ from core.serializers_ai import (
 )
 
 logger = logging.getLogger(__name__)
+
+MAX_AI_ATTACHMENT_SIZE = 50 * 1024 * 1024
+
+
+def _describe_attachment(uploaded_file) -> str:
+    file_name = getattr(uploaded_file, 'name', 'fayl')
+    content_type = getattr(uploaded_file, 'content_type', '') or mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+    size_mb = (getattr(uploaded_file, 'size', 0) or 0) / (1024 * 1024)
+    return f"Biriktirilgan fayl: {file_name} ({content_type}, {size_mb:.1f} MB)"
+
+
+def _validate_ai_attachment(uploaded_file) -> str | None:
+    if not uploaded_file:
+        return None
+    if uploaded_file.size > MAX_AI_ATTACHMENT_SIZE:
+        return "Fayl hajmi 50MB dan oshmasligi kerak"
+    return None
 
 
 class AIConversationViewSet(viewsets.ModelViewSet):
@@ -79,12 +97,20 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                 'detected_intent': {'intent': 'ERROR'}
             })
 
-        serializer = ChatInputSerializer(data=request.data)
+        payload = request.data.copy()
+        if 'attachment' not in payload and request.FILES.get('attachment'):
+            payload['attachment'] = request.FILES.get('attachment')
+
+        serializer = ChatInputSerializer(data=payload)
         
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        message_text = serializer.validated_data['message']
+        message_text = serializer.validated_data.get('message', '').strip()
+        attachment = serializer.validated_data.get('attachment') or request.FILES.get('attachment')
+        attachment_error = _validate_ai_attachment(attachment)
+        if attachment_error:
+            return Response({'error': attachment_error}, status=status.HTTP_400_BAD_REQUEST)
         user_message = None
 
         try:
@@ -103,7 +129,9 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                 user_message = AIMessage.objects.create(
                     conversation=conversation,
                     role='user',
-                    content=message_text
+                    content=message_text or (attachment.name if attachment else ''),
+                    audio_file=attachment,
+                    is_audio_message=bool(attachment and (attachment.content_type or '').startswith('audio/'))
                 )
 
                 if normalized in no_words:
@@ -155,7 +183,9 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             user_message = AIMessage.objects.create(
                 conversation=conversation,
                 role='user',
-                content=message_text
+                content=message_text or (attachment.name if attachment else ''),
+                audio_file=attachment,
+                is_audio_message=bool(attachment and (attachment.content_type or '').startswith('audio/'))
             )
             
             # AI javobini olish
@@ -163,7 +193,16 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             
             # Suhbat tarixini olish
             messages = [
-                {"role": msg.role, "content": msg.content}
+                {
+                    "role": msg.role,
+                    "content": (
+                        msg.content
+                        + (
+                            f"\n[{_describe_attachment(msg.audio_file)}]"
+                            if msg.audio_file else ""
+                        )
+                    ).strip()
+                }
                 for msg in conversation.messages.order_by('created_at')
             ]
 
@@ -184,7 +223,12 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             }
 
             # AI javob
-            if intent_result.get('intent') in query_intents:
+            if attachment and not message_text:
+                ai_response = (
+                    f"Fayl qabul qilindi. {_describe_attachment(attachment)}. "
+                    "Agar shu fayl asosida topshiriq yaratmoqchi bo'lsangiz, qisqa izoh ham yozing."
+                )
+            elif intent_result.get('intent') in query_intents:
                 ai_response = ai_service.handle_query(
                     intent_result.get('intent'),
                     intent_result.get('parameters', {}),
@@ -215,6 +259,41 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                     initiated_by=request.user,
                     status='PENDING'
                 )
+
+                auto_execute = (
+                    intent_result.get('intent') in {'CREATE_TASK', 'CREATE_RECURRING_TASK'}
+                    and request.user.role in {'HOKIM', 'HOKIMLIK_MASUL', 'HOKIM_YORDAMCHISI', 'ADMIN'}
+                    and intent_result.get('confidence', 0) >= 0.75
+                )
+
+                if auto_execute:
+                    action.status = 'IN_PROGRESS'
+                    action.save(update_fields=['status'])
+
+                    result = ai_service.execute_action(action)
+                    action.status = 'COMPLETED' if result.get('success') else 'FAILED'
+                    action.result = result
+                    action.executed_at = timezone.now()
+                    action.save()
+
+                    if result.get('success'):
+                        extra_lines = []
+                        if result.get('report_id'):
+                            extra_lines.append(f"[REPORT_ID:{result.get('report_id')}] ")
+                        if result.get('summary'):
+                            extra_lines.append(f"\n{result.get('summary')}")
+                        extra_text = f"\n\n" + "\n".join(extra_lines) if extra_lines else ""
+                        ai_message.content = f"✅ {result.get('message', 'Bajarildi')}" + extra_text
+                    else:
+                        ai_message.content = f"❌ Xatolik: {result.get('error', 'Noma\'lum xatolik')}"
+                    ai_message.save(update_fields=['content'])
+                    conversation.updated_at = timezone.now()
+                    conversation.save()
+                    return Response({
+                        'user_message': AIMessageSerializer(user_message, context={'request': request}).data,
+                        'ai_message': AIMessageSerializer(ai_message, context={'request': request}).data,
+                        'detected_intent': intent_result
+                    })
 
                 # Tasdiqlash so'rash (AI oldindan bajarildi deb yozmasin)
                 params = intent_result.get('parameters', {})
@@ -264,8 +343,8 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             conversation.save()
             
             return Response({
-                'user_message': AIMessageSerializer(user_message).data,
-                'ai_message': AIMessageSerializer(ai_message).data,
+                'user_message': AIMessageSerializer(user_message, context={'request': request}).data,
+                'ai_message': AIMessageSerializer(ai_message, context={'request': request}).data,
                 'detected_intent': intent_result
             })
         except Exception as e:
@@ -382,8 +461,8 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             conversation.save()
             return Response({
                 'transcription': transcription,
-                'user_message': AIMessageSerializer(user_message).data,
-                'ai_message': AIMessageSerializer(ai_message).data,
+                'user_message': AIMessageSerializer(user_message, context={'request': request}).data,
+                'ai_message': AIMessageSerializer(ai_message, context={'request': request}).data,
                 'detected_intent': {'intent': 'CONFIRM_ACTION'}
             })
 
@@ -518,8 +597,8 @@ class AIConversationViewSet(viewsets.ModelViewSet):
 
         return Response({
             'transcription': transcription,
-            'user_message': AIMessageSerializer(user_message).data,
-            'ai_message': AIMessageSerializer(ai_message).data,
+            'user_message': AIMessageSerializer(user_message, context={'request': request}).data,
+            'ai_message': AIMessageSerializer(ai_message, context={'request': request}).data,
             'detected_intent': intent_result
         })
     

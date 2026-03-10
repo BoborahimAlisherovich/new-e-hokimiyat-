@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,12 @@ import {
   Trash2,
   FileText,
   Zap,
+  Maximize2,
+  Minimize2,
+  Paperclip,
+  Image as ImageIcon,
+  Video,
+  X,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { API_BASE, getAccessToken, getRefreshToken, setAccessToken } from "@/lib/api/client";
@@ -51,6 +57,9 @@ interface AIMessage {
   created_at: string;
   detected_intent?: string;
   is_audio_message?: boolean;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
+  attachment_content_type?: string | null;
 }
 
 interface AIConversation {
@@ -101,11 +110,14 @@ export default function AIAssistantPage() {
   const [isSending, setIsSending] = useState(false);
   const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
   const [statsCollapsed, setStatsCollapsed] = useState(true);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [stats, setStats] = useState<AIStats | null>(null);
   const [speechText, setSpeechText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const shouldScrollRef = useRef<boolean>(false);
   const speechRecognitionRef = useRef<any>(null);
   const speechFinalRef = useRef<string>("");
@@ -174,6 +186,17 @@ export default function AIAssistantPage() {
     }
   }, [isRecording, speechText, audioBlob]);
 
+  useEffect(() => {
+    if (!isMaximized) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMaximized(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMaximized]);
+
   const loadConversationMessages = useCallback(async (conversationId: string) => {
     setIsLoading(true);
     try {
@@ -193,10 +216,17 @@ export default function AIAssistantPage() {
       setCurrentConversation(response.data);
       setMessages([]);
       loadConversations();
+      return response.data;
     } catch (err) {
       console.error("Error creating conversation:", err);
+      return null;
     }
   }, [loadConversations]);
+
+  const ensureConversation = useCallback(async () => {
+    if (currentConversation) return currentConversation;
+    return createNewConversation();
+  }, [createNewConversation, currentConversation]);
 
   const deleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -217,7 +247,8 @@ export default function AIAssistantPage() {
 
   const sendMessage = async (overrideText?: string) => {
     const userMessage = (overrideText ?? inputMessage).trim();
-    if (!userMessage || !currentConversation) return;
+    const conversation = await ensureConversation();
+    if ((!userMessage && !pendingAttachment) || !conversation) return;
 
     setInputMessage("");
     setIsSending(true);
@@ -225,23 +256,41 @@ export default function AIAssistantPage() {
     const tempUserMessage: AIMessage = {
       id: `temp-${Date.now()}`,
       role: "user",
-      content: userMessage,
+      content: userMessage || pendingAttachment?.name || "Fayl yuborildi",
       created_at: new Date().toISOString(),
+      attachment_name: pendingAttachment?.name || null,
+      attachment_content_type: pendingAttachment?.type || null,
     };
     shouldScrollRef.current = true;
     setMessages((prev) => [...prev, tempUserMessage]);
 
     try {
-      const response = await api.post<{ user_message: AIMessage; ai_message: AIMessage }>(
-        `/ai/conversations/${currentConversation.id}/send_message/`,
-        { message: userMessage }
-      );
+      let response;
+      if (pendingAttachment) {
+        const formData = new FormData();
+        if (userMessage) formData.append("message", userMessage);
+        formData.append("attachment", pendingAttachment);
+        response = await api.postFormData<{ user_message: AIMessage; ai_message: AIMessage }>(
+          `/ai/conversations/${conversation.id}/send_message/`,
+          formData
+        );
+      } else {
+        response = await api.post<{ user_message: AIMessage; ai_message: AIMessage }>(
+          `/ai/conversations/${conversation.id}/send_message/`,
+          { message: userMessage }
+        );
+      }
       shouldScrollRef.current = true;
       setMessages((prev) => [
         ...prev.filter((m) => m.id !== tempUserMessage.id),
         response.data.user_message,
         response.data.ai_message,
       ]);
+      setPendingAttachment(null);
+      if (attachmentInputRef.current) {
+        attachmentInputRef.current.value = "";
+      }
+      loadConversations();
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id));
@@ -307,7 +356,8 @@ export default function AIAssistantPage() {
   };
 
   const sendAudioMessage = async () => {
-    if (!audioBlob || !currentConversation) return;
+    const conversation = await ensureConversation();
+    if (!audioBlob || !conversation) return;
     setIsSending(true);
 
     const tempUserMessage: AIMessage = {
@@ -327,7 +377,7 @@ export default function AIAssistantPage() {
         formData.append("transcript", speechText.trim());
       }
       const response = await api.postFormData<{ user_message: AIMessage; ai_message: AIMessage; transcription: string }>(
-        `/ai/conversations/${currentConversation.id}/send_audio/`,
+        `/ai/conversations/${conversation.id}/send_audio/`,
         formData
       );
       shouldScrollRef.current = true;
@@ -339,6 +389,7 @@ export default function AIAssistantPage() {
       resetRecording();
       setSpeechText("");
       setInputMessage("");
+      loadConversations();
     } catch (error) {
       console.error("Error sending audio:", error);
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id));
@@ -364,6 +415,20 @@ export default function AIAssistantPage() {
     if (!currentConversation) await createNewConversation();
     setInputMessage(message);
   }, [currentConversation, createNewConversation]);
+
+  const getAttachmentKind = (message: AIMessage) => {
+    const contentType = message.attachment_content_type || "";
+    if (contentType.startsWith("image/")) return "image";
+    if (contentType.startsWith("video/")) return "video";
+    if (contentType.startsWith("audio/")) return "audio";
+    return "file";
+  };
+
+  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setPendingAttachment(file);
+  };
 
   const selectConversation = useCallback((conv: AIConversation) => {
     setCurrentConversation(conv);
@@ -586,8 +651,17 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Main chat area */}
-        <div className="min-h-[55vh] xl:min-h-0">
-          <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
+        <div className={isMaximized ? "contents" : "min-h-[55vh] xl:min-h-0"}>
+          {isMaximized && (
+            <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm" onClick={() => setIsMaximized(false)} />
+          )}
+          <Card
+            className={`flex flex-col overflow-hidden bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 ${
+              isMaximized
+                ? "fixed inset-3 z-50 h-[calc(100vh-1.5rem)] rounded-3xl border-sky-100/80 bg-white/92 shadow-[0_30px_120px_-30px_rgba(15,23,42,0.45)]"
+                : "h-full"
+            }`}
+          >
             {currentConversation ? (
               <>
                 <CardHeader className="pb-3 border-b border-indigo-100/40 flex-shrink-0 bg-indigo-50/30">
@@ -616,6 +690,19 @@ export default function AIAssistantPage() {
                           <ChevronRight className="h-3.5 w-3.5 ml-1" />
                         ) : (
                           <ChevronLeft className="h-3.5 w-3.5 ml-1" />
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsMaximized((prev) => !prev)}
+                        className="h-8 px-2.5 text-xs"
+                      >
+                        {isMaximized ? (
+                          <Minimize2 className="h-3.5 w-3.5" />
+                        ) : (
+                          <Maximize2 className="h-3.5 w-3.5" />
                         )}
                       </Button>
                     </div>
@@ -692,6 +779,38 @@ export default function AIAssistantPage() {
                                 </button>
                               </div>
                             )}
+                            {message.attachment_url && (
+                              <div className="mt-3">
+                                {getAttachmentKind(message) === "image" ? (
+                                  <a href={message.attachment_url} target="_blank" rel="noreferrer">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={message.attachment_url}
+                                      alt={message.attachment_name || "Rasm"}
+                                      className="max-h-72 rounded-xl border border-slate-200 object-cover"
+                                    />
+                                  </a>
+                                ) : getAttachmentKind(message) === "video" ? (
+                                  <video
+                                    src={message.attachment_url}
+                                    controls
+                                    className="max-h-72 w-full rounded-xl border border-slate-200 bg-slate-950"
+                                  />
+                                ) : getAttachmentKind(message) === "audio" ? (
+                                  <audio src={message.attachment_url} controls className="w-full" />
+                                ) : (
+                                  <a
+                                    href={message.attachment_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                  >
+                                    <FileText className="h-4 w-4 text-blue-600" />
+                                    {message.attachment_name || "Faylni ochish"}
+                                  </a>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -711,6 +830,24 @@ export default function AIAssistantPage() {
                   </ScrollArea>
                 </CardContent>
                 <div className="p-4 border-t border-indigo-100/40 bg-indigo-50/30 flex-shrink-0">
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {[
+                      "Tezkor topshiriq yarat: bugun suv ta'minoti holatini tekshirish",
+                      "Tezkor topshiriq yarat: barcha maktablarga haftalik hisobot topshirish",
+                      "Haftalik hisobot yarat",
+                    ].map((prompt) => (
+                      <Button
+                        key={prompt}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setInputMessage(prompt)}
+                        className="h-8 rounded-full border-sky-100 bg-white/70 px-3 text-[11px] text-slate-600 hover:bg-sky-50"
+                      >
+                        {prompt}
+                      </Button>
+                    ))}
+                  </div>
                   {isRecording && (
                     <div className="mb-3 flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
                       <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
@@ -729,7 +866,53 @@ export default function AIAssistantPage() {
                       </Button>
                     </div>
                   )}
+                  {pendingAttachment && (
+                    <div className="mb-3 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+                      {pendingAttachment.type.startsWith("image/") ? (
+                        <ImageIcon className="h-4 w-4 text-sky-600" />
+                      ) : pendingAttachment.type.startsWith("video/") ? (
+                        <Video className="h-4 w-4 text-sky-600" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-sky-600" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-slate-700">{pendingAttachment.name}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {(pendingAttachment.size / (1024 * 1024)).toFixed(1)} MB
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setPendingAttachment(null);
+                          if (attachmentInputRef.current) attachmentInputRef.current.value = "";
+                        }}
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                   <div className="flex items-end gap-2">
+                    <input
+                      ref={attachmentInputRef}
+                      type="file"
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                      className="hidden"
+                      onChange={handleAttachmentChange}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => attachmentInputRef.current?.click()}
+                      disabled={isSending || isRecording}
+                      className="h-10 w-10 flex-shrink-0"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant={isRecording ? "destructive" : "outline"}
                       size="icon"
@@ -755,7 +938,7 @@ export default function AIAssistantPage() {
                     />
                     <Button
                       onClick={() => sendMessage()}
-                      disabled={!inputMessage.trim() || isSending || isRecording}
+                      disabled={(!inputMessage.trim() && !pendingAttachment) || isSending || isRecording}
                       className="h-10 w-10 flex-shrink-0 bg-blue-600 hover:bg-blue-700"
                     >
                       {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
