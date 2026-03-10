@@ -19,6 +19,7 @@ from .serializers import (
     TelegramAppealListSerializer, TelegramAppealDetailSerializer,
     AppealReviewSerializer, BotStatsSerializer
 )
+from core.permissions import CanManageBotSettings
 
 
 def _find_bot_pids() -> list:
@@ -77,6 +78,16 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
     queryset = BotSettings.objects.all()
     serializer_class = BotSettingsSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        protected_actions = {
+            'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy',
+            'test_connection', 'set_webhook', 'delete_webhook', 'start_bot',
+            'stop_bot', 'bot_status', 'webhook_info', 'test_ai_connection'
+        }
+        if self.action in protected_actions:
+            return [permissions.IsAuthenticated(), CanManageBotSettings()]
+        return [permissions.IsAuthenticated()]
     
     def get_object(self):
         # Har doim birinchi (va yagona) sozlamani qaytarish

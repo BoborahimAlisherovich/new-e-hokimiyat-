@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Phone, MapPin, Layers } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getSectors, type Sector } from "@/lib/api/sectors.api"
+import { api } from "@/lib/api"
 
 interface CreateOrganizationFormData {
   name: string
@@ -34,26 +35,37 @@ export function OrganizationCreateDialog({
 }: OrganizationCreateDialogProps) {
  const [sectors, setSectors] = useState<Sector[]>([])
  const [loadingSectors, setLoadingSectors] = useState(false)
-
- const handleOpenChange = (nextOpen: boolean) => {
- if (nextOpen) {
- setLoadingSectors(true)
- }
- onOpenChange(nextOpen)
- }
+ const [populatingDefaults, setPopulatingDefaults] = useState(false)
 
  useEffect(() => {
- if (!open || !loadingSectors) return
+ if (!open) return
 
+ setLoadingSectors(true)
  getSectors()
- .then(setSectors)
- .catch(console.error)
+ .then((items) => setSectors(items.filter((sector) => sector.is_active)))
+ .catch((error) => {
+ console.error("Failed to load sectors:", error)
+ setSectors([])
+ })
  .finally(() => setLoadingSectors(false))
- }, [open, loadingSectors])
+ }, [open])
+
+ const handlePopulateDefaults = async () => {
+ setPopulatingDefaults(true)
+ try {
+ await api.post("/organizations/sectors/populate_defaults/")
+ const items = await getSectors()
+ setSectors(items.filter((sector) => sector.is_active))
+ } catch (error) {
+ console.error("Failed to populate default sectors:", error)
+ } finally {
+ setPopulatingDefaults(false)
+ }
+ }
 
  return (
- <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-indigo-50/30 shadow-2xl">
+ <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-indigo-50/30 shadow-2xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
@@ -94,12 +106,25 @@ export function OrganizationCreateDialog({
               <SelectContent className="rounded-xl">
                 <SelectItem value="none">Tanlanmagan</SelectItem>
                 {sectors.map((sector) => (
-                  <SelectItem key={sector.id} value={sector.id}>
+                  <SelectItem key={sector.id} value={String(sector.id)}>
                     {sector.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {!loadingSectors && sectors.length === 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Sohalar topilmadi.
+                <button
+                  type="button"
+                  onClick={handlePopulateDefaults}
+                  disabled={populatingDefaults}
+                  className="ml-2 font-semibold underline underline-offset-2 disabled:opacity-50"
+                >
+                  {populatingDefaults ? "Yuklanmoqda..." : "Standart sohalarni yuklash"}
+                </button>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">

@@ -97,6 +97,18 @@ export default function TaskDetailPage() {
   const wsRef = useRef<WebSocket | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const normalizeExecution = (item: any) => {
+    if (item?.type !== "execution") return null
+    return {
+      id: item.id,
+      actionType: item.action_type || item.actionType || "ACTION",
+      comment: item.content || item.comment || "",
+      executedByName: item.user_name || item.executed_by_name || item.executedByName || "Tizim",
+      executedByRole: item.user_role || item.executed_by_role || item.executedByRole || "SYSTEM",
+      createdAt: item.timestamp || item.created_at || item.createdAt,
+    }
+  }
+
   const normalizeChatMessage = (msg: any) => {
     if (msg?.type === 'execution') return null
     const senderObj = msg.sender && typeof msg.sender === 'object' ? msg.sender : null
@@ -111,6 +123,16 @@ export default function TaskDetailPage() {
       attachment: msg.attachment || (msg.attachments && msg.attachments[0]) || null,
       createdAt: msg.created_at || msg.createdAt || msg.timestamp,
     }
+  }
+
+  const applyTimelineData = (timeline: any[]) => {
+    const normalizedMessages = normalizeChatMessages(timeline || [])
+    const normalizedExecutions = (timeline || [])
+      .map(normalizeExecution)
+      .filter(Boolean)
+
+    setChatMessages(normalizedMessages)
+    setTaskExecutions(normalizedExecutions)
   }
 
   const normalizeChatMessages = (list: any[]) => {
@@ -130,7 +152,7 @@ export default function TaskDetailPage() {
       .then(([t, chat, users, orgs, me]) => {
         if (!mounted) return
         setTask(t)
-        setChatMessages(normalizeChatMessages(chat || []))
+        applyTimelineData(chat || [])
         const uMap: Record<string, any> = {}
         users.forEach((u: any) => (uMap[u.id] = u))
         setUsersMap(uMap)
@@ -150,10 +172,10 @@ export default function TaskDetailPage() {
             try {
               const payload = JSON.parse(ev.data)
               if (payload.type === 'history') {
-                setChatMessages(normalizeChatMessages(payload.messages || []))
+                applyTimelineData(payload.messages || [])
               } else if (payload.type === 'message') {
                 // On new message, refresh chat from REST to keep shape consistent
-                getTaskChat(id).then((data) => setChatMessages(normalizeChatMessages(data || []))).catch(() => {})
+                getTaskChat(id).then((data) => applyTimelineData(data || [])).catch(() => {})
               }
             } catch {}
           }
@@ -249,6 +271,7 @@ export default function TaskDetailPage() {
         reason: extendReason,
       })
       setTask(updatedTask)
+      refreshTimeline()
       setExtendReason("")
       setIsExtendOpen(false)
     } catch (error) {
@@ -267,6 +290,7 @@ export default function TaskDetailPage() {
     try {
       const updatedTask = await markTaskComplete(id)
       setTask(updatedTask)
+      refreshTimeline()
       alert("Topshiriq bajarildi deb belgilandi!")
     } catch (error) {
       console.error("Mark complete error:", error)
@@ -284,6 +308,7 @@ export default function TaskDetailPage() {
     try {
       const updatedTask = await approveTask(id, { comment: "Topshiriq nazoratdan yechildi" })
       setTask(updatedTask)
+      refreshTimeline()
     } catch (error) {
       console.error("Approve task error:", error)
       alert("Topshiriqni tasdiqlashda xatolik yuz berdi")
@@ -301,6 +326,7 @@ export default function TaskDetailPage() {
     try {
       const updatedTask = await rejectTask(id, { comment: reason })
       setTask(updatedTask)
+      refreshTimeline()
     } catch (error) {
       console.error("Reject task error:", error)
       alert("Topshiriqni qayta ijroga yuborishda xatolik yuz berdi")
@@ -309,9 +335,9 @@ export default function TaskDetailPage() {
     }
   }
 
-  const refreshChat = () => {
+  const refreshTimeline = () => {
     getTaskChat(id)
-      .then((data) => setChatMessages(normalizeChatMessages(data || [])))
+      .then((data) => applyTimelineData(data || []))
       .catch(() => {})
   }
 
@@ -364,7 +390,7 @@ export default function TaskDetailPage() {
     try {
       await sendTaskMessage(id, { content: '🎤 Ovozli xabar', attachment: audioFile })
       setAudioBlob(null)
-      refreshChat()
+      refreshTimeline()
     } catch (error) {
       console.error('Audio yuborishda xatolik:', error)
     }
@@ -386,7 +412,7 @@ export default function TaskDetailPage() {
       const locationMessage = `📍 Joylashuv: https://maps.google.com/maps?q=${latitude},${longitude}`
       
       await sendTaskMessage(id, { content: locationMessage })
-      refreshChat()
+      refreshTimeline()
     } catch (error) {
       console.error('Location error:', error)
       alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
@@ -437,7 +463,7 @@ export default function TaskDetailPage() {
         setEditingMessageId(null)
         setEditingContent("")
         setNewMessage("")
-        refreshChat()
+        refreshTimeline()
         return
       } catch {
         return
@@ -448,7 +474,7 @@ export default function TaskDetailPage() {
       await sendTaskMessage(id, { content: hasContent ? newMessage.trim() : undefined, attachment: hasFile ? chatFile : undefined })
       setNewMessage("")
       setChatFile(null)
-      refreshChat()
+      refreshTimeline()
     } catch {
       // fallback: if WS available, try send directly (text only)
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && newMessage.trim()) {
@@ -468,7 +494,7 @@ export default function TaskDetailPage() {
   const handleDeleteMessage = async (msg: any) => {
     try {
       await deleteTaskMessage(id, msg.id)
-      refreshChat()
+      refreshTimeline()
     } catch {}
   }
 
@@ -1102,7 +1128,6 @@ export default function TaskDetailPage() {
                         <div className="text-center text-muted-foreground py-8">Hozircha tarix yo'q</div>
                       ) : (
                         taskExecutions.map((exec) => {
-                          const executor = usersMap[exec.executedBy]
                           return (
                             <div key={exec.id} className="flex gap-3">
                               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -1110,13 +1135,11 @@ export default function TaskDetailPage() {
                               </div>
                               <div className="space-y-1">
                                 <p className="text-sm font-medium text-foreground">
-                                  {exec.actionType.replace(/_/g, " ")}
+                                  {(exec.actionType || "ACTION").replace(/_/g, " ")}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{exec.comment}</p>
+                                <p className="text-sm text-muted-foreground">{exec.comment || "Izoh yo'q"}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>
-                                    {executor?.lastName} {executor?.firstName}
-                                  </span>
+                                  <span>{exec.executedByName || "Tizim"}</span>
                                   <span>•</span>
                                   <span>{formatDateTime(exec.createdAt)}</span>
                                 </div>

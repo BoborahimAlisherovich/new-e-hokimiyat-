@@ -9,6 +9,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { Plus, Trash2, Edit } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
 import { api } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 type Translation = ReturnType<typeof useTranslation>
 
@@ -17,7 +18,7 @@ interface SettingsSectorsTabProps {
 }
 
 interface Sector {
-  id: number
+  id: string
   name: string
   description?: string
   is_active?: boolean
@@ -25,10 +26,12 @@ interface Sector {
 
 
 export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
+  const { toast } = useToast()
   const [sectors, setSectors] = useState<Sector[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -47,6 +50,11 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
       setSectors(normalized)
     } catch (error) {
       console.error("Error loading sectors:", error)
+      toast({
+        title: t.common.error,
+        description: "Sohalarni yuklashda xatolik yuz berdi",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -54,18 +62,38 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.name.trim()) return
+
     try {
+      setIsSaving(true)
       if (editingId) {
-        await api.put(`/organizations/sectors/${editingId}/`, formData)
+        await api.patch(`/organizations/sectors/${editingId}/`, {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+        })
       } else {
-        await api.post("/organizations/sectors/", formData)
+        await api.post("/organizations/sectors/", {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+        })
       }
       setFormData({ name: "", description: "" })
       setIsAdding(false)
       setEditingId(null)
-      loadSectors()
+      await loadSectors()
+      toast({
+        title: t.common.success,
+        description: editingId ? "Soha yangilandi" : "Soha qo'shildi",
+      })
     } catch (error) {
       console.error("Error saving sector:", error)
+      toast({
+        title: t.common.error,
+        description: "Sohani saqlashda xatolik yuz berdi",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -78,13 +106,22 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
     setIsAdding(true)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Ushbu sohani o'chirmoqchimisiz?")) return
     try {
       await api.delete(`/organizations/sectors/${id}/`)
-      loadSectors()
+      await loadSectors()
+      toast({
+        title: t.common.success,
+        description: "Soha o'chirildi",
+      })
     } catch (error) {
       console.error("Error deleting sector:", error)
+      toast({
+        title: t.common.error,
+        description: "Sohani o'chirishda xatolik yuz berdi",
+        variant: "destructive",
+      })
     }
   }
 
@@ -97,9 +134,18 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
   const handleAddDefaults = async () => {
     try {
       await api.post("/organizations/sectors/populate_defaults/")
-      loadSectors()
+      await loadSectors()
+      toast({
+        title: t.common.success,
+        description: "Standart sohalar yangilandi",
+      })
     } catch (error) {
       console.error("Error adding default sectors:", error)
+      toast({
+        title: t.common.error,
+        description: "Standart sohalarni qo'shishda xatolik yuz berdi",
+        variant: "destructive",
+      })
     }
   }
 
@@ -107,10 +153,10 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
     <TabsContent value="sectors" className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>Sohalar boshqaruvi</span>
             {!isAdding && (
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button onClick={handleAddDefaults} variant="outline" size="sm">
                   Standart sohalarni qo'shish
                 </Button>
@@ -150,10 +196,10 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button type="submit">
-                  {editingId ? "Yangilash" : "Qo'shish"}
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? "Saqlanmoqda..." : editingId ? "Yangilash" : "Qo'shish"}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleCancel}>
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
                   Bekor qilish
                 </Button>
               </div>

@@ -57,7 +57,8 @@ export type UserRole =
   | 'HOKIM' 
   | 'HOKIM_YORDAMCHISI'
   | 'HOKIMLIK_MASUL' 
-  | 'TASHKILOT_RAHBAR' 
+  | 'TASHKILOT_RAHBAR'
+  | 'TASHKILOT_RAHBARI'
   | 'TASHKILOT_MASUL' 
   | 'ADMIN'
 
@@ -101,6 +102,7 @@ export const roleLabels: Readonly<Record<UserRole, string>> = Object.freeze({
   HOKIM_YORDAMCHISI: "Hokim yordamchisi",
   HOKIMLIK_MASUL: "Hokimlik mas'uli",
   TASHKILOT_RAHBAR: "Tashkilot rahbari",
+  TASHKILOT_RAHBARI: "Tashkilot rahbari",
   TASHKILOT_MASUL: "Tashkilot mas'uli",
   ADMIN: "Administrator",
 })
@@ -111,6 +113,7 @@ export const roleCabinet: Readonly<Record<UserRole, CabinetType>> = Object.freez
   HOKIM_YORDAMCHISI: 'HOKIMLIK',
   HOKIMLIK_MASUL: 'HOKIMLIK',
   TASHKILOT_RAHBAR: 'TASHKILOT',
+  TASHKILOT_RAHBARI: 'TASHKILOT',
   TASHKILOT_MASUL: 'TASHKILOT',
   ADMIN: 'ADMIN',
 })

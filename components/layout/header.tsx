@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { User as UserType } from "@/types"
 import { useI18n, useTranslation } from "@/lib/i18n/context"
+import { useAudioAlert } from "@/hooks/use-audio-alert"
 
 interface HeaderProps {
   title: string
@@ -30,6 +31,7 @@ interface HeaderProps {
 
 export function Header({ title, description }: HeaderProps) {
   const router = useRouter()
+  const playAlert = useAudioAlert()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -41,24 +43,39 @@ export function Header({ title, description }: HeaderProps) {
 
  useEffect(() => {
  let isMounted = true
+ let previousUnreadCount = 0
+ let initialized = false
 
-    
-    // Fetch current user
-    getCurrentUser()
-      .then((user) => isMounted && setCurrentUser(user))
-      .catch(() => {})
-    
-    // Fetch notifications
-    getUnreadNotificationsCount()
-      .then((c) => isMounted && setUnreadCount(c))
-      .catch(() => {})
-    getNotifications()
-      .then((list) => isMounted && setRecentNotifications(list.slice(0, 5)))
-      .catch(() => {})
+    const loadHeaderData = async () => {
+      try {
+        const [user, count, list] = await Promise.all([
+          getCurrentUser().catch(() => null),
+          getUnreadNotificationsCount().catch(() => 0),
+          getNotifications(1, 5).catch(() => []),
+        ])
+
+        if (!isMounted) return
+
+        if (user) setCurrentUser(user)
+        setUnreadCount(count)
+        setRecentNotifications(list.slice(0, 5))
+
+        if (initialized && count > previousUnreadCount) {
+          playAlert(720, 0.16)
+          window.dispatchEvent(new CustomEvent("notificationReceived", { detail: { unreadCount: count } }))
+        }
+        initialized = true
+        previousUnreadCount = count
+      } catch {}
+    }
+
+    loadHeaderData()
+    const interval = window.setInterval(loadHeaderData, 15000)
     return () => {
       isMounted = false
+      window.clearInterval(interval)
     }
-  }, [])
+  }, [playAlert])
 
   const handleLogout = async () => {
     try {
@@ -230,19 +247,19 @@ export function Header({ title, description }: HeaderProps) {
                   <div className="flex items-center gap-2 w-full">
                     <div className={cn(
                       "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      notification.type === "task_overdue" ? "bg-red-500" : "bg-indigo-600"
+                      notification.type === "TASK_OVERDUE" ? "bg-red-500" : "bg-indigo-600"
                     )} />
                     <span className={cn(
                       "font-medium text-xs flex-1",
-                      notification.type === "task_overdue" ? "text-red-600" : "text-slate-900"
+                      notification.type === "TASK_OVERDUE" ? "text-red-600" : "text-slate-900"
                     )}>
                       {notification.title}
                     </span>
-                    {!notification.read && (
+                    {!notification.is_read && (
                       <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></div>
                     )}
                   </div>
-                  <span className="text-xs text-slate-600 line-clamp-2">{notification.description}</span>
+                  <span className="text-xs text-slate-600 line-clamp-2">{notification.message}</span>
                 </DropdownMenuItem>
               ))}
             </div>

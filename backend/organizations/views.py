@@ -116,6 +116,11 @@ class SectorViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering = ['name']
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'populate_defaults']:
+            return [IsAuthenticated(), CanManageOrganizations()]
+        return [IsAuthenticated()]
+
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated, CanManageOrganizations])
     def populate_defaults(self, request):
         """

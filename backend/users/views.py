@@ -213,6 +213,8 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['login', 'pnfl', 'first_name', 'last_name', 'middle_name', 'email', 'position']
     ordering_fields = ['created_at', 'last_name', 'first_name']
     ordering = ['-created_at']
+
+    SELF_RESTRICTED_FIELDS = {'role', 'status', 'organization'}
     
     def get_serializer_class(self) -> Type[Serializer]:
         """So'rov turiga qarab serializer tanlash.
@@ -267,6 +269,62 @@ class UserViewSet(viewsets.ModelViewSet):
             },
             ip_address=getattr(self.request, 'client_ip', None)
         )
+
+    def _can_manage_target_user(self, actor: User, target: User) -> bool:
+        """Check whether actor can modify target user according to role hierarchy."""
+        if actor == target:
+            return True
+        if actor.role == UserRole.ADMIN:
+            return True
+        return actor.can_add_user_with_role(target.role)
+
+    def _ensure_can_manage_target_user(self, request: Request, target: User) -> None:
+        """Raise 403 if current user cannot manage target user."""
+        if not self._can_manage_target_user(request.user, target):
+            self.permission_denied(
+                request,
+                message="Bu foydalanuvchini boshqarish huquqingiz yo'q",
+            )
+
+    def _validate_self_update_payload(self, request: Request, target: User) -> Response | None:
+        """Prevent non-admin users from changing own privileged fields."""
+        if target != request.user or request.user.role == UserRole.ADMIN:
+            return None
+
+        forbidden_fields = self.SELF_RESTRICTED_FIELDS.intersection(request.data.keys())
+        if not forbidden_fields:
+            return None
+
+        return Response(
+            {'detail': "O'zingizning rolingiz, holatingiz yoki tashkilotingizni o'zgartira olmaysiz"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        user = self.get_object()
+        self._ensure_can_manage_target_user(request, user)
+        self_restriction_error = self._validate_self_update_payload(request, user)
+        if self_restriction_error:
+            return self_restriction_error
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        user = self.get_object()
+        self._ensure_can_manage_target_user(request, user)
+        self_restriction_error = self._validate_self_update_payload(request, user)
+        if self_restriction_error:
+            return self_restriction_error
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        user = self.get_object()
+        if user == request.user:
+            return Response(
+                {'detail': "O'zingizni o'chira olmaysiz"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        self._ensure_can_manage_target_user(request, user)
+        return super().destroy(request, *args, **kwargs)
     
     @action(detail=True, methods=['patch'])
     def block(self, request, pk=None):
@@ -409,6 +467,19 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(
                 {'detail': "Foydalanuvchi allaqachon faol"},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if user == request.user:
+            return Response(
+                {'detail': "O'zingizni faollashtira olmaysiz"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check hierarchy
+        if not request.user.can_add_user_with_role(user.role):
+            return Response(
+                {'detail': "Bu foydalanuvchini faollashtirish huquqingiz yo'q"},
+                status=status.HTTP_403_FORBIDDEN
             )
         
         old_status = user.status

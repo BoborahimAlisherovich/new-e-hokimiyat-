@@ -33,91 +33,7 @@ import { Badge } from "@/components/ui/badge"
 import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
-
-// Role-based menu configuration based on texnik topshiriq.txt
-const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  // Hokim - full access to everything except telegram-bot (admin only)
-  HOKIM: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/organizations',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/analytics',
-    '/dashboard/chat',
-    '/dashboard/ai-assistant',
-    '/dashboard/settings',
-  ],
-  // Hokim yordamchisi - similar to Hokim but cannot close tasks
-  HOKIM_YORDAMCHISI: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/organizations',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/analytics',
-    '/dashboard/chat',
-    '/dashboard/ai-assistant',
-    '/dashboard/settings',
-  ],
-  // Hokimlik mas'uli - can add users, orgs, create tasks (+ AI Assistant)
-  HOKIMLIK_MASUL: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/organizations',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/analytics',
-    '/dashboard/chat',
-    '/dashboard/ai-assistant',
-    '/dashboard/settings',
-  ],
-  // Tashkilot rahbari - can add tashkilot mas'uli, view tasks, upload reports
-  TASHKILOT_RAHBAR: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/chat',
-    '/dashboard/settings',
-  ],
-  // Backend sends TASHKILOT_RAHBARI — alias for TASHKILOT_RAHBAR
-  TASHKILOT_RAHBARI: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/chat',
-    '/dashboard/settings',
-  ],
-  // Tashkilot mas'uli - can only execute tasks and upload reports
-  TASHKILOT_MASUL: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/notifications',
-    '/dashboard/chat',
-    '/dashboard/settings',
-  ],
-  // Admin - technical admin, full access including telegram-bot
-  ADMIN: [
-    '/dashboard',
-    '/dashboard/tasks',
-    '/dashboard/users',
-    '/dashboard/organizations',
-    '/dashboard/notifications',
-    '/dashboard/appeals',
-    '/dashboard/analytics',
-    '/dashboard/chat',
-    '/dashboard/ai-assistant',
-    '/dashboard/telegram-bot',
-    '/dashboard/settings',
-  ],
-}
+import { canAccessDashboardPath, isDashboardNavItemActive } from "@/lib/dashboard-access"
 
 export function Sidebar() {
   const t = useTranslation()
@@ -159,6 +75,10 @@ export function Sidebar() {
     const handleChatRead = () => fetchUnreadCounts()
     window.addEventListener('chatRead', handleChatRead)
     
+    // Refresh quickly when header detects a new notification
+    const handleNotificationReceived = () => fetchUnreadCounts()
+    window.addEventListener('notificationReceived', handleNotificationReceived)
+    
     // Fetch unread counts
     const fetchUnreadCounts = async () => {
       try {
@@ -182,13 +102,13 @@ export function Sidebar() {
       window.removeEventListener("resize", handleResize)
       window.removeEventListener('userUpdated', handleUserUpdated)
       window.removeEventListener('chatRead', handleChatRead)
+      window.removeEventListener('notificationReceived', handleNotificationReceived)
       clearInterval(interval)
     }
   }, [])
 
   // Get user role - default to TASHKILOT_MASUL for minimal access
   const userRole = currentUser?.role || 'TASHKILOT_MASUL'
-  const allowedPaths = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.TASHKILOT_MASUL
 
   const roleLabels: Record<UserRole, string> = {
     HOKIM: t.roles.HOKIM,
@@ -201,7 +121,7 @@ export function Sidebar() {
   }
 
   // Check if user can access a path
-  const canAccess = (path: string) => allowedPaths.includes(path)
+  const canAccess = (path: string) => canAccessDashboardPath(userRole, path)
 
   // All navigation items
   const allNavItems = [
@@ -306,7 +226,7 @@ export function Sidebar() {
           variant="secondary"
           size="icon"
           onClick={() => setCollapsed(false)}
-          className="fixed top-4 left-4 z-50 shadow-md h-10 w-10 rounded-full border border-border/50 bg-white/80 backdrop-blur"
+          className="fixed left-4 top-4 z-50 h-11 w-11 rounded-2xl border border-sky-100/80 bg-white/90 shadow-[0_12px_30px_-18px_rgba(14,165,233,0.55)] backdrop-blur"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -317,7 +237,7 @@ export function Sidebar() {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={cn(
-          "flex h-screen flex-col bg-gradient-to-b from-white/95 via-indigo-50/20 to-white/90 text-slate-800 border-r border-indigo-100/40 transition-all duration-300 shadow-[4px_0_30px_-10px_rgba(99,102,241,0.06)] backdrop-blur-2xl",
+          "flex h-screen flex-col bg-gradient-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
           isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "relative",
           collapsed 
             ? (isMobile ? "-translate-x-full w-[280px]" : "w-20") 
@@ -377,7 +297,7 @@ export function Sidebar() {
             </p>
             <div className="space-y-3">
               {mainItems.map((item, index) => (
-                <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index} />
+                <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index} />
               ))}
             </div>
           </div>
@@ -386,7 +306,7 @@ export function Sidebar() {
         {collapsed && mainItems.length > 0 && (
           <div className="space-y-3 mb-4">
             {mainItems.map((item, index) => (
-              <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index} />
+              <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index} />
             ))}
           </div>
         )}
@@ -399,7 +319,7 @@ export function Sidebar() {
             </p>
             <div className="space-y-3">
               {communicationItems.map((item, index) => (
-                <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index + mainItems.length} />
+                <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index + mainItems.length} />
               ))}
             </div>
           </div>
@@ -410,7 +330,7 @@ export function Sidebar() {
             <div className="h-px bg-indigo-100/50 my-4" />
             <div className="space-y-3 mb-4">
               {communicationItems.map((item, index) => (
-                <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index + mainItems.length} />
+                <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index + mainItems.length} />
               ))}
             </div>
           </>
@@ -424,7 +344,7 @@ export function Sidebar() {
             </p>
             <div className="space-y-3">
               {analyticsItems.map((item, index) => (
-                <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index + mainItems.length + communicationItems.length} />
+                <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index + mainItems.length + communicationItems.length} />
               ))}
             </div>
           </div>
@@ -435,7 +355,7 @@ export function Sidebar() {
             <div className="h-px bg-indigo-100/50 my-4" />
             <div className="space-y-3">
               {analyticsItems.map((item, index) => (
-                <NavItem key={item.href} item={item} isActive={pathname === item.href} collapsed={collapsed} index={index + mainItems.length + communicationItems.length} />
+                <NavItem key={item.href} item={item} isActive={isDashboardNavItemActive(item.href, pathname)} collapsed={collapsed} index={index + mainItems.length + communicationItems.length} />
               ))}
             </div>
           </>

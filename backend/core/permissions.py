@@ -109,6 +109,23 @@ class CanManageOrganizations(permissions.BasePermission):
         return request.user.role in self.allowed_roles
 
 
+class CanManageBotSettings(permissions.BasePermission):
+    """
+    Permission to manage Telegram bot and privileged system settings.
+    Only admin users can change these settings.
+    """
+    allowed_roles = ['ADMIN']
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.role in self.allowed_roles
+
+        return request.user.role in self.allowed_roles
+
+
 class CanCreateTasks(permissions.BasePermission):
     """
     Permission to create tasks.
