@@ -552,7 +552,7 @@ export default function AIAssistantPage() {
     <>
       <Header title="AI Yordamchi" description="Sun'iy intellekt yordamchisi bilan suhbatlashing" />
       <div ref={pageRef} className="p-4 sm:p-6">
-        <div className="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-[1700px] flex-col gap-3">
+        <div className="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-425 flex-col gap-3">
           <section
             data-gsap-section
             className="flex flex-col gap-3 rounded-[28px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(239,246,255,0.94),rgba(240,249,255,0.9))] p-4 shadow-[0_24px_80px_-32px_rgba(14,165,233,0.35)] backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between"
@@ -604,8 +604,7 @@ export default function AIAssistantPage() {
           >
         
             {/* Left sidebar - Conversations */}
-            <div className="min-h-[220px] xl:h-full xl:min-h-0">
-          <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
+            <div className="min-h-55 xl:h-full xl:min-h-0">
           <Card data-gsap-card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="py-2.5 px-3 border-b border-indigo-100/40 shrink-0">
               <div className="flex items-center justify-between">
@@ -709,7 +708,7 @@ export default function AIAssistantPage() {
               <>
                 <CardHeader className="pb-3 border-b border-indigo-100/40 shrink-0 bg-indigo-50/30">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="max-w-[180px] truncate text-base font-semibold text-slate-800 sm:max-w-[320px]">
+                    <CardTitle className="max-w-45 truncate text-base font-semibold text-slate-800 sm:max-w-[320px]">
                       {currentConversation.title || "Yangi suhbat"}
                     </CardTitle>
                     <div className="flex items-center gap-2">
@@ -1096,7 +1095,6 @@ export default function AIAssistantPage() {
 
       {/* Bottom FAQ section */}
       <section data-gsap-section>
-      <Card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
       <Card data-gsap-card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
         <CardHeader className="py-3 border-b border-indigo-100/40">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-800">
