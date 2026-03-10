@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/header"
 import { Tabs } from "@/components/ui/tabs"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useI18n, useTranslation, type Language } from "@/lib/i18n/context"
 import { getCurrentUser } from "@/lib/api"
 import { User } from "@/types"
@@ -16,8 +16,12 @@ import { SettingsAdminTab } from "@/components/dashboard/settings/settings-admin
 import { useToast } from "@/hooks/use-toast"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { api } from "@/lib/api"
+import { canAccessSettingsTab, getAllowedSettingsTabs, type SettingsTabKey } from "@/lib/settings-access"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const t = useTranslation()
   const { language, setLanguage } = useI18n()
   const { toast } = useToast()
@@ -47,18 +51,20 @@ export default function SettingsPage() {
       const user = await getCurrentUser()
       setCurrentUser(user)
 
-      try {
-        const botSettingsRes = await api.get<{ bot_token?: string; bot_username?: string }>(
-          "/telegram-bot/settings/"
-        )
-        if (typeof botSettingsRes.data?.bot_token === "string") {
-          setBotToken(botSettingsRes.data.bot_token)
+      if (canAccessSettingsTab(user.role, "admin")) {
+        try {
+          const botSettingsRes = await api.get<{ bot_token?: string; bot_username?: string }>(
+            "/telegram-bot/settings/"
+          )
+          if (typeof botSettingsRes.data?.bot_token === "string") {
+            setBotToken(botSettingsRes.data.bot_token)
+          }
+          if (typeof botSettingsRes.data?.bot_username === "string") {
+            setBotUsername(botSettingsRes.data.bot_username)
+          }
+        } catch (error) {
+          // ignore bot settings load errors for now
         }
-        if (typeof botSettingsRes.data?.bot_username === "string") {
-          setBotUsername(botSettingsRes.data.bot_username)
-        }
-      } catch (error) {
-        // ignore bot settings load errors for now
       }
       
       // Load settings from localStorage
@@ -89,10 +95,21 @@ export default function SettingsPage() {
   }, [language])
 
   const isAdmin = currentUser?.role === "ADMIN"
-  const isHokim = currentUser?.role === "HOKIM" || currentUser?.role === "HOKIM_YORDAMCHISI"
-  const isHokimlikMasul = currentUser?.role === "HOKIMLIK_MASUL"
-  const isTashkilotRahbar = currentUser?.role === "TASHKILOT_RAHBAR"
-  const showAdminTabs = isAdmin || isHokim
+  const userRole = currentUser?.role ?? null
+  const allowedTabs = useMemo(() => getAllowedSettingsTabs(userRole), [userRole])
+  const requestedTab = searchParams.get("tab") as SettingsTabKey | null
+  const resolvedTab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : allowedTabs[0]
+  const [activeTab, setActiveTab] = useState<SettingsTabKey>("profile")
+
+  useEffect(() => {
+    setActiveTab(resolvedTab)
+  }, [resolvedTab])
+
+  const handleTabChange = (value: string) => {
+    const nextTab = value as SettingsTabKey
+    setActiveTab(nextTab)
+    router.replace(`/dashboard/settings?tab=${nextTab}`, { scroll: false })
+  }
 
   const saveAdminSettings = async () => {
     try {
@@ -167,7 +184,7 @@ export default function SettingsPage() {
     return (
       <>
         <Header title={t.settings.title} description={t.settings.description} />
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
@@ -182,17 +199,14 @@ export default function SettingsPage() {
   return (
     <>
       <Header title={t.settings.title} description={t.settings.description} />
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-purple-400/8 to-transparent rounded-full blur-2xl" />
         </div>
-        <div
-          ref={pageRef}
-          className="max-w-4xl mx-auto relative z-10"
-        >
-          <Tabs defaultValue="profile" className="space-y-6">
+        <div ref={pageRef} className="relative z-10 mx-auto max-w-5xl">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <section data-gsap-section>
               <SettingsTabs t={t} isAdmin={isAdmin} userRole={currentUser?.role} />
             </section>
@@ -218,15 +232,9 @@ export default function SettingsPage() {
             <SettingsAppearanceTab t={t} language={language} onLanguageChange={(value) => setLanguage(value as Language)} onSave={saveSettings} saving={saving} />
             
             {/* Admin-only tabs */}
-            {showAdminTabs && (
-              <>
-                {(currentUser?.role === "ADMIN" || currentUser?.role === "HOKIM" || currentUser?.role === "HOKIM_YORDAMCHISI" || currentUser?.role === "HOKIMLIK_MASUL") && (
-                  <SettingsSectorsTab t={t} />
-                )}
-              </>
-            )}
+            {canAccessSettingsTab(userRole, "sectors") && <SettingsSectorsTab t={t} />}
 
-            {isAdmin && (
+            {canAccessSettingsTab(userRole, "admin") && isAdmin && (
               <SettingsAdminTab
                 t={t}
                 botToken={botToken}

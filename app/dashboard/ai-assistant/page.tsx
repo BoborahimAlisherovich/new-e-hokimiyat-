@@ -487,11 +487,18 @@ export default function AIAssistantPage() {
     <>
       <Header title="AI Yordamchi" description="Sun'iy intellekt yordamchisi bilan suhbatlashing" />
       <div ref={pageRef} className="p-4 sm:p-6">
-        <div className="flex flex-col h-[calc(100vh-10rem)] gap-3">
-          <section data-gsap-section className="flex flex-col lg:flex-row flex-1 gap-3 min-h-0">
+        <div className="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-[1700px] flex-col gap-3">
+          <section
+            data-gsap-section
+            className={`grid flex-1 min-h-0 gap-3 ${
+              statsCollapsed
+                ? "xl:grid-cols-[230px_minmax(0,1fr)]"
+                : "xl:grid-cols-[230px_minmax(0,1fr)] 2xl:grid-cols-[230px_minmax(0,1fr)_280px]"
+            }`}
+          >
         
             {/* Left sidebar - Conversations */}
-            <div className="w-full lg:w-60 xl:w-68 flex-shrink-0 min-h-[200px] lg:min-h-0 lg:h-full">
+            <div className="min-h-[220px] xl:h-full xl:min-h-0">
           <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="py-2.5 px-3 border-b border-indigo-100/40 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -579,13 +586,13 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Main chat area */}
-        <div className={`flex-1 min-h-0 ${statsCollapsed ? "lg:flex-[1.8]" : "lg:flex-[1.4]"}`}>
+        <div className="min-h-[55vh] xl:min-h-0">
           <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
             {currentConversation ? (
               <>
                 <CardHeader className="pb-3 border-b border-indigo-100/40 flex-shrink-0 bg-indigo-50/30">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-slate-800 truncate max-w-[200px]">
+                    <CardTitle className="max-w-[180px] truncate text-base font-semibold text-slate-800 sm:max-w-[320px]">
                       {currentConversation.title || "Yangi suhbat"}
                     </CardTitle>
                     <div className="flex items-center gap-2">
@@ -601,7 +608,7 @@ export default function AIAssistantPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setStatsCollapsed((prev) => !prev)}
-                        className="hidden lg:inline-flex h-8 px-2.5 text-xs"
+                        className="hidden 2xl:inline-flex h-8 px-2.5 text-xs"
                       >
                         <BarChart3 className="h-3.5 w-3.5 mr-1" />
                         {statsCollapsed ? "AI faollik" : "Yopish"}
@@ -616,7 +623,7 @@ export default function AIAssistantPage() {
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
                   <ScrollArea className="h-full">
-                    <div className="space-y-4 p-4">
+                    <div className="space-y-4 p-3 sm:p-4 lg:p-6">
                       {messages.length === 0 && !isLoading && (
                         <div className="text-center py-12">
                           <Sparkles className="h-12 w-12 mx-auto text-blue-400 mb-4" />
@@ -649,7 +656,7 @@ export default function AIAssistantPage() {
                           key={message.id}
                           className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                         >
-                          <div className={`max-w-[85%] rounded-xl p-4 ${
+                          <div className={`max-w-[96%] rounded-2xl p-3 sm:max-w-[94%] sm:p-4 lg:max-w-[90%] xl:max-w-[86%] ${
                             message.role === "user"
                               ? "bg-blue-600 text-white"
                               : "bg-indigo-50/50 border border-indigo-100/40"
@@ -722,7 +729,7 @@ export default function AIAssistantPage() {
                       </Button>
                     </div>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex items-end gap-2">
                     <Button
                       variant={isRecording ? "destructive" : "outline"}
                       size="icon"
@@ -744,7 +751,7 @@ export default function AIAssistantPage() {
                       }}
                       disabled={isSending || isRecording}
                       rows={1}
-                      className="min-h-[40px] max-h-24 resize-none"
+                      className="min-h-[44px] flex-1 max-h-32 resize-none rounded-2xl border-indigo-100/60 bg-white"
                     />
                     <Button
                       onClick={() => sendMessage()}
@@ -774,7 +781,7 @@ export default function AIAssistantPage() {
 
         {/* Right sidebar - Stats */}
         {!statsCollapsed && (
-        <div className="w-full lg:w-56 xl:w-64 flex-shrink-0 hidden lg:block">
+        <div className="hidden 2xl:block">
           <Card className="h-full bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="pb-3 border-b border-indigo-100/40">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-800">

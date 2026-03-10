@@ -8,6 +8,7 @@ export const roleCabinet = (role: string): string => {
     HOKIM: "/dashboard",
     HOKIMLIK_MASUL: "/dashboard",
     TASHKILOT_RAHBAR: "/dashboard",
+    TASHKILOT_RAHBARI: "/dashboard",
     TASHKILOT_MASUL: "/dashboard",
   }
   return cabinets[role] || "/dashboard"

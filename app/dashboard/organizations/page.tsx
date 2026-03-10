@@ -110,7 +110,10 @@ export default function OrganizationsPage() {
   const filteredOrganizations = useMemo(() => {
     return organizations.filter((org) => {
       const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
-      const matchesType = typeFilter === "all" || org.sector === typeFilter
+      const matchesType =
+        typeFilter === "all" ||
+        String(org.sector ?? "") === typeFilter ||
+        String(org.sector_id ?? "") === typeFilter
       const matchesSearch =
         (org.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (org.head || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -146,7 +149,7 @@ export default function OrganizationsPage() {
   return (
     <>
       <Header title={t.pages.organizations.title} description={t.pages.organizations.description} />
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div ref={pageRef} className="space-y-6 p-4 sm:p-6">
             {/* Filters and Actions */}
             <section data-gsap-section>
               <OrganizationFilters

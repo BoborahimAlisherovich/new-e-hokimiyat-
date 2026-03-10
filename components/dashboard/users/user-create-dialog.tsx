@@ -30,7 +30,7 @@ interface UserCreateDialogProps {
   formData: CreateUserFormData
   organizations: Organization[]
   onChange: (field: keyof CreateUserFormData, value: string) => void
-  onSubmit: () => void
+  onCreated: () => void
 }
 
 export function UserCreateDialog({
@@ -39,7 +39,7 @@ export function UserCreateDialog({
   formData,
   organizations,
   onChange,
-  onSubmit,
+  onCreated,
 }: UserCreateDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -82,7 +82,7 @@ export function UserCreateDialog({
         role: formData.role,
         organization: formData.organizationId || undefined,
       })
-      onSubmit()
+      onCreated()
     } catch (error: any) {
       console.error("Create user error:", error)
       

@@ -190,6 +190,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
       HOKIM: "Ҳоким",
       HOKIMLIK_MASUL: "Ҳокимлик масъули",
       TASHKILOT_RAHBAR: "Ташкилот раҳбари",
+      TASHKILOT_RAHBARI: "Ташкилот раҳбари",
       TASHKILOT_MASUL: "Ташкилот масъули",
       USER: "Фойдаланувчи",
     }

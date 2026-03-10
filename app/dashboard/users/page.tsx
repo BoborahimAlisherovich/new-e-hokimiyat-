@@ -85,27 +85,22 @@ export default function UsersPage() {
     setIsCreateDialogOpen(true)
   }
 
-  const handleCreateSubmit = async () => {
-    try {
-      // API call to create user
-      setIsCreateDialogOpen(false)
-      setCreateFormData({
-        login: "",
-        firstName: "",
-        lastName: "",
-        middleName: "",
-        email: "",
-        phone: "",
-        pnfl: "",
-        position: "",
-        password: "",
-        role: "TASHKILOT_MASUL",
-        organizationId: "",
-      })
-      await loadData()
-    } catch (error) {
-      // Handle error
-    }
+  const handleUserCreated = async () => {
+    setIsCreateDialogOpen(false)
+    setCreateFormData({
+      login: "",
+      firstName: "",
+      lastName: "",
+      middleName: "",
+      email: "",
+      phone: "",
+      pnfl: "",
+      position: "",
+      password: "",
+      role: "TASHKILOT_MASUL",
+      organizationId: "",
+    })
+    await loadData()
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -119,7 +114,7 @@ export default function UsersPage() {
     return (
       <>
         <Header title={t.pages.users.title} description={t.pages.users.description} />
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
@@ -134,7 +129,7 @@ export default function UsersPage() {
   return (
     <>
       <Header title={t.pages.users.title} description={t.pages.users.description} />
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div ref={pageRef} className="p-4 sm:p-6 space-y-6">
           {/* Stats Cards */}
           <section data-gsap-section>
             <UserStats
@@ -174,7 +169,7 @@ export default function UsersPage() {
         formData={createFormData}
         organizations={organizations}
         onChange={handleInputChange}
-        onSubmit={handleCreateSubmit}
+        onCreated={handleUserCreated}
       />
     </>
   )

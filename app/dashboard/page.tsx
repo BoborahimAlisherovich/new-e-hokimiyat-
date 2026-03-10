@@ -13,8 +13,7 @@ import OrgDashboard from "@/components/dashboard/org-dashboard"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { getCurrentUser } from "@/lib/api"
-
-const ORG_ROLES = ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL', 'TASHKILOT_RAHBAR']
+import { isOrganizationRole } from "@/lib/role-utils"
 
 export default function DashboardPage() {
   const t = useTranslation()
@@ -29,7 +28,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const isOrgUser = ORG_ROLES.includes(userRole || '')
+  const isOrgUser = isOrganizationRole(userRole)
 
   if (loading) {
     return (

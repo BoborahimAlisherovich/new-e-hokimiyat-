@@ -867,6 +867,7 @@ QOIDALAR:
                     'type': 'message',
                     'id': msg.id,
                     'timestamp': msg.created_at,
+                    'sender': str(msg.sender_id) if msg.sender_id else None,
                     'user_name': msg.sender.full_name if msg.sender else 'Tizim',
                     'user_role': msg.sender.role if msg.sender else 'SYSTEM',
                     'content': msg.content,
@@ -879,6 +880,7 @@ QOIDALAR:
                     'type': 'execution',
                     'id': exec.id,
                     'timestamp': exec.created_at,
+                    'executed_by': str(exec.executed_by_id) if exec.executed_by_id else None,
                     'user_name': exec.executed_by.full_name,
                     'user_role': exec.executed_by.role,
                     'content': exec.comment or exec.get_action_type_display(),
@@ -920,6 +922,26 @@ QOIDALAR:
                 content=content or (attachment_file.name if attachment_file else ''),
                 attachment=attachment
             )
+
+            # Tashkilot izohi yoki fayli kelganda Hokimlarga bildirishnoma yuboriladi.
+            if request.user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+                from users.models import User as UserModel
+
+                preview = (content or '').strip()
+                if not preview and attachment_file:
+                    preview = f"Fayl yuborildi: {attachment_file.name}"
+                preview = preview[:120] + ('...' if len(preview) > 120 else '')
+
+                hokim_users = UserModel.objects.filter(role='HOKIM', status='FAOL').exclude(id=request.user.id)
+                for hokim in hokim_users:
+                    Notification.objects.create(
+                        user=hokim,
+                        title='Topshiriq bo\'yicha yangi izoh',
+                        message=f"{request.user.full_name} \"{task.title}\" topshirig'iga izoh qoldirdi. {preview}",
+                        notification_type='TASK',
+                        related_task=task,
+                        link=f'/dashboard/tasks/{task.id}'
+                    )
 
             # Broadcast to WS clients
             channel_layer = get_channel_layer()
