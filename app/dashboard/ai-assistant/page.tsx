@@ -555,6 +555,47 @@ export default function AIAssistantPage() {
         <div className="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-[1700px] flex-col gap-3">
           <section
             data-gsap-section
+            className="flex flex-col gap-3 rounded-[28px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(239,246,255,0.94),rgba(240,249,255,0.9))] p-4 shadow-[0_24px_80px_-32px_rgba(14,165,233,0.35)] backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-600">Interactive Workspace</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                AI yordamchini to&apos;liq ekran, audio va media bilan boshqaring
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Tezkor topshiriq, hisobot va fayl bilan ishlash bir joyda.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                data-gsap-action
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMaximized((prev) => !prev)}
+                className="h-10 rounded-2xl border-sky-100 bg-white/80 px-4 text-slate-700 shadow-sm hover:bg-sky-50"
+              >
+                {isMaximized ? (
+                  <Minimize2 className="mr-2 h-4 w-4" />
+                ) : (
+                  <Maximize2 className="mr-2 h-4 w-4" />
+                )}
+                {isMaximized ? "Minimize" : "Maksimize"}
+              </Button>
+              <Button
+                data-gsap-action
+                type="button"
+                size="sm"
+                onClick={createNewConversation}
+                className="h-10 rounded-2xl bg-linear-to-r from-sky-600 via-blue-600 to-cyan-500 px-4 text-white shadow-[0_16px_30px_-18px_rgba(2,132,199,0.7)] hover:from-sky-700 hover:via-blue-700 hover:to-cyan-600"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Yangi suhbat
+              </Button>
+            </div>
+          </section>
+          <section
+            data-gsap-section
             className={`grid flex-1 min-h-0 gap-3 ${
               statsCollapsed
                 ? "xl:grid-cols-[230px_minmax(0,1fr)]"
@@ -565,6 +606,7 @@ export default function AIAssistantPage() {
             {/* Left sidebar - Conversations */}
             <div className="min-h-[220px] xl:h-full xl:min-h-0">
           <Card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
+          <Card data-gsap-card className="h-full flex flex-col bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="py-2.5 px-3 border-b border-indigo-100/40 shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
@@ -656,6 +698,7 @@ export default function AIAssistantPage() {
             <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm" onClick={() => setIsMaximized(false)} />
           )}
           <Card
+            data-gsap-card
             className={`flex flex-col overflow-hidden bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 ${
               isMaximized
                 ? "fixed inset-3 z-50 h-[calc(100vh-1.5rem)] rounded-3xl border-sky-100/80 bg-white/92 shadow-[0_30px_120px_-30px_rgba(15,23,42,0.45)]"
@@ -678,6 +721,7 @@ export default function AIAssistantPage() {
                         {currentConversation.status === "ACTIVE" ? "Faol" : "Yakunlangan"}
                       </Badge>
                       <Button
+                        data-gsap-action
                         type="button"
                         variant="outline"
                         size="sm"
@@ -693,6 +737,7 @@ export default function AIAssistantPage() {
                         )}
                       </Button>
                       <Button
+                        data-gsap-action
                         type="button"
                         variant="outline"
                         size="sm"
@@ -965,7 +1010,7 @@ export default function AIAssistantPage() {
         {/* Right sidebar - Stats */}
         {!statsCollapsed && (
         <div className="hidden 2xl:block">
-          <Card className="h-full bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
+          <Card data-gsap-card className="h-full bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30">
             <CardHeader className="pb-3 border-b border-indigo-100/40">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-800">
                 <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -1052,6 +1097,7 @@ export default function AIAssistantPage() {
       {/* Bottom FAQ section */}
       <section data-gsap-section>
       <Card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
+      <Card data-gsap-card className="bg-white/75 backdrop-blur-xl border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 shrink-0">
         <CardHeader className="py-3 border-b border-indigo-100/40">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <Sparkles className="h-4 w-4 text-violet-600" />
