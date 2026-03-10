@@ -108,6 +108,7 @@ export default function AIAssistantPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
   const [statsCollapsed, setStatsCollapsed] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -211,17 +212,34 @@ export default function AIAssistantPage() {
   }, []);
 
   const createNewConversation = useCallback(async () => {
+    if (isCreatingConversation) return; // Prevent duplicate requests
+    
+    setIsCreatingConversation(true);
     try {
       const response = await api.post<AIConversation>("/ai/conversations/", { title: "Yangi suhbat" });
       setCurrentConversation(response.data);
       setMessages([]);
       loadConversations();
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Yangi suhbat yaratildi",
+      });
       return response.data;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating conversation:", err);
+      const errorMsg = err?.response?.data?.detail || 
+                       err?.response?.data?.message || 
+                       (err instanceof Error ? err.message : "Suhbat yaratishda xatolik yuz berdi");
+      toast({
+        title: "Xatolik",
+        description: errorMsg,
+        variant: "destructive",
+      });
       return null;
+    } finally {
+      setIsCreatingConversation(false);
     }
-  }, [loadConversations]);
+  }, [loadConversations, toast, isCreatingConversation]);
 
   const ensureConversation = useCallback(async () => {
     if (currentConversation) return currentConversation;
@@ -587,10 +605,15 @@ export default function AIAssistantPage() {
                 type="button"
                 size="sm"
                 onClick={createNewConversation}
-                className="h-10 rounded-2xl bg-linear-to-r from-sky-600 via-blue-600 to-cyan-500 px-4 text-white shadow-[0_16px_30px_-18px_rgba(2,132,199,0.7)] hover:from-sky-700 hover:via-blue-700 hover:to-cyan-600"
+                disabled={isCreatingConversation}
+                className="h-10 rounded-2xl bg-linear-to-r from-sky-600 via-blue-600 to-cyan-500 px-4 text-white shadow-[0_16px_30px_-18px_rgba(2,132,199,0.7)] hover:from-sky-700 hover:via-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Yangi suhbat
+                {isCreatingConversation ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
+                {isCreatingConversation ? "Yaratilmoqda..." : "Yangi suhbat"}
               </Button>
             </div>
           </section>
@@ -615,10 +638,15 @@ export default function AIAssistantPage() {
                 <Button 
                   size="sm" 
                   onClick={createNewConversation}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2.5"
+                  disabled={isCreatingConversation}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Yangi
+                  {isCreatingConversation ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Plus className="h-3 w-3 mr-1" />
+                  )}
+                  {isCreatingConversation ? "..." : "Yangi"}
                 </Button>
               </div>
             </CardHeader>
@@ -996,9 +1024,17 @@ export default function AIAssistantPage() {
                   <Bot className="h-16 w-16 mx-auto text-blue-400 mb-4" />
                   <h2 className="text-xl font-semibold text-slate-800 mb-2">AI Yordamchi</h2>
                   <p className="text-sm text-slate-500 mb-6">Suhbat tanlang yoki yangi suhbat boshlang</p>
-                  <Button onClick={createNewConversation} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Yangi suhbat
+                  <Button 
+                    onClick={createNewConversation} 
+                    disabled={isCreatingConversation}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingConversation ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    {isCreatingConversation ? "Yaratilmoqda..." : "Yangi suhbat"}
                   </Button>
                 </div>
               </div>
