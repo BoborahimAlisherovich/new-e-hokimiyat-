@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import Link from "next/link"
-import { getNotifications, getUnreadNotificationsCount, logout, getCurrentUser } from "@/lib/api"
+import { WS_BASE, getAccessToken, getNotifications, getUnreadNotificationsCount, logout, getCurrentUser } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { User as UserType } from "@/types"
@@ -45,6 +45,51 @@ export function Header({ title, description }: HeaderProps) {
  let isMounted = true
  let previousUnreadCount = 0
  let initialized = false
+ let wsReady = false
+ let ws: WebSocket | null = null
+
+    const mapNotificationType = (type?: string) => {
+      switch (type) {
+        case 'TASK_ASSIGNED':
+        case 'TASK_UPDATED':
+        case 'TASK_COMPLETED':
+        case 'TASK_OVERDUE':
+        case 'MESSAGE':
+        case 'SYSTEM':
+          return type
+        case 'TASK':
+          return 'TASK_ASSIGNED'
+        case 'DEADLINE':
+          return 'TASK_OVERDUE'
+        case 'SUCCESS':
+          return 'TASK_COMPLETED'
+        case 'WARNING':
+          return 'TASK_UPDATED'
+        case 'ERROR':
+          return 'TASK_OVERDUE'
+        case 'INFO':
+        default:
+          return 'SYSTEM'
+      }
+    }
+
+    const normalizeWsNotification = (raw: any) => {
+      const createdAt = raw?.created_at ?? new Date().toISOString()
+      const mappedType = mapNotificationType(raw?.notification_type ?? raw?.type)
+      return {
+        id: raw?.id,
+        user_id: raw?.user_id ?? 0,
+        title: raw?.title ?? '',
+        message: raw?.message ?? '',
+        type: mappedType,
+        is_read: Boolean(raw?.is_read),
+        read_at: raw?.read_at ?? undefined,
+        related_task_id: raw?.related_task_id ?? raw?.related_task ?? undefined,
+        link: raw?.link,
+        created_at: createdAt,
+        updated_at: raw?.updated_at ?? createdAt,
+      }
+    }
 
     const loadHeaderData = async () => {
       try {
@@ -60,7 +105,7 @@ export function Header({ title, description }: HeaderProps) {
         setUnreadCount(count)
         setRecentNotifications(list.slice(0, 5))
 
-        if (initialized && count > previousUnreadCount) {
+        if (!wsReady && initialized && count > previousUnreadCount) {
           playAlert(720, 0.16)
           window.dispatchEvent(new CustomEvent("notificationReceived", { detail: { unreadCount: count } }))
         }
@@ -71,9 +116,41 @@ export function Header({ title, description }: HeaderProps) {
 
     loadHeaderData()
     const interval = window.setInterval(loadHeaderData, 15000)
+
+    const token = getAccessToken()
+    if (token) {
+      try {
+        const wsUrl = `${WS_BASE}/ws/notifications/?token=${token}`
+        ws = new WebSocket(wsUrl)
+        ws.onopen = () => { wsReady = true }
+        ws.onclose = () => { wsReady = false }
+        ws.onmessage = (ev) => {
+          try {
+            const payload = JSON.parse(ev.data)
+            if (payload?.type === "unread_count") {
+              const count = Number(payload.count) || 0
+              if (isMounted) setUnreadCount(count)
+              previousUnreadCount = count
+              initialized = true
+              return
+            }
+            if (payload?.type === "notification" && payload.notification) {
+              if (isMounted) {
+                const normalized = normalizeWsNotification(payload.notification)
+                setRecentNotifications((prev) => [normalized, ...(prev || [])].slice(0, 5))
+              }
+              playAlert(720, 0.16)
+              window.dispatchEvent(new CustomEvent("notificationReceived", { detail: { unreadCount: previousUnreadCount + 1 } }))
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+
     return () => {
       isMounted = false
       window.clearInterval(interval)
+      if (ws) { try { ws.close() } catch {} }
     }
   }, [playAlert])
 

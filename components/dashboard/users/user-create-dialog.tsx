@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Organization, User } from "@/types"
 import { createUser } from "@/lib/api"
-import { Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 interface CreateUserFormData {
   login: string
@@ -43,6 +43,7 @@ export function UserCreateDialog({
 }: UserCreateDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showPassword, setShowPassword] = useState(false)
 
   const organizationItems = Array.isArray(organizations)
     ? organizations
@@ -54,6 +55,7 @@ export function UserCreateDialog({
     if (!formData.firstName.trim()) newErrors.firstName = "Ism majburiy"
     if (!formData.lastName.trim()) newErrors.lastName = "Familiya majburiy"
     if (!formData.phone.trim()) newErrors.phone = "Telefon majburiy"
+    if (!formData.pnfl.trim()) newErrors.pnfl = "PNFL majburiy"
     if (!formData.password.trim()) newErrors.password = "Parol majburiy"
     if (formData.password && formData.password.length < 6) newErrors.password = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
     if (formData.pnfl && formData.pnfl.length !== 14) newErrors.pnfl = "PNFL 14 ta raqamdan iborat bo'lishi kerak"
@@ -202,7 +204,7 @@ export function UserCreateDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pnfl">PNFL</Label>
+              <Label htmlFor="pnfl">PNFL <span className="text-red-500">*</span></Label>
               <Input
                 id="pnfl"
                 value={formData.pnfl}
@@ -215,14 +217,24 @@ export function UserCreateDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Parol <span className="text-red-500">*</span></Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => onChange("password", e.target.value)}
-                placeholder="Kamida 6 ta belgi"
-                className={errors.password ? "border-red-500" : ""}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => onChange("password", e.target.value)}
+                  placeholder="Kamida 6 ta belgi"
+                  className={`${errors.password ? "border-red-500" : ""} pr-10`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+                  aria-label={showPassword ? "Parolni yashirish" : "Parolni ko‘rsatish"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
             </div>
             <div className="space-y-2">

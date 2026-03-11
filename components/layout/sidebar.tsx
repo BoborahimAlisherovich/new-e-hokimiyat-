@@ -75,6 +75,20 @@ export function Sidebar() {
     
     // Fetch current user
     let isMounted = true
+
+    const fetchUnreadCounts = async () => {
+      try {
+        const [chatCount, notifCount] = await Promise.all([
+          getUnreadChatCount().catch(() => 0),
+          getUnreadNotificationsCount().catch(() => 0),
+        ])
+        if (isMounted) {
+          setUnreadChatCount(chatCount)
+          setUnreadNotificationsCount(notifCount)
+        }
+      } catch (e) {}
+    }
+
     const fetchUser = () => {
       getCurrentUser()
         .then((user) => {
@@ -103,20 +117,6 @@ export function Sidebar() {
     // Refresh quickly when header detects a new notification
     const handleNotificationReceived = () => fetchUnreadCounts()
     window.addEventListener('notificationReceived', handleNotificationReceived)
-    
-    // Fetch unread counts
-    const fetchUnreadCounts = async () => {
-      try {
-        const [chatCount, notifCount] = await Promise.all([
-          getUnreadChatCount().catch(() => 0),
-          getUnreadNotificationsCount().catch(() => 0),
-        ])
-        if (isMounted) {
-          setUnreadChatCount(chatCount)
-          setUnreadNotificationsCount(notifCount)
-        }
-      } catch (e) {}
-    }
     
     fetchUnreadCounts()
     // Refresh every 30 seconds
@@ -473,7 +473,8 @@ function NavItem({ item, isActive, collapsed, index }: {
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03 }}
       className={cn(
-        "group relative flex items-center gap-2 overflow-hidden rounded-[18px] px-2.5 py-1 transition-all duration-200 sm:gap-2.5 sm:px-3 sm:py-1.5",
+        "group relative flex items-center gap-2 rounded-[18px] px-2.5 py-1 transition-all duration-200 sm:gap-2.5 sm:px-3 sm:py-1.5",
+        collapsed && hasBadge ? "overflow-visible" : "overflow-hidden",
         collapsed
           ? "mx-auto h-11 w-11 justify-center px-0 py-0"
           : isCompact
