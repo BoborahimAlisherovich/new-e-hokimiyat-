@@ -22,6 +22,7 @@
 export {
   // Configuration
   API_BASE,
+  WS_BASE,
   
   // Token Management
   getAccessToken,

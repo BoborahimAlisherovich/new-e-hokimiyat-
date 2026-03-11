@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_BASE = process.env.BACKEND_URL || 'http://localhost:8000'
+const RAW_BACKEND =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8000'
+
+// Route proxies to `${API_BASE}/api/...`, so strip any trailing `/api`.
+const API_BASE = RAW_BACKEND.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '')
 
 export async function GET(
   request: NextRequest,
