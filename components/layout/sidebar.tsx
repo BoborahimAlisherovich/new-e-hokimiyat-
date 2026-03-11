@@ -31,17 +31,31 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
+import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount, TOKEN_KEYS } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
 import { canAccessDashboardPath, isDashboardNavItemActive } from "@/lib/dashboard-access"
+
+function getCachedUser(): User | null {
+  if (typeof window === "undefined") return null
+
+  const rawUser = localStorage.getItem(TOKEN_KEYS.USER)
+  if (!rawUser) return null
+
+  try {
+    return JSON.parse(rawUser) as User
+  } catch {
+    localStorage.removeItem(TOKEN_KEYS.USER)
+    return null
+  }
+}
 
 export function Sidebar() {
   const t = useTranslation()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getCachedUser())
   const [unreadChatCount, setUnreadChatCount] = useState(0)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
 
@@ -63,8 +77,18 @@ export function Sidebar() {
     let isMounted = true
     const fetchUser = () => {
       getCurrentUser()
-        .then((user) => isMounted && setCurrentUser(user))
-        .catch(() => {})
+        .then((user) => {
+          if (!isMounted) return
+          setCurrentUser(user)
+          localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(user))
+        })
+        .catch(() => {
+          if (!isMounted) return
+          const cachedUser = getCachedUser()
+          if (cachedUser) {
+            setCurrentUser(cachedUser)
+          }
+        })
     }
     fetchUser()
     

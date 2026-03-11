@@ -303,9 +303,10 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const token = getAccessToken()
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const hasBody = options.body !== undefined && options.body !== null
 
   const headers: Record<string, string> = {
-    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(!isFormData && hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers as Record<string, string>),
   }
 
@@ -443,7 +444,7 @@ export const api = {
   async post<T = unknown>(url: string, body?: unknown): Promise<{ data: T }> {
     const data = await fetchApi<T>(url, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     })
     return { data }
   },
@@ -451,7 +452,7 @@ export const api = {
   async put<T = unknown>(url: string, body?: unknown): Promise<{ data: T }> {
     const data = await fetchApi<T>(url, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     })
     return { data }
   },
@@ -459,7 +460,7 @@ export const api = {
   async patch<T = unknown>(url: string, body?: unknown): Promise<{ data: T }> {
     const data = await fetchApi<T>(url, {
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     })
     return { data }
   },

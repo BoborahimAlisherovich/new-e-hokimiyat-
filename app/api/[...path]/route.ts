@@ -73,7 +73,8 @@ async function proxyRequest(
     if (method !== 'GET' && method !== 'DELETE') {
       const contentType = request.headers.get('content-type')
       if (contentType?.includes('application/json')) {
-        body = JSON.stringify(await request.json())
+        const rawBody = await request.text()
+        body = rawBody || undefined
       } else {
         body = await request.arrayBuffer()
       }
