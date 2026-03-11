@@ -1,6 +1,9 @@
 "use client"
 
+import { DashboardDetailFrame } from "@/components/layout/dashboard-detail-frame"
+import { PremiumActionButton, PremiumActivityCard, PremiumAttachmentItem, PremiumCallout, PremiumChoiceItem, PremiumFieldGroup, PremiumFieldSurface, PremiumFormLayout, PremiumImagePreview, PremiumInfoCard, PremiumInfoItem, PremiumInsightMetric, PremiumMessageBubble, PremiumSideCard, PremiumTimelineItem } from "@/components/dashboard/premium-activity"
 import { Header } from "@/components/layout/header"
+import { LoadingSpinner } from "@/components/ui/loading"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -66,11 +69,11 @@ import {
   X,
   Paperclip,
   Mic,
-  Image,
+  Image as ImageIcon,
   Trash2
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { Appeal } from "@/types"
 
@@ -155,7 +158,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [appealData, messagesData, historyData] = await Promise.all([
@@ -171,11 +174,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     } finally {
       setLoading(false)
     }
-  }
+  }, [appealId])
 
   useEffect(() => {
     loadData()
-  }, [appealId])
+  }, [loadData])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -463,14 +466,18 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     return (
       <>
         <Header title="Murojaat" description="Murojaat tafsilotlari" />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 pt-20">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
-            </div>
+        <DashboardDetailFrame
+          eyebrow="Murojaat"
+          title="Ma'lumotlar tayyorlanmoqda"
+          description="Murojaat tafsilotlari, muloqot va ko'rib chiqish tarixi yuklanmoqda."
+          backHref="/dashboard/appeals"
+          stats={[]}
+        >
+          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <LoadingSpinner size="lg" className="mb-4" />
+            <p className="text-sm text-slate-500">Murojaat ma'lumotlari yuklanmoqda...</p>
           </div>
-        </div>
+        </DashboardDetailFrame>
       </>
     )
   }
@@ -479,23 +486,27 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     return (
       <>
         <Header title="Murojaat" description="Murojaat topilmadi" />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 pt-20">
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <Card>
-              <CardContent className="py-12 text-center">
-                <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Murojaat topilmadi</h2>
-                <p className="text-muted-foreground mb-4">Ushbu murojaat mavjud emas yoki o'chirilgan</p>
+        <DashboardDetailFrame
+          eyebrow="Murojaat"
+          title="Murojaat topilmadi"
+          description="Ushbu murojaat mavjud emas yoki o'chirilgan."
+          backHref="/dashboard/appeals"
+          stats={[]}
+        >
+          <Card className="rounded-[28px] border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <CardContent className="py-12 text-center">
+              <XCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+              <h2 className="mb-2 text-xl font-semibold">Murojaat topilmadi</h2>
+              <p className="mb-4 text-muted-foreground">Ro'yxatga qayting yoki boshqa murojaatni tanlang.</p>
+              <Button asChild>
                 <Link href="/dashboard/appeals">
-                  <Button>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Orqaga
-                  </Button>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Orqaga
                 </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </Button>
+            </CardContent>
+          </Card>
+        </DashboardDetailFrame>
       </>
     )
   }
@@ -503,122 +514,117 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   return (
     <>
       <Header title={`Murojaat #${appeal.id?.replace('tg-', '')}`} description={appeal.citizenName} />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 pt-20">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Link href="/dashboard/appeals">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Orqaga
-              </Button>
-            </Link>
-            
-            <div className="flex items-center gap-2">
-              {appeal.status !== 'resolved' && appeal.status !== 'rejected' && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleApprove}
-                    className="text-green-600 border-green-200 hover:bg-green-50"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Tasdiqlash
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setRejectDialogOpen(true)}
-                    className="text-red-600 border-red-200 hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Rad etish
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={openTaskDialog}
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                  >
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Topshiriq yaratish
-                  </Button>
-                  <Button 
-                    size="sm"
-                    onClick={() => setCloseDialogOpen(true)}
-                    className="bg-primary"
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Yopish va javob berish
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+      <DashboardDetailFrame
+        eyebrow="Murojaat kartasi"
+        title={`Murojaat #${appeal.id?.replace("tg-", "")}`}
+        description={appeal.citizenName || "Fuqaro murojaati tafsilotlari, tarix va muloqot bir joyda."}
+        backHref="/dashboard/appeals"
+        stats={[
+          {
+            label: "Holat",
+            value: appeal.status || "Noma'lum",
+            icon: CheckCircle,
+            tone: "from-cyan-50 via-white to-cyan-100/70",
+          },
+          {
+            label: "Xabarlar",
+            value: messages.length,
+            icon: MessageSquare,
+            tone: "from-emerald-50 via-white to-emerald-100/70",
+          },
+          {
+            label: "Sana",
+            value: formatDate(appeal.createdAt),
+            icon: Calendar,
+            tone: "from-amber-50 via-white to-amber-100/70",
+          },
+        ]}
+        badges={
+          <>
+            {getStatusBadge(appeal.status)}
+            {appeal.priority && getPriorityBadge(appeal.priority)}
+          </>
+        }
+        actions={
+          <>
+            {appeal.status !== "resolved" && appeal.status !== "rejected" && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleApprove}
+                  className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Tasdiqlash
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setRejectDialogOpen(true)}
+                  className="border-red-200 bg-red-50 text-red-700 shadow-none hover:bg-red-100"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Rad etish
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={openTaskDialog}
+                  className="border-cyan-200 bg-cyan-50 text-cyan-700 shadow-none hover:bg-cyan-100"
+                >
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Topshiriq yaratish
+                </Button>
+                <Button size="sm" onClick={() => setCloseDialogOpen(true)} className="bg-white text-cyan-700 hover:bg-cyan-50">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Yopish va javob berish
+                </Button>
+              </>
+            )}
+          </>
+        }
+      >
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Appeal Info */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Appeal Details */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Murojaat ma'lumotlari</CardTitle>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(appeal.status)}
-                      {appeal.priority && getPriorityBadge(appeal.priority)}
-                    </div>
+              <PremiumInfoCard
+                icon={FileText}
+                title="Murojaat ma'lumotlari"
+                subtitle="Fuqaro, hudud, kategoriya va murojaat matni."
+                accent="from-cyan-50 via-white to-emerald-50/35"
+                headerExtra={
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(appeal.status)}
+                    {appeal.priority && getPriorityBadge(appeal.priority)}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                }
+              >
+                <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Fuqaro</p>
-                        <p className="font-medium">{appeal.citizenName}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Telefon</p>
-                        <p className="font-medium">{appeal.citizenPhone || '-'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Hudud</p>
-                        <p className="font-medium">{appeal.district || '-'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Sana</p>
-                        <p className="font-medium">{formatDate(appeal.createdAt)}</p>
-                      </div>
-                    </div>
+                    <PremiumInfoItem icon={User} label="Fuqaro" value={appeal.citizenName} />
+                    <PremiumInfoItem icon={Phone} label="Telefon" value={appeal.citizenPhone || "-"} />
+                    <PremiumInfoItem icon={MapPin} label="Hudud" value={appeal.district || "-"} />
+                    <PremiumInfoItem icon={Calendar} label="Sana" value={formatDate(appeal.createdAt)} />
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Murojaat kategoriyasi</p>
-                    <Badge variant="secondary">{appeal.category || 'Belgilanmagan'}</Badge>
+                    <p className="mb-2 text-sm text-muted-foreground">Murojaat kategoriyasi</p>
+                    <Badge variant="secondary">{appeal.category || "Belgilanmagan"}</Badge>
                   </div>
-                  
+
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Murojaat matni</p>
-                    <div className="p-4 bg-muted/30 rounded-lg overflow-hidden">
+                    <p className="mb-2 text-sm text-muted-foreground">Murojaat matni</p>
+                    <div className="rounded-[22px] border border-slate-200 bg-slate-50/75 p-4 overflow-hidden">
                       <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{appeal.description}</p>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Murojaat fayllari</p>
+                    <p className="mb-2 text-sm text-muted-foreground">Murojaat fayllari</p>
                     {appeal.attachments && appeal.attachments.length > 0 ? (
                       <div className="space-y-2">
                         {appeal.attachments.map((attachment) => {
@@ -628,36 +634,14 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                           const fileSize = formatFileSize(attachment.file_size)
                           const isImage = attachment.file_type === "photo"
                           return (
-                            <div
+                            <PremiumAttachmentItem
                               key={attachment.id}
-                              className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/70 p-3"
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="h-9 w-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-600">
-                                    {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="font-medium text-sm truncate">{fileName}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {fileLabel}{fileSize ? ` • ${fileSize}` : ""}
-                                    </p>
-                                  </div>
-                                </div>
-                                {fileHref ? (
-                                  <a
-                                    href={fileHref}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-sm text-blue-600 hover:text-blue-700"
-                                  >
-                                    Ochish
-                                  </a>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Link yo'q</span>
-                                )}
-                              </div>
-                            </div>
+                              href={fileHref || undefined}
+                              icon={isImage ? ImageIcon : Paperclip}
+                              title={fileName}
+                              meta={`${fileLabel}${fileSize ? ` • ${fileSize}` : ""}`}
+                              actionLabel={fileHref ? "Ochish" : "Link yo'q"}
+                            />
                           )
                         })}
                       </div>
@@ -665,50 +649,40 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                       <p className="text-sm text-muted-foreground">Fayl biriktirilmagan</p>
                     )}
                   </div>
-                  
-                  {/* Baholash ko'rsatish */}
-                  {appeal.status === 'resolved' && (
-                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-green-700 dark:text-green-400">Murojaat yopilgan</p>
-                          {appeal.closed_at && (
-                            <p className="text-xs text-green-600 dark:text-green-500">
-                              {new Date(appeal.closed_at).toLocaleString('uz-UZ')}
-                            </p>
-                          )}
-                        </div>
+
+                  {appeal.status === "resolved" && (
+                    <PremiumCallout
+                      title="Murojaat yopilgan"
+                      description={appeal.closed_at ? new Date(appeal.closed_at).toLocaleString("uz-UZ") : undefined}
+                    >
+                      <div className="flex items-center justify-between gap-4">
                         {appeal.rating ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">{'⭐'.repeat(appeal.rating)}</span>
-                            <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                              {appeal.rating}/5
-                            </span>
+                            <span className="text-2xl">{"⭐".repeat(appeal.rating)}</span>
+                            <span className="text-sm font-medium text-emerald-700">{appeal.rating}/5</span>
                           </div>
                         ) : (
-                          <Badge variant="outline" className="text-yellow-600 border-yellow-400">
+                          <Badge variant="outline" className="border-yellow-400 text-yellow-600">
                             Baholanmagan
                           </Badge>
                         )}
                       </div>
                       {appeal.rating_comment && (
-                        <p className="mt-2 text-sm text-green-600 dark:text-green-500 italic">
-                          "{appeal.rating_comment}"
-                        </p>
+                        <p className="mt-3 text-sm italic text-emerald-700">"{appeal.rating_comment}"</p>
                       )}
-                    </div>
+                    </PremiumCallout>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </PremiumInfoCard>
 
               {/* Tabs for Chat and History */}
-              <Card>
+              <PremiumActivityCard>
                 <Tabs defaultValue="chat" className="w-full">
-                  <CardHeader className="pb-0">
-                    <TabsList className="w-full grid grid-cols-2">
+                  <CardHeader className="border-b border-cyan-100/70 bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
+                    <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100/90 p-1">
                       <TabsTrigger value="chat" className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
-                        Chat
+                        Muloqot
                       </TabsTrigger>
                       <TabsTrigger value="history" className="flex items-center gap-2">
                         <History className="h-4 w-4" />
@@ -716,98 +690,78 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                       </TabsTrigger>
                     </TabsList>
                   </CardHeader>
-                  
+
                   <CardContent className="pt-4">
                     <TabsContent value="chat" className="mt-0">
                       <div className="space-y-4">
                         <ScrollArea className="h-[400px] pr-4">
                           <div className="space-y-4">
                             {messages.length === 0 ? (
-                              <div className="text-center text-muted-foreground py-12">
-                                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                <p>Hali xabarlar yo'q</p>
+                              <div className="rounded-[24px] border border-dashed border-cyan-200 bg-cyan-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                                Hali xabarlar yo'q
                               </div>
                             ) : (
                               messages.map((msg) => {
-                                const senderDisplayName = msg.is_from_admin 
-                                  ? (msg.sender_name || msg.admin_name || "Admin") 
-                                  : (appeal.citizenName || "Fuqaro")
-                                const nameParts = senderDisplayName.split(' ')
+                                const senderDisplayName = msg.is_from_admin
+                                  ? msg.sender_name || msg.admin_name || "Admin"
+                                  : appeal.citizenName || "Fuqaro"
+                                const nameParts = senderDisplayName.split(" ")
+
                                 return (
-                                <div
-                                  key={msg.id}
-                                  className={cn(
-                                    "flex gap-3",
-                                    msg.is_from_admin ? "flex-row-reverse" : ""
-                                  )}
-                                >
-                                  <UserAvatar
-                                    firstName={nameParts[1] || nameParts[0] || ""}
-                                    lastName={nameParts[0] || ""}
-                                    avatarUrl={msg.is_from_admin ? msg.sender_avatar_url : undefined}
-                                    size="sm"
-                                  />
-                                  <div className={cn(
-                                    "max-w-[70%] rounded-lg p-3",
-                                    msg.is_from_admin 
-                                      ? "bg-primary text-primary-foreground" 
-                                      : "bg-muted"
-                                  )}>
-                                    <p className={cn(
-                                      "text-xs font-medium mb-1",
-                                      msg.is_from_admin ? "text-primary-foreground/80" : "text-muted-foreground"
-                                    )}>
-                                      {senderDisplayName}
-                                    </p>
-                                    <p className="text-sm">{msg.text}</p>
-                                    <p className={cn(
-                                      "text-xs mt-1",
-                                      msg.is_from_admin ? "text-primary-foreground/70" : "text-muted-foreground"
-                                    )}>
-                                      {formatDate(msg.created_at)}
-                                    </p>
+                                  <div
+                                    key={msg.id}
+                                    className={cn("flex gap-3", msg.is_from_admin ? "flex-row-reverse" : "")}
+                                  >
+                                    <UserAvatar
+                                      firstName={nameParts[1] || nameParts[0] || ""}
+                                      lastName={nameParts[0] || ""}
+                                      avatarUrl={msg.is_from_admin ? msg.sender_avatar_url : undefined}
+                                      size="sm"
+                                    />
+                                    <PremiumMessageBubble
+                                      align={msg.is_from_admin ? "right" : "left"}
+                                      title={senderDisplayName}
+                                      meta={formatDate(msg.created_at)}
+                                    >
+                                      <p className="text-sm leading-6">{msg.text}</p>
+                                    </PremiumMessageBubble>
                                   </div>
-                                </div>
                                 )
                               })
                             )}
                             <div ref={messagesEndRef} />
                           </div>
                         </ScrollArea>
-                        
-                        {/* Message Input */}
+
                         <div className="flex flex-col gap-2">
-                          {/* Audio Recording UI */}
                           {isRecording && (
-                            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
-                              <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                              <span className="text-sm text-red-600 font-medium">Yozib olinmoqda...</span>
+                            <div className="flex items-center gap-2 rounded-[22px] border border-red-200 bg-red-50 p-2.5">
+                              <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+                              <span className="text-sm font-medium text-red-600">Yozib olinmoqda...</span>
                               <div className="flex-1" />
-                              <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
+                              <Button variant="outline" size="sm" onClick={stopRecording} className="border-emerald-300 text-emerald-600">
                                 Tugatish
                               </Button>
-                              <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
+                              <Button variant="outline" size="sm" onClick={cancelRecording} className="border-red-300 text-red-600">
                                 Bekor qilish
                               </Button>
                             </div>
                           )}
-                          
-                          {/* Audio Preview */}
+
                           {audioBlob && !isRecording && (
-                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center gap-2 rounded-[22px] border border-blue-200 bg-blue-50 p-2.5">
                               <Mic className="h-4 w-4 text-blue-600" />
                               <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
                               <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700" disabled={sendingMessage}>
-                                {sendingMessage ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Send className="h-3 w-3 mr-1" /> Yuborish</>}
+                                {sendingMessage ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Send className="mr-1 h-3 w-3" /> Yuborish</>}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
                           )}
-                          
-                          <div className="flex gap-2">
-                            {/* Hidden file input */}
+
+                          <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50/70 p-2">
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -815,26 +769,24 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                               accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                               onChange={(e) => {
                                 setChatFile(e.target.files?.[0] || null)
-                                e.target.value = ''
+                                e.target.value = ""
                               }}
                             />
-                            
-                            {/* File attach button */}
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="shrink-0" 
-                              type="button" 
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0"
+                              type="button"
                               title="Fayl biriktirish"
                               onClick={handleFileButtonClick}
                             >
                               <Paperclip className="h-4 w-4" />
                             </Button>
-                            
-                            {/* Audio record */}
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className={cn("shrink-0", isRecording && "text-red-500")}
                               type="button"
                               onClick={isRecording ? stopRecording : startRecording}
@@ -842,12 +794,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                             >
                               <Mic className="h-4 w-4" />
                             </Button>
-                            
-                            {/* Location */}
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="shrink-0" 
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0"
                               type="button"
                               onClick={sendLocation}
                               disabled={isLocationLoading}
@@ -855,47 +806,40 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                             >
                               <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                             </Button>
-                            
+
                             <Input
                               placeholder="Xabar yozing... (Ctrl+V - rasm)"
                               value={messageText}
                               onChange={(e) => setMessageText(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
+                                if (e.key === "Enter" && !e.shiftKey) {
                                   e.preventDefault()
                                   handleSendMessage()
                                 }
                               }}
                               onPaste={handlePaste}
+                              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
                             />
-                            <Button 
-                              onClick={handleSendMessage} 
+                            <Button
+                              onClick={handleSendMessage}
                               disabled={sendingMessage || (!messageText.trim() && !chatFile)}
+                              className="rounded-2xl"
                             >
-                              {sendingMessage ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
+                              {sendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                             </Button>
                           </div>
-                          
-                          {/* File preview */}
+
                           {chatFile && (
-                            <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                              {chatFile.type.startsWith('image/') ? (
+                            <div className="flex items-center gap-2 rounded-[22px] border border-slate-200 bg-slate-50 p-2.5">
+                              {chatFile.type.startsWith("image/") ? (
                                 <>
-                                  <Image className="h-4 w-4 text-blue-500" />
-                                  <img 
-                                    src={URL.createObjectURL(chatFile)} 
-                                    alt="Tanlangan rasm" 
-                                    className="h-12 w-12 object-cover rounded"
-                                  />
+                                  <ImageIcon className="h-4 w-4 text-blue-500" />
+                                  <PremiumImagePreview src={URL.createObjectURL(chatFile)} alt="Tanlangan rasm" className="h-12 w-12" />
                                 </>
                               ) : (
                                 <FileText className="h-4 w-4" />
                               )}
-                              <span className="text-xs text-muted-foreground flex-1 truncate">{chatFile.name}</span>
+                              <span className="flex-1 truncate text-xs text-muted-foreground">{chatFile.name}</span>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -909,146 +853,127 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                         </div>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="history" className="mt-0">
                       <ScrollArea className="h-[400px] pr-4">
                         <div className="space-y-4">
                           {history.length === 0 ? (
-                            <div className="text-center text-muted-foreground py-12">
-                              <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                              <p>Hali tarix yo'q</p>
+                            <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                              Hali tarix yo'q
                             </div>
                           ) : (
-                            history.map((item, index) => (
-                              <div key={index} className="flex gap-3">
-                                <div className={cn(
-                                  "h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0",
-                                  item.type === 'ai_analysis' ? "bg-blue-100 text-blue-600" :
-                                  item.type === 'admin_review' ? "bg-green-100 text-green-600" :
-                                  "bg-gray-100 text-gray-600"
-                                )}>
-                                  {item.type === 'ai_analysis' ? <Bot className="h-4 w-4" /> :
-                                   item.type === 'admin_review' ? <CheckCircle className="h-4 w-4" /> :
-                                   <MessageSquare className="h-4 w-4" />}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-medium">{item.title}</p>
-                                  
-                                  {/* AI Analysis Details */}
-                                  {item.type === 'ai_analysis' && (
-                                    <div className="mt-2 p-3 bg-blue-50 rounded-lg text-sm">
-                                      <p className="text-muted-foreground">{item.description}</p>
-                                      <div className="flex gap-4 mt-2">
-                                        <span>Ball: <strong>{item.score || 0}</strong></span>
-                                        <span>Muhimlik: <strong>{item.priority || '-'}</strong></span>
-                                        <span>To'g'ri: <strong>{item.is_valid ? 'Ha' : 'Yo\'q'}</strong></span>
-                                      </div>
-                                      {item.rejection_reason && (
-                                        <p className="mt-2 text-red-600">
-                                          <AlertTriangle className="h-4 w-4 inline mr-1" />
-                                          {item.rejection_reason}
-                                        </p>
+                            history.map((item, index) => {
+                              const TimelineIcon = item.type === "ai_analysis" ? Bot : item.type === "admin_review" ? CheckCircle : MessageSquare
+                              const tone = item.type === "ai_analysis"
+                                ? "bg-cyan-100 text-cyan-700"
+                                : item.type === "admin_review"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-slate-100 text-slate-700"
+
+                              return (
+                                <PremiumTimelineItem
+                                  key={index}
+                                  icon={TimelineIcon}
+                                  title={item.title}
+                                  tone={tone}
+                                  description={
+                                    <>
+                                      {item.type === "ai_analysis" && (
+                                        <div className="mt-2 rounded-2xl bg-cyan-50 p-3 text-sm">
+                                          <p className="text-muted-foreground">{item.description}</p>
+                                          <div className="mt-2 flex flex-wrap gap-4">
+                                            <span>Ball: <strong>{item.score || 0}</strong></span>
+                                            <span>Muhimlik: <strong>{item.priority || "-"}</strong></span>
+                                            <span>To'g'ri: <strong>{item.is_valid ? "Ha" : "Yo'q"}</strong></span>
+                                          </div>
+                                          {item.rejection_reason && (
+                                            <p className="mt-2 text-red-600">
+                                              <AlertTriangle className="mr-1 inline h-4 w-4" />
+                                              {item.rejection_reason}
+                                            </p>
+                                          )}
+                                        </div>
                                       )}
-                                    </div>
-                                  )}
-                                  
-                                  {/* Admin Review Details */}
-                                  {item.type === 'admin_review' && (
-                                    <div className="mt-2 p-3 bg-green-50 rounded-lg text-sm">
-                                      {item.admin && <p>Admin: {item.admin}</p>}
-                                      {item.status && <p>Holat: {item.status}</p>}
-                                      {item.response && <p className="mt-1">{item.response}</p>}
-                                    </div>
-                                  )}
-                                  
-                                  {/* Message */}
-                                  {item.type === 'message' && item.text && (
-                                    <p className="mt-1 text-muted-foreground">{item.text}</p>
-                                  )}
-                                  
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {formatDate(item.created_at)}
-                                  </p>
-                                </div>
-                              </div>
-                            ))
+                                      {item.type === "admin_review" && (
+                                        <div className="mt-2 rounded-2xl bg-emerald-50 p-3 text-sm">
+                                          {item.admin && <p>Admin: {item.admin}</p>}
+                                          {item.status && <p>Holat: {item.status}</p>}
+                                          {item.response && <p className="mt-1">{item.response}</p>}
+                                        </div>
+                                      )}
+                                      {item.type === "message" && item.text && <p className="mt-1">{item.text}</p>}
+                                    </>
+                                  }
+                                  meta={formatDate(item.created_at)}
+                                />
+                              )
+                            })
                           )}
                         </div>
                       </ScrollArea>
                     </TabsContent>
                   </CardContent>
                 </Tabs>
-              </Card>
+              </PremiumActivityCard>
             </div>
 
             {/* Right Column - Quick Actions */}
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Tezkor harakatlar</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
+              <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="from-cyan-50 via-white to-emerald-50/30">
+                <div className="space-y-3">
+                  <PremiumActionButton
+                    icon={CheckCircle}
                     onClick={() => setCloseDialogOpen(true)}
-                    disabled={appeal.status === 'resolved' || appeal.status === 'rejected'}
+                    disabled={appeal.status === "resolved" || appeal.status === "rejected"}
+                    className="text-cyan-700"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
                     Murojaatni yopish
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Topshiriq yaratish
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-red-600 hover:text-red-700"
-                    onClick={() => setRejectDialogOpen(true)}
-                    disabled={appeal.status === 'resolved' || appeal.status === 'rejected'}
+                  </PremiumActionButton>
+                  <PremiumActionButton
+                    icon={ClipboardList}
+                    onClick={openTaskDialog}
+                    disabled={appeal.status === "resolved" || appeal.status === "rejected"}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    Topshiriq yaratish
+                  </PremiumActionButton>
+                  <PremiumActionButton
+                    icon={XCircle}
+                    onClick={() => setRejectDialogOpen(true)}
+                    disabled={appeal.status === "resolved" || appeal.status === "rejected"}
+                    className="text-red-700"
+                  >
                     Rad etish
-                  </Button>
-                </CardContent>
-              </Card>
+                  </PremiumActionButton>
+                </div>
+              </PremiumSideCard>
 
               {/* AI Analysis Card */}
               {history.some(h => h.type === 'ai_analysis') && (
-                <Card className="border-blue-200 bg-blue-50/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Bot className="h-5 w-5 text-blue-600" />
-                      AI Tahlili
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <PremiumSideCard icon={Bot} title="AI tahlili" accent="from-cyan-50 via-white to-blue-50/40">
+                  <div className="space-y-3">
                     {history
                       .filter(h => h.type === 'ai_analysis')
                       .map((item, i) => (
-                        <div key={i} className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Ball:</span>
-                            <span className={cn(
-                              "font-bold",
-                              (item.score || 0) >= 70 ? "text-green-600" :
-                              (item.score || 0) >= 40 ? "text-yellow-600" : "text-red-600"
-                            )}>
-                              {item.score || 0}/100
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Muhimlik:</span>
-                            <span className="font-medium">{item.priority || '-'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">To'g'rilik:</span>
-                            <span className={item.is_valid ? "text-green-600" : "text-red-600"}>
-                              {item.is_valid ? 'Ha ✓' : 'Yo\'q ✗'}
-                            </span>
-                          </div>
+                        <div key={i} className="space-y-2 rounded-[22px] border border-cyan-100 bg-cyan-50/50 p-4 text-sm">
+                          <PremiumInsightMetric
+                            label="Ball"
+                            value={`${item.score || 0}/100`}
+                            valueClassName={
+                              (item.score || 0) >= 70
+                                ? "text-emerald-600"
+                                : (item.score || 0) >= 40
+                                  ? "text-amber-600"
+                                  : "text-red-600"
+                            }
+                          />
+                          <PremiumInsightMetric label="Muhimlik" value={item.priority || "-"} />
+                          <PremiumInsightMetric
+                            label="To'g'rilik"
+                            value={item.is_valid ? "Ha" : "Yo'q"}
+                            valueClassName={item.is_valid ? "text-emerald-600" : "text-red-600"}
+                          />
                           {item.rejection_reason && (
-                            <div className="pt-2 border-t mt-2">
+                            <div className="mt-2 border-t border-cyan-100 pt-2">
                               <p className="text-red-600 text-xs">
                                 <AlertTriangle className="h-3 w-3 inline mr-1" />
                                 {item.rejection_reason}
@@ -1057,40 +982,38 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                           )}
                         </div>
                       ))}
-                  </CardContent>
-                </Card>
+                  </div>
+                </PremiumSideCard>
               )}
             </div>
           </div>
-        </div>
-      </div>
+      </DashboardDetailFrame>
 
       {/* Close Appeal Dialog */}
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
-        <DialogContent>
+        <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle>Murojaatni yopish</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-slate-900">Murojaatni yopish</DialogTitle>
             <DialogDescription>
               Foydalanuvchiga javob yozing. Javob yuborilgandan so'ng foydalanuvchidan qoniqish so'raladi.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="closeResponse">Javob matni</Label>
+          <PremiumFormLayout>
+            <PremiumFieldGroup label="Javob matni" hint="Yakuniy javob fuqaro uchun tushunarli va aniq bo'lsin.">
               <Textarea
                 id="closeResponse"
                 placeholder="Javobingizni yozing..."
                 value={closeResponse}
                 onChange={(e) => setCloseResponse(e.target.value)}
-                className="min-h-[120px] mt-2"
+                className="min-h-[140px] rounded-2xl border-slate-200 bg-white"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCloseDialogOpen(false)}>
+            </PremiumFieldGroup>
+          </PremiumFormLayout>
+          <DialogFooter className="border-t border-slate-100 pt-4">
+            <Button variant="outline" onClick={() => setCloseDialogOpen(false)} className="rounded-2xl border-slate-200 bg-white">
               Bekor qilish
             </Button>
-            <Button onClick={handleCloseAppeal} disabled={closingAppeal}>
+            <Button onClick={handleCloseAppeal} disabled={closingAppeal} className="rounded-2xl">
               {closingAppeal ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1109,27 +1032,27 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Reject Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Murojaatni rad etish</AlertDialogTitle>
             <AlertDialogDescription>
               Rad etish sababini kiriting
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
+          <div className="py-2">
             <Textarea
               placeholder="Rad etish sababi..."
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
             />
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+          <AlertDialogFooter className="border-t border-slate-100 pt-4">
+            <AlertDialogCancel className="rounded-2xl border-slate-200 bg-white">Bekor qilish</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleRejectAppeal}
               disabled={rejecting}
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-2xl bg-red-600 hover:bg-red-700"
             >
               {rejecting ? (
                 <>
@@ -1146,9 +1069,9 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Task Creation Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
               <ClipboardList className="h-5 w-5 text-blue-600" />
               Topshiriq yaratish
             </DialogTitle>
@@ -1156,34 +1079,31 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               Murojaatni topshiriq sifatida tashkilotlarga yo'naltiring
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="taskTitle">Sarlavha *</Label>
+          <PremiumFormLayout className="py-4">
+            <PremiumFieldGroup label="Sarlavha *" hint="Yaratiladigan topshiriq nomini kiriting.">
               <Input
                 id="taskTitle"
                 placeholder="Topshiriq sarlavhasi..."
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
+                className="h-11 rounded-2xl border-slate-200 bg-white"
               />
-            </div>
+            </PremiumFieldGroup>
 
-            {/* Deadline */}
-            <div className="space-y-2">
-              <Label htmlFor="taskDeadline">Bajarilish muddati *</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PremiumFieldGroup label="Bajarilish muddati *">
               <Input
                 id="taskDeadline"
                 type="date"
                 value={taskDeadline}
                 onChange={(e) => setTaskDeadline(e.target.value)}
+                className="h-11 rounded-2xl border-slate-200 bg-white"
               />
-            </div>
+              </PremiumFieldGroup>
 
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label>Muhimlik darajasi</Label>
+              <PremiumFieldGroup label="Muhimlik darajasi">
               <Select value={taskPriority} onValueChange={setTaskPriority}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
                   <SelectValue placeholder="Muhimlikni tanlang" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1193,62 +1113,47 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   <SelectItem value="SHOSHILINCH">Shoshilinch</SelectItem>
                 </SelectContent>
               </Select>
+              </PremiumFieldGroup>
             </div>
 
-            {/* Organizations */}
-            <div className="space-y-2">
-              <Label>Mas'ul tashkilotlar *</Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-2">
+            <PremiumFieldGroup label="Mas'ul tashkilotlar *" hint="Bir yoki bir nechta tashkilotni belgilang.">
+              <PremiumFieldSurface className="max-h-48 space-y-2 overflow-y-auto">
                 {organizations.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-2">
                     Tashkilotlar yuklanmoqda...
                   </p>
                 ) : (
                   organizations.map((org: any) => (
-                    <div
+                    <PremiumChoiceItem
                       key={org.id}
-                      className={cn(
-                        "flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors",
-                        selectedOrganizations.includes(org.id)
-                          ? "bg-blue-100 border border-blue-300"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      )}
                       onClick={() => toggleOrganization(org.id)}
+                      selected={selectedOrganizations.includes(org.id)}
                     >
-                      <div className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center",
-                        selectedOrganizations.includes(org.id)
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-gray-300"
-                      )}>
-                        {selectedOrganizations.includes(org.id) && (
-                          <CheckCircle className="h-3 w-3 text-white" />
-                        )}
-                      </div>
                       <span className="text-sm">{org.name}</span>
-                    </div>
+                    </PremiumChoiceItem>
                   ))
                 )}
-              </div>
+              </PremiumFieldSurface>
               {selectedOrganizations.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {selectedOrganizations.length} ta tashkilot tanlandi
                 </p>
               )}
-            </div>
-          </div>
-          <DialogFooter>
+            </PremiumFieldGroup>
+          </PremiumFormLayout>
+          <DialogFooter className="border-t border-slate-100 pt-4">
             <Button 
               variant="outline" 
               onClick={() => setTaskDialogOpen(false)}
               disabled={creatingTask}
+              className="rounded-2xl border-slate-200 bg-white"
             >
               Bekor qilish
             </Button>
             <Button 
               onClick={handleCreateTask} 
               disabled={creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 hover:bg-blue-700"
             >
               {creatingTask ? (
                 <>

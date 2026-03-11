@@ -1,6 +1,9 @@
 "use client"
 
+import { DashboardDetailFrame } from "@/components/layout/dashboard-detail-frame"
+import { PremiumActionButton, PremiumActivityCard, PremiumAttachmentItem, PremiumFieldGroup, PremiumFieldSurface, PremiumFormLayout, PremiumImagePreview, PremiumInfoCard, PremiumInfoItem, PremiumMessageBubble, PremiumSideCard, PremiumSystemNote, PremiumTimelineItem } from "@/components/dashboard/premium-activity"
 import { Header } from "@/components/layout/header"
+import { LoadingSpinner } from "@/components/ui/loading"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -45,10 +48,10 @@ import {
   Lock,
   Download,
   File as FileIcon,
-  Image,
+  Image as ImageIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useParams } from "next/navigation"
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -97,7 +100,7 @@ export default function TaskDetailPage() {
   const wsRef = useRef<WebSocket | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const normalizeExecution = (item: any) => {
+  const normalizeExecution = useCallback((item: any) => {
     if (item?.type !== "execution") return null
     return {
       id: item.id,
@@ -107,9 +110,9 @@ export default function TaskDetailPage() {
       executedByRole: item.user_role || item.executed_by_role || item.executedByRole || "SYSTEM",
       createdAt: item.timestamp || item.created_at || item.createdAt,
     }
-  }
+  }, [])
 
-  const normalizeChatMessage = (msg: any) => {
+  const normalizeChatMessage = useCallback((msg: any) => {
     if (msg?.type === 'execution') return null
     const senderObj = msg.sender && typeof msg.sender === 'object' ? msg.sender : null
     const senderId = senderObj?.id || msg.sender || msg.sender_id || msg.senderId
@@ -123,9 +126,19 @@ export default function TaskDetailPage() {
       attachment: msg.attachment || (msg.attachments && msg.attachments[0]) || null,
       createdAt: msg.created_at || msg.createdAt || msg.timestamp,
     }
-  }
+  }, [])
 
-  const applyTimelineData = (timeline: any[]) => {
+  const normalizeChatMessages = useCallback((list: any[]) => {
+    const normalized = (list || []).map(normalizeChatMessage).filter(Boolean)
+    const seen = new Set<number | string>()
+    return normalized.filter((msg) => {
+      if (!msg || seen.has(msg.id)) return false
+      seen.add(msg.id)
+      return true
+    })
+  }, [normalizeChatMessage])
+
+  const applyTimelineData = useCallback((timeline: any[]) => {
     const normalizedMessages = normalizeChatMessages(timeline || [])
     const normalizedExecutions = (timeline || [])
       .map(normalizeExecution)
@@ -133,18 +146,7 @@ export default function TaskDetailPage() {
 
     setChatMessages(normalizedMessages)
     setTaskExecutions(normalizedExecutions)
-  }
-
-  const normalizeChatMessages = (list: any[]) => {
-    const normalized = (list || []).map(normalizeChatMessage).filter(Boolean)
-    // Deduplicate by message ID
-    const seen = new Set<number | string>()
-    return normalized.filter((msg) => {
-      if (!msg || seen.has(msg.id)) return false
-      seen.add(msg.id)
-      return true
-    })
-  }
+  }, [normalizeChatMessages, normalizeExecution])
 
   useEffect(() => {
     let mounted = true
@@ -187,7 +189,7 @@ export default function TaskDetailPage() {
       mounted = false
       if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
     }
-  }, [id])
+  }, [id, applyTimelineData])
   
   // Initialize edit form when task loads
   useEffect(() => {
@@ -208,7 +210,18 @@ export default function TaskDetailPage() {
     return (
       <>
         <Header title="Topshiriq tafsilotlari" />
-        <div className="p-6">Yuklanmoqda...</div>
+        <DashboardDetailFrame
+          eyebrow="Topshiriq"
+          title="Ma'lumotlar tayyorlanmoqda"
+          description="Topshiriq tafsilotlari, ijro holati va muloqot ma'lumotlari yuklanmoqda."
+          backHref="/dashboard/tasks"
+          stats={[]}
+        >
+          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <LoadingSpinner size="lg" className="mb-4" />
+            <p className="text-sm text-slate-500">Topshiriq ma'lumotlari yuklanmoqda...</p>
+          </div>
+        </DashboardDetailFrame>
       </>
     )
   }
@@ -512,70 +525,97 @@ export default function TaskDetailPage() {
 
   return (
     <>
-      <Header title="Topshiriq tafsilotlari" />
-      <div className="p-6 space-y-6">
-        {/* Header with title and actions */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between w-full">
-            <h1 className="text-2xl font-bold text-foreground">Topshiriq tafsilotlari</h1>
-            
-            <div className="flex gap-2">
-              <Link href="/dashboard/tasks">
-                <Button variant="ghost" className="gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Orqaga
-                </Button>
-              </Link>
-              {canMarkComplete && (
-                <Button 
-                  variant="default" 
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={handleMarkComplete}
-                  disabled={isSaving}
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {isSaving ? "Saqlanmoqda..." : "Bajarildi"}
-                </Button>
-              )}
-              {canExtend && (
-                <Dialog open={isExtendOpen} onOpenChange={setIsExtendOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Clock className="mr-2 h-4 w-4" />
-                      Muddat uzaytirish
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
+      <Header title="Topshiriq tafsilotlari" description={task.title} />
+      <DashboardDetailFrame
+        eyebrow="Topshiriq kartasi"
+        title={task.title}
+        description={task.description || "Topshiriq tafsilotlari, ijro holati va ichki muloqot bir oynada."}
+        backHref="/dashboard/tasks"
+        stats={[
+          {
+            label: "Holat",
+            value: task.status?.replaceAll("_", " ") || "Noma'lum",
+            icon: CheckCircle2,
+            tone: "from-cyan-50 via-white to-cyan-100/70",
+          },
+          {
+            label: "Murojaatlar",
+            value: chatMessages.length,
+            icon: MessageSquare,
+            tone: "from-emerald-50 via-white to-emerald-100/70",
+          },
+          {
+            label: "Muddat",
+            value: task.deadline ? new Date(task.deadline).toLocaleDateString("uz-UZ") : "Belgilanmagan",
+            icon: Calendar,
+            tone: "from-amber-50 via-white to-amber-100/70",
+          },
+        ]}
+        badges={
+          <>
+            {task.category && (
+              <Badge className="border-white/20 bg-white/12 text-white hover:bg-white/15">
+                {CATEGORY_LABELS[task.category] || task.category}
+              </Badge>
+            )}
+            <div className="rounded-full border border-white/20 bg-white/12 px-3 py-1">
+              <PriorityBadge priority={task.priority} />
+            </div>
+            <div className="rounded-full border border-white/20 bg-white/12 px-3 py-1">
+              <TaskStatusBadge status={task.status} />
+            </div>
+          </>
+        }
+        actions={
+          <>
+            {canMarkComplete && (
+              <Button
+                variant="secondary"
+                className="border-white/20 bg-emerald-500/20 text-white shadow-none hover:bg-emerald-500/30"
+                onClick={handleMarkComplete}
+                disabled={isSaving}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {isSaving ? "Saqlanmoqda..." : "Bajarildi"}
+              </Button>
+            )}
+            {canExtend && (
+              <Dialog open={isExtendOpen} onOpenChange={setIsExtendOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="secondary" className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Muddat uzaytirish
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-foreground">Muddat uzaytirish so'rovi</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">Yangi muddat va sabab kiriting</DialogDescription>
+                    <DialogTitle className="text-xl font-bold text-slate-900">Muddat uzaytirish so'rovi</DialogTitle>
+                    <DialogDescription className="text-slate-500">Yangi muddat va sababni aniq kiriting.</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Yangi muddat</Label>
+                  <PremiumFormLayout>
+                    <PremiumFieldGroup label="Yangi muddat" hint="Joriy muddatdan keyingi sanani tanlang.">
                       <Input 
                         type="date" 
                         value={extendDeadline ? extendDeadline.split('T')[0] : ''} 
                         onChange={(e) => setExtendDeadline(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                        className="h-11 rounded-2xl border-slate-200 bg-white" 
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Sabab</Label>
+                    </PremiumFieldGroup>
+                    <PremiumFieldGroup label="Sabab" hint="Uzatirish zaruratini qisqa va ravshan yozing.">
                       <Textarea 
                         placeholder="Sababni kiriting..." 
                         value={extendReason}
                         onChange={(e) => setExtendReason(e.target.value)}
-                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                        className="min-h-[120px] rounded-2xl border-slate-200 bg-white" 
                       />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="border-border/50 bg-background/50">
+                    </PremiumFieldGroup>
+                  </PremiumFormLayout>
+                  <DialogFooter className="border-t border-slate-100 pt-4">
+                    <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="rounded-2xl border-slate-200 bg-white">
                       Bekor qilish
                     </Button>
-                    <Button onClick={handleExtendDeadline} disabled={isSaving}>
+                    <Button onClick={handleExtendDeadline} disabled={isSaving} className="rounded-2xl">
                       {isSaving ? "Saqlanmoqda..." : "So'rov yuborish"}
                     </Button>
                   </DialogFooter>
@@ -585,37 +625,36 @@ export default function TaskDetailPage() {
             {canEdit && (
               <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="secondary" className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18">
                     <Edit className="mr-2 h-4 w-4" />
                     Tahrirlash
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
+                <DialogContent className="sm:max-w-[640px] overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-foreground">Topshiriqni tahrirlash</DialogTitle>
+                    <DialogTitle className="text-xl font-bold text-slate-900">Topshiriqni tahrirlash</DialogTitle>
+                    <DialogDescription className="text-slate-500">Asosiy maydonlarni yangilang va topshiriqni bir xil standartda saqlang.</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Sarlavha</Label>
+                  <PremiumFormLayout>
+                    <PremiumFieldGroup label="Sarlavha">
                       <Input 
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="bg-background/50 border-border/50 focus:bg-background focus:border-primary transition-all" 
+                        className="h-11 rounded-2xl border-slate-200 bg-white" 
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Tavsif</Label>
+                    </PremiumFieldGroup>
+                    <PremiumFieldGroup label="Tavsif">
                       <Textarea 
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
-                        rows={3} 
+                        rows={3}
+                        className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Ustuvorlik</Label>
+                    </PremiumFieldGroup>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <PremiumFieldGroup label="Ustuvorlik">
                         <Select value={editPriority} onValueChange={setEditPriority}>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -626,20 +665,19 @@ export default function TaskDetailPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Muddat</Label>
+                      </PremiumFieldGroup>
+                      <PremiumFieldGroup label="Muddat">
                         <Input 
                           type="date" 
                           value={editDeadline ? editDeadline.split('T')[0] : ''} 
                           onChange={(e) => setEditDeadline(e.target.value)}
+                          className="h-11 rounded-2xl border-slate-200 bg-white"
                         />
-                      </div>
+                      </PremiumFieldGroup>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Soha</Label>
+                    <PremiumFieldGroup label="Soha">
                       <Select value={editCategory} onValueChange={setEditCategory}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -650,13 +688,13 @@ export default function TaskDetailPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                    </PremiumFieldGroup>
+                  </PremiumFormLayout>
+                  <DialogFooter className="border-t border-slate-100 pt-4">
+                    <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-2xl border-slate-200 bg-white">
                       Bekor qilish
                     </Button>
-                    <Button onClick={handleSaveTask} disabled={isSaving}>
+                    <Button onClick={handleSaveTask} disabled={isSaving} className="rounded-2xl">
                       {isSaving ? "Saqlanmoqda..." : "Saqlash"}
                     </Button>
                   </DialogFooter>
@@ -666,8 +704,8 @@ export default function TaskDetailPage() {
 
             {canReassign && (
               <Button
-                variant="outline"
-                className="text-orange-500 border-orange-500/30 hover:bg-orange-500/10 bg-transparent"
+                variant="secondary"
+                className="border-orange-200 bg-orange-50 text-orange-700 shadow-none hover:bg-orange-100"
                 onClick={handleRejectTask}
                 disabled={isSaving}
               >
@@ -678,7 +716,7 @@ export default function TaskDetailPage() {
 
             {canClose && (
               <Button 
-                className="bg-accent hover:bg-accent/90"
+                className="bg-white text-emerald-700 hover:bg-emerald-50"
                 onClick={handleApproveTask}
                 disabled={isSaving}
               >
@@ -686,138 +724,97 @@ export default function TaskDetailPage() {
                 {isSaving ? "Yopilmoqda..." : "Nazoratdan yechish"}
               </Button>
             )}
-          </div>
-        </div>
+          </>
+        }
+      >
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content - Task Details and Chat */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Task Info Card */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl">{task.title}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{task.description}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {task.category && (
-                      <Badge variant="outline" className="font-normal">
-                        {CATEGORY_LABELS[task.category] || task.category}
-                      </Badge>
-                    )}
-                    <PriorityBadge priority={task.priority} />
-                    <TaskStatusBadge status={task.status} />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Calendar className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Muddat</p>
-                      <p className={cn("font-medium", isOverdue && "text-destructive")}>
-                        {new Date(task.deadline).toLocaleDateString('en-GB')}
-                        {isOverdue && " (kechiktirilgan)"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <User className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Yaratuvchi</p>
-                      <p className="font-medium">
-                        {creator?.full_name || `${creator?.last_name || creator?.lastName || ''} ${creator?.first_name || creator?.firstName || ''}`.trim() || '—'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Layers className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Soha</p>
-                      <p className="font-medium">{CATEGORY_LABELS[task.category] || task.category || '—'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Building2 className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Tashkilotlar</p>
-                      <p className="font-medium">
-                        {(task.assigned_organizations || task.organizations || []).map((org: any) => 
-                          typeof org === 'object' ? org.organization?.name || org.name : orgsMap[org]?.name
-                        ).filter(Boolean).join(", ") || '-'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Yaratilgan</p>
-                      <p className="font-medium">{(task.createdAt || task.created_at) ? new Date(task.createdAt || task.created_at).toLocaleDateString('uz-UZ') : '-'}</p>
-                    </div>
-                  </div>
-
-                  {task.location && (
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                        <MapPin className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Joylashuv</p>
-                        <p className="font-medium">
-                          {task.location.lat.toFixed(4)}, {task.location.lng.toFixed(4)}
-                        </p>
-                      </div>
-                    </div>
+            <PremiumInfoCard
+              icon={Layers}
+              title="Topshiriq ma'lumotlari"
+              subtitle="Asosiy tafsilotlar, muddat va biriktirilgan tashkilotlar."
+              accent="from-cyan-50 via-white to-emerald-50/35"
+              headerExtra={
+                <div className="flex flex-wrap gap-2">
+                  {task.category && (
+                    <Badge variant="outline" className="font-normal">
+                      {CATEGORY_LABELS[task.category] || task.category}
+                    </Badge>
                   )}
+                  <PriorityBadge priority={task.priority} />
+                  <TaskStatusBadge status={task.status} />
                 </div>
-              </CardContent>
-            </Card>
+              }
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <PremiumInfoItem
+                  icon={Calendar}
+                  label="Muddat"
+                  value={
+                    <>
+                      {new Date(task.deadline).toLocaleDateString("en-GB")}
+                      {isOverdue && " (kechiktirilgan)"}
+                    </>
+                  }
+                  valueClassName={isOverdue ? "text-red-600" : undefined}
+                />
+                <PremiumInfoItem
+                  icon={User}
+                  label="Yaratuvchi"
+                  value={creator?.full_name || `${creator?.last_name || ""} ${creator?.first_name || ""}`.trim() || "—"}
+                />
+                <PremiumInfoItem
+                  icon={Layers}
+                  label="Soha"
+                  value={CATEGORY_LABELS[task.category] || task.category || "—"}
+                />
+                <PremiumInfoItem
+                  icon={Building2}
+                  label="Tashkilotlar"
+                  value={
+                    (task.assigned_organizations || task.organizations || [])
+                      .map((org: any) => (typeof org === "object" ? org.organization?.name || org.name : orgsMap[org]?.name))
+                      .filter(Boolean)
+                      .join(", ") || "-"
+                  }
+                />
+                <PremiumInfoItem
+                  icon={Clock}
+                  label="Yaratilgan"
+                  value={(task.createdAt || task.created_at) ? new Date(task.createdAt || task.created_at).toLocaleDateString("uz-UZ") : "-"}
+                />
+                {task.location && (
+                  <PremiumInfoItem
+                    icon={MapPin}
+                    label="Joylashuv"
+                    value={`${task.location.lat.toFixed(4)}, ${task.location.lng.toFixed(4)}`}
+                  />
+                )}
+              </div>
+            </PremiumInfoCard>
 
             {/* Task Content - Full Description */}
             {task.description && (
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Topshiriq mazmuni
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              <PremiumInfoCard
+                icon={FileText}
+                title="Topshiriq mazmuni"
+                subtitle="Batafsil tavsif va ijro uchun asosiy matn."
+                accent="from-amber-50 via-white to-cyan-50/30"
+              >
                   <div className="prose prose-sm max-w-none dark:prose-invert">
                     <p className="text-foreground whitespace-pre-wrap leading-relaxed">
                       {task.description}
                     </p>
                   </div>
-                </CardContent>
-              </Card>
+              </PremiumInfoCard>
             )}
 
             {/* Attachments */}
             {task.attachments && task.attachments.length > 0 && (
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Paperclip className="h-5 w-5 text-primary" />
-                    Biriktirilgan fayllar ({task.attachments.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              <PremiumSideCard icon={Paperclip} title={`Biriktirilgan fayllar (${task.attachments.length})`} accent="from-cyan-50 via-white to-amber-50/40">
+                <div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {task.attachments.map((attachment: any) => {
                       const fileName = attachment.file_name || attachment.fileName || attachment.file?.split('/').pop() || 'Fayl'
@@ -826,45 +823,29 @@ export default function TaskDetailPage() {
                       const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)
                       
                       return (
-                        <a
+                        <PremiumAttachmentItem
                           key={attachment.id}
                           href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors group"
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            {isImage ? (
-                              <Image className="h-5 w-5 text-primary" />
-                            ) : (
-                              <FileIcon className="h-5 w-5 text-primary" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{fileName}</p>
-                            {fileSize && (
-                              <p className="text-xs text-muted-foreground">
-                                {(fileSize / 1024).toFixed(1)} KB
-                              </p>
-                            )}
-                          </div>
-                          <Download className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </a>
+                          icon={isImage ? ImageIcon : FileIcon}
+                          title={fileName}
+                          meta={fileSize ? `${(fileSize / 1024).toFixed(1)} KB` : undefined}
+                          actionLabel="Yuklash"
+                        />
                       )
                     })}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </PremiumSideCard>
             )}
 
             {/* Chat / Timeline */}
-            <Card className="bg-card border-border">
+            <PremiumActivityCard>
               <Tabs defaultValue="chat" className="w-full">
-                <CardHeader className="border-b border-border">
-                  <TabsList className="grid w-full grid-cols-2">
+                <CardHeader className="border-b border-cyan-100/70 bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
+                  <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100/90 p-1">
                     <TabsTrigger value="chat" className="gap-2">
                       <MessageSquare className="h-4 w-4" />
-                      Chat
+                      Muloqot
                     </TabsTrigger>
                     <TabsTrigger value="history" className="gap-2">
                       <History className="h-4 w-4" />
@@ -875,6 +856,11 @@ export default function TaskDetailPage() {
                 <TabsContent value="chat" className="m-0">
                   <ScrollArea className="h-[400px] p-4">
                     <div className="space-y-4">
+                      {chatMessages.length === 0 && (
+                        <div className="rounded-[24px] border border-dashed border-cyan-200 bg-cyan-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                          Hozircha muloqot boshlanmagan
+                        </div>
+                      )}
                       {chatMessages.map((msg) => {
                         const sender = usersMap[msg.senderId] || null
                         const isSystem = msg.messageType === "SYSTEM" || msg.senderRole === "SYSTEM"
@@ -883,11 +869,9 @@ export default function TaskDetailPage() {
 
                         if (isSystem) {
                           return (
-                            <div key={msg.id} className="flex justify-center">
-                              <Badge variant="secondary" className="text-xs font-normal">
+                            <PremiumSystemNote key={msg.id}>
                                 {msg.content} - {formatDateTime(msg.createdAt)}
-                              </Badge>
-                            </div>
+                            </PremiumSystemNote>
                           )
                         }
 
@@ -899,48 +883,64 @@ export default function TaskDetailPage() {
                               avatarUrl={sender?.avatar_url}
                               size="sm"
                             />
-                            <div className={cn("max-w-[70%] space-y-1", isCurrentUser && "items-end")}>
-                              <div className={cn("flex items-center gap-2", isCurrentUser && "flex-row-reverse")}>
-                                <span className="text-sm font-medium text-foreground">
-                                  {isCurrentUser && currentUser 
-                                    ? `${currentUser.last_name || ''} ${currentUser.first_name || ''}`.trim()
-                                    : sender 
-                                      ? `${sender.last_name || ''} ${sender.first_name || ''}`.trim()
-                                      : msg.senderName || "-"
-                                  }
-                                </span>
-                                <span className="text-xs text-muted-foreground">{formatDateTime(msg.createdAt)}</span>
-                              </div>
-                              <div
-                                className={cn(
-                                  "rounded-lg p-3",
-                                  isCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted",
-                                )}
-                              >
-                                {msg.content && <p className="text-sm">{msg.content}</p>}
+                            <PremiumMessageBubble
+                              align={isCurrentUser ? "right" : "left"}
+                              title={
+                                isCurrentUser && currentUser
+                                  ? `${currentUser.last_name || ''} ${currentUser.first_name || ''}`.trim()
+                                  : sender
+                                    ? `${sender.last_name || ''} ${sender.first_name || ''}`.trim()
+                                    : msg.senderName || "-"
+                              }
+                              meta={formatDateTime(msg.createdAt)}
+                              footer={
+                                isCurrentUser && !isSystem ? (
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 rounded-full"
+                                      onClick={() => handleEditMessage(msg)}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 rounded-full"
+                                      onClick={() => handleDeleteMessage(msg)}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : null
+                              }
+                            >
+                              <div className="space-y-2">
+                                {msg.content && <p className="text-sm leading-6">{msg.content}</p>}
                                 {attachment && (
-                                  <div className="mt-2 space-y-2">
-                                    {attachment.file_type === 'IMAGE' && (
-                                      <img
+                                  <div className="space-y-2">
+                                    {attachment.file_type === "IMAGE" && (
+                                      <PremiumImagePreview
                                         src={attachment.file}
-                                        alt={attachment.file_name}
-                                        className="max-h-48 rounded-md border"
+                                        alt={attachment.file_name || "Biriktirilgan rasm"}
+                                        className="h-48 w-full max-w-xs"
                                       />
                                     )}
-                                    {attachment.file_type === 'VIDEO' && (
-                                      <video src={attachment.file} controls className="max-h-48 rounded-md border w-full" />
+                                    {attachment.file_type === "VIDEO" && (
+                                      <video src={attachment.file} controls className="max-h-48 w-full rounded-2xl border border-white/60" />
                                     )}
-                                    {attachment.file_type === 'AUDIO' && (
+                                    {attachment.file_type === "AUDIO" && (
                                       <audio src={attachment.file} controls className="w-full" />
                                     )}
-                                    {attachment.file_type !== 'IMAGE' && attachment.file_type !== 'VIDEO' && attachment.file_type !== 'AUDIO' && (
+                                    {attachment.file_type !== "IMAGE" && attachment.file_type !== "VIDEO" && attachment.file_type !== "AUDIO" && (
                                       <a
                                         href={attachment.file}
                                         target="_blank"
                                         rel="noreferrer"
                                         className={cn(
                                           "flex items-center gap-2 text-xs underline",
-                                          isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground",
+                                          isCurrentUser ? "text-white/80" : "text-slate-500",
                                         )}
                                       >
                                         <FileText className="h-3 w-3" />
@@ -950,27 +950,7 @@ export default function TaskDetailPage() {
                                   </div>
                                 )}
                               </div>
-                              {isCurrentUser && !isSystem && (
-                                <div className={cn("flex gap-1", isCurrentUser && "justify-end")}> 
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => handleEditMessage(msg)}
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => handleDeleteMessage(msg)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+                            </PremiumMessageBubble>
                           </div>
                         )
                       })}
@@ -1013,7 +993,7 @@ export default function TaskDetailPage() {
                         </div>
                       )}
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50/70 p-2">
                         {/* Hidden file input */}
                         <input
                           ref={fileInputRef}
@@ -1069,22 +1049,18 @@ export default function TaskDetailPage() {
                           onChange={(e) => editingMessageId ? setEditingContent(e.target.value) : setNewMessage(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                           onPaste={handlePaste}
-                          className="bg-secondary"
+                          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
                         />
-                        <Button onClick={sendMessage} className="shrink-0">
+                        <Button onClick={sendMessage} className="shrink-0 rounded-2xl">
                           <Send className="h-4 w-4" />
                         </Button>
                       </div>
                       {chatFile && (
-                        <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                        <div className="flex items-center gap-2 rounded-[22px] border border-slate-200 bg-slate-50 p-2.5">
                           {chatFile.type.startsWith('image/') ? (
                             <>
-                              <Image className="h-4 w-4 text-blue-500" />
-                              <img 
-                                src={URL.createObjectURL(chatFile)} 
-                                alt="Tanlangan rasm" 
-                                className="h-12 w-12 object-cover rounded"
-                              />
+                              <ImageIcon className="h-4 w-4 text-blue-500" />
+                              <PremiumImagePreview src={URL.createObjectURL(chatFile)} alt="Tanlangan rasm" className="h-12 w-12" />
                             </>
                           ) : (
                             <FileText className="h-4 w-4" />
@@ -1125,26 +1101,20 @@ export default function TaskDetailPage() {
                   <ScrollArea className="h-[450px] p-4">
                     <div className="space-y-4">
                       {taskExecutions.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-8">Hozircha tarix yo'q</div>
+                        <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                          Hozircha tarix yo'q
+                        </div>
                       ) : (
                         taskExecutions.map((exec) => {
                           return (
-                            <div key={exec.id} className="flex gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                                <History className="h-4 w-4 text-primary" />
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">
-                                  {(exec.actionType || "ACTION").replace(/_/g, " ")}
-                                </p>
-                                <p className="text-sm text-muted-foreground">{exec.comment || "Izoh yo'q"}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{exec.executedByName || "Tizim"}</span>
-                                  <span>•</span>
-                                  <span>{formatDateTime(exec.createdAt)}</span>
-                                </div>
-                              </div>
-                            </div>
+                            <PremiumTimelineItem
+                              key={exec.id}
+                              icon={History}
+                              title={(exec.actionType || "ACTION").replace(/_/g, " ")}
+                              description={exec.comment || "Izoh yo'q"}
+                              meta={`${exec.executedByName || "Tizim"} • ${formatDateTime(exec.createdAt)}`}
+                              tone="bg-amber-100 text-amber-700"
+                            />
                           )
                         })
                       )}
@@ -1152,23 +1122,20 @@ export default function TaskDetailPage() {
                   </ScrollArea>
                 </TabsContent>
               </Tabs>
-            </Card>
+            </PremiumActivityCard>
           </div>
 
           {/* Sidebar - Organizations Status */}
           <div className="space-y-6">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-base">Tashkilotlar holati</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <PremiumSideCard icon={Building2} title="Tashkilotlar holati" accent="from-emerald-50 via-white to-cyan-50/30">
+              <div className="space-y-3">
                 {(task.organizations || []).map((orgId: string) => {
                   const org = orgsMap[orgId]
                   return (
-                    <div key={orgId} className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div key={orgId} className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-slate-50/70 p-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                          <Building2 className="h-4 w-4 text-primary" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                          <Building2 className="h-4 w-4 text-cyan-700" />
                         </div>
                         <div>
                           <span className="text-sm font-medium">{org?.name}</span>
@@ -1179,39 +1146,62 @@ export default function TaskDetailPage() {
                     </div>
                   )
                 })}
-              </CardContent>
-            </Card>
+              </div>
+            </PremiumSideCard>
 
             {/* Attachments */}
             {task.attachments && task.attachments.length > 0 && (
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-base">Fayllar</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <PremiumSideCard icon={Download} title="Tezkor fayllar" accent="from-amber-50 via-white to-cyan-50/30">
+                <div className="space-y-2">
                   {task.attachments.map((file: any, i: number) => {
                     const fileName = typeof file === 'string' ? file : (file.file_name || file.fileName || file.file?.split('/').pop() || 'Fayl')
                     const fileUrl = typeof file === 'string' ? file : (file.file || file.url)
                     return (
-                      <a
+                      <PremiumAttachmentItem
                         key={file?.id || i}
                         href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer"
-                      >
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{fileName}</span>
-                      </a>
+                        icon={FileText}
+                        title={fileName}
+                        actionLabel="Ochish"
+                      />
                     )
                   })}
-                </CardContent>
-              </Card>
+                </div>
+              </PremiumSideCard>
             )}
-          </div>
+
+            <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="from-cyan-50 via-white to-emerald-50/30">
+              <div className="space-y-3">
+                {canMarkComplete && (
+                  <PremiumActionButton icon={CheckCircle2} onClick={handleMarkComplete} disabled={isSaving} className="text-emerald-700">
+                    {isSaving ? "Saqlanmoqda..." : "Bajarildi deb belgilash"}
+                  </PremiumActionButton>
+                )}
+                {canExtend && (
+                  <PremiumActionButton icon={Clock} onClick={() => setIsExtendOpen(true)}>
+                    Muddat uzaytirish
+                  </PremiumActionButton>
+                )}
+                {canEdit && (
+                  <PremiumActionButton icon={Edit} onClick={() => setIsEditOpen(true)}>
+                    Topshiriqni tahrirlash
+                  </PremiumActionButton>
+                )}
+                {canReassign && (
+                  <PremiumActionButton icon={RotateCcw} onClick={handleRejectTask} disabled={isSaving} className="text-amber-700">
+                    Qayta ijroga yuborish
+                  </PremiumActionButton>
+                )}
+                {canClose && (
+                  <PremiumActionButton icon={CheckCircle2} onClick={handleApproveTask} disabled={isSaving} className="text-cyan-700">
+                    Nazoratdan yechish
+                  </PremiumActionButton>
+                )}
+              </div>
+            </PremiumSideCard>
           </div>
         </div>
-      </div>
+      </DashboardDetailFrame>
     </>
   )
 }

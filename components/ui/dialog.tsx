@@ -38,13 +38,14 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-30',
+        'fixed inset-0 z-30 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
         className,
       )}
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        backdropFilter: 'blur(12px) saturate(120%)',
-        WebkitBackdropFilter: 'blur(12px) saturate(120%)'
+        background:
+          'radial-gradient(circle at top, rgba(34,211,238,0.12), transparent 28%), rgba(255,255,255,0.58)',
+        backdropFilter: 'blur(18px) saturate(145%)',
+        WebkitBackdropFilter: 'blur(18px) saturate(145%)'
       }}
       {...props}
     />
@@ -65,15 +66,16 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'bg-white/90 backdrop-blur-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-40 grid w-[calc(100%-1.5rem)] max-h-[calc(100vh-3rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-white/60 p-4 sm:p-6 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15),0_10px_30px_-10px_rgba(0,0,0,0.06)] ring-1 ring-indigo-100/20 duration-300 overflow-y-auto sm:max-w-lg sm:w-full',
+          'fixed top-[50%] left-[50%] z-40 grid w-[calc(100%-1.5rem)] max-h-[calc(100vh-3rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.84))] p-4 shadow-[0_32px_90px_-28px_rgba(14,165,233,0.28),0_14px_35px_-18px_rgba(15,23,42,0.12)] ring-1 ring-cyan-100/40 backdrop-blur-2xl duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:w-full sm:max-w-lg sm:p-6',
           className
         )}
       >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 rounded-t-[28px] bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_68%)]" />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-3 right-3 sm:top-4 sm:right-4 rounded-lg opacity-60 transition-all hover:opacity-100 hover:bg-indigo-50 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none p-1.5 sm:p-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="ring-offset-background absolute top-3 right-3 rounded-xl border border-white/70 bg-white/72 p-1.5 opacity-75 shadow-sm transition-all hover:bg-cyan-50 hover:opacity-100 focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none sm:top-4 sm:right-4 sm:p-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -114,7 +116,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      className={cn('text-lg leading-none font-semibold tracking-tight text-slate-900', className)}
       {...props}
     />
   )
@@ -127,7 +129,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-sm text-slate-500', className)}
       {...props}
     />
   )

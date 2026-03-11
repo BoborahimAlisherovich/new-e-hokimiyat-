@@ -1,6 +1,7 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
+import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { api, getAppeals } from "@/lib/api"
 import { Appeal, FilterOptions } from "@/types"
@@ -11,6 +12,7 @@ import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail
 import { useTranslation } from "@/lib/i18n/context"
 import { PRIORITY_LABELS, STATUS_LABELS } from "@/components/dashboard/appeals/appeal-constants"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { CircleAlert, MessageCircleMore, ShieldCheck } from "lucide-react"
 
 export default function AppealsPage() {
   const t = useTranslation()
@@ -145,7 +147,17 @@ export default function AppealsPage() {
   return (
     <>
       <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div ref={pageRef}>
+      <DashboardPageFrame
+        eyebrow="Murojaatlar"
+        title="Fuqarolar murojaatlari holati, ustuvorligi va oqimi bir markazda ko‘rinadi."
+        description="Murojaatlarni tez saralash, nazoratga olish va javob jarayonini yo‘qotmasdan boshqarish uchun yagona ish maydoni."
+        stats={[
+          { label: "Jami", value: calculatedStats.total, icon: MessageCircleMore, tone: "from-cyan-500/18 to-cyan-100/70" },
+          { label: "Kutilmoqda", value: calculatedStats.pending, icon: CircleAlert, tone: "from-amber-400/24 to-amber-100/75" },
+          { label: "Hal etildi", value: calculatedStats.resolved, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
+        ]}
+      >
         {/* Stats Cards */}
         <section data-gsap-section>
           <AppealStats stats={calculatedStats} />
@@ -172,8 +184,8 @@ export default function AppealsPage() {
 
         {/* Appeals Table */}
         <section data-gsap-section>
-          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
-            <div className="px-6 py-4 border-b border-indigo-50/60 bg-gradient-to-r from-indigo-50/30 to-transparent">
+          <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <div className="border-b border-cyan-100/60 bg-gradient-to-r from-cyan-50/55 via-white/30 to-transparent px-6 py-4">
               <h2 className="text-lg font-semibold text-slate-800">{t.pages.appeals.tableTitle}</h2>
             </div>
             <AppealTable
@@ -183,6 +195,7 @@ export default function AppealsPage() {
             />
           </div>
         </section>
+      </DashboardPageFrame>
       </div>
       <AppealDetailDialog appeal={selectedAppeal} onClose={() => setSelectedAppeal(null)} />
     </>
