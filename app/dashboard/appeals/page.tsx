@@ -63,9 +63,9 @@ export default function AppealsPage() {
   }, [loadAppeals])
 
   useEffect(() => {
-    const statusOptions: Record<string, string> = { all: "Barchasi" }
-    const priorityOptions: Record<string, string> = { all: "Barchasi" }
-    const categoryOptions: Record<string, string> = { all: "Barchasi" }
+    const statusOptions: Record<string, string> = { all: t.common.all }
+    const priorityOptions: Record<string, string> = { all: t.common.all }
+    const categoryOptions: Record<string, string> = { all: t.common.all }
 
     const statusSet = new Set(appeals.map((appeal) => appeal.status).filter(Boolean))
     statusSet.forEach((status) => {
@@ -93,7 +93,7 @@ export default function AppealsPage() {
       category: categoryOptions,
       districts: districtOptions,
     })
-  }, [appeals, regions])
+  }, [appeals, regions, t.common.all])
 
   // Filtered appeals
   const filteredAppeals = useMemo(() => {
@@ -131,11 +131,11 @@ export default function AppealsPage() {
   if (loading) {
     return (
       <>
-        <Header title="Murojaatlar" description="Fuqarolar murojaatlari boshqaruvi tizimi" />
+        <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
         <div className="p-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-500 text-sm">Yuklanmoqda...</p>
+            <p className="mt-4 text-slate-500 text-sm">{t.pages.appeals.loading}</p>
           </div>
         </div>
       </>
@@ -174,7 +174,7 @@ export default function AppealsPage() {
         <section data-gsap-section>
           <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
             <div className="px-6 py-4 border-b border-indigo-50/60 bg-gradient-to-r from-indigo-50/30 to-transparent">
-              <h2 className="text-lg font-semibold text-slate-800">Murojaatlar Jadvali</h2>
+              <h2 className="text-lg font-semibold text-slate-800">{t.pages.appeals.tableTitle}</h2>
             </div>
             <AppealTable
               appeals={filteredAppeals}

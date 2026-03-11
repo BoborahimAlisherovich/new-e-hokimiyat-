@@ -210,6 +210,7 @@ export interface Translations {
       title: string
       description: string
       filtersTitle: string
+      tableTitle: string
       totalLabel: string
       filteredLabel: string
       previous: string
@@ -228,10 +229,14 @@ export interface Translations {
     appeals: {
       title: string
       description: string
+      loading: string
+      tableTitle: string
     }
     notifications: {
       title: string
       description: string
+      loading: string
+      retry: string
       loadError: string
       markReadError: string
       markAllReadError: string
@@ -278,6 +283,7 @@ export interface Translations {
     notifications: string
     security: string
     appearance: string
+    sectors: string
     admin: string
     profileInfo: string
     profileDescription: string

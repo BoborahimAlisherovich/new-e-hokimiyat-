@@ -36,6 +36,7 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
                 <SelectItem value="uz">{t.settings.languageUzLatin}</SelectItem>
                 <SelectItem value="uz-cyrl">{t.settings.languageUzCyrl}</SelectItem>
                 <SelectItem value="ru">{t.settings.languageRu}</SelectItem>
+                <SelectItem value="en">{t.settings.languageEn}</SelectItem>
               </SelectContent>
             </Select>
           </div>

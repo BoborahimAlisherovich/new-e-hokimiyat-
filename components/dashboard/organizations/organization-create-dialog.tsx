@@ -8,6 +8,7 @@ import { Building2, Phone, MapPin, Layers } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getSectors, type Sector } from "@/lib/api/sectors.api"
 import { api } from "@/lib/api"
+import { useI18n } from "@/lib/i18n/context"
 
 interface CreateOrganizationFormData {
   name: string
@@ -33,6 +34,78 @@ export function OrganizationCreateDialog({
  onSubmit = () => {},
  loading = false
 }: OrganizationCreateDialogProps) {
+ const { language } = useI18n()
+ const tr = {
+   uz: {
+     title: "Yangi tashkilot qo'shish",
+     desc: "Tashkilot ma'lumotlarini kiriting",
+     name: "Tashkilot nomi *",
+     namePlaceholder: "Tashkilot nomini kiriting",
+     sector: "Soha",
+     loading: "Yuklanmoqda...",
+     selectSector: "Sohani tanlang",
+     notSelected: "Tanlanmagan",
+     noSectors: "Sohalar topilmadi.",
+     loadDefaults: "Standart sohalarni yuklash",
+     servicePhone: "Tashkilot xizmat telefoni",
+     address: "Tashkilot manzili",
+     addressPlaceholder: "Tashkilot manzilini kiriting",
+     cancel: "Bekor qilish",
+     add: "Qo'shish",
+   },
+   "uz-cyrl": {
+     title: "Янги ташкилот қўшиш",
+     desc: "Ташкилот маълумотларини киритинг",
+     name: "Ташкилот номи *",
+     namePlaceholder: "Ташкилот номини киритинг",
+     sector: "Соҳa",
+     loading: "Юкланмоқда...",
+     selectSector: "Соҳани танланг",
+     notSelected: "Танланмаган",
+     noSectors: "Соҳалар топилмади.",
+     loadDefaults: "Стандарт соҳаларни юклаш",
+     servicePhone: "Ташкилот хизмат телефони",
+     address: "Ташкилот манзили",
+     addressPlaceholder: "Ташкилот манзилини киритинг",
+     cancel: "Бекор қилиш",
+     add: "Қўшиш",
+   },
+   ru: {
+     title: "Добавить организацию",
+     desc: "Введите данные организации",
+     name: "Название организации *",
+     namePlaceholder: "Введите название организации",
+     sector: "Сфера",
+     loading: "Загрузка...",
+     selectSector: "Выберите сферу",
+     notSelected: "Не выбрано",
+     noSectors: "Сферы не найдены.",
+     loadDefaults: "Загрузить стандартные сферы",
+     servicePhone: "Служебный телефон организации",
+     address: "Адрес организации",
+     addressPlaceholder: "Введите адрес организации",
+     cancel: "Отмена",
+     add: "Добавить",
+   },
+   en: {
+     title: "Add new organization",
+     desc: "Enter organization details",
+     name: "Organization name *",
+     namePlaceholder: "Enter organization name",
+     sector: "Sector",
+     loading: "Loading...",
+     selectSector: "Select sector",
+     notSelected: "Not selected",
+     noSectors: "No sectors found.",
+     loadDefaults: "Load default sectors",
+     servicePhone: "Organization service phone",
+     address: "Organization address",
+     addressPlaceholder: "Enter organization address",
+     cancel: "Cancel",
+     add: "Add",
+   },
+ }[language]
+
  const [sectors, setSectors] = useState<Sector[]>([])
  const [loadingSectors, setLoadingSectors] = useState(false)
  const [populatingDefaults, setPopulatingDefaults] = useState(false)
@@ -71,22 +144,22 @@ export function OrganizationCreateDialog({
             <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
               <Building2 className="h-5 w-5 text-white" />
             </div>
-            Yangi tashkilot qo'shish
+            {tr.title}
           </DialogTitle>
-          <DialogDescription className="text-slate-600">Tashkilot ma'lumotlarini kiriting</DialogDescription>
+          <DialogDescription className="text-slate-600">{tr.desc}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-5 py-4">
           <div className="space-y-2">
             <Label htmlFor="orgName" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Building2 className="h-4 w-4 text-violet-500" />
-              Tashkilot nomi *
+              {tr.name}
             </Label>
             <Input 
               id="orgName" 
               value={formData.name}
               onChange={(e) => onChange("name", e.target.value)}
-              placeholder="Tashkilot nomini kiriting" 
+              placeholder={tr.namePlaceholder}
               className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20"
             />
           </div>
@@ -94,17 +167,17 @@ export function OrganizationCreateDialog({
           <div className="space-y-2">
             <Label htmlFor="orgSector" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Layers className="h-4 w-4 text-violet-500" />
-              Soha
+              {tr.sector}
             </Label>
             <Select
               value={formData.sector_id || "none"}
               onValueChange={(value) => onChange("sector_id", value === "none" ? "" : value)}
             >
               <SelectTrigger className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20">
-                <SelectValue placeholder={loadingSectors ? "Yuklanmoqda..." : "Sohani tanlang"} />
+                <SelectValue placeholder={loadingSectors ? tr.loading : tr.selectSector} />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="none">Tanlanmagan</SelectItem>
+                <SelectItem value="none">{tr.notSelected}</SelectItem>
                 {sectors.map((sector) => (
                   <SelectItem key={sector.id} value={String(sector.id)}>
                     {sector.name}
@@ -114,14 +187,14 @@ export function OrganizationCreateDialog({
             </Select>
             {!loadingSectors && sectors.length === 0 && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Sohalar topilmadi.
+                {tr.noSectors}
                 <button
                   type="button"
                   onClick={handlePopulateDefaults}
                   disabled={populatingDefaults}
                   className="ml-2 font-semibold underline underline-offset-2 disabled:opacity-50"
                 >
-                  {populatingDefaults ? "Yuklanmoqda..." : "Standart sohalarni yuklash"}
+                  {populatingDefaults ? tr.loading : tr.loadDefaults}
                 </button>
               </div>
             )}
@@ -130,7 +203,7 @@ export function OrganizationCreateDialog({
           <div className="space-y-2">
             <Label htmlFor="orgServicePhone" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Phone className="h-4 w-4 text-violet-500" />
-              Tashkilot xizmat telefoni
+              {tr.servicePhone}
             </Label>
             <Input 
               id="orgServicePhone" 
@@ -144,13 +217,13 @@ export function OrganizationCreateDialog({
           <div className="space-y-2">
             <Label htmlFor="orgAddress" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-violet-500" />
-              Tashkilot manzili
+              {tr.address}
             </Label>
             <Textarea 
               id="orgAddress" 
               value={formData.address}
               onChange={(e) => onChange("address", e.target.value)}
-              placeholder="Tashkilot manzilini kiriting" 
+              placeholder={tr.addressPlaceholder}
               rows={3}
               className="rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20 resize-none"
             />
@@ -163,14 +236,14 @@ export function OrganizationCreateDialog({
             disabled={loading}
             className="rounded-xl border-indigo-100/60 hover:bg-indigo-50/30"
           >
-            Bekor qilish
+            {tr.cancel}
           </Button>
           <Button 
             onClick={onSubmit} 
             disabled={loading}
             className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25"
           >
-            {loading ? "Yuklanmoqda..." : "Qo'shish"}
+            {loading ? tr.loading : tr.add}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -38,7 +38,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-[30]',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-30',
         className,
       )}
       style={{
@@ -65,7 +65,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'bg-white/90 backdrop-blur-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[40] grid w-[calc(100%-1.5rem)] max-h-[calc(100vh-3rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-white/60 p-4 sm:p-6 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15),0_10px_30px_-10px_rgba(0,0,0,0.06)] ring-1 ring-indigo-100/20 duration-300 overflow-y-auto sm:max-w-lg sm:w-full',
+          'bg-white/90 backdrop-blur-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-40 grid w-[calc(100%-1.5rem)] max-h-[calc(100vh-3rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-white/60 p-4 sm:p-6 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15),0_10px_30px_-10px_rgba(0,0,0,0.06)] ring-1 ring-indigo-100/20 duration-300 overflow-y-auto sm:max-w-lg sm:w-full',
           className
         )}
       >

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Building2, Clock, Target, TrendingUp, MessageSquare } from "lucide-react"
+import { useI18n } from "@/lib/i18n/context"
 
 interface AnalyticsOverviewProps {
   tasks: any[]
@@ -8,6 +9,38 @@ interface AnalyticsOverviewProps {
 }
 
 export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOverviewProps) {
+  const { language } = useI18n()
+  const tr = {
+    uz: {
+      totalTasks: "Jami topshiriqlar",
+      completion: "Bajarilganlik",
+      overdue: "Kechikkan topshiriqlar",
+      activeOrgs: "Faol tashkilotlar",
+      totalAppeals: "Jami murojaatlar",
+    },
+    "uz-cyrl": {
+      totalTasks: "Жами топшириқлар",
+      completion: "Бажарилганлик",
+      overdue: "Кечиккан топшириқлар",
+      activeOrgs: "Фаол ташкилотлар",
+      totalAppeals: "Жами мурожаатлар",
+    },
+    ru: {
+      totalTasks: "Всего поручений",
+      completion: "Выполнение",
+      overdue: "Просроченные поручения",
+      activeOrgs: "Активные организации",
+      totalAppeals: "Всего обращений",
+    },
+    en: {
+      totalTasks: "Total tasks",
+      completion: "Completion",
+      overdue: "Overdue tasks",
+      activeOrgs: "Active organizations",
+      totalAppeals: "Total appeals",
+    },
+  }[language]
+
   const completedCount = tasks.filter(
     (task) => task.status === "BAJARILDI" || task.status === "NAZORATDAN_YECHILDI",
   ).length
@@ -26,7 +59,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{tasks.length}</p>
-                <p className="text-sm text-muted-foreground">Jami topshiriqlar</p>
+                <p className="text-sm text-muted-foreground">{tr.totalTasks}</p>
               </div>
             </div>
           </CardContent>
@@ -40,7 +73,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
-                <p className="text-sm text-muted-foreground">Bajarilganlik</p>
+                <p className="text-sm text-muted-foreground">{tr.completion}</p>
               </div>
             </div>
           </CardContent>
@@ -54,7 +87,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{overdueCount}</p>
-                <p className="text-sm text-muted-foreground">Kechikkan topshiriqlar</p>
+                <p className="text-sm text-muted-foreground">{tr.overdue}</p>
               </div>
             </div>
           </CardContent>
@@ -68,7 +101,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{organizations.length}</p>
-                <p className="text-sm text-muted-foreground">Faol tashkilotlar</p>
+                <p className="text-sm text-muted-foreground">{tr.activeOrgs}</p>
               </div>
             </div>
           </CardContent>
@@ -82,7 +115,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{appeals.length}</p>
-                <p className="text-sm text-muted-foreground">Jami murojaatlar</p>
+                <p className="text-sm text-muted-foreground">{tr.totalAppeals}</p>
               </div>
             </div>
           </CardContent>

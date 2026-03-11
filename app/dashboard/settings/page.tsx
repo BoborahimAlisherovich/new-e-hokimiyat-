@@ -12,10 +12,8 @@ import { SettingsNotificationsTab } from "@/components/dashboard/settings/settin
 import { SettingsSecurityTab } from "@/components/dashboard/settings/settings-security-tab"
 import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-appearance-tab"
 import { SettingsSectorsTab } from "@/components/dashboard/settings/settings-sectors-tab"
-import { SettingsAdminTab } from "@/components/dashboard/settings/settings-admin-tab"
 import { useToast } from "@/hooks/use-toast"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
-import { api } from "@/lib/api"
 import { canAccessSettingsTab, getAllowedSettingsTabs, type SettingsTabKey } from "@/lib/settings-access"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -37,35 +35,11 @@ export default function SettingsPage() {
   const [taskDeadlineReminder, setTaskDeadlineReminder] = useState(true)
   const [newTaskNotification, setNewTaskNotification] = useState(true)
 
-  const [botToken, setBotToken] = useState("")
-  const [botUsername, setBotUsername] = useState("")
-  const [showToken, setShowToken] = useState(false)
-  const [tokenSaved, setTokenSaved] = useState(false)
-  const [smtpHost, setSmtpHost] = useState("")
-  const [smtpPort, setSmtpPort] = useState("")
-  const [senderEmail, setSenderEmail] = useState("")
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const user = await getCurrentUser()
       setCurrentUser(user)
-
-      if (canAccessSettingsTab(user.role, "admin")) {
-        try {
-          const botSettingsRes = await api.get<{ bot_token?: string; bot_username?: string }>(
-            "/telegram-bot/settings/"
-          )
-          if (typeof botSettingsRes.data?.bot_token === "string") {
-            setBotToken(botSettingsRes.data.bot_token)
-          }
-          if (typeof botSettingsRes.data?.bot_username === "string") {
-            setBotUsername(botSettingsRes.data.bot_username)
-          }
-        } catch (error) {
-          // ignore bot settings load errors for now
-        }
-      }
       
       // Load settings from localStorage
       const savedNotifications = localStorage.getItem("notifications")
@@ -94,7 +68,6 @@ export default function SettingsPage() {
     document.documentElement.lang = language || "uz"
   }, [language])
 
-  const isAdmin = currentUser?.role === "ADMIN"
   const userRole = currentUser?.role ?? null
   const allowedTabs = useMemo(() => getAllowedSettingsTabs(userRole), [userRole])
   const requestedTab = searchParams.get("tab") as SettingsTabKey | null
@@ -111,21 +84,10 @@ export default function SettingsPage() {
     router.replace(`/dashboard/settings?tab=${nextTab}`, { scroll: false })
   }
 
-  const saveAdminSettings = async () => {
-    try {
-      await api.put("/telegram-bot/settings/1/", {
-        bot_token: botToken,
-        bot_username: botUsername,
-      })
-      setTokenSaved(true)
-      setTimeout(() => setTokenSaved(false), 3000)
-    } catch (error) {
-      toast({
-        title: t.common.error,
-        description: t.settings.adminSaveError,
-        variant: "destructive",
-      })
-    }
+  const handleLanguageChange = (value: string) => {
+    const supported: Language[] = ["uz", "uz-cyrl", "ru", "en"]
+    const normalized = supported.includes(value as Language) ? (value as Language) : "uz"
+    setLanguage(normalized)
   }
 
   const saveSettings = async () => {
@@ -208,7 +170,7 @@ export default function SettingsPage() {
         <div ref={pageRef} className="relative z-10 mx-auto max-w-5xl">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <section data-gsap-section>
-              <SettingsTabs t={t} isAdmin={isAdmin} userRole={currentUser?.role} />
+              <SettingsTabs t={t} userRole={currentUser?.role} />
             </section>
             <section data-gsap-section>
               <SettingsProfileTab t={t} currentUser={userForProfile} onUserUpdate={loadData} />
@@ -229,30 +191,8 @@ export default function SettingsPage() {
               saving={saving}
             />
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
-            <SettingsAppearanceTab t={t} language={language} onLanguageChange={(value) => setLanguage(value as Language)} onSave={saveSettings} saving={saving} />
-            
-            {/* Admin-only tabs */}
+            <SettingsAppearanceTab t={t} language={language} onLanguageChange={handleLanguageChange} onSave={saveSettings} saving={saving} />
             {canAccessSettingsTab(userRole, "sectors") && <SettingsSectorsTab t={t} />}
-
-            {canAccessSettingsTab(userRole, "admin") && isAdmin && (
-              <SettingsAdminTab
-                t={t}
-                botToken={botToken}
-                botUsername={botUsername}
-                showToken={showToken}
-                tokenSaved={tokenSaved}
-                smtpHost={smtpHost}
-                smtpPort={smtpPort}
-                senderEmail={senderEmail}
-                onBotTokenChange={setBotToken}
-                onBotUsernameChange={setBotUsername}
-                onShowTokenToggle={() => setShowToken((prev) => !prev)}
-                onSaveBotSettings={saveAdminSettings}
-                onSmtpHostChange={setSmtpHost}
-                onSmtpPortChange={setSmtpPort}
-                onSenderEmailChange={setSenderEmail}
-              />
-            )}
           </Tabs>
         </div>
       </div>

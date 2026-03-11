@@ -18,6 +18,7 @@ import {
   LabelList,
 } from "recharts"
 import { useMemo } from "react"
+import { useI18n } from "@/lib/i18n/context"
 
 const STATUS_LABELS: Record<string, string> = {
   YANGI: "Yangi",
@@ -69,6 +70,57 @@ interface AnalyticsChartsProps {
   appeals: any[]
 }
 
+const TEXTS = {
+  uz: {
+    unknown: "Noma'lum",
+    statusBy: "Holatlar bo'yicha",
+    priorityBy: "Muhimlik bo'yicha",
+    categorySlice: "Kategoriyalar kesimi",
+    trend: "Topshiriqlar tendensiyasi",
+    orgLoadTop6: "Tashkilotlar yuklamasi (Top 6)",
+    appealsByGender: "Murojaatchilar jinsi bo'yicha",
+    appealsStatus: "Murojaatlar holati",
+    countLabel: "Soni",
+    unit: "ta",
+  },
+  "uz-cyrl": {
+    unknown: "Номаълум",
+    statusBy: "Ҳолатлар бўйича",
+    priorityBy: "Муҳимлик бўйича",
+    categorySlice: "Категориялар кесими",
+    trend: "Топшириқлар тенденцияси",
+    orgLoadTop6: "Ташкилотлар юкламаси (Топ 6)",
+    appealsByGender: "Мурожаатчилар жинси бўйича",
+    appealsStatus: "Мурожаатлар ҳолати",
+    countLabel: "Сони",
+    unit: "та",
+  },
+  ru: {
+    unknown: "Неизвестно",
+    statusBy: "По статусам",
+    priorityBy: "По приоритету",
+    categorySlice: "По категориям",
+    trend: "Тенденция задач",
+    orgLoadTop6: "Нагрузка организаций (Топ 6)",
+    appealsByGender: "По полу заявителей",
+    appealsStatus: "Статусы обращений",
+    countLabel: "Количество",
+    unit: "шт.",
+  },
+  en: {
+    unknown: "Unknown",
+    statusBy: "By status",
+    priorityBy: "By priority",
+    categorySlice: "By category",
+    trend: "Task trend",
+    orgLoadTop6: "Organization load (Top 6)",
+    appealsByGender: "By applicant gender",
+    appealsStatus: "Appeal statuses",
+    countLabel: "Count",
+    unit: "pcs",
+  },
+} as const
+
 const formatShortDate = (value: string) => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -76,6 +128,101 @@ const formatShortDate = (value: string) => {
 }
 
 export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChartsProps) {
+  const { language } = useI18n()
+  const tr = TEXTS[language || "uz"] || TEXTS.uz
+
+  const statusLabels = useMemo(() => ({
+    ...STATUS_LABELS,
+    ...(language === "uz-cyrl"
+      ? {
+          YANGI: "Янги",
+          IJRODA: "Ижрода",
+          BAJARILDI: "Бажарилди",
+          NAZORATDAN_YECHILDI: "Назоратдан ечилди",
+          MUDDATI_KECH: "Муддати кечиккан",
+          QAYTA_IJROGA_YUBORILDI: "Қайта ижрога юборилди",
+          BAJARILMADI: "Бажарилмади",
+        }
+      : language === "ru"
+      ? {
+          YANGI: "Новая",
+          IJRODA: "В работе",
+          BAJARILDI: "Выполнено",
+          NAZORATDAN_YECHILDI: "Снято с контроля",
+          MUDDATI_KECH: "Просрочено",
+          QAYTA_IJROGA_YUBORILDI: "Отправлено на доработку",
+          BAJARILMADI: "Не выполнено",
+        }
+      : language === "en"
+      ? {
+          YANGI: "New",
+          IJRODA: "In progress",
+          BAJARILDI: "Completed",
+          NAZORATDAN_YECHILDI: "Released from control",
+          MUDDATI_KECH: "Overdue",
+          QAYTA_IJROGA_YUBORILDI: "Returned to execution",
+          BAJARILMADI: "Not completed",
+        }
+      : {}),
+  }), [language])
+
+  const priorityLabels = useMemo(() => ({
+    ...PRIORITY_LABELS,
+    ...(language === "uz-cyrl"
+      ? { FAVQULODDA: "Фавқулодда", YUQORI: "Юқори", ODDIY: "Ўртача", PAST: "Паст" }
+      : language === "ru"
+      ? { FAVQULODDA: "Критично", YUQORI: "Высокий", ODDIY: "Средний", PAST: "Низкий" }
+      : language === "en"
+      ? { FAVQULODDA: "Critical", YUQORI: "High", ODDIY: "Medium", PAST: "Low" }
+      : {}),
+  }), [language])
+
+  const categoryLabels = useMemo(() => ({
+    ...CATEGORY_LABELS,
+    ...(language === "uz-cyrl"
+      ? {
+          IJTIMOIY: "Ижтимоий",
+          IQTISODIY: "Иқтисодий",
+          HUQUQIY: "Ҳуқуқий",
+          INFRASTRUKTURA: "Инфратузилма",
+          TA_LIM: "Таълим",
+          SOG_LIQNI_SAQLASH: "Соғлиқни сақлаш",
+          BOSHQA: "Бошқа",
+        }
+      : language === "ru"
+      ? {
+          IJTIMOIY: "Социальная",
+          IQTISODIY: "Экономическая",
+          HUQUQIY: "Правовая",
+          INFRASTRUKTURA: "Инфраструктура",
+          TA_LIM: "Образование",
+          SOG_LIQNI_SAQLASH: "Здравоохранение",
+          BOSHQA: "Другое",
+        }
+      : language === "en"
+      ? {
+          IJTIMOIY: "Social",
+          IQTISODIY: "Economic",
+          HUQUQIY: "Legal",
+          INFRASTRUKTURA: "Infrastructure",
+          TA_LIM: "Education",
+          SOG_LIQNI_SAQLASH: "Healthcare",
+          BOSHQA: "Other",
+        }
+      : {}),
+  }), [language])
+
+  const genderLabels = useMemo(() => ({
+    ...GENDER_LABELS,
+    ...(language === "uz-cyrl"
+      ? { male: "Эркак", female: "Аёл" }
+      : language === "ru"
+      ? { male: "Мужчины", female: "Женщины" }
+      : language === "en"
+      ? { male: "Male", female: "Female" }
+      : {}),
+  }), [language])
+
   const statusData = useMemo(() => {
     const map = new Map<string, number>()
     const safeTasks = tasks || []
@@ -84,10 +231,10 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: STATUS_LABELS[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : statusLabels[key] || key,
       value,
     }))
-  }, [tasks])
+  }, [tasks, statusLabels, tr.unknown])
 
   const priorityData = useMemo(() => {
     const map = new Map<string, number>()
@@ -97,10 +244,10 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: PRIORITY_LABELS[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : priorityLabels[key] || key,
       value,
     }))
-  }, [tasks])
+  }, [tasks, priorityLabels, tr.unknown])
 
   const categoryData = useMemo(() => {
     const map = new Map<string, number>()
@@ -110,10 +257,10 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: CATEGORY_LABELS[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : categoryLabels[key] || key,
       value,
     }))
-  }, [tasks])
+  }, [tasks, categoryLabels, tr.unknown])
 
   // Murojaatchilar jinsi bo'yicha
   const genderData = useMemo(() => {
@@ -133,14 +280,14 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
     }
     // Erkakni chap tomonda (180°), Ayolni o'ng tomonda (0°) ko'rsatish uchun tartibni to'g'rilash
     const data = Array.from(map.entries()).map(([key, value]) => ({
-      name: GENDER_LABELS[key] || key,
+      name: genderLabels[key] || key,
       value,
       fill: key === 'male' ? GENDER_COLORS[0] : GENDER_COLORS[1],
       startAngle: key === 'male' ? 90 : -90,
       endAngle: key === 'male' ? 270 : 90,
     }))
     return data
-  }, [appeals])
+  }, [appeals, genderLabels])
 
   const trendData = useMemo(() => {
     const map = new Map<string, number>()
@@ -165,7 +312,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       const assignments = task.assigned_organizations || task.organizations || []
       if (Array.isArray(assignments) && assignments.length > 0) {
         assignments.forEach((item: any) => {
-          const name = item?.organization?.name || item?.name || "Номаълум"
+          const name = item?.organization?.name || item?.name || tr.unknown
           map.set(name, (map.get(name) || 0) + 1)
         })
       } else if (task.organization?.name) {
@@ -176,7 +323,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
     if (map.size === 0 && organizations?.length) {
       organizations.forEach((org) => {
-        map.set(org.name || "Noma'lum", map.get(org.name) || 0)
+        map.set(org.name || tr.unknown, map.get(org.name) || 0)
       })
     }
 
@@ -184,24 +331,70 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6)
-  }, [tasks, organizations])
+  }, [tasks, organizations, tr.unknown])
 
   // Murojaatlar holati bo'yicha
   const appealStatusData = useMemo(() => {
-    const statusMap: Record<string, string> = {
-      PENDING: 'Kutilmoqda',
-      pending: 'Kutilmoqda',
-      pending_ai: 'AI tahlilida',
-      pending_review: "Ko'rib chiqilmoqda",
-      IN_PROGRESS: 'Jarayonda',
-      in_progress: 'Jarayonda',
-      RESOLVED: 'Hal etildi',
-      resolved: 'Hal etildi',
-      REJECTED: 'Rad etildi',
-      rejected: 'Rad etildi',
-      approved: 'Tasdiqlandi',
-      responded: 'Javob berildi',
-    }
+    const statusMap: Record<string, string> =
+      language === "uz-cyrl"
+        ? {
+            PENDING: "Кутилмоқда",
+            pending: "Кутилмоқда",
+            pending_ai: "AI таҳлилида",
+            pending_review: "Кўриб чиқилмоқда",
+            IN_PROGRESS: "Жараёнда",
+            in_progress: "Жараёнда",
+            RESOLVED: "Ҳал этилди",
+            resolved: "Ҳал этилди",
+            REJECTED: "Рад этилди",
+            rejected: "Рад этилди",
+            approved: "Тасдиқланди",
+            responded: "Жавоб берилди",
+          }
+        : language === "ru"
+        ? {
+            PENDING: "Ожидает",
+            pending: "Ожидает",
+            pending_ai: "AI анализ",
+            pending_review: "На рассмотрении",
+            IN_PROGRESS: "В процессе",
+            in_progress: "В процессе",
+            RESOLVED: "Решено",
+            resolved: "Решено",
+            REJECTED: "Отклонено",
+            rejected: "Отклонено",
+            approved: "Подтверждено",
+            responded: "Ответ дан",
+          }
+        : language === "en"
+        ? {
+            PENDING: "Pending",
+            pending: "Pending",
+            pending_ai: "AI analysis",
+            pending_review: "Under review",
+            IN_PROGRESS: "In progress",
+            in_progress: "In progress",
+            RESOLVED: "Resolved",
+            resolved: "Resolved",
+            REJECTED: "Rejected",
+            rejected: "Rejected",
+            approved: "Approved",
+            responded: "Responded",
+          }
+        : {
+            PENDING: "Kutilmoqda",
+            pending: "Kutilmoqda",
+            pending_ai: "AI tahlilida",
+            pending_review: "Ko'rib chiqilmoqda",
+            IN_PROGRESS: "Jarayonda",
+            in_progress: "Jarayonda",
+            RESOLVED: "Hal etildi",
+            resolved: "Hal etildi",
+            REJECTED: "Rad etildi",
+            rejected: "Rad etildi",
+            approved: "Tasdiqlandi",
+            responded: "Javob berildi",
+          }
     const statusColors: Record<string, string> = {
       'Kutilmoqda': '#f59e0b',
       'AI tahlilida': '#8b5cf6',
@@ -215,7 +408,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
     const map = new Map<string, number>()
     appeals.forEach((appeal: any) => {
       const key = appeal.status || 'PENDING'
-      const label = statusMap[key] || key
+      const label = statusMap[key] || (key === "UNKNOWN" ? tr.unknown : key)
       map.set(label, (map.get(label) || 0) + 1)
     })
     return Array.from(map.entries()).map(([name, value]) => ({ 
@@ -223,14 +416,14 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       value, 
       fill: statusColors[name] || '#8b5cf6' 
     }))
-  }, [appeals])
+  }, [appeals, language, tr.unknown])
 
   return (
     <section className="animate-slide-up" style={{ animationDelay: "300ms" }}>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Holatlar bo'yicha</CardTitle>
+            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{tr.statusBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -255,7 +448,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Muhimlik bo'yicha</CardTitle>
+            <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{tr.priorityBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -284,7 +477,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">Kategoriyalar kesimi</CardTitle>
+            <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">{tr.categorySlice}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -309,7 +502,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Topshiriqlar tendensiyasi</CardTitle>
+            <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tr.trend}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -332,7 +525,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Tashkilotlar yuklamasi (Top 6)</CardTitle>
+            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{tr.orgLoadTop6}</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -358,7 +551,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
         {/* Murojaatchilar jinsi bo'yicha */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Murojaatchilar jinsi bo'yicha</CardTitle>
+            <CardTitle className="text-lg">{tr.appealsByGender}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -398,7 +591,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
                     <Cell key={index} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [`${value} ta`, 'Soni']} />
+                <Tooltip formatter={(value: number) => [`${value} ${tr.unit}`, tr.countLabel]} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -407,7 +600,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
         {/* Murojaatlar holati */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Murojaatlar holati</CardTitle>
+            <CardTitle className="text-lg">{tr.appealsStatus}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
