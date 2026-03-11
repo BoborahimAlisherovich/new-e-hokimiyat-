@@ -246,10 +246,12 @@ export function Sidebar() {
       >
       
       {/* Header */}
-      <div className="relative z-10 flex h-20 items-center justify-between px-5 border-b border-indigo-100/30 bg-white/50 backdrop-blur-xl">
+      <div className="relative z-10 flex h-20 items-center justify-between border-b border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.42))] px-5 backdrop-blur-2xl">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <Image src="/government-icon.svg" alt="Logo" width={44} height={44} className="w-11 h-11" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(236,254,255,0.88))] shadow-[0_16px_32px_-18px_rgba(14,165,233,0.35)]">
+              <Image src="/government-icon.svg" alt="Logo" width={32} height={32} className="h-8 w-8" />
+            </div>
             <div>
               <h1 className="text-base font-semibold tracking-tight text-slate-900">{t.sidebar.appName}</h1>
               <p className="text-[11px] text-slate-500 leading-tight">{t.sidebar.appDescription}</p>
@@ -261,7 +263,7 @@ export function Sidebar() {
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 rounded-lg transition-all duration-200 hover:bg-white"
+          className="h-9 w-9 rounded-xl border border-white/60 bg-white/60 transition-all duration-200 hover:bg-white"
         >
           <ChevronLeft className={cn(
             "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -278,7 +280,9 @@ export function Sidebar() {
           className="flex justify-center py-5"
         >
           <Link href="/dashboard">
-            <Image src="/government-icon.svg" alt="Logo" width={44} height={44} className="w-11 h-11 hover:scale-105 transition-transform" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(236,254,255,0.88))] shadow-[0_16px_32px_-18px_rgba(14,165,233,0.35)]">
+              <Image src="/government-icon.svg" alt="Logo" width={30} height={30} className="h-7.5 w-7.5 hover:scale-105 transition-transform" />
+            </div>
           </Link>
         </motion.div>
       )}
@@ -292,7 +296,8 @@ export function Sidebar() {
         {/* Main Section */}
         {!collapsed && mainItems.length > 0 && (
           <div className="mb-7">
-            <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
+            <p className="mb-3 flex items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
               {t.navigation.mainSection}
             </p>
             <div className="space-y-3">
@@ -314,7 +319,8 @@ export function Sidebar() {
         {/* Communication Section */}
         {!collapsed && communicationItems.length > 0 && (
           <div className="mb-7">
-            <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
+            <p className="mb-3 flex items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
               {t.navigation.communicationSection}
             </p>
             <div className="space-y-3">
@@ -339,7 +345,8 @@ export function Sidebar() {
         {/* Analytics Section */}
         {!collapsed && analyticsItems.length > 0 && (
           <div>
-            <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-wide mb-3 px-2">
+            <p className="mb-3 flex items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
               {t.navigation.analyticsSection}
             </p>
             <div className="space-y-3">
@@ -363,14 +370,14 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-indigo-100/30 bg-white/30 backdrop-blur-xl px-4 py-4">
+      <div className="border-t border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.50))] px-4 py-4 backdrop-blur-2xl">
         {/* User Profile */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className={cn(
-            "group relative flex items-center gap-3 rounded-xl p-3 bg-white/70 border border-indigo-100/40 transition-all duration-200 hover:shadow-sm hover:border-indigo-200/50 backdrop-blur-sm",
+            "group relative flex items-center gap-3 rounded-2xl border border-white/75 bg-white/72 p-3 transition-all duration-200 hover:border-cyan-200/70 hover:shadow-[0_18px_36px_-28px_rgba(14,165,233,0.42)] backdrop-blur-sm",
             collapsed && "justify-center p-2"
           )}
         >
@@ -399,11 +406,13 @@ export function Sidebar() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={cn(
-              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white hover:shadow-sm",
+              "group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white/90 hover:shadow-[0_16px_30px_-24px_rgba(14,165,233,0.35)]",
               collapsed && "justify-center px-2"
             )}
           >
-            <Settings className="h-5 w-5 transition-transform duration-200 group-hover:rotate-90" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-cyan-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+              <Settings className="h-4.5 w-4.5 transition-transform duration-200 group-hover:rotate-90" />
+            </div>
             
             {!collapsed && (
               <span className="transition-colors duration-200">
@@ -426,6 +435,7 @@ function NavItem({ item, isActive, collapsed, index }: {
   index: number
 }) {
   const hasBadge = item.badge && item.badge > 0
+  const Icon = item.icon
   
   return (
     <Link href={item.href}>
@@ -434,22 +444,34 @@ function NavItem({ item, isActive, collapsed, index }: {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: index * 0.03 }}
         className={cn(
-          "group relative flex items-center gap-3 rounded-[12px] px-3 py-2.5 transition-all duration-200",
-          collapsed ? "h-11 justify-center" : "h-11",
+          "group relative flex items-center gap-3 overflow-hidden rounded-[18px] px-3 py-2.5 transition-all duration-200",
+          collapsed ? "h-12 justify-center" : "h-12",
           isActive
-            ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-            : "text-slate-600 hover:bg-white/80 hover:shadow-sm hover:text-indigo-700"
+            ? "border border-cyan-400/20 bg-[linear-gradient(135deg,#0f766e,#0891b2)] text-white shadow-[0_18px_34px_-20px_rgba(8,145,178,0.70)]"
+            : "border border-transparent text-slate-600 hover:border-white/80 hover:bg-white/85 hover:shadow-[0_18px_34px_-24px_rgba(14,165,233,0.28)] hover:text-cyan-800"
         )}
         whileHover={{ scale: collapsed ? 1.05 : 1.01 }}
         whileTap={{ scale: 0.98 }}
         role="menuitem"
         aria-current={isActive ? "page" : undefined}
       >
+        {!isActive && (
+          <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.72),rgba(240,253,250,0.92),rgba(255,251,235,0.82))]" />
+        )}
         <div className="relative flex-shrink-0">
-          <item.icon className={cn(
-            "h-[21px] w-[21px] transition-colors duration-200",
-            isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-600"
-          )} />
+          <div
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
+              isActive
+                ? "bg-white/14 ring-1 ring-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
+                : "bg-[linear-gradient(135deg,rgba(248,250,252,0.98),rgba(236,254,255,0.82))] ring-1 ring-cyan-100/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] group-hover:scale-105 group-hover:bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(236,253,245,0.88))]"
+            )}
+          >
+            <Icon className={cn(
+              "h-[18px] w-[18px] transition-colors duration-200",
+              isActive ? "text-white" : "text-cyan-700 group-hover:text-emerald-700"
+            )} />
+          </div>
           {/* Badge for collapsed state */}
           {collapsed && hasBadge && (
             <motion.span 
@@ -465,7 +487,7 @@ function NavItem({ item, isActive, collapsed, index }: {
         {!collapsed && (
           <>
             <span className={cn(
-              "truncate text-[15px] flex-1 font-medium transition-colors duration-200",
+              "relative z-10 flex-1 truncate text-[15px] font-medium transition-colors duration-200",
               isActive ? "text-white" : "text-slate-700"
             )}>
               {item.title}

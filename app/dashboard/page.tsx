@@ -65,7 +65,13 @@ export default function DashboardPage() {
   return (
     <>
       <Header title={t.pages.dashboard.title} description={t.pages.dashboard.description} />
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div className="relative p-6">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute left-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/25 to-transparent blur-3xl" />
+          <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/20 to-transparent blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/18 to-transparent blur-3xl" />
+        </div>
+        <div ref={pageRef} className="relative z-10 mx-auto max-w-7xl space-y-6">
 
             {/* 1. Task Summary (KPI) */}
             <section data-gsap-section>
@@ -97,6 +103,7 @@ export default function DashboardPage() {
               <DeadlineCriticalTasks />
             </section>
 
+        </div>
       </div>
     </>
   )
