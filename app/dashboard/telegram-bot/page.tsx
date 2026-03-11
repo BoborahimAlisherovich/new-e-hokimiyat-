@@ -39,7 +39,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useGSAPPageEntrance } from "@/hooks/use-gsap";
-import { Header } from "@/components/layout/header";
 import { AdminOnly } from "@/components/auth/admin-only";
 
 interface BotSettings {
@@ -93,7 +92,7 @@ export default function TelegramBotPage() {
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<BotSettings | null>(null);
   const [stats, setStats] = useState<BotStats | null>(null);
-    const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
+  const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
   const [botStatus, setBotStatus] = useState<{
     is_active: boolean;
     is_running: boolean;
@@ -112,9 +111,8 @@ export default function TelegramBotPage() {
     if (!settings?.bot_token && !settings?.has_token) return;
     try {
       const response = await api.get<{ success: boolean; result?: WebhookInfo }>("/telegram-bot/settings/webhook_info/");
-      if (response.data.success && response.data.result) {
-        setWebhookInfo(response.data.result);
-      }
+      if (response.data.success && response.data.result) setWebhookInfo(response.data.result);
+      else setWebhookInfo(null);
     } catch {
       setWebhookInfo(null);
     }
@@ -124,23 +122,30 @@ export default function TelegramBotPage() {
     try {
       setLoading(true);
       setError(null);
-      const [settingsRes, statsRes, statusRes] = await Promise.all([
+      const [settingsRes, statsRes, statusRes] = await Promise.allSettled([
         api.get<BotSettings>("/telegram-bot/settings/"),
         api.get<BotStats>("/telegram-bot/stats/"),
-        api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/")
+        api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>(
+          "/telegram-bot/settings/bot_status/"
+        ),
       ]);
-      setSettings(settingsRes.data);
-      setStats(statsRes.data);
-      setBotStatus(statusRes.data);
-      if (settingsRes.data?.use_webhook) {
-        try {
-          const webhookRes = await api.get<{ success: boolean; result?: WebhookInfo }>("/telegram-bot/settings/webhook_info/");
-          if (webhookRes.data.success && webhookRes.data.result) {
-            setWebhookInfo(webhookRes.data.result);
-          }
-        } catch {
-          setWebhookInfo(null);
-        }
+
+      if (settingsRes.status === "fulfilled") {
+        setSettings(settingsRes.value.data);
+      } else {
+        throw settingsRes.reason;
+      }
+
+      if (statsRes.status === "fulfilled") {
+        setStats(statsRes.value.data);
+      } else {
+        setStats(null);
+      }
+
+      if (statusRes.status === "fulfilled") {
+        setBotStatus(statusRes.value.data);
+      } else {
+        setBotStatus(null);
       }
     } catch (err) {
       setError("Ma'lumotlarni yuklashda xato yuz berdi");
@@ -157,6 +162,14 @@ export default function TelegramBotPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!settings?.use_webhook) {
+      setWebhookInfo(null);
+      return;
+    }
+    void loadWebhookInfo();
+  }, [loadWebhookInfo, settings?.use_webhook]);
 
   const startBot = useCallback(async (force = false) => {
     try {
@@ -301,7 +314,7 @@ export default function TelegramBotPage() {
     } finally {
       setTesting(false);
     }
-  }, [loadStatus, toast]);
+  }, [toast]);
 
   const testAIConnection = useCallback(async () => {
     try {
@@ -352,8 +365,7 @@ export default function TelegramBotPage() {
           description: "Webhook o'rnatildi"
         });
         setSettings(prev => prev ? { ...prev, use_webhook: true } : null);
-        const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>("/telegram-bot/settings/bot_status/");
-        setBotStatus(statusRes.data);
+        await loadStatus();
       } else {
         toast({
           title: "Xato",

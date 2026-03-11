@@ -38,6 +38,7 @@ from core.constants import FileType, Messages, TaskStatus, UserRole
 from core.permissions import CanCloseTask, CanCreateTasks, CanExecuteTasks
 from core.ai_service import AIService
 from notifications.models import Notification
+from notifications.services import notify_task_chat_message
 
 from .models import (
     DeadlineExtensionRequest,
@@ -923,25 +924,15 @@ QOIDALAR:
                 attachment=attachment
             )
 
-            # Tashkilot izohi yoki fayli kelganda Hokimlarga bildirishnoma yuboriladi.
-            if request.user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
-                from users.models import User as UserModel
-
-                preview = (content or '').strip()
-                if not preview and attachment_file:
-                    preview = f"Fayl yuborildi: {attachment_file.name}"
-                preview = preview[:120] + ('...' if len(preview) > 120 else '')
-
-                hokim_users = UserModel.objects.filter(role='HOKIM', status='FAOL').exclude(id=request.user.id)
-                for hokim in hokim_users:
-                    Notification.objects.create(
-                        user=hokim,
-                        title='Topshiriq bo\'yicha yangi izoh',
-                        message=f"{request.user.full_name} \"{task.title}\" topshirig'iga izoh qoldirdi. {preview}",
-                        notification_type='TASK',
-                        related_task=task,
-                        link=f'/dashboard/tasks/{task.id}'
-                    )
+            preview = (content or "").strip()
+            if not preview and attachment_file:
+                preview = f"Fayl yuborildi: {attachment_file.name}"
+            notify_task_chat_message(
+                task=task,
+                sender=request.user,
+                preview=preview,
+                link=f"/dashboard/tasks/{task.id}",
+            )
 
             # Broadcast to WS clients
             channel_layer = get_channel_layer()

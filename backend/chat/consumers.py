@@ -136,6 +136,7 @@ class TaskChatConsumer(AsyncWebsocketConsumer):
     def save_message(self, content, message_type='TEXT'):
         """Save message to database."""
         from tasks.models import Task, TaskMessage
+        from notifications.services import notify_task_chat_message
         
         task = Task.objects.get(id=self.task_id)
         
@@ -144,6 +145,13 @@ class TaskChatConsumer(AsyncWebsocketConsumer):
             sender=self.user,
             content=content,
             message_type=message_type.upper()
+        )
+
+        notify_task_chat_message(
+            task=task,
+            sender=self.user,
+            preview=content,
+            link=f"/dashboard/tasks/{task.id}",
         )
         
         return {
@@ -222,6 +230,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'notification',
             'notification': event['notification']
+        }))
+        unread_count = await self.get_unread_count()
+        await self.send(text_data=json.dumps({
+            'type': 'unread_count',
+            'count': unread_count
         }))
     
     @database_sync_to_async

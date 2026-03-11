@@ -1583,13 +1583,14 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
     """Adminlarga yangi murojaat haqida xabar"""
     from django.utils import timezone as tz
     admins = BotAdmin.objects.filter(is_active=True)
-    from notifications.models import Notification
+    from notifications.services import create_notification, notify_new_appeal
     appeal_id = getattr(appeal, "id", None) or getattr(appeal, "pk", None)
     
     # Admin xabardor qilingan vaqtni belgilash (auto-response timeout uchun)
     appeal.admin_notified_at = tz.now()
     appeal.save(update_fields=['admin_notified_at'])
     
+    bot_admin_user_ids = set()
     for admin in admins:
         try:
             user = appeal.telegram_user
@@ -1636,15 +1637,34 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
                 )
 
             if admin.user and admin.user.is_active:
-                Notification.objects.create(
+                bot_admin_user_ids.add(admin.user_id)
+                create_notification(
                     user=admin.user,
                     title="Yangi murojaat",
                     message=(
                         f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) "
                         f"{cat_name} / {type_name}"
                     ),
-                    notification_type='INFO',
-                    link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals"
+                    notification_type="INFO",
+                    link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals",
                 )
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
+
+    # Dashboard admin rollariga ham bildirishnoma (BotAdmin ga bog'lanmaganlar).
+    try:
+        user = appeal.telegram_user
+        appeal_type = appeal.appeal_type
+        category = appeal.category
+        type_name = appeal_type.name_uz if appeal_type else ""
+        cat_name = category.name_uz if category else ""
+        notify_new_appeal(
+            title="Yangi murojaat",
+            message=(
+                f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) {cat_name} / {type_name}"
+            ),
+            link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals",
+            exclude_user_ids=bot_admin_user_ids,
+        )
+    except Exception:
+        pass
