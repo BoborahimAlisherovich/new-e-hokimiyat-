@@ -129,7 +129,7 @@ export default function NotificationsPage() {
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-                <span className="ml-3 text-slate-500">Yuklanmoqda...</span>
+                <span className="ml-3 text-slate-500">{t.pages.notifications.loading}</span>
               </div>
             </div>
           ) : error ? (
@@ -139,7 +139,7 @@ export default function NotificationsPage() {
                 onClick={() => window.location.reload()} 
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Qayta urinish
+                {t.pages.notifications.retry}
               </button>
             </div>
           ) : (

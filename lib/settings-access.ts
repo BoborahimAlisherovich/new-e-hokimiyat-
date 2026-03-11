@@ -7,10 +7,9 @@ export type SettingsTabKey =
   | "security"
   | "appearance"
   | "sectors"
-  | "admin"
 
 const SETTINGS_ACCESS_BY_ROLE: Record<UserRole, SettingsTabKey[]> = {
-  ADMIN: ["profile", "notifications", "security", "appearance", "sectors", "admin"],
+  ADMIN: ["profile", "notifications", "security", "appearance", "sectors"],
   HOKIM: ["profile", "notifications", "security", "appearance", "sectors"],
   HOKIM_YORDAMCHISI: ["profile", "notifications", "security", "appearance", "sectors"],
   HOKIMLIK_MASUL: ["profile", "notifications", "security", "appearance", "sectors"],

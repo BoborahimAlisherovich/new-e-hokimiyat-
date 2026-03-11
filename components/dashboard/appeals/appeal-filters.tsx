@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FilterOptions } from "@/types"
 import { Search, X, Filter, MessageSquare, Sparkles } from "lucide-react"
+import { useI18n } from "@/lib/i18n/context"
 
 interface AppealFiltersProps {
   searchQuery: string
@@ -36,6 +37,58 @@ export function AppealFilters({
   totalCount = 0,
   filteredCount = 0,
 }: AppealFiltersProps) {
+  const { language } = useI18n()
+  const tr = {
+    uz: {
+      title: "Murojaatlar filtri",
+      desc: "Murojaatlarni qidiring va filtrlang",
+      clear: "Tozalash",
+      itemShort: "ta",
+      search: "Murojaatlarni qidirish...",
+      status: "Holat",
+      priority: "Muhimlik",
+      category: "Soha",
+      district: "Hudud",
+      all: "Barchasi",
+    },
+    "uz-cyrl": {
+      title: "Мурожаатлар фильтри",
+      desc: "Мурожаатларни қидиринг ва фильтрланг",
+      clear: "Тозалаш",
+      itemShort: "та",
+      search: "Мурожаатларни қидириш...",
+      status: "Ҳолат",
+      priority: "Муҳимлик",
+      category: "Соҳa",
+      district: "Ҳудуд",
+      all: "Барчаси",
+    },
+    ru: {
+      title: "Фильтр обращений",
+      desc: "Ищите и фильтруйте обращения",
+      clear: "Очистить",
+      itemShort: "шт",
+      search: "Поиск обращений...",
+      status: "Статус",
+      priority: "Приоритет",
+      category: "Категория",
+      district: "Район",
+      all: "Все",
+    },
+    en: {
+      title: "Appeal filters",
+      desc: "Search and filter appeals",
+      clear: "Clear",
+      itemShort: "items",
+      search: "Search appeals...",
+      status: "Status",
+      priority: "Priority",
+      category: "Category",
+      district: "District",
+      all: "All",
+    },
+  }[language]
+
   const hasActiveFilters = searchQuery || statusFilter !== "all" || priorityFilter !== "all" || categoryFilter !== "all" || districtFilter !== "all"
 
   const handleClearFilters = () => {
@@ -56,21 +109,21 @@ export function AppealFilters({
               <MessageSquare className="h-5 w-5 text-teal-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-800">Murojaatlar filtri</h3>
-              <p className="text-xs text-slate-500">Murojaatlarni qidiring va filtrlang</p>
+              <h3 className="text-base font-semibold text-slate-800">{tr.title}</h3>
+              <p className="text-xs text-slate-500">{tr.desc}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <Badge variant="secondary" className="text-xs bg-teal-100 text-teal-700 border-teal-200">
                 <Sparkles className="h-3 w-3 mr-1" />
-                {filteredCount} / {totalCount} ta
+                {filteredCount} / {totalCount} {tr.itemShort}
               </Badge>
             )}
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
                 <X className="h-4 w-4 mr-1" />
-                Tozalash
+                {tr.clear}
               </Button>
             )}
           </div>
@@ -82,7 +135,7 @@ export function AppealFilters({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Murojaatlarni qidirish..."
+            placeholder={tr.search}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10 h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all"
@@ -93,7 +146,7 @@ export function AppealFilters({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select value={statusFilter} onValueChange={onStatusChange}>
             <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder="Holat" />
+              <SelectValue placeholder={tr.status} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(options.status).map(([key, value]) => (
@@ -106,7 +159,7 @@ export function AppealFilters({
 
           <Select value={priorityFilter} onValueChange={onPriorityChange}>
             <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder="Muhimlik" />
+              <SelectValue placeholder={tr.priority} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(options.priority).map(([key, value]) => (
@@ -119,7 +172,7 @@ export function AppealFilters({
 
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
             <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder="Soha" />
+              <SelectValue placeholder={tr.category} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(options.category).map(([key, value]) => (
@@ -132,10 +185,10 @@ export function AppealFilters({
 
           <Select value={districtFilter} onValueChange={onDistrictChange}>
             <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder="Hudud" />
+              <SelectValue placeholder={tr.district} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Barchasi</SelectItem>
+              <SelectItem value="all">{tr.all}</SelectItem>
               {options.districts.map((district) => (
                 <SelectItem key={district} value={district}>
                   {district}

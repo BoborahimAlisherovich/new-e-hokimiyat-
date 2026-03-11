@@ -26,7 +26,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   const startTimer = useCallback(() => {
@@ -47,14 +47,24 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setError(null)
       chunksRef.current = []
 
-      // Microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        },
-      })
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError("Brauzeringiz mikrofon yozib olishni qo'llab-quvvatlamaydi")
+        return
+      }
+
+      // Microphone access: try tuned constraints first, then fallback.
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100,
+          },
+        })
+      } catch (initialErr) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      }
 
       streamRef.current = stream
 
@@ -89,6 +99,26 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setRecordingTime(0)
       startTimer()
     } catch (err) {
+      const mediaError = err as DOMException
+      if (
+        mediaError?.name === "NotFoundError" ||
+        mediaError?.name === "DevicesNotFoundError"
+      ) {
+        console.warn("Microphone device not found")
+        setError("Mikrofon topilmadi. Qurilma ulanganini tekshiring.")
+        return
+      }
+      if (
+        mediaError?.name === "NotAllowedError" ||
+        mediaError?.name === "PermissionDeniedError"
+      ) {
+        setError("Mikrofon ruxsati berilmagan. Brauzer ruxsatini yoqing.")
+        return
+      }
+      if (mediaError?.name === "NotReadableError") {
+        setError("Mikrofon band yoki mavjud emas. Boshqa ilovalarni yoping.")
+        return
+      }
       console.error("Error starting recording:", err)
       setError("Mikrofondan foydalanish imkoni yo'q")
     }

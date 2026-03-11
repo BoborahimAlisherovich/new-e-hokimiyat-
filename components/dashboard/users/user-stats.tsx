@@ -1,4 +1,5 @@
 import { AlertCircle, Building, Shield, UserCheck, TrendingUp, Users, Sparkles } from "lucide-react"
+import { useI18n } from "@/lib/i18n/context"
 
 interface UserStatsProps {
   total: number
@@ -8,9 +9,37 @@ interface UserStatsProps {
 }
 
 export function UserStats({ total, active, inactive, organizations }: UserStatsProps) {
+  const { language } = useI18n()
+  const labels = {
+    uz: {
+      total: "Jami foydalanuvchilar",
+      active: "Faol foydalanuvchilar",
+      inactive: "Nofaol foydalanuvchilar",
+      organizations: "Tashkilotlar",
+    },
+    "uz-cyrl": {
+      total: "Жами фойдаланувчилар",
+      active: "Фаол фойдаланувчилар",
+      inactive: "Нофаол фойдаланувчилар",
+      organizations: "Ташкилотлар",
+    },
+    ru: {
+      total: "Всего пользователей",
+      active: "Активные пользователи",
+      inactive: "Неактивные пользователи",
+      organizations: "Организации",
+    },
+    en: {
+      total: "Total users",
+      active: "Active users",
+      inactive: "Inactive users",
+      organizations: "Organizations",
+    },
+  }[language]
+
   const stats = [
     {
-      label: "Jami foydalanuvchilar",
+      label: labels.total,
       value: total,
       icon: Users,
       gradient: "from-blue-500 to-indigo-600",
@@ -20,7 +49,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       borderColor: "border-blue-200/50"
     },
     {
-      label: "Faol foydalanuvchilar",
+      label: labels.active,
       value: active,
       icon: UserCheck,
       gradient: "from-emerald-500 to-teal-600",
@@ -30,7 +59,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       borderColor: "border-emerald-200/50"
     },
     {
-      label: "Nofaol foydalanuvchilar",
+      label: labels.inactive,
       value: inactive,
       icon: AlertCircle,
       gradient: "from-red-500 to-rose-600",
@@ -40,7 +69,7 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       borderColor: "border-red-200/50"
     },
     {
-      label: "Tashkilotlar",
+      label: labels.organizations,
       value: organizations,
       icon: Building,
       gradient: "from-violet-500 to-purple-600",

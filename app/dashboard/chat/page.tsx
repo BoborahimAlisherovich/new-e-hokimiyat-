@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { useAudioAlert } from "@/hooks/use-audio-alert"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n/context"
 
 // Maksimal fayl hajmi (50MB)
 const MAX_FILE_SIZE = 50 * 1024 * 1024
@@ -54,15 +55,243 @@ const ALLOWED_FILE_TYPES = [
   'text/plain',
 ]
 
-// Role labels
-const ROLE_LABELS: Record<string, string> = {
-  HOKIM: "Hokim",
-  HOKIMLIK_MASUL: "Hokimlik mas'uli",
-  TASHKILOT_RAHBAR: "Tashkilot rahbari",
-  TASHKILOT_RAHBARI: "Tashkilot rahbari",
-  TASHKILOT_MASUL: "Tashkilot mas'uli",
-  ADMIN: "Admin",
+const ROLE_LABELS: Record<string, Record<string, string>> = {
+  uz: {
+    HOKIM: "Hokim",
+    HOKIMLIK_MASUL: "Hokimlik mas'uli",
+    TASHKILOT_RAHBAR: "Tashkilot rahbari",
+    TASHKILOT_RAHBARI: "Tashkilot rahbari",
+    TASHKILOT_MASUL: "Tashkilot mas'uli",
+    ADMIN: "Admin",
+  },
+  "uz-cyrl": {
+    HOKIM: "Ҳоким",
+    HOKIMLIK_MASUL: "Ҳокимлик масъули",
+    TASHKILOT_RAHBAR: "Ташкилот раҳбари",
+    TASHKILOT_RAHBARI: "Ташкилот раҳбари",
+    TASHKILOT_MASUL: "Ташкилот масъули",
+    ADMIN: "Админ",
+  },
+  ru: {
+    HOKIM: "Хоким",
+    HOKIMLIK_MASUL: "Ответственный хокимията",
+    TASHKILOT_RAHBAR: "Руководитель организации",
+    TASHKILOT_RAHBARI: "Руководитель организации",
+    TASHKILOT_MASUL: "Ответственный организации",
+    ADMIN: "Админ",
+  },
+  en: {
+    HOKIM: "Mayor",
+    HOKIMLIK_MASUL: "District officer",
+    TASHKILOT_RAHBAR: "Organization head",
+    TASHKILOT_RAHBARI: "Organization head",
+    TASHKILOT_MASUL: "Organization officer",
+    ADMIN: "Admin",
+  },
 }
+
+const CHAT_TEXTS = {
+  uz: {
+    title: "Chat",
+    loading: "Yuklanmoqda...",
+    users: "Foydalanuvchilar",
+    search: "Qidiruv...",
+    defaultUser: "Foydalanuvchi",
+    usersList: "Foydalanuvchilar ro'yxati",
+    online: "Onlayn",
+    offline: "Oflayn",
+    deletingMessage: "Xabarni o'chirish",
+    file: "Fayl",
+    dropFile: "Faylni shu yerga tashlang",
+    recording: "Yozib olinmoqda...",
+    finish: "Tugatish",
+    cancel: "Bekor qilish",
+    send: "Yuborish",
+    attachFile: "Fayl biriktirish",
+    stopRecording: "Yozishni to'xtatish",
+    startRecording: "Ovozli xabar yozish",
+    sendLocation: "Joylashuvni yuborish",
+    messagePlaceholder: "Xabar yozing yoki rasm joylashtiring (Ctrl+V)...",
+    selectConversation: "Suhbatni tanlang",
+    selectConversationDesc: "Ro'yxatdan foydalanuvchini tanlang va xabar yozishni boshlang",
+    usersAvailable: "ta foydalanuvchi mavjud",
+    openMap: "Xaritada ochish uchun bosing",
+    location: "Joylashuv",
+    imageAlt: "Katta rasm",
+    fileAdded: "Fayl qo'shildi",
+    imagePasted: "Rasm clipboard dan qo'shildi",
+    loadingError: "Chat ma'lumotlarini yuklashda xatolik:",
+    historyError: "Chat tarixini yuklashda xatolik:",
+    fileTooBig: "Fayl hajmi 50MB dan oshmasligi kerak.",
+    fileTypeError: "Ruxsat etilmagan fayl turi:",
+    unknown: "noma'lum",
+    micDenied: "Mikrofondan foydalanish uchun ruxsat berilmagan",
+    micNotFound: "Mikrofon qurilmasi topilmadi",
+    micBusy: "Mikrofon band yoki boshqa ilova ishlatyapti",
+    recordingStarted: "Ovozli xabar yozilmoqda...",
+    audioSent: "Ovozli xabar yuborildi",
+    audioError: "Ovozli xabar yuborishda xatolik",
+    locationSent: "Joylashuv yuborildi",
+    locationDenied: "Joylashuvga ruxsat berilmadi. Brauzer sozlamasidan ruxsat bering.",
+    locationUnavailable: "Joylashuvni aniqlab bo'lmadi. Qurilma joylashuvini yoqing.",
+    locationTimeout: "Joylashuvni olish muddati tugadi. Qayta urinib ko'ring.",
+    locationError: "Joylashuvni olishda xatolik. Iltimos, ruxsatni tekshiring.",
+    messageSent: "Xabar yuborildi",
+    messageSendError: "Xabar yuborishda xatolik yuz berdi",
+    messageDeleted: "Xabar o'chirildi",
+    messageDeleteError: "Xabarni o'chirishda xatolik yuz berdi",
+  },
+  "uz-cyrl": {
+    title: "Чат",
+    loading: "Юкланмоқда...",
+    users: "Фойдаланувчилар",
+    search: "Қидирув...",
+    defaultUser: "Фойдаланувчи",
+    usersList: "Фойдаланувчилар рўйхати",
+    online: "Онлайн",
+    offline: "Офлайн",
+    deletingMessage: "Хабарни ўчириш",
+    file: "Файл",
+    dropFile: "Файлни шу ерга ташланг",
+    recording: "Ёзиб олинмоқда...",
+    finish: "Тугатиш",
+    cancel: "Бекор қилиш",
+    send: "Юбориш",
+    attachFile: "Файл бириктириш",
+    stopRecording: "Ёзишни тўхтатиш",
+    startRecording: "Овозли хабар ёзиш",
+    sendLocation: "Жойлашувни юбориш",
+    messagePlaceholder: "Хабар ёзинг ёки расм жойлаштиринг (Ctrl+V)...",
+    selectConversation: "Суҳбатни танланг",
+    selectConversationDesc: "Рўйхатдан фойдаланувчини танланг ва хабар ёзишни бошланг",
+    usersAvailable: "та фойдаланувчи мавжуд",
+    openMap: "Харитада очиш учун босинг",
+    location: "Жойлашув",
+    imageAlt: "Катта расм",
+    fileAdded: "Файл қўшилди",
+    imagePasted: "Расм clipboard дан қўшилди",
+    loadingError: "Чат маълумотларини юклашда хатолик:",
+    historyError: "Чат тарихини юклашда хатолик:",
+    fileTooBig: "Файл ҳажми 50MB дан ошмаслиги керак.",
+    fileTypeError: "Рухсат этилмаган файл тури:",
+    unknown: "номаълум",
+    micDenied: "Микрофондан фойдаланиш учун рухсат берилмаган",
+    micNotFound: "Микрофон қурилмаси топилмади",
+    micBusy: "Микрофон банд ёки бошқа иловада ишламоқда",
+    recordingStarted: "Овозли хабар ёзилмоқда...",
+    audioSent: "Овозли хабар юборилди",
+    audioError: "Овозли хабар юборишда хатолик",
+    locationSent: "Жойлашув юборилди",
+    locationDenied: "Жойлашувга рухсат берилмади. Браузер созламасидан рухсат беринг.",
+    locationUnavailable: "Жойлашувни аниқлаб бўлмади. Қурилма жойлашувини ёқинг.",
+    locationTimeout: "Жойлашувни олиш муддати тугади. Қайта уриниб кўринг.",
+    locationError: "Жойлашувни олишда хатолик. Илтимос, рухсатни текширинг.",
+    messageSent: "Хабар юборилди",
+    messageSendError: "Хабар юборишда хатолик юз берди",
+    messageDeleted: "Хабар ўчирилди",
+    messageDeleteError: "Хабарни ўчиришда хатолик юз берди",
+  },
+  ru: {
+    title: "Чат",
+    loading: "Загрузка...",
+    users: "Пользователи",
+    search: "Поиск...",
+    defaultUser: "Пользователь",
+    usersList: "Список пользователей",
+    online: "Онлайн",
+    offline: "Офлайн",
+    deletingMessage: "Удалить сообщение",
+    file: "Файл",
+    dropFile: "Перетащите файл сюда",
+    recording: "Идёт запись...",
+    finish: "Завершить",
+    cancel: "Отмена",
+    send: "Отправить",
+    attachFile: "Прикрепить файл",
+    stopRecording: "Остановить запись",
+    startRecording: "Записать голосовое",
+    sendLocation: "Отправить геопозицию",
+    messagePlaceholder: "Введите сообщение или вставьте изображение (Ctrl+V)...",
+    selectConversation: "Выберите чат",
+    selectConversationDesc: "Выберите пользователя в списке и начните переписку",
+    usersAvailable: "пользователей доступно",
+    openMap: "Нажмите, чтобы открыть карту",
+    location: "Геопозиция",
+    imageAlt: "Большое изображение",
+    fileAdded: "Файл добавлен",
+    imagePasted: "Изображение вставлено из буфера",
+    loadingError: "Ошибка загрузки данных чата:",
+    historyError: "Ошибка загрузки истории чата:",
+    fileTooBig: "Размер файла не должен превышать 50MB.",
+    fileTypeError: "Недопустимый тип файла:",
+    unknown: "неизвестно",
+    micDenied: "Нет доступа к микрофону",
+    micNotFound: "Устройство микрофона не найдено",
+    micBusy: "Микрофон занят другим приложением",
+    recordingStarted: "Запись голосового сообщения...",
+    audioSent: "Голосовое сообщение отправлено",
+    audioError: "Ошибка отправки голосового сообщения",
+    locationSent: "Геопозиция отправлена",
+    locationDenied: "Доступ к геопозиции запрещён. Разрешите его в браузере.",
+    locationUnavailable: "Не удалось определить геопозицию. Включите геолокацию на устройстве.",
+    locationTimeout: "Время получения геопозиции истекло. Попробуйте снова.",
+    locationError: "Ошибка получения геопозиции. Проверьте разрешение.",
+    messageSent: "Сообщение отправлено",
+    messageSendError: "Ошибка при отправке сообщения",
+    messageDeleted: "Сообщение удалено",
+    messageDeleteError: "Ошибка при удалении сообщения",
+  },
+  en: {
+    title: "Chat",
+    loading: "Loading...",
+    users: "Users",
+    search: "Search...",
+    defaultUser: "User",
+    usersList: "Users list",
+    online: "Online",
+    offline: "Offline",
+    deletingMessage: "Delete message",
+    file: "File",
+    dropFile: "Drop file here",
+    recording: "Recording...",
+    finish: "Finish",
+    cancel: "Cancel",
+    send: "Send",
+    attachFile: "Attach file",
+    stopRecording: "Stop recording",
+    startRecording: "Record voice",
+    sendLocation: "Send location",
+    messagePlaceholder: "Type a message or paste an image (Ctrl+V)...",
+    selectConversation: "Select a conversation",
+    selectConversationDesc: "Pick a user from the list and start messaging",
+    usersAvailable: "users available",
+    openMap: "Click to open map",
+    location: "Location",
+    imageAlt: "Large image",
+    fileAdded: "File added",
+    imagePasted: "Image pasted from clipboard",
+    loadingError: "Error loading chat data:",
+    historyError: "Error loading chat history:",
+    fileTooBig: "File size must be less than 50MB.",
+    fileTypeError: "Unsupported file type:",
+    unknown: "unknown",
+    micDenied: "Microphone permission denied",
+    micNotFound: "No microphone device found",
+    micBusy: "Microphone is busy in another app",
+    recordingStarted: "Recording voice message...",
+    audioSent: "Voice message sent",
+    audioError: "Error sending voice message",
+    locationSent: "Location sent",
+    locationDenied: "Location permission denied. Please enable it in your browser.",
+    locationUnavailable: "Could not determine location. Turn on location on your device.",
+    locationTimeout: "Location request timed out. Please try again.",
+    locationError: "Error getting location. Please check permission.",
+    messageSent: "Message sent",
+    messageSendError: "Error sending message",
+    messageDeleted: "Message deleted",
+    messageDeleteError: "Error deleting message",
+  },
+} as const
 
 type AttachmentType = "IMAGE" | "VIDEO" | "AUDIO" | "FILE"
 
@@ -103,6 +332,9 @@ interface Conversation {
 
 export default function ChatPage() {
   const pageRef = useGSAPPageEntrance()
+  const { language } = useI18n()
+  const tr = CHAT_TEXTS[language]
+  const roleLabels = ROLE_LABELS[language]
   const [users, setUsers] = useState<ChatUser[]>([])
   const [conversations, setConversations] = useState<Map<string, Conversation>>(new Map())
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -131,13 +363,13 @@ export default function ChatPage() {
   const setFileWithPreview = useCallback((file: File) => {
     // Fayl hajmi tekshiruvi
     if (file.size > MAX_FILE_SIZE) {
-      toast.error(`Fayl hajmi 50MB dan oshmasligi kerak. Hozirgi: ${(file.size / (1024*1024)).toFixed(1)}MB`)
+      toast.error(`${tr.fileTooBig} ${((file.size / (1024*1024)).toFixed(1))}MB`)
       return false
     }
     
     // Fayl turi tekshiruvi
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      toast.error(`Ruxsat etilmagan fayl turi: ${file.type || "noma'lum"}`)
+      toast.error(`${tr.fileTypeError} ${file.type || tr.unknown}`)
       return false
     }
     
@@ -157,7 +389,7 @@ export default function ChatPage() {
     }
     
     return true
-  }, [filePreview])
+  }, [filePreview, tr.fileTooBig, tr.fileTypeError, tr.unknown])
 
   // Fayl tanlanganda preview yaratish
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,13 +417,13 @@ export default function ChatPage() {
           const newFile = new File([file], `pasted_${timestamp}.${extension}`, { type: item.type })
           
           if (setFileWithPreview(newFile)) {
-            toast.success("Rasm clipboard dan qo'shildi")
+            toast.success(tr.imagePasted)
           }
         }
         return
       }
     }
-  }, [setFileWithPreview])
+  }, [setFileWithPreview, tr.imagePasted])
 
   // Fayl olib tashlanganda preview ni tozalash
   const clearFile = useCallback(() => {
@@ -235,14 +467,10 @@ export default function ChatPage() {
     if (files.length > 0) {
       const file = files[0]
       if (setFileWithPreview(file)) {
-        toast.success(`Fayl qo'shildi: ${file.name}`)
+        toast.success(`${tr.fileAdded}: ${file.name}`)
       }
     }
-  }, [setFileWithPreview])
-
-  useEffect(() => {
-    loadData()
-  }, [])
+  }, [setFileWithPreview, tr.fileAdded])
 
   useEffect(() => {
     if (!currentUser) return
@@ -297,12 +525,12 @@ export default function ChatPage() {
     }
   }, [messagesLength, selectedUserId])
 
-  const mapUserToChatUser = (user: any): ChatUser => ({
+  const mapUserToChatUser = useCallback((user: any): ChatUser => ({
     ...user,
     id: String(user?.id ?? ""),
-  })
+  }), [])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [meResult, usersResult, convsResult] = await Promise.allSettled([
@@ -329,7 +557,23 @@ export default function ChatPage() {
         if (!other?.id) return
         const otherId = String(other.id)
         const user = processedUsers.find((u: ChatUser) => u.id === otherId) || mapUserToChatUser(other)
-        const lastMsg = conv.last_message ? mapApiMessage(conv.last_message) : null
+        const lastMsg = conv.last_message
+          ? {
+              id: String(conv.last_message.id),
+              senderId: String(conv.last_message.sender?.id || conv.last_message.sender_id || ""),
+              senderName: conv.last_message.sender_name || conv.last_message.sender?.full_name || "",
+              content: conv.last_message.content || "",
+              attachment: conv.last_message.attachment
+                ? {
+                    name: getAttachmentName(conv.last_message.attachment),
+                    url: conv.last_message.attachment,
+                    type: inferAttachmentType(conv.last_message.attachment),
+                  }
+                : undefined,
+              timestamp: conv.last_message.created_at || new Date().toISOString(),
+              is_read: conv.last_message.is_read ?? false,
+            }
+          : null
         convMap.set(otherId, {
           user,
           messages: lastMsg ? [lastMsg] : [],
@@ -338,11 +582,15 @@ export default function ChatPage() {
       })
       setConversations(convMap)
     } catch (error) {
-      console.error("Chat ma'lumotlarini yuklashda xatolik:", error)
+      console.error("Chat load error:", error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [mapUserToChatUser])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const getAttachmentName = (url: string) => {
     try {
@@ -409,10 +657,17 @@ export default function ChatPage() {
 
       mediaRecorder.start()
       setIsRecording(true)
-      toast.info("Ovozli xabar yozilmoqda...")
+      toast.info(tr.recordingStarted)
     } catch (error) {
-      console.error('Mikrofondan foydalanish uchun ruxsat berilmagan:', error)
-      toast.error('Mikrofondan foydalanish uchun ruxsat berilmagan')
+      const errName = (error as DOMException | undefined)?.name
+      console.error(tr.micDenied, error)
+      if (errName === "NotFoundError") {
+        toast.error(tr.micNotFound)
+      } else if (errName === "NotReadableError") {
+        toast.error(tr.micBusy)
+      } else {
+        toast.error(tr.micDenied)
+      }
     }
   }
 
@@ -447,10 +702,10 @@ export default function ChatPage() {
 
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
       setAudioBlob(null)
-      toast.success("Ovozli xabar yuborildi")
+      toast.success(tr.audioSent)
     } catch (error: any) {
       console.error("Audio yuborishda xatolik:", error)
-      toast.error(error?.message || "Ovozli xabar yuborishda xatolik")
+      toast.error(error?.message || tr.audioError)
     } finally {
       setIsSending(false)
     }
@@ -477,10 +732,18 @@ export default function ChatPage() {
       })
 
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
-      toast.success("Joylashuv yuborildi")
-    } catch (error) {
-      console.error('Location error:', error)
-      toast.error('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
+      toast.success(tr.locationSent)
+    } catch (error: any) {
+      console.error("Location error:", error)
+      if (error?.code === 1) {
+        toast.error(tr.locationDenied)
+      } else if (error?.code === 2) {
+        toast.error(tr.locationUnavailable)
+      } else if (error?.code === 3) {
+        toast.error(tr.locationTimeout)
+      } else {
+        toast.error(tr.locationError)
+      }
     } finally {
       setIsLocationLoading(false)
     }
@@ -533,10 +796,10 @@ export default function ChatPage() {
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
       setNewMessage("")
       clearFile()
-      toast.success("Xabar yuborildi")
+      toast.success(tr.messageSent)
     } catch (error: any) {
       console.error("Xabar yuborishda xatolik:", error)
-      toast.error(error?.message || "Xabar yuborishda xatolik yuz berdi")
+      toast.error(error?.message || tr.messageSendError)
     } finally {
       setIsSending(false)
     }
@@ -554,15 +817,18 @@ export default function ChatPage() {
         const newMap = new Map(prev)
         const conv = newMap.get(selectedUserId)
         if (conv) {
-          conv.messages = conv.messages.filter(m => m.id !== messageId)
+          newMap.set(selectedUserId, {
+            ...conv,
+            messages: conv.messages.filter((m) => m.id !== messageId),
+          })
         }
         return newMap
       })
       
-      toast.success("Xabar o'chirildi")
+      toast.success(tr.messageDeleted)
     } catch (error: any) {
       console.error("Xabarni o'chirishda xatolik:", error)
-      toast.error(error?.message || "Xabarni o'chirishda xatolik yuz berdi")
+      toast.error(error?.message || tr.messageDeleteError)
     }
   }
 
@@ -573,7 +839,8 @@ export default function ChatPage() {
   }
 
   const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString("uz-UZ", {
+    const locale = language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
+    return new Date(dateStr).toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -583,7 +850,8 @@ export default function ChatPage() {
   }
 
   const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })
+    const locale = language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
+    return new Date(dateStr).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
   }
 
   // Parse location from message content
@@ -605,7 +873,7 @@ export default function ChatPage() {
         <a href={mapUrl} target="_blank" rel="noreferrer" className="block">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="h-4 w-4" />
-            <span className="text-sm font-medium">📍 Joylashuv</span>
+            <span className="text-sm font-medium">📍 {tr.location}</span>
           </div>
           <div className="rounded-lg overflow-hidden border border-border/40">
             <iframe
@@ -621,7 +889,7 @@ export default function ChatPage() {
             "text-xs mt-1",
             isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
           )}>
-            Xaritada ochish uchun bosing
+            {tr.openMap}
           </p>
         </a>
       )
@@ -634,7 +902,7 @@ export default function ChatPage() {
     if (!conv || conv.messages.length === 0) return null
     const lastMsg = conv.messages[conv.messages.length - 1]
     return {
-      text: lastMsg.attachment ? `📎 ${lastMsg.attachment.name?.split('/').pop() || 'Fayl'}` : (parseLocation(lastMsg.content) ? "📍 Joylashuv" : lastMsg.content.substring(0, 30)),
+      text: lastMsg.attachment ? `📎 ${lastMsg.attachment.name?.split('/').pop() || tr.file}` : (parseLocation(lastMsg.content) ? `📍 ${tr.location}` : lastMsg.content.substring(0, 30)),
       time: formatTime(lastMsg.timestamp),
     }
   }
@@ -681,7 +949,7 @@ export default function ChatPage() {
       // Dispatch event to update sidebar unread count
       window.dispatchEvent(new Event('chatRead'))
     } catch (error) {
-      console.error("Chat tarixini yuklashda xatolik:", error)
+      console.error(tr.historyError, error)
     }
   }
 
@@ -712,12 +980,12 @@ export default function ChatPage() {
   if (loading) {
     return (
       <>
-        <Header title="Chat" />
+        <Header title={tr.title} />
         <div className="p-6">
           <div className="flex items-center justify-center h-[calc(100vh-120px)]">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
-              <p className="mt-4 text-slate-500">Yuklanmoqda...</p>
+              <p className="mt-4 text-slate-500">{tr.loading}</p>
             </div>
           </div>
         </div>
@@ -727,7 +995,7 @@ export default function ChatPage() {
 
   return (
     <>
-      <Header title="Chat" />
+      <Header title={tr.title} />
       <div ref={pageRef} className="p-6">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -751,14 +1019,14 @@ export default function ChatPage() {
                   <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
                     <Users className="h-4 w-4 text-white" />
                   </div>
-                  Foydalanuvchilar
+                  {tr.users}
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/80 text-indigo-700 font-semibold shadow-sm">{users.length}</Badge>
               </div>
               <div className="relative mt-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Qidiruv..."
+                  placeholder={tr.search}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white/90 border-indigo-100/40 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl shadow-inner"
@@ -808,7 +1076,7 @@ export default function ChatPage() {
                           )}
                         </div>
                         <p className={cn("text-xs text-slate-500 truncate mt-0.5", unreadCount > 0 && "font-semibold text-slate-700")}>
-                          {lastMsg ? lastMsg.text : (user.role ? ROLE_LABELS[user.role] || user.role : "Foydalanuvchi")}
+                          {lastMsg ? lastMsg.text : (user.role ? roleLabels[user.role] || user.role : tr.defaultUser)}
                         </p>
                       </div>
                     </button>
@@ -835,7 +1103,7 @@ export default function ChatPage() {
                       size="icon"
                       className="lg:hidden hover:bg-white/80"
                       onClick={() => setShowUserList(true)}
-                      title="Foydalanuvchilar ro'yxati"
+                      title={tr.usersList}
                     >
                       <Users className="h-4 w-4" />
                     </Button>
@@ -853,14 +1121,14 @@ export default function ChatPage() {
                         {selectedUser.is_online ? (
                           <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
                             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Onlayn
+                            {tr.online}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500 font-medium">Oflayn</span>
+                          <span className="text-xs text-slate-500 font-medium">{tr.offline}</span>
                         )}
                         {selectedUser.role && (
                           <Badge variant="outline" className="text-[10px] px-2 py-0 font-medium bg-white/80 border-indigo-100/40">
-                            {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                            {roleLabels[selectedUser.role] || selectedUser.role}
                           </Badge>
                         )}
                       </div>
@@ -904,7 +1172,7 @@ export default function ChatPage() {
                                 <button
                                   onClick={() => handleDeleteMessage(msg.id)}
                                   className="opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                                  title="Xabarni o'chirish"
+                                  title={tr.deletingMessage}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -965,7 +1233,7 @@ export default function ChatPage() {
                                           "text-xs",
                                           isCurrentUser ? "text-primary-foreground/60" : "text-muted-foreground"
                                         )}>
-                                          {msg.attachment.size || "Fayl"}
+                                          {msg.attachment.size || tr.file}
                                         </p>
                                       </div>
                                       <Download className={cn(
@@ -1001,7 +1269,7 @@ export default function ChatPage() {
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/10 backdrop-blur-sm pointer-events-none">
                       <div className="text-center">
                         <ImageIcon className="h-10 w-10 mx-auto text-primary mb-2" />
-                        <p className="text-sm font-medium text-primary">Faylni shu yerga tashlang</p>
+                        <p className="text-sm font-medium text-primary">{tr.dropFile}</p>
                       </div>
                     </div>
                   )}
@@ -1010,13 +1278,13 @@ export default function ChatPage() {
                     {isRecording && (
                       <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950 rounded-xl border border-red-200 dark:border-red-800">
                         <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">Yozib olinmoqda...</span>
+                        <span className="text-sm text-red-600 dark:text-red-400 font-medium">{tr.recording}</span>
                         <div className="flex-1" />
                         <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
-                          Tugatish
+                          {tr.finish}
                         </Button>
                         <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
-                          Bekor qilish
+                          {tr.cancel}
                         </Button>
                       </div>
                     )}
@@ -1037,7 +1305,7 @@ export default function ChatPage() {
                           ) : (
                             <Send className="h-3 w-3 mr-1" />
                           )}
-                          Yuborish
+                          {tr.send}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
                           <Trash2 className="h-3 w-3" />
@@ -1106,7 +1374,7 @@ export default function ChatPage() {
                         size="icon" 
                         className="shrink-0 h-9 w-9 sm:h-10 sm:w-10" 
                         type="button" 
-                        title="Fayl biriktirish"
+                        title={tr.attachFile}
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <Paperclip className="h-4 w-4" />
@@ -1120,7 +1388,7 @@ export default function ChatPage() {
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isSending}
-                        title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
+                        title={isRecording ? tr.stopRecording : tr.startRecording}
                       >
                         <Mic className="h-4 w-4" />
                       </Button>
@@ -1133,14 +1401,14 @@ export default function ChatPage() {
                         type="button"
                         onClick={sendLocation}
                         disabled={isLocationLoading || isSending}
-                        title="Joylashuvni yuborish"
+                        title={tr.sendLocation}
                       >
                         <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                       </Button>
                       
                       <Input
                         ref={inputRef}
-                        placeholder="Xabar yozing yoki rasm joylashtiring (Ctrl+V)..."
+                        placeholder={tr.messagePlaceholder}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
@@ -1168,9 +1436,9 @@ export default function ChatPage() {
                 <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-blue-500/25">
                   <MessageSquare className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">Suhbatni tanlang</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">{tr.selectConversation}</h3>
                 <p className="text-sm sm:text-base text-slate-500 max-w-sm px-4">
-                  Ro&apos;yxatdan foydalanuvchini tanlang va xabar yozishni boshlang
+                  {tr.selectConversationDesc}
                 </p>
                 <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm text-slate-500">
                   <div className="flex -space-x-2">
@@ -1178,7 +1446,7 @@ export default function ChatPage() {
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">B</div>
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">C</div>
                   </div>
-                  <span>{users.length} ta foydalanuvchi mavjud</span>
+                  <span>{users.length} {tr.usersAvailable}</span>
                 </div>
               </div>
             )}
@@ -1198,7 +1466,7 @@ export default function ChatPage() {
               >
                 <img
                   src={lightboxImage}
-                  alt="Katta rasm"
+                  alt={tr.imageAlt}
                   className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
                 />
                 <div className="absolute top-4 right-4 flex gap-2">

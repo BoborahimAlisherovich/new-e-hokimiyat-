@@ -7,6 +7,7 @@ import { Appeal } from "@/types"
 import { Archive, Eye, MoreHorizontal, MessageSquare, MessageCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "./appeal-constants"
+import { useI18n } from "@/lib/i18n/context"
 
 interface AppealTableProps {
   appeals: Appeal[]
@@ -16,6 +17,53 @@ interface AppealTableProps {
 
 export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
   const router = useRouter()
+  const { language } = useI18n()
+  const tr = {
+    uz: {
+      emptyTitle: "Murojaatlar topilmadi",
+      emptyDesc: "Hozircha bu filtrlar bo'yicha murojaatlar mavjud emas.",
+      citizen: "Murojaatchi",
+      district: "Mahalla",
+      type: "Turi",
+      date: "Sana",
+      status: "Holati",
+      details: "Batafsil",
+      archive: "Arxivlash",
+    },
+    "uz-cyrl": {
+      emptyTitle: "Мурожаатлар топилмади",
+      emptyDesc: "Ҳозирча бу фильтрлар бўйича мурожаатлар мавжуд эмас.",
+      citizen: "Мурожаатчи",
+      district: "Маҳалла",
+      type: "Тури",
+      date: "Сана",
+      status: "Ҳолати",
+      details: "Батафсил",
+      archive: "Архивлаш",
+    },
+    ru: {
+      emptyTitle: "Обращения не найдены",
+      emptyDesc: "По текущим фильтрам обращений нет.",
+      citizen: "Заявитель",
+      district: "Махалля",
+      type: "Тип",
+      date: "Дата",
+      status: "Статус",
+      details: "Подробнее",
+      archive: "В архив",
+    },
+    en: {
+      emptyTitle: "No appeals found",
+      emptyDesc: "No appeals match current filters.",
+      citizen: "Citizen",
+      district: "District",
+      type: "Type",
+      date: "Date",
+      status: "Status",
+      details: "Details",
+      archive: "Archive",
+    },
+  }[language]
 
   const handleRowClick = (appeal: Appeal) => {
     const id = appeal.id.startsWith('tg-') ? appeal.id.replace('tg-', '') : appeal.id
@@ -28,9 +76,9 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
         <div className="rounded-full bg-indigo-50/50 p-5 mb-4">
           <MessageSquare className="h-10 w-10 text-slate-400" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">Murojaatlar topilmadi</h3>
+        <h3 className="text-lg font-semibold text-slate-700 mb-2">{tr.emptyTitle}</h3>
         <p className="text-sm text-slate-500 text-center max-w-sm">
-          Hozircha bu filtrlar bo'yicha murojaatlar mavjud emas.
+          {tr.emptyDesc}
         </p>
       </div>
     )
@@ -42,11 +90,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
         <TableHeader>
           <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">ID</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Murojaatchi</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Mahalla</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Turi</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Sana</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">Holati</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.citizen}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.district}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.type}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.date}</TableHead>
+            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.status}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -81,7 +129,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               </TableCell>
               <TableCell className="py-4 px-6">
                 <span className="text-sm text-slate-600 font-medium">
-                  {new Date(appeal.createdAt).toLocaleDateString("uz-UZ", {
+                  {new Date(appeal.createdAt).toLocaleDateString(language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ", {
                     day: "2-digit",
                     month: "2-digit", 
                     year: "numeric"
@@ -110,11 +158,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                   <DropdownMenuContent align="end" className="min-w-[150px]">
                     <DropdownMenuItem onClick={() => handleRowClick(appeal)} className="cursor-pointer">
                       <Eye className="mr-2 h-4 w-4" />
-                      Batafsil
+                      {tr.details}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onArchive(appeal.id)} className="cursor-pointer">
                       <Archive className="mr-2 h-4 w-4" />
-                      Arxivlash
+                      {tr.archive}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
