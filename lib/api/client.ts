@@ -71,7 +71,10 @@ function normalizeApiBaseUrl(value: string): string {
 
 function resolveWsBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_WS_URL) {
-    return process.env.NEXT_PUBLIC_WS_URL.trim().replace(/\/+$/, '')
+    const raw = process.env.NEXT_PUBLIC_WS_URL.trim().replace(/\/+$/, '')
+    // Some deployments configure WS url as `wss://host/ws`. Our code appends `/ws/...`,
+    // so normalize to base host to avoid `/ws/ws/...` duplication.
+    return raw.replace(/\/ws\/?$/, '')
   }
 
   const configuredApi = process.env.NEXT_PUBLIC_API_URL
@@ -79,7 +82,7 @@ function resolveWsBaseUrl(): string {
     const httpBase = normalizeApiBaseUrl(configuredApi)
     const baseNoApi = httpBase.replace(/\/api\/?$/, '')
     if (baseNoApi.startsWith('http')) {
-      return baseNoApi.replace(/^http/, 'ws')
+      return baseNoApi.replace(/^http/, 'ws').replace(/\/ws\/?$/, '')
     }
   }
 

@@ -30,7 +30,7 @@ import {
   Radio,
   Activity,
 } from "lucide-react"
-import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
+import { API_BASE, getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { useAudioAlert } from "@/hooks/use-audio-alert"
@@ -39,6 +39,34 @@ import { useI18n } from "@/lib/i18n/context"
 
 // Maksimal fayl hajmi (50MB)
 const MAX_FILE_SIZE = 50 * 1024 * 1024
+// Server/proxy limitlar sabab rasmni yuborishda 413 bo'lmasligi uchun
+const TARGET_IMAGE_BYTES = 850 * 1024 // ~0.85MB
+const MAX_IMAGE_DIMENSION = 1600
+
+function getApiOriginFromApiBase(apiBase: string): string {
+  if (typeof apiBase === "string" && apiBase.startsWith("http")) {
+    return apiBase.replace(/\/api\/?$/, "")
+  }
+  if (typeof window !== "undefined") return window.location.origin
+  return ""
+}
+
+function resolveMediaUrl(apiBase: string, url: string): string {
+  if (!url) return url
+  const trimmed = String(url).trim()
+  if (!trimmed) return trimmed
+
+  if (trimmed.startsWith("/")) {
+    const origin = getApiOriginFromApiBase(apiBase)
+    return origin ? `${origin}${trimmed}` : trimmed
+  }
+
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && trimmed.startsWith("http://")) {
+    return trimmed.replace(/^http:\/\//, "https://")
+  }
+
+  return trimmed
+}
 
 // Ruxsat etilgan fayl turlari
 const ALLOWED_FILE_TYPES = [
@@ -568,8 +596,8 @@ export default function ChatPage() {
               attachment: conv.last_message.attachment
                 ? {
                     name: getAttachmentName(conv.last_message.attachment),
-                    url: conv.last_message.attachment,
-                    type: inferAttachmentType(conv.last_message.attachment),
+                    url: resolveMediaUrl(API_BASE, conv.last_message.attachment),
+                    type: inferAttachmentType(resolveMediaUrl(API_BASE, conv.last_message.attachment)),
                   }
                 : undefined,
               timestamp: conv.last_message.created_at || new Date().toISOString(),
@@ -613,8 +641,64 @@ export default function ChatPage() {
     return "FILE"
   }
 
+	  const compressImageForUpload = async (file: File): Promise<File> => {
+    try {
+      if (!file.type.startsWith("image/")) return file
+      if (file.size <= TARGET_IMAGE_BYTES) return file
+
+      // Prefer `createImageBitmap` for performance.
+      const bitmap = await createImageBitmap(file)
+      const { width, height } = bitmap
+      const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(width, height))
+      let targetW = Math.max(1, Math.round(width * scale))
+      let targetH = Math.max(1, Math.round(height * scale))
+
+      let quality = 0.86
+      let attempts = 0
+      let blob: Blob | null = null
+
+      while (attempts < 6) {
+        const canvas = document.createElement("canvas")
+        canvas.width = targetW
+        canvas.height = targetH
+        const ctx = canvas.getContext("2d")
+        if (!ctx) break
+        ctx.drawImage(bitmap, 0, 0, targetW, targetH)
+
+        blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(
+            (b) => resolve(b),
+            "image/webp",
+            quality,
+          )
+        })
+
+        if (blob && blob.size <= TARGET_IMAGE_BYTES) break
+
+        // Try lowering quality first, then dimensions.
+        quality = Math.max(0.6, quality - 0.08)
+        if (attempts >= 2) {
+          targetW = Math.max(1, Math.round(targetW * 0.88))
+          targetH = Math.max(1, Math.round(targetH * 0.88))
+        }
+        attempts += 1
+      }
+
+      if (!blob) return file
+      if (blob.size > TARGET_IMAGE_BYTES) {
+        // Still too big; send original and let server decide (or user can resize).
+        return file
+      }
+
+      const baseName = file.name.replace(/\.[^.]+$/, "") || "image"
+      return new File([blob], `${baseName}.webp`, { type: "image/webp" })
+    } catch {
+      return file
+    }
+  }
+
   const mapApiMessage = (msg: any): Message => {
-    const attachmentUrl = msg.attachment || undefined
+    const attachmentUrl = msg.attachment ? resolveMediaUrl(API_BASE, msg.attachment) : undefined
     const attachment = attachmentUrl
       ? {
           name: getAttachmentName(attachmentUrl),
@@ -696,6 +780,11 @@ export default function ChatPage() {
       const file = new File([audioBlob], `audio_${Date.now()}.webm`, {
         type: audioBlob.type || "audio/webm",
       })
+
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${tr.fileTooBig} ${((file.size / (1024 * 1024)).toFixed(1))}MB`)
+        return
+      }
 
       const saved = await sendChatMessage(selectedUserId, {
         content: "🎤 Ovozli xabar",
@@ -790,9 +879,15 @@ export default function ChatPage() {
 
     setIsSending(true)
     try {
+      const attachment = hasFile && chatFile ? await compressImageForUpload(chatFile) : null
+      if (attachment && attachment.size > MAX_FILE_SIZE) {
+        toast.error(`${tr.fileTooBig} ${((attachment.size / (1024 * 1024)).toFixed(1))}MB`)
+        return
+      }
+
       const saved = await sendChatMessage(selectedUserId, {
         content: hasContent ? newMessage.trim() : (hasFile ? "📎 Fayl" : ""),
-        attachment: hasFile ? chatFile : null,
+        attachment,
       })
 
       addMessageToConversation(mapApiMessage(saved), selectedUserId)
@@ -801,7 +896,12 @@ export default function ChatPage() {
       toast.success(tr.messageSent)
     } catch (error: any) {
       console.error("Xabar yuborishda xatolik:", error)
-      toast.error(error?.message || tr.messageSendError)
+      const msg = String(error?.message || "")
+      if (msg.includes("413")) {
+        toast.error(tr.fileTooBig)
+      } else {
+        toast.error(error?.message || tr.messageSendError)
+      }
     } finally {
       setIsSending(false)
     }
