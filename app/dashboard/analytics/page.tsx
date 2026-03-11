@@ -68,16 +68,15 @@ export default function AnalyticsPage() {
     <>
       <Header title={t.pages.analytics.title} description={t.pages.analytics.description} />
       <div className="p-6">
-        {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
+          <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/26 to-transparent blur-3xl" />
+          <div className="absolute top-1/2 right-0 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/20 to-transparent blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/16 to-transparent blur-3xl" />
+          <div className="absolute top-1/3 left-1/2 h-48 w-48 rounded-full bg-gradient-to-br from-sky-200/10 to-transparent blur-2xl" />
         </div>
         
         <div ref={pageRef} className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="space-y-12 py-8">
+          <div className="space-y-10 py-8">
 
             <section data-gsap-section>
               <AnalyticsOverview tasks={tasks} organizations={orgs} appeals={appeals} />
