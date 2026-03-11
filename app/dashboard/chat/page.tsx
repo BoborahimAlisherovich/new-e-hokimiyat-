@@ -27,6 +27,8 @@ import {
   Download,
   Loader2,
   AlertCircle,
+  Radio,
+  Activity,
 } from "lucide-react"
 import { getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -929,6 +931,21 @@ export default function ChatPage() {
     })
     .map(({ user }) => user)
 
+  const onlineUsersCount = useMemo(
+    () => users.filter((user) => user.is_online).length,
+    [users]
+  )
+
+  const totalUnreadCount = useMemo(
+    () => Array.from(conversations.values()).reduce((sum, conv) => sum + (conv.unreadCount || 0), 0),
+    [conversations]
+  )
+
+  const activeConversationCount = useMemo(
+    () => Array.from(conversations.values()).filter((conv) => conv.messages.length > 0).length,
+    [conversations]
+  )
+
   const loadConversation = async (userId: string) => {
     try {
       const messages = await getChatMessages(userId)
@@ -997,23 +1014,75 @@ export default function ChatPage() {
     <>
       <Header title={tr.title} />
       <div ref={pageRef} className="p-6">
-        {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
+          <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/30 to-transparent blur-3xl" />
+          <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/22 to-transparent blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/20 to-transparent blur-3xl" />
+          <div className="absolute right-1/4 top-12 h-40 w-40 rotate-12 rounded-[32px] border border-white/50 bg-white/25 backdrop-blur-xl" />
         </div>
         
         <div className="relative z-10 p-3 sm:p-4 lg:p-6">
-        <div data-gsap-section className="flex h-[calc(100vh-160px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
+        <section data-gsap-section className="mb-5">
+          <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
+            <div
+              data-gsap-card
+              className="relative overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.96),rgba(15,118,110,0.90))] p-6 text-white shadow-[0_26px_70px_-28px_rgba(15,118,110,0.65)]"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_32%)]" />
+              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full border border-white/20" />
+              <div className="relative">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-50/90">
+                  <Radio className="h-3.5 w-3.5" />
+                  Live Communication
+                </div>
+                <h2 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Tezkor muloqot markazi: xabarlar, fayllar va joylashuv bir oynada.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-cyan-50/82 sm:text-base">
+                  Muhim suhbatlar birinchi o‘ringa chiqadi, yangi xabarlar ajralib turadi va operatorning keyingi qadami aniq ko‘rinadi.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+              {[
+                { label: "Faol chatlar", value: activeConversationCount, icon: MessageSquare, tone: "from-cyan-500/20 to-cyan-100/60 text-cyan-900" },
+                { label: "Onlayn foydalanuvchilar", value: onlineUsersCount, icon: Activity, tone: "from-emerald-500/20 to-emerald-100/60 text-emerald-900" },
+                { label: "O‘qilmagan xabarlar", value: totalUnreadCount, icon: AlertCircle, tone: "from-amber-400/25 to-amber-100/70 text-amber-900" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  data-gsap-card
+                  className={cn(
+                    "rounded-[24px] border border-white/70 bg-gradient-to-br p-4 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.22)] backdrop-blur-xl",
+                    item.tone
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">{item.label}</p>
+                      <p className="mt-2 text-3xl font-semibold tracking-tight">{item.value}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/70 p-3 shadow-sm">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div data-gsap-section className="flex h-[calc(100vh-220px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Users List */}
           <Card
+            data-gsap-card
             className={cn(
-              "bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl w-full lg:w-80 xl:w-96 flex flex-col min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
+              "w-full min-h-0 overflow-hidden rounded-[28px] border border-white/75 bg-white/78 shadow-[0_28px_70px_-34px_rgba(14,165,233,0.30)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_80px_-32px_rgba(14,165,233,0.34)] lg:w-80 xl:w-96 flex flex-col",
               !showUserList && "hidden lg:flex"
             )}
           >
-            <CardHeader className="pb-3 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50">
+            <CardHeader className="border-b border-cyan-100/60 bg-[linear-gradient(135deg,rgba(236,254,255,0.92),rgba(240,249,255,0.88),rgba(236,253,245,0.88))] pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
                   <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
@@ -1021,7 +1090,7 @@ export default function ChatPage() {
                   </div>
                   {tr.users}
                 </CardTitle>
-                <Badge variant="secondary" className="bg-white/80 text-indigo-700 font-semibold shadow-sm">{users.length}</Badge>
+                <Badge variant="secondary" className="bg-white/80 text-cyan-800 font-semibold shadow-sm">{users.length}</Badge>
               </div>
               <div className="relative mt-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -1029,7 +1098,7 @@ export default function ChatPage() {
                   placeholder={tr.search}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-white/90 border-indigo-100/40 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl shadow-inner"
+                  className="rounded-xl border-cyan-100/60 bg-white/90 pl-9 shadow-inner focus:border-cyan-400 focus:ring-cyan-400/20"
                 />
               </div>
             </CardHeader>
@@ -1045,9 +1114,10 @@ export default function ChatPage() {
                     <button
                       key={user.id}
                       onClick={() => handleSelectUser(user.id)}
+                      data-gsap-action
                       className={cn(
-                        "w-full flex items-center gap-3 p-3.5 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 text-left overflow-hidden",
-                        isSelected && "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-3 border-l-indigo-500"
+                        "w-full overflow-hidden px-4 py-3.5 text-left transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-50/70 hover:to-emerald-50/60 flex items-center gap-3",
+                        isSelected && "border-l-4 border-l-cyan-500 bg-gradient-to-r from-cyan-50 to-emerald-50/60"
                       )}
                     >
                       <div className="relative">
@@ -1088,15 +1158,16 @@ export default function ChatPage() {
 
           {/* Chat Area */}
           <Card
+            data-gsap-card
             className={cn(
-              "bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden hover:shadow-xl transition-all duration-300",
+              "flex min-h-0 flex-1 overflow-hidden rounded-[30px] border border-white/75 bg-white/80 shadow-[0_28px_75px_-34px_rgba(15,118,110,0.26)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_85px_-32px_rgba(15,118,110,0.30)]",
               showUserList && "hidden lg:flex"
             )}
           >
             {selectedUser ? (
               <>
                 {/* Chat Header */}
-                <CardHeader className="py-3 border-b border-slate-100 flex-shrink-0 bg-gradient-to-r from-slate-50 via-blue-50/30 to-indigo-50/30">
+                <CardHeader className="flex-shrink-0 border-b border-cyan-100/60 bg-[linear-gradient(135deg,rgba(248,250,252,0.96),rgba(236,254,255,0.92),rgba(236,253,245,0.88))] py-3">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
@@ -1104,6 +1175,7 @@ export default function ChatPage() {
                       className="lg:hidden hover:bg-white/80"
                       onClick={() => setShowUserList(true)}
                       title={tr.usersList}
+                      data-gsap-action
                     >
                       <Users className="h-4 w-4" />
                     </Button>
@@ -1137,7 +1209,7 @@ export default function ChatPage() {
                 </CardHeader>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 min-h-0 p-4 bg-gradient-to-b from-transparent to-muted/30">
+                <ScrollArea className="flex-1 min-h-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(236,254,255,0.40),rgba(255,251,235,0.36))] p-4">
                   <div className="space-y-4">
                     {selectedConversation?.messages.map((msg) => {
                       const isCurrentUser = Boolean(currentUser && msg.senderId === currentUser.id)
@@ -1171,6 +1243,7 @@ export default function ChatPage() {
                               {isCurrentUser && (
                                 <button
                                   onClick={() => handleDeleteMessage(msg.id)}
+                                  data-gsap-action
                                   className="opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                                   title={tr.deletingMessage}
                                 >
@@ -1180,8 +1253,10 @@ export default function ChatPage() {
                             </div>
                             <div
                               className={cn(
-                                "rounded-xl p-2.5 sm:p-3 shadow-sm border",
-                                isCurrentUser ? "bg-primary text-primary-foreground border-primary/20" : "bg-white/80 border-border/60",
+                                "rounded-[20px] border p-2.5 shadow-sm sm:p-3",
+                                isCurrentUser
+                                  ? "border-cyan-800/10 bg-[linear-gradient(135deg,#0f766e,#0891b2)] text-white shadow-[0_18px_35px_-18px_rgba(8,145,178,0.70)]"
+                                  : "border-white/80 bg-white/88 shadow-[0_14px_32px_-22px_rgba(15,23,42,0.24)]",
                               )}
                             >
                               {msg.content && renderMessageContent(msg.content, isCurrentUser)}
@@ -1372,10 +1447,11 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="shrink-0 h-9 w-9 sm:h-10 sm:w-10" 
+                        className="h-9 w-9 shrink-0 rounded-xl bg-cyan-50/70 text-cyan-700 hover:bg-cyan-100 sm:h-10 sm:w-10" 
                         type="button" 
                         title={tr.attachFile}
                         onClick={() => fileInputRef.current?.click()}
+                        data-gsap-action
                       >
                         <Paperclip className="h-4 w-4" />
                       </Button>
@@ -1384,11 +1460,12 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className={cn("shrink-0 h-9 w-9 sm:h-10 sm:w-10 hidden sm:inline-flex", isRecording && "text-red-500")}
+                        className={cn("hidden h-9 w-9 shrink-0 rounded-xl bg-rose-50/70 text-rose-700 hover:bg-rose-100 sm:inline-flex sm:h-10 sm:w-10", isRecording && "bg-rose-100 text-rose-600")}
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isSending}
                         title={isRecording ? tr.stopRecording : tr.startRecording}
+                        data-gsap-action
                       >
                         <Mic className="h-4 w-4" />
                       </Button>
@@ -1397,11 +1474,12 @@ export default function ChatPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 hidden sm:inline-flex" 
+                        className="hidden h-9 w-9 shrink-0 rounded-xl bg-amber-50/80 text-amber-700 hover:bg-amber-100 sm:inline-flex sm:h-10 sm:w-10" 
                         type="button"
                         onClick={sendLocation}
                         disabled={isLocationLoading || isSending}
                         title={tr.sendLocation}
+                        data-gsap-action
                       >
                         <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                       </Button>
@@ -1414,12 +1492,13 @@ export default function ChatPage() {
                         onKeyDown={handleKeyPress}
                         onPaste={handlePaste}
                         disabled={isSending}
-                        className="bg-white/90 border-indigo-100/40 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-xl"
+                        className="rounded-xl border-cyan-100/60 bg-white/95 focus:border-cyan-400 focus:ring-cyan-400/20"
                       />
                       <Button 
                         onClick={sendMessage} 
-                        className="shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 rounded-xl"
+                        className="shrink-0 rounded-xl bg-[linear-gradient(135deg,#0f766e,#0891b2)] shadow-lg shadow-cyan-600/25 hover:brightness-110"
                         disabled={isSending || (!newMessage.trim() && !chatFile)}
+                        data-gsap-action
                       >
                         {isSending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1432,8 +1511,8 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-blue-500/25">
+              <div className="flex flex-1 flex-col items-center justify-center bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_36%),linear-gradient(180deg,rgba(248,250,252,0.95),rgba(236,254,255,0.88),rgba(255,251,235,0.76))] p-4 text-center sm:p-8">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f766e,#0891b2)] shadow-xl shadow-cyan-700/20 sm:mb-6 sm:h-24 sm:w-24 sm:rounded-3xl">
                   <MessageSquare className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">{tr.selectConversation}</h3>
@@ -1442,9 +1521,9 @@ export default function ChatPage() {
                 </p>
                 <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm text-slate-500">
                   <div className="flex -space-x-2">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">A</div>
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">B</div>
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-[10px] sm:text-xs border-2 border-white">C</div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-cyan-400 to-cyan-600 text-[10px] text-white sm:h-8 sm:w-8 sm:text-xs">A</div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-emerald-400 to-emerald-600 text-[10px] text-white sm:h-8 sm:w-8 sm:text-xs">B</div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-amber-400 to-orange-500 text-[10px] text-white sm:h-8 sm:w-8 sm:text-xs">C</div>
                   </div>
                   <span>{users.length} {tr.usersAvailable}</span>
                 </div>

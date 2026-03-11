@@ -185,6 +185,8 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
       completed: sectorTasks.filter(t => t.status === 'BAJARILDI' || t.status === 'COMPLETED').length,
     }
   }) : []
+  const hasTaskStatusStats = statusStats.completed + statusStats.in_progress + statusStats.new + statusStats.overdue > 0
+  const hasSectorActivity = sectorStats.some((item) => item.organizations > 0 || item.tasks > 0 || item.completed > 0)
 
   return (
     <section className="space-y-6">
@@ -212,35 +214,43 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
         {/* Status Tab */}
         <TabsContent value="status" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Bajarildi", value: statusStats.completed, color: "from-green-500 to-green-600", icon: "✓" },
-              { label: "Ijroda", value: statusStats.in_progress, color: "from-blue-500 to-blue-600", icon: "⟳" },
-              { label: "Yangi", value: statusStats.new, color: "from-purple-500 to-purple-600", icon: "★" },
-              { label: "Muddati kechgan", value: statusStats.overdue, color: "from-red-500 to-red-600", icon: "!" },
-            ].map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
-                        <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+          {hasTaskStatusStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Bajarildi", value: statusStats.completed, color: "from-green-500 to-green-600", icon: "✓" },
+                { label: "Ijroda", value: statusStats.in_progress, color: "from-blue-500 to-blue-600", icon: "⟳" },
+                { label: "Yangi", value: statusStats.new, color: "from-purple-500 to-purple-600", icon: "★" },
+                { label: "Muddati kechgan", value: statusStats.overdue, color: "from-red-500 to-red-600", icon: "!" },
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
+                          <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                        </div>
+                        <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br", stat.color, "flex items-center justify-center text-white text-2xl shadow-lg")}>
+                          {stat.icon}
+                        </div>
                       </div>
-                      <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br", stat.color, "flex items-center justify-center text-white text-2xl shadow-lg")}>
-                        {stat.icon}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
+              <CardContent className="py-10 text-center text-slate-500">
+                Hozircha topshiriqlar statistikasi mavjud emas. Statuslar bo'yicha tahlil topshiriqlar kelgandan keyin ko'rinadi.
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Sector Tab */}
@@ -389,31 +399,37 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {sectorStats.map((stat, index) => (
-                    <motion.div
-                      key={stat.sector}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium text-slate-900">{stat.sector}</h4>
-                        <p className="text-sm text-slate-600">
-                          {stat.organizations} tashkilot • {stat.tasks} topshiriq
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-sm text-slate-600">Bajarildi</p>
-                          <p className="text-lg font-bold text-green-600">{stat.completed}</p>
+                {hasSectorActivity ? (
+                  <div className="space-y-3">
+                    {sectorStats.map((stat, index) => (
+                      <motion.div
+                        key={stat.sector}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-slate-900">{stat.sector}</h4>
+                          <p className="text-sm text-slate-600">
+                            {stat.organizations} tashkilot • {stat.tasks} topshiriq
+                          </p>
                         </div>
-                        <TrendingUp className="h-5 w-5 text-green-600" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-sm text-slate-600">Bajarildi</p>
+                            <p className="text-lg font-bold text-green-600">{stat.completed}</p>
+                          </div>
+                          <TrendingUp className="h-5 w-5 text-green-600" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-slate-500">
+                    Sohalar mavjud, lekin ular bo'yicha hali topshiriq yoki tashkilot statistikasi shakllanmagan.
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

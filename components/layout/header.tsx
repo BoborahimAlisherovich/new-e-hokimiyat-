@@ -93,7 +93,7 @@ export function Header({ title, description }: HeaderProps) {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-indigo-100/40 bg-white/70 backdrop-blur-2xl px-6 shadow-[0_1px_20px_-6px_rgba(99,102,241,0.08)]" 
+        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-cyan-100/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.72))] backdrop-blur-2xl px-6 shadow-[0_1px_24px_-10px_rgba(14,165,233,0.20)]" 
         role="banner"
       >
 
@@ -124,12 +124,12 @@ export function Header({ title, description }: HeaderProps) {
         <div className="relative group">
           <Search className={cn(
             "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200",
-            isSearchFocused ? "text-indigo-600" : "group-hover:text-slate-600"
+            isSearchFocused ? "text-cyan-600" : "group-hover:text-slate-600"
           )} />
           <Input 
             placeholder={t.common.search}
             className={cn(
-              "w-full h-10 bg-indigo-50/50 border border-indigo-100 rounded-lg pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 transition-all duration-200"
+              "w-full h-10 bg-white/80 border border-cyan-100 rounded-xl pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:border-cyan-400 transition-all duration-200"
             )}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
@@ -164,7 +164,7 @@ export function Header({ title, description }: HeaderProps) {
                 size="icon" 
                 className="h-10 w-10 rounded-xl hover:bg-slate-100"
               >
-                <Globe className="h-[22px] w-[22px] text-slate-600" />
+                <Globe className="h-[22px] w-[22px] text-cyan-700" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg rounded-xl">
@@ -209,14 +209,14 @@ export function Header({ title, description }: HeaderProps) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative h-9 w-9 rounded-lg hover:bg-slate-100 hidden md:flex"
+                className="relative h-9 w-9 rounded-xl hover:bg-cyan-50 hidden md:flex"
               >
                 <Bell className={cn(
-                  "h-5 w-5 text-slate-600",
+                  "h-5 w-5 text-slate-700",
                   unreadCount > 0 ? "animate-pulse" : ""
                 )} />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -right-1 -top-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-[9px] font-semibold border-2 border-white rounded-full">
+                  <Badge className="absolute -right-1 -top-1 h-4 w-4 p-0 flex items-center justify-center bg-amber-500 text-white text-[9px] font-semibold border-2 border-white rounded-full">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}

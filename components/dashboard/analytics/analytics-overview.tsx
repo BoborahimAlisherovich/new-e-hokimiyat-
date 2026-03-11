@@ -17,6 +17,11 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
       overdue: "Kechikkan topshiriqlar",
       activeOrgs: "Faol tashkilotlar",
       totalAppeals: "Jami murojaatlar",
+      noTasks: "Hozircha topshiriqlar yaratilmagan",
+      noCompletion: "Bajarilish foizi hisoblash uchun topshiriq yo'q",
+      noOverdue: "Kechikkan topshiriqlar hozircha yo'q",
+      noOrganizations: "Tizimda hali tashkilotlar mavjud emas",
+      noAppeals: "Hozircha hech qanday murojaat yuborilmagan",
     },
     "uz-cyrl": {
       totalTasks: "Жами топшириқлар",
@@ -24,6 +29,11 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
       overdue: "Кечиккан топшириқлар",
       activeOrgs: "Фаол ташкилотлар",
       totalAppeals: "Жами мурожаатлар",
+      noTasks: "Ҳозирча топшириқлар яратилмаган",
+      noCompletion: "Бажарилиш фоизини ҳисоблаш учун топшириқ йўқ",
+      noOverdue: "Кечиккан топшириқлар ҳозирча йўқ",
+      noOrganizations: "Тизимда ҳали ташкилотлар мавжуд эмас",
+      noAppeals: "Ҳозирча ҳеч қандай мурожаат юборилмаган",
     },
     ru: {
       totalTasks: "Всего поручений",
@@ -31,6 +41,11 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
       overdue: "Просроченные поручения",
       activeOrgs: "Активные организации",
       totalAppeals: "Всего обращений",
+      noTasks: "Поручения пока не созданы",
+      noCompletion: "Нет поручений для расчета выполнения",
+      noOverdue: "Просроченных поручений пока нет",
+      noOrganizations: "В системе пока нет организаций",
+      noAppeals: "Заявители пока не отправляли обращения",
     },
     en: {
       totalTasks: "Total tasks",
@@ -38,6 +53,11 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
       overdue: "Overdue tasks",
       activeOrgs: "Active organizations",
       totalAppeals: "Total appeals",
+      noTasks: "No tasks have been created yet",
+      noCompletion: "No tasks available to calculate completion",
+      noOverdue: "There are no overdue tasks yet",
+      noOrganizations: "No organizations have been added yet",
+      noAppeals: "No appeals have been submitted yet",
     },
   }[language]
 
@@ -46,8 +66,6 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
   ).length
   const completionRate = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
   const overdueCount = tasks.filter((task) => task.status === "MUDDATI_KECH").length
-  const pendingAppeals = appeals.filter((a) => a.status === "PENDING" || a.status === "pending").length
-
   return (
     <section className="animate-slide-up">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
@@ -60,6 +78,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               <div>
                 <p className="text-2xl font-bold text-foreground">{tasks.length}</p>
                 <p className="text-sm text-muted-foreground">{tr.totalTasks}</p>
+                {tasks.length === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noTasks}</p>}
               </div>
             </div>
           </CardContent>
@@ -74,6 +93,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               <div>
                 <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
                 <p className="text-sm text-muted-foreground">{tr.completion}</p>
+                {tasks.length === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noCompletion}</p>}
               </div>
             </div>
           </CardContent>
@@ -88,6 +108,8 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               <div>
                 <p className="text-2xl font-bold text-foreground">{overdueCount}</p>
                 <p className="text-sm text-muted-foreground">{tr.overdue}</p>
+                {tasks.length === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noTasks}</p>}
+                {tasks.length > 0 && overdueCount === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noOverdue}</p>}
               </div>
             </div>
           </CardContent>
@@ -102,6 +124,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               <div>
                 <p className="text-2xl font-bold text-foreground">{organizations.length}</p>
                 <p className="text-sm text-muted-foreground">{tr.activeOrgs}</p>
+                {organizations.length === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noOrganizations}</p>}
               </div>
             </div>
           </CardContent>
@@ -116,6 +139,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
               <div>
                 <p className="text-2xl font-bold text-foreground">{appeals.length}</p>
                 <p className="text-sm text-muted-foreground">{tr.totalAppeals}</p>
+                {appeals.length === 0 && <p className="text-xs text-muted-foreground mt-1">{tr.noAppeals}</p>}
               </div>
             </div>
           </CardContent>
