@@ -21,7 +21,7 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
         }
         return sum
       }, 0)
-      avgDays = Math.round((totalDays / completed.length) * 10) / 10 || 4.2
+      avgDays = Math.round((totalDays / completed.length) * 10) / 10
     }
     
     const completionRate = tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0
@@ -29,12 +29,15 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
     const rating = Math.max(0, completionRate - overdueRate * 0.5)
     
     return {
-      avgDays: avgDays || 4.2,
-      completionRate: completionRate || 87,
-      overdueRate: overdueRate || 8,
-      rating: Math.round(rating * 10) / 10 || 86.8
+      avgDays,
+      completionRate,
+      overdueRate,
+      rating: Math.round(rating * 10) / 10
     }
   }, [tasks])
+
+  const hasTasks = tasks.length > 0
+  const hasCompleted = tasks.some((t) => t.status === 'BAJARILDI' || t.status === 'NAZORATDAN_YECHILDI')
 
   return (
     <section className="animate-slide-up" style={{ animationDelay: "400ms" }}>
@@ -49,7 +52,10 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">O'rtacha ijro muddati</p>
-                    <p className="text-2xl font-bold text-foreground">{metrics.avgDays} kun</p>
+                    <p className="text-2xl font-bold text-foreground">{hasCompleted ? `${metrics.avgDays} kun` : "-"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {hasCompleted ? "Yopilgan topshiriqlar asosida hisoblandi" : "Hali bajarilgan topshiriqlar mavjud emas"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -63,7 +69,10 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Ijro samaradorligi</p>
-                    <p className="text-2xl font-bold text-foreground">{metrics.completionRate}%</p>
+                    <p className="text-2xl font-bold text-foreground">{hasTasks ? `${metrics.completionRate}%` : "-"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {hasTasks ? "Jami topshiriqlarga nisbatan" : "Samaradorlikni hisoblash uchun topshiriq yo'q"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -77,7 +86,10 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Kechikish foizi</p>
-                    <p className="text-2xl font-bold text-foreground">{metrics.overdueRate}%</p>
+                    <p className="text-2xl font-bold text-foreground">{hasTasks ? `${metrics.overdueRate}%` : "-"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {hasTasks ? "Muddati kechgan topshiriqlar ulushi" : "Kechikish foizini hisoblash uchun topshiriq yo'q"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -91,7 +103,10 @@ export function AnalyticsMetrics({ tasks }: AnalyticsMetricsProps) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Umumiy reyting</p>
-                    <p className="text-2xl font-bold text-foreground">{metrics.rating}</p>
+                    <p className="text-2xl font-bold text-foreground">{hasTasks ? metrics.rating : "-"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {hasTasks ? "Bajarilish va kechikish ko'rsatkichlari asosida" : "Reytingni hisoblash uchun statistik ma'lumot yo'q"}
+                    </p>
                   </div>
                 </div>
               </CardContent>

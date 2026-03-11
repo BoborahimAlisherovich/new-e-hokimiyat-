@@ -14,7 +14,6 @@ import {
   Cell,
   LineChart,
   Line,
-  Legend,
   LabelList,
 } from "recharts"
 import { useMemo } from "react"
@@ -54,13 +53,6 @@ const GENDER_LABELS: Record<string, string> = {
 
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#14b8a6"]
 const GENDER_COLORS = ["#3b82f6", "#ec4899"] // Blue for male, Pink for female
-const GRADIENT_COLORS = {
-  status: { start: "#3b82f6", end: "#8b5cf6" },
-  priority: { start: "#10b981", end: "#06b6d4" },
-  category: { start: "#f59e0b", end: "#ef4444" },
-  trend: { start: "#8b5cf6", end: "#ec4899" }
-}
-
 const AXIS_TICK = { fill: "#475569", fontSize: 12, fontWeight: 600 }
 const VALUE_LABEL = { fill: "#334155", fontSize: 12, fontWeight: 600 }
 
@@ -68,6 +60,14 @@ interface AnalyticsChartsProps {
   tasks: any[]
   organizations: any[]
   appeals: any[]
+}
+
+function ChartEmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex h-full items-center justify-center text-center text-sm text-slate-500">
+      <div className="max-w-xs">{message}</div>
+    </div>
+  )
 }
 
 const TEXTS = {
@@ -82,6 +82,13 @@ const TEXTS = {
     appealsStatus: "Murojaatlar holati",
     countLabel: "Soni",
     unit: "ta",
+    noStatusData: "Topshiriqlar holati bo'yicha ma'lumot hozircha yo'q",
+    noPriorityData: "Muhimlik statistikasi topshiriqlar qo'shilgach ko'rinadi",
+    noCategoryData: "Kategoriya bo'yicha topshiriqlar ma'lumoti hali yo'q",
+    noTrendData: "Topshiriqlar tendensiyasi topshiriqlar yaratilgach ko'rinadi",
+    noOrgLoadData: "Tashkilotlar yuklamasi bo'yicha ma'lumot hozircha yo'q",
+    noGenderData: "Hozircha hech qanday murojaat yuborilmagan",
+    noAppealStatusData: "Murojaatlar holati statistikasi hozircha mavjud emas",
   },
   "uz-cyrl": {
     unknown: "Номаълум",
@@ -94,6 +101,13 @@ const TEXTS = {
     appealsStatus: "Мурожаатлар ҳолати",
     countLabel: "Сони",
     unit: "та",
+    noStatusData: "Топшириқлар ҳолати бўйича маълумот ҳозирча йўқ",
+    noPriorityData: "Муҳимлик статистикаси топшириқлар қўшилгандан кейин кўринади",
+    noCategoryData: "Категория бўйича топшириқлар маълумоти ҳали йўқ",
+    noTrendData: "Топшириқлар тенденцияси топшириқлар яратилгандан кейин кўринади",
+    noOrgLoadData: "Ташкилотлар юкламаси бўйича маълумот ҳозирча йўқ",
+    noGenderData: "Ҳозирча ҳеч қандай мурожаат юборилмаган",
+    noAppealStatusData: "Мурожаатлар ҳолати статистикаси ҳозирча мавжуд эмас",
   },
   ru: {
     unknown: "Неизвестно",
@@ -106,6 +120,13 @@ const TEXTS = {
     appealsStatus: "Статусы обращений",
     countLabel: "Количество",
     unit: "шт.",
+    noStatusData: "Данные по статусам поручений пока отсутствуют",
+    noPriorityData: "Статистика по приоритетам появится после добавления поручений",
+    noCategoryData: "Пока нет данных по категориям поручений",
+    noTrendData: "Тренд появится после создания поручений",
+    noOrgLoadData: "Данные по загрузке организаций пока отсутствуют",
+    noGenderData: "Пока не было ни одного обращения",
+    noAppealStatusData: "Статистика по статусам обращений пока недоступна",
   },
   en: {
     unknown: "Unknown",
@@ -118,6 +139,13 @@ const TEXTS = {
     appealsStatus: "Appeal statuses",
     countLabel: "Count",
     unit: "pcs",
+    noStatusData: "No task status data yet",
+    noPriorityData: "Priority statistics will appear after tasks are added",
+    noCategoryData: "There is no category-based task data yet",
+    noTrendData: "Task trend will appear after tasks are created",
+    noOrgLoadData: "Organization workload data is not available yet",
+    noGenderData: "No appeals have been submitted yet",
+    noAppealStatusData: "Appeal status statistics are not available yet",
   },
 } as const
 
@@ -417,6 +445,8 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
     }))
   }, [appeals, language, tr.unknown])
 
+  const hasChartValues = (data: Array<{ value: number }>) => data.some((item) => item.value > 0)
+
   return (
     <section className="animate-slide-up" style={{ animationDelay: "300ms" }}>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -425,23 +455,25 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{tr.statusBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statusData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-                <defs>
-                  <linearGradient id="statusGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-15} height={60} />
-                <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#statusGradient)" radius={[8, 8, 0, 0]}>
-                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasChartValues(statusData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="statusGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
+                  <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-15} height={60} />
+                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip cursor={{ fill: "#f1f5f9" }} />
+                  <Bar dataKey="value" fill="url(#statusGradient)" radius={[8, 8, 0, 0]}>
+                    <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noStatusData} />}
           </CardContent>
         </Card>
 
@@ -450,27 +482,29 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{tr.priorityBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={priorityData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={110}
-                  innerRadius={65}
-                  paddingAngle={4}
-                  animationBegin={0}
-                  animationDuration={800}
-                  label={({ name, value }) => `${name} ${value}`}
-                  labelLine={false}
-                >
-                  {priorityData.map((_, index) => (
-                    <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {hasChartValues(priorityData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={priorityData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={110}
+                    innerRadius={65}
+                    paddingAngle={4}
+                    animationBegin={0}
+                    animationDuration={800}
+                    label={({ name, value }) => `${name} ${value}`}
+                    labelLine={false}
+                  >
+                    {priorityData.map((_, index) => (
+                      <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noPriorityData} />}
           </CardContent>
         </Card>
 
@@ -479,23 +513,25 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">{tr.categorySlice}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-                <defs>
-                  <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.6}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
-                <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#categoryGradient)" radius={[8, 8, 0, 0]}>
-                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasChartValues(categoryData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#ef4444" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
+                  <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
+                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip cursor={{ fill: "#f1f5f9" }} />
+                  <Bar dataKey="value" fill="url(#categoryGradient)" radius={[8, 8, 0, 0]}>
+                    <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noCategoryData} />}
           </CardContent>
         </Card>
 
@@ -504,21 +540,23 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tr.trend}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-                <defs>
-                  <linearGradient id="trendGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
-                    <stop offset="100%" stopColor="#ec4899" stopOpacity={1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="date" tick={AXIS_TICK} />
-                <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                <Tooltip cursor={{ stroke: "#e2e8f0" }} />
-                <Line type="monotone" dataKey="value" stroke="url(#trendGradient)" strokeWidth={3} dot={{ r: 4, fill: "#8b5cf6" }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {hasChartValues(trendData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="trendGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
+                      <stop offset="100%" stopColor="#ec4899" stopOpacity={1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
+                  <XAxis dataKey="date" tick={AXIS_TICK} />
+                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip cursor={{ stroke: "#e2e8f0" }} />
+                  <Line type="monotone" dataKey="value" stroke="url(#trendGradient)" strokeWidth={3} dot={{ r: 4, fill: "#8b5cf6" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noTrendData} />}
           </CardContent>
         </Card>
 
@@ -527,23 +565,25 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{tr.orgLoadTop6}</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={orgData} layout="vertical" margin={{ left: 40, right: 36, top: 8, bottom: 8 }}>
-                <defs>
-                  <linearGradient id="orgGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.8}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis type="number" tick={AXIS_TICK} allowDecimals={false} />
-                <YAxis type="category" dataKey="name" tick={AXIS_TICK} width={180} />
-                <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                <Bar dataKey="value" fill="url(#orgGradient)" radius={[0, 8, 8, 0]}>
-                  <LabelList dataKey="value" position="right" {...VALUE_LABEL} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasChartValues(orgData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={orgData} layout="vertical" margin={{ left: 40, right: 36, top: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="orgGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.8}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
+                  <XAxis type="number" tick={AXIS_TICK} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={AXIS_TICK} width={180} />
+                  <Tooltip cursor={{ fill: "#f1f5f9" }} />
+                  <Bar dataKey="value" fill="url(#orgGradient)" radius={[0, 8, 8, 0]}>
+                    <LabelList dataKey="value" position="right" {...VALUE_LABEL} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noOrgLoadData} />}
           </CardContent>
         </Card>
 
@@ -553,46 +593,47 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg">{tr.appealsByGender}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={genderData} 
-                  dataKey="value" 
-                  nameKey="name" 
-                  cx="50%" 
-                  cy="50%" 
-                  startAngle={180}
-                  endAngle={-180}
-                  outerRadius={100} 
-                  innerRadius={60}
-                  paddingAngle={0}
-                  label={({ cx, cy, index, name, percent, value, fill }) => {
-                    // Erkak (index 0) chap tomonda, Ayol (index 1) o'ng tomonda
-                    const x = index === 0 ? cx - 140 : cx + 140
-                    const y = cy
-                    
-                    return (
-                      <text 
-                        x={x} 
-                        y={y} 
-                        fill={fill}
-                        textAnchor={index === 0 ? 'end' : 'start'} 
-                        dominantBaseline="middle"
-                        style={{ fontSize: '16px', fontWeight: 700 }}
-                      >
-                        {`${name} ${value} (${(percent * 100).toFixed(0)}%)`}
-                      </text>
-                    )
-                  }}
-                  labelLine={false}
-                >
-                  {genderData.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => [`${value} ${tr.unit}`, tr.countLabel]} />
-              </PieChart>
-            </ResponsiveContainer>
+            {hasChartValues(genderData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={genderData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    startAngle={180}
+                    endAngle={-180}
+                    outerRadius={100} 
+                    innerRadius={60}
+                    paddingAngle={0}
+                    label={({ cx, cy, index, name, percent, value, fill }) => {
+                      const x = index === 0 ? cx - 140 : cx + 140
+                      const y = cy
+                      
+                      return (
+                        <text 
+                          x={x} 
+                          y={y} 
+                          fill={fill}
+                          textAnchor={index === 0 ? 'end' : 'start'} 
+                          dominantBaseline="middle"
+                          style={{ fontSize: '16px', fontWeight: 700 }}
+                        >
+                          {`${name} ${value} (${(percent * 100).toFixed(0)}%)`}
+                        </text>
+                      )
+                    }}
+                    labelLine={false}
+                  >
+                    {genderData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [`${value} ${tr.unit}`, tr.countLabel]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noGenderData} />}
           </CardContent>
         </Card>
 
@@ -602,20 +643,22 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
             <CardTitle className="text-lg">{tr.appealsStatus}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={appealStatusData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
-                <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {appealStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                  <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasChartValues(appealStatusData) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={appealStatusData} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                  <XAxis dataKey="name" tick={AXIS_TICK} interval={0} angle={-10} height={50} />
+                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {appealStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                    <LabelList dataKey="value" position="top" {...VALUE_LABEL} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <ChartEmptyState message={tr.noAppealStatusData} />}
           </CardContent>
         </Card>
       </div>
