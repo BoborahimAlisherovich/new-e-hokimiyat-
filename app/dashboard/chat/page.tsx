@@ -1023,7 +1023,7 @@ export default function ChatPage() {
         
         <div className="relative z-10 p-3 sm:p-4 lg:p-6">
         <section data-gsap-section className="mb-4">
-          <div className="grid gap-3 xl:grid-cols-[1.45fr_1fr]">
+	          <div className="grid gap-3 2xl:grid-cols-[1.45fr_1fr]">
             <div
               data-gsap-card
               className="relative overflow-hidden rounded-[24px] border border-white/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.96),rgba(15,118,110,0.90))] p-4 text-white shadow-[0_22px_60px_-30px_rgba(15,118,110,0.60)]"
@@ -1049,11 +1049,11 @@ export default function ChatPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-              {[
-                { label: "Faol chatlar", value: activeConversationCount, icon: MessageSquare, tone: "from-cyan-500/20 to-cyan-100/60 text-cyan-900" },
-                { label: "Onlayn foydalanuvchilar", value: onlineUsersCount, icon: Activity, tone: "from-emerald-500/20 to-emerald-100/60 text-emerald-900" },
-                { label: "O‘qilmagan xabarlar", value: totalUnreadCount, icon: AlertCircle, tone: "from-amber-400/25 to-amber-100/70 text-amber-900" },
+	            <div className="grid gap-4 sm:grid-cols-3 2xl:grid-cols-1">
+	              {[
+	                { label: "Faol chatlar", value: activeConversationCount, icon: MessageSquare, tone: "from-cyan-500/20 to-cyan-100/60 text-cyan-900" },
+	                { label: "Onlayn foydalanuvchilar", value: onlineUsersCount, icon: Activity, tone: "from-emerald-500/20 to-emerald-100/60 text-emerald-900" },
+	                { label: "O‘qilmagan xabarlar", value: totalUnreadCount, icon: AlertCircle, tone: "from-amber-400/25 to-amber-100/70 text-amber-900" },
               ].map((item) => (
                 <div
                   key={item.label}

@@ -62,12 +62,12 @@
   --radius: 0.75rem;
   --sidebar: rgba(255,255,255,0.92);
   --sidebar-foreground: #0f172a;
-  --sidebar-primary: #6366f1;
+  --sidebar-primary: #0891b2;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(238,242,255,0.85);
+  --sidebar-accent: rgba(236,254,255,0.88);
   --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: rgba(199,210,254,0.35);
-  --sidebar-ring: #6366f1;
+  --sidebar-border: rgba(186,230,253,0.45);
+  --sidebar-ring: #0891b2;
   --warning: #f59e0b;
   --warning-foreground: #1e293b;
   --success: #10b981;

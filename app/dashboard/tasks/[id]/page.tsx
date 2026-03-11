@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, API_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension, markTaskComplete } from "@/lib/api"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, WS_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension, markTaskComplete } from "@/lib/api"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import {
@@ -163,14 +163,13 @@ export default function TaskDetailPage() {
         setOrgsMap(oMap)
         setCurrentUser(me)
 
-        // Setup WebSocket for real-time chat
-        const token = getAccessToken()
-        if (token) {
-          const wsBase = API_BASE.replace(/\/api\/?$/, '').replace(/^http/, 'ws')
-          const wsUrl = `${wsBase}/ws/tasks/${id}/chat/?token=${token}`
-          const ws = new WebSocket(wsUrl)
-          wsRef.current = ws
-          ws.onmessage = (ev) => {
+	        // Setup WebSocket for real-time chat
+	        const token = getAccessToken()
+	        if (token) {
+	          const wsUrl = `${WS_BASE}/ws/tasks/${id}/chat/?token=${token}`
+	          const ws = new WebSocket(wsUrl)
+	          wsRef.current = ws
+	          ws.onmessage = (ev) => {
             try {
               const payload = JSON.parse(ev.data)
               if (payload.type === 'history') {

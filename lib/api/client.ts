@@ -23,13 +23,28 @@ import { TOKEN_KEYS, HTTP_STATUS } from './types'
  * API base URL ni aniqlaydi muhit va domain asosida
  */
 function resolveApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL
+  const configured = process.env.NEXT_PUBLIC_API_URL
+  if (configured) {
+    const normalized = normalizeApiBaseUrl(configured)
+
+    // In the browser, prefer same-origin proxy to avoid CORS/mixed-content issues.
+    if (typeof window !== 'undefined') {
+      try {
+        const configuredUrl = new URL(normalized, window.location.origin)
+        if (configuredUrl.origin !== window.location.origin) {
+          return '/api'
+        }
+      } catch {
+        // If URL parsing fails, fall back to the proxy.
+        return '/api'
+      }
+    }
+
+    return normalized
   }
   
   if (typeof window !== 'undefined') {
     const { hostname } = window.location
-    const { protocol } = window.location
     
     if (hostname === 'gameroom.uz') {
       return 'https://api.gameroom.uz/api'
@@ -38,15 +53,6 @@ function resolveApiBaseUrl(): string {
     if (hostname === 'pytech.uz' || hostname === 'www.pytech.uz') {
       return 'https://api.pytech.uz/api'
     }
-    
-    if (hostname === 'localhost') {
-      return 'http://localhost:8000/api'
-    }
-
-    // Dev fallback for LAN access (e.g., 10.x.x.x)
-    if (hostname && hostname !== 'localhost') {
-      return `${protocol}//${hostname}:8000/api`
-    }
   }
   
   return '/api'
@@ -54,6 +60,42 @@ function resolveApiBaseUrl(): string {
 
 /** API Base URL */
 export const API_BASE = resolveApiBaseUrl()
+
+function normalizeApiBaseUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, '')
+  if (!trimmed) return '/api'
+  if (trimmed === '/api') return '/api'
+  if (trimmed.endsWith('/api')) return trimmed
+  return `${trimmed}/api`
+}
+
+function resolveWsBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL.trim().replace(/\/+$/, '')
+  }
+
+  const configuredApi = process.env.NEXT_PUBLIC_API_URL
+  if (configuredApi) {
+    const httpBase = normalizeApiBaseUrl(configuredApi)
+    const baseNoApi = httpBase.replace(/\/api\/?$/, '')
+    if (baseNoApi.startsWith('http')) {
+      return baseNoApi.replace(/^http/, 'ws')
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const host = window.location.hostname
+    if (host === 'gameroom.uz') return 'wss://api.gameroom.uz'
+    if (host === 'pytech.uz' || host === 'www.pytech.uz') return 'wss://api.pytech.uz'
+    return `${wsProtocol}://${host}:8000`
+  }
+
+  return ''
+}
+
+/** WebSocket Base URL (no `/api` suffix) */
+export const WS_BASE = resolveWsBaseUrl()
 
 // ============================================================================
 // Token Management
@@ -274,11 +316,20 @@ export async function fetchApi<T>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
-  
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  })
+ 
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    })
+  } catch (error) {
+    throw new ApiError(
+      `API bilan bog'lanib bo'lmadi: ${String(error)}`,
+      0,
+      { url: `${API_BASE}${endpoint}` }
+    )
+  }
 
   // 401 Unauthorized - token yangilashga urinish
   if (response.status === HTTP_STATUS.UNAUTHORIZED) {
@@ -290,10 +341,19 @@ export async function fetchApi<T>(
         headers['Authorization'] = `Bearer ${newToken}`
       }
       
-      const retryResponse = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers,
-      })
+      let retryResponse: Response
+      try {
+        retryResponse = await fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers,
+        })
+      } catch (error) {
+        throw new ApiError(
+          `API bilan bog'lanib bo'lmadi: ${String(error)}`,
+          0,
+          { url: `${API_BASE}${endpoint}` }
+        )
+      }
       
       if (!retryResponse.ok) {
         const errorData = await parseResponseBody(retryResponse)
