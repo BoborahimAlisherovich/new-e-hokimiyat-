@@ -184,6 +184,7 @@ export interface TelegramUser {
   first_name?: string
   last_name?: string
   full_name?: string
+  gender?: string
   phone?: string
   region_name?: string
 }
