@@ -414,6 +414,7 @@ export interface OrganizationUpdateInput extends Partial<OrganizationCreateInput
 export interface Appeal {
   id: string
   citizenName: string
+  citizenGender?: string
   citizenPhone: string
   citizenEmail: string
   subject: string

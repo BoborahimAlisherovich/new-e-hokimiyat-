@@ -267,18 +267,17 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
     const map = new Map<string, number>()
     const safeAppeals = appeals || []
     safeAppeals.forEach((appeal: any) => {
-      // telegram_user dan gender olish
-      const gender = appeal.telegram_user?.gender || appeal.citizenGender || 'unknown'
+      const gender = appeal.citizenGender || appeal.telegram_user?.gender || "unknown"
       if (gender && gender !== 'unknown') {
         map.set(gender, (map.get(gender) || 0) + 1)
       }
     })
-    // Agar ma'lumot bo'lmasa, namuna ma'lumot
+
     if (map.size === 0) {
-      map.set('male', Math.floor(safeAppeals.length * 0.55) || 45)
-      map.set('female', Math.floor(safeAppeals.length * 0.45) || 35)
+      map.set("male", 0)
+      map.set("female", 0)
     }
-    // Erkakni chap tomonda (180°), Ayolni o'ng tomonda (0°) ko'rsatish uchun tartibni to'g'rilash
+
     const data = Array.from(map.entries()).map(([key, value]) => ({
       name: genderLabels[key] || key,
       value,

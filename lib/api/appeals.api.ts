@@ -42,6 +42,7 @@ interface TelegramAppealResponse {
     first_name?: string
     last_name?: string
     full_name?: string
+    gender?: string
     phone?: string
     region_name?: string
   }
@@ -206,6 +207,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
   return {
     id: `tg-${appeal.id}`,
     citizenName: extractUserName(telegramUser, appeal.user_name),
+    citizenGender: telegramUser?.gender,
     citizenPhone: telegramUser?.phone || '',
     citizenEmail: '',
     subject: extractSubject(appeal),
