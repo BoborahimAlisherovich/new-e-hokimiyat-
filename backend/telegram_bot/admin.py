@@ -43,7 +43,7 @@ class BotRegionAdmin(admin.ModelAdmin):
 
 @admin.register(TelegramUser)
 class TelegramUserAdmin(admin.ModelAdmin):
-    list_display = ['telegram_id', 'first_name', 'last_name', 'phone', 'region', 'is_registered', 'language']
+    list_display = ['telegram_id', 'first_name', 'last_name', 'gender', 'phone', 'region', 'is_registered', 'language']
     list_filter = ['is_registered', 'gender', 'language', 'region']
     search_fields = ['telegram_id', 'first_name', 'last_name', 'phone']
     readonly_fields = ['telegram_id', 'created_at', 'updated_at']
@@ -77,7 +77,7 @@ class AppealMessageInline(admin.TabularInline):
 
 @admin.register(TelegramAppeal)
 class TelegramAppealAdmin(admin.ModelAdmin):
-    list_display = ['appeal_number', 'telegram_user', 'appeal_type', 'category', 'status', 'priority', 'created_at']
+    list_display = ['appeal_number', 'telegram_user', 'user_gender', 'appeal_type', 'category', 'status', 'priority', 'created_at']
     list_filter = ['status', 'priority', 'appeal_type', 'category', 'source', 'forwarded_to_site']
     search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name']
     readonly_fields = ['uuid', 'appeal_number', 'created_at', 'updated_at', 'ai_analysis']
@@ -105,6 +105,12 @@ class TelegramAppealAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+
+    @admin.display(description='Jinsi')
+    def user_gender(self, obj):
+        if not obj.telegram_user:
+            return '-'
+        return obj.telegram_user.get_gender_display()
 
 
 @admin.register(UserState)
