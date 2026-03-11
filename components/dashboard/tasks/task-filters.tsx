@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, X, Filter, Sparkles } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
+import { PremiumCountBadge, PremiumFilterShell } from "@/components/dashboard/premium-dashboard-ui"
 
 type Organization = {
   id: string
@@ -99,46 +100,38 @@ export function TaskFilters({
   ].filter(Boolean) as { label: string; value: string }[]
   
   return (
-    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
-      {/* Header with gradient accent */}
-      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-b border-indigo-50/60 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white shadow-sm">
-              <Filter className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-slate-800">Topshiriqlar filtri</h3>
-              <p className="text-xs text-slate-500">Topshiriqlarni qidiring va filtrlang</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                <Sparkles className="h-3 w-3 mr-1" />
-                {activeFilters.length} ta filtr
-              </Badge>
-            )}
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={onClear} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
-                <X className="h-4 w-4 mr-1" />
-                Tozalash
-              </Button>
-            )}
-          </div>
-        </div>
+    <PremiumFilterShell
+      icon={Filter}
+      title="Topshiriqlar filtri"
+      description="Topshiriqlarni qidiring, saralang va kerakli oqimni ajrating"
+      accentClassName="bg-gradient-to-r from-amber-50 via-orange-50/90 to-rose-50/80"
+      badge={
+        hasActiveFilters ? (
+          <PremiumCountBadge className="border-orange-200 bg-orange-100 text-orange-700">
+            <Sparkles className="mr-1 h-3 w-3" />
+            {activeFilters.length} ta filtr
+          </PremiumCountBadge>
+        ) : undefined
+      }
+      clearAction={
+        hasActiveFilters ? (
+          <Button variant="ghost" size="sm" onClick={onClear} className="text-slate-500 hover:bg-red-50 hover:text-red-600">
+            <X className="mr-1 h-4 w-4" />
+            Tozalash
+          </Button>
+        ) : undefined
+      }
+    >
+      <div className="space-y-4">
         {hasActiveFilters && activeFilters.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {activeFilters.map((filter) => (
-              <Badge key={`${filter.label}-${filter.value}`} variant="outline" className="text-xs border-orange-200 text-orange-700">
+              <Badge key={`${filter.label}-${filter.value}`} variant="outline" className="border-orange-200 bg-white/70 text-xs text-orange-700">
                 {filter.label}: {filter.value}
               </Badge>
             ))}
           </div>
         )}
-      </div>
-
-      <div className="p-4 space-y-4">
         {/* Search and Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
@@ -147,12 +140,12 @@ export function TaskFilters({
               placeholder="Topshiriqlarni qidirish (sarlavha/tavsif)"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
+              className="h-11 rounded-xl border-cyan-100/60 bg-white/90 pl-10 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-all"
             />
           </div>
           <div className="flex gap-2">
             {showCreateButton && onCreate && (
-              <Button onClick={onCreate} className="h-10 bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all">
+              <Button onClick={onCreate} className="h-11 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 text-white shadow-sm transition-all hover:from-orange-700 hover:to-rose-700 hover:shadow-md">
                 <Plus className="h-4 w-4 mr-1" />
                 {t.tasks.newTask}
               </Button>
@@ -165,7 +158,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Holat bo'yicha</Label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
                 <SelectValue placeholder="Holat bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -184,7 +177,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Muhimlik bo'yicha</Label>
             <Select value={priorityFilter} onValueChange={onPriorityChange}>
-              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
                 <SelectValue placeholder="Muhimlik bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +193,7 @@ export function TaskFilters({
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
             <Select value={categoryFilter} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
                 <SelectValue placeholder="Soha bo'yicha" />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +213,7 @@ export function TaskFilters({
             <div className="space-y-1">
               <Label className="text-xs text-slate-500">Tashkilot bo'yicha</Label>
               <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-                <SelectTrigger className="h-10 border-indigo-100/60 rounded-xl focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
                   <SelectValue placeholder="Tashkilot bo'yicha" />
                 </SelectTrigger>
                 <SelectContent>
@@ -236,6 +229,6 @@ export function TaskFilters({
           )}
         </div>
       </div>
-    </div>
+    </PremiumFilterShell>
   )
 }

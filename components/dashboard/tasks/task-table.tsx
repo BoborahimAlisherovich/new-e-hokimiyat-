@@ -8,6 +8,7 @@ import type { Task } from "@/types"
 import { PRIORITY_COLORS, STATUS_COLORS } from "@/components/dashboard/tasks/task-constants"
 import { FileX, AlertTriangle } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
+import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
 
 type TaskTableProps = {
   tasks: Task[]
@@ -52,21 +53,26 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
   
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="rounded-full bg-indigo-50/50 p-5 mb-4">
-          <FileX className="h-10 w-10 text-slate-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">{t.tasks.emptyTitle}</h3>
-        <p className="text-sm text-slate-500 max-w-sm">{t.tasks.emptyDescription}</p>
-      </div>
+      <PremiumEmptyState
+        icon={FileX}
+        title={t.tasks.emptyTitle}
+        description={t.tasks.emptyDescription}
+        tone="from-cyan-50 to-slate-100 text-slate-500"
+      />
     )
   }
   
   return (
+    <PremiumTableShell
+      icon={ClipboardListIcon}
+      title="Topshiriqlar ro'yxati"
+      countLabel={`${tasks.length} ta topshiriq`}
+      accentClassName="bg-gradient-to-r from-cyan-50/55 via-white/30 to-amber-50/35"
+    >
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
+          <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.titleLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.categoryLabel}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{t.tasks.organizationsLabel}</TableHead>
@@ -84,7 +90,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
               <TableRow 
                 key={task.id} 
                 className={cn(
-                  "cursor-pointer transition-all duration-200 border-b border-indigo-50/60 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50",
+                  "cursor-pointer border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-50/40 hover:to-amber-50/50",
                   isOverdue && "bg-red-50/50 hover:bg-red-50"
                 )}
                 onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
@@ -152,5 +158,10 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
         </TableBody>
       </Table>
     </div>
+    </PremiumTableShell>
   )
+}
+
+function ClipboardListIcon(props: React.ComponentProps<typeof AlertTriangle>) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><path d="M9 2h6"/><path d="M10 5h4"/><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 10h6"/><path d="M9 14h6"/><path d="M9 18h4"/></svg>
 }

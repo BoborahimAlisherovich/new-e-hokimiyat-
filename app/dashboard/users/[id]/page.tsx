@@ -1,40 +1,33 @@
 "use client"
 
+import { DashboardDetailFrame } from "@/components/layout/dashboard-detail-frame"
 import { Header } from "@/components/layout/header"
-import { UserAvatar } from "@/components/ui/user-avatar"
-import { Badge } from "@/components/ui/badge"
+import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { LoadingSpinner } from "@/components/ui/loading"
 import { getUserById, blockUser, unblockUser, archiveUser } from "@/lib/api"
-import { cn } from "@/lib/utils"
-import { User } from "@/types"
-import { 
-  ArrowLeft, 
-  Building, 
-  Calendar, 
-  Edit, 
-  Lock, 
-  Mail, 
-  Phone, 
-  Shield, 
-  Unlock, 
-  UserIcon, 
+import type { User } from "@/types"
+import {
+  AlertTriangle,
   Archive,
-  AlertTriangle
+  ArrowLeft,
+  Building,
+  Calendar,
+  Edit,
+  Lock,
+  Mail,
+  Phone,
+  Shield,
+  Unlock,
+  UserIcon,
+  Users,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-
-// Role configurations
-const ROLE_COLORS: Record<string, string> = {
-  HOKIM: "bg-purple-500 text-white",
-  HOKIMLIK_MASUL: "bg-blue-500 text-white",
-  TASHKILOT_RAHBARI: "bg-emerald-500 text-white",
-  TASHKILOT_MASUL: "bg-cyan-500 text-white",
-  ADMIN: "bg-red-500 text-white",
-}
+import { useEffect, useMemo, useState } from "react"
 
 const ROLE_LABELS: Record<string, string> = {
   HOKIM: "Hokim",
@@ -44,27 +37,44 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrator",
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  FAOL: "bg-emerald-500 text-white",
-  KUTILMOQDA: "bg-yellow-500 text-white",
-  BLOKLANGAN: "bg-red-500 text-white",
-  ARXIV: "bg-gray-500 text-white",
-  DRAFT: "bg-slate-400 text-white",
-}
-
 const STATUS_LABELS: Record<string, string> = {
   FAOL: "Faol",
-  KUTILMOQDA: "Kutilmoqda",
+  ACTIVE: "Faol",
   BLOKLANGAN: "Bloklangan",
-  ARXIV: "Arxivlangan",
+  BLOCKED: "Bloklangan",
+  ARXIV: "Arxiv",
+  KUTILMOQDA: "Kutilmoqda",
+  INACTIVE: "Nofaol",
   DRAFT: "Qoralama",
+}
+
+function DetailItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
+      <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-600">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{label}</p>
+        <p className="mt-1 break-words text-sm font-medium text-slate-800">{value || "—"}</p>
+      </div>
+    </div>
+  )
 }
 
 export default function UserDetailPage() {
   const params = useParams()
   const router = useRouter()
   const userId = params.id as string
-  
+
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -80,15 +90,17 @@ export default function UserDetailPage() {
         setLoading(false)
       }
     }
+
     loadUser()
   }, [userId])
 
   const handleBlock = async () => {
     if (!user) return
+
     try {
       setActionLoading(true)
- const updated = await blockUser(user.id)
- setUser(updated)
+      const updated = await blockUser(user.id)
+      setUser(updated)
     } catch (error) {
       console.error("Error blocking user:", error)
     } finally {
@@ -98,10 +110,11 @@ export default function UserDetailPage() {
 
   const handleUnblock = async () => {
     if (!user) return
+
     try {
       setActionLoading(true)
- const updated = await unblockUser(user.id)
- setUser(updated)
+      const updated = await unblockUser(user.id)
+      setUser(updated)
     } catch (error) {
       console.error("Error unblocking user:", error)
     } finally {
@@ -111,10 +124,11 @@ export default function UserDetailPage() {
 
   const handleArchive = async () => {
     if (!user) return
+
     try {
       setActionLoading(true)
- const updated = await archiveUser(user.id)
- setUser(updated)
+      const updated = await archiveUser(user.id)
+      setUser(updated)
     } catch (error) {
       console.error("Error archiving user:", error)
     } finally {
@@ -122,18 +136,47 @@ export default function UserDetailPage() {
     }
   }
 
+  const userStats = useMemo(() => {
+    if (!user) return []
+
+    return [
+      {
+        label: "Holat",
+        value: user.status === "FAOL" ? "Faol" : user.status === "BLOKLANGAN" ? "Bloklangan" : user.status === "ARXIV" ? "Arxiv" : "Kutilmoqda",
+        icon: Shield,
+        tone: "from-cyan-50 via-white to-cyan-100/70",
+      },
+      {
+        label: "Rol",
+        value: ROLE_LABELS[user.role] || user.role,
+        icon: Users,
+        tone: "from-emerald-50 via-white to-emerald-100/70",
+      },
+      {
+        label: "Tashkilot",
+        value: user.organization?.name || user.organization_name || "Biriktirilmagan",
+        icon: Building,
+        tone: "from-amber-50 via-white to-amber-100/70",
+      },
+    ]
+  }, [user])
+
   if (loading) {
     return (
       <>
-        <Header title="Foydalanuvchi" description="Foydalanuvchi ma'lumotlari yuklanmoqda..." />
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
-            </div>
+        <Header title="Foydalanuvchi" description="Foydalanuvchi ma'lumotlari yuklanmoqda" />
+        <DashboardDetailFrame
+          eyebrow="Foydalanuvchi"
+          title="Ma'lumotlar tayyorlanmoqda"
+          description="Shaxsiy ma'lumotlar va boshqaruv imkoniyatlari yuklanmoqda."
+          backHref="/dashboard/users"
+          stats={[]}
+        >
+          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <LoadingSpinner size="lg" className="mb-4" />
+            <p className="text-sm text-slate-500">Foydalanuvchi ma'lumotlari yuklanmoqda...</p>
           </div>
-        </div>
+        </DashboardDetailFrame>
       </>
     )
   }
@@ -142,197 +185,179 @@ export default function UserDetailPage() {
     return (
       <>
         <Header title="Foydalanuvchi topilmadi" description="So'ralgan foydalanuvchi mavjud emas" />
-        <div className="p-6">
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertTriangle className="h-16 w-16 text-yellow-500" />
-            <p className="text-muted-foreground">Foydalanuvchi topilmadi</p>
-            <Button onClick={() => router.back()} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Orqaga qaytish
-            </Button>
+        <DashboardDetailFrame
+          eyebrow="Foydalanuvchi"
+          title="Foydalanuvchi topilmadi"
+          description="So'ralgan foydalanuvchi mavjud emas yoki o'chirilgan."
+          backHref="/dashboard/users"
+          stats={[]}
+        >
+          <div className="rounded-[28px] border border-white/70 bg-white/78 p-6 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <PremiumEmptyState
+              icon={AlertTriangle}
+              title="Ma'lumot topilmadi"
+              description="Ro'yxatga qayting yoki boshqa foydalanuvchini tanlang."
+              tone="from-amber-100 to-orange-100 text-amber-600"
+            />
           </div>
-        </div>
+        </DashboardDetailFrame>
       </>
     )
   }
 
   return (
     <>
-      <Header 
-        title={`${user.last_name || ''} ${user.first_name || ''}`} 
-        description="Foydalanuvchi ma'lumotlari va boshqaruvi" 
+      <Header
+        title={`${user.last_name || ""} ${user.first_name || ""}`.trim() || "Foydalanuvchi"}
+        description="Foydalanuvchi ma'lumotlari va boshqaruvi"
       />
-      <div className="p-6">
-        {/* Back button */}
-        <div className="mb-6">
-          <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Orqaga
-          </Button>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main info card */}
-          <Card className="lg:col-span-2 bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
-            <CardHeader className="flex flex-row items-center gap-4">
-              <UserAvatar
-                firstName={user.first_name}
-                lastName={user.last_name}
-                avatarUrl={user.avatar_url}
-                size="xl"
-              />
-              <div className="flex-1">
-                <CardTitle className="text-2xl">
-                  {user.last_name} {user.first_name} {user.middle_name}
-                </CardTitle>
-                <CardDescription className="text-base mt-1">
-                  {user.position || "Lavozim ko'rsatilmagan"}
-                </CardDescription>
-                <div className="flex gap-2 mt-3">
-                  <Badge className={cn("px-3 py-1", ROLE_COLORS[user.role] || "bg-gray-100 text-gray-800")}>
-                    {ROLE_LABELS[user.role] || user.role}
-                  </Badge>
-                  <Badge className={cn("px-3 py-1", STATUS_COLORS[user.status] || "bg-gray-100 text-gray-800")}>
-                    {STATUS_LABELS[user.status] || user.status}
-                  </Badge>
+      <DashboardDetailFrame
+        eyebrow="Foydalanuvchi kartasi"
+        title={user.full_name || `${user.last_name || ""} ${user.first_name || ""}`.trim()}
+        description={user.position || "Lavozim ko'rsatilmagan"}
+        backHref="/dashboard/users"
+        stats={userStats}
+        badges={
+          <>
+            <Badge className="border-white/20 bg-white/12 text-white hover:bg-white/15">
+              {ROLE_LABELS[user.role] || user.role}
+            </Badge>
+            <Badge className="border-white/20 bg-white/12 text-white hover:bg-white/15">
+              {STATUS_LABELS[user.status] || user.status}
+            </Badge>
+          </>
+        }
+        actions={
+          <>
+            <Button
+              asChild
+              variant="secondary"
+              className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18"
+            >
+              <Link href={`/dashboard/users/${user.id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Tahrirlash
+              </Link>
+            </Button>
+          </>
+        }
+      >
+        <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
+          <PremiumTableShell
+            icon={UserIcon}
+            title="Asosiy ma'lumotlar"
+            countLabel="Shaxsiy va tizim ma'lumotlari"
+            accentClassName="bg-gradient-to-r from-cyan-50 via-white to-cyan-50/40"
+          >
+            <div className="space-y-6 p-6">
+              <div className="flex flex-col gap-4 rounded-[26px] border border-white/70 bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 p-5 sm:flex-row sm:items-center">
+                <UserAvatar
+                  firstName={user.first_name}
+                  lastName={user.last_name}
+                  avatarUrl={user.avatar_url}
+                  size="xl"
+                />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                    {user.last_name} {user.first_name} {user.middle_name}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">{user.position || "Lavozim ko'rsatilmagan"}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
+                    Login: {user.login || "—"}
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <Separator />
-            <CardContent className="pt-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <UserIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Login</p>
-                      <p className="font-medium">{user.login || "—"}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <UserIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">PNFL</p>
-                      <p className="font-mono">{user.masked_pnfl || user.pnfl || "—"}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Phone className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Telefon</p>
-                      <p>{user.phone || "—"}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Mail className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p>{user.email || "—"}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Building className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tashkilot</p>
-                      <p>{user.organization?.name || (user as any).organization_name || "Belgilanmagan"}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Shield className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Rol</p>
-                      <p>{ROLE_LABELS[user.role] || user.role}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Ro'yxatdan o'tgan</p>
-                      <p>{user.created_at ? new Date(user.created_at).toLocaleDateString("uz-UZ") : "—"}</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <DetailItem icon={UserIcon} label="Login" value={user.login || "—"} />
+                <DetailItem icon={UserIcon} label="PNFL" value={user.masked_pnfl || user.pnfl || "—"} />
+                <DetailItem icon={Phone} label="Telefon" value={user.phone || "—"} />
+                <DetailItem icon={Mail} label="Elektron pochta" value={user.email || "—"} />
+                <DetailItem
+                  icon={Building}
+                  label="Tashkilot"
+                  value={user.organization?.name || (user as User & { organization_name?: string }).organization_name || "Belgilanmagan"}
+                />
+                <DetailItem icon={Shield} label="Rol" value={ROLE_LABELS[user.role] || user.role} />
+                <DetailItem
+                  icon={Calendar}
+                  label="Ro'yxatdan o'tgan sana"
+                  value={user.created_at ? new Date(user.created_at).toLocaleDateString("uz-UZ") : "—"}
+                />
+                <DetailItem
+                  icon={Calendar}
+                  label="So'nggi kirish"
+                  value={user.last_login ? new Date(user.last_login).toLocaleString("uz-UZ") : "Hali kirilmagan"}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </PremiumTableShell>
 
-          {/* Actions card */}
-          <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl h-fit">
-            <CardHeader>
-              <CardTitle>Amallar</CardTitle>
-              <CardDescription>Foydalanuvchi ustida amallar bajarish</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                className="w-full justify-start" 
-                variant="outline"
-                asChild
-              >
-                <Link href={`/dashboard/users/${user.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Tahrirlash
-                </Link>
-              </Button>
-              
-              {user.status === "BLOKLANGAN" ? (
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline"
-                  onClick={handleUnblock}
-                  disabled={actionLoading}
+          <div className="space-y-6">
+            <PremiumTableShell
+              icon={Shield}
+              title="Holat boshqaruvi"
+              countLabel="Tezkor amallar"
+              accentClassName="bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40"
+            >
+              <div className="space-y-3 p-6">
+                <Button
+                  asChild
+                  className="h-11 w-full justify-start rounded-2xl bg-slate-900 text-white hover:bg-slate-800"
                 >
-                  <Unlock className="mr-2 h-4 w-4" />
-                  Blokdan chiqarish
+                  <Link href={`/dashboard/users/${user.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Tahrirlash sahifasini ochish
+                  </Link>
                 </Button>
-              ) : (
-                <Button 
-                  className="w-full justify-start text-red-600 hover:text-red-700" 
-                  variant="outline"
-                  onClick={handleBlock}
-                  disabled={actionLoading || user.status === "ARXIV"}
+
+                {user.status === "BLOKLANGAN" ? (
+                  <Button
+                    className="h-11 w-full justify-start rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    variant="outline"
+                    onClick={handleUnblock}
+                    disabled={actionLoading}
+                  >
+                    <Unlock className="mr-2 h-4 w-4" />
+                    Blokdan chiqarish
+                  </Button>
+                ) : (
+                  <Button
+                    className="h-11 w-full justify-start rounded-2xl border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    variant="outline"
+                    onClick={handleBlock}
+                    disabled={actionLoading || user.status === "ARXIV"}
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Vaqtincha bloklash
+                  </Button>
+                )}
+
+                {user.status !== "ARXIV" && (
+                  <Button
+                    className="h-11 w-full justify-start rounded-2xl border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    variant="outline"
+                    onClick={handleArchive}
+                    disabled={actionLoading}
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    Arxivga o'tkazish
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  className="h-11 w-full justify-start rounded-2xl text-slate-600 hover:bg-slate-100"
+                  onClick={() => router.back()}
                 >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Bloklash
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Oldingi sahifaga qaytish
                 </Button>
-              )}
-              
-              {user.status !== "ARXIV" && (
-                <Button 
-                  className="w-full justify-start text-orange-600 hover:text-orange-700" 
-                  variant="outline"
-                  onClick={handleArchive}
-                  disabled={actionLoading}
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  Arxivlash
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            </PremiumTableShell>
+          </div>
         </div>
-      </div>
+      </DashboardDetailFrame>
     </>
   )
 }

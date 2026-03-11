@@ -1,6 +1,7 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
+import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { User, Organization } from "@/types"
 import { getUsers, getOrganizations } from "@/lib/api"
@@ -10,6 +11,7 @@ import { UserTable } from "@/components/dashboard/users/user-table"
 import { UserCreateDialog } from "@/components/dashboard/users/user-create-dialog"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { Building2, ShieldCheck, UsersRound } from "lucide-react"
 
 export default function UsersPage() {
   const t = useTranslation()
@@ -129,7 +131,17 @@ export default function UsersPage() {
   return (
     <>
       <Header title={t.pages.users.title} description={t.pages.users.description} />
-      <div ref={pageRef} className="p-4 sm:p-6 space-y-6">
+      <div ref={pageRef}>
+      <DashboardPageFrame
+        eyebrow="Foydalanuvchilar"
+        title="Jamoa, rollar va tashkilotlar kesimida boshqaruv bir xil uslubda yuritiladi."
+        description="Faol xodimlar, tashkilotlar bo‘yicha taqsimot va yangi foydalanuvchi yaratish jarayoni bir oqimda boshqariladi."
+        stats={[
+          { label: "Jami", value: users.length, icon: UsersRound, tone: "from-cyan-500/18 to-cyan-100/70" },
+          { label: "Faol", value: users.filter((u) => u.status === "FAOL").length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
+          { label: "Tashkilotlar", value: organizations.length, icon: Building2, tone: "from-amber-400/24 to-amber-100/75" },
+        ]}
+      >
           {/* Stats Cards */}
           <section data-gsap-section>
             <UserStats
@@ -162,6 +174,7 @@ export default function UsersPage() {
           <section data-gsap-section>
             <UserTable users={filteredUsers} />
           </section>
+      </DashboardPageFrame>
       </div>
       <UserCreateDialog
         open={isCreateDialogOpen}

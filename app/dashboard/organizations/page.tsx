@@ -1,6 +1,7 @@
 "use client"
 
 import { Header } from "@/components/layout/header"
+import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { getOrganizations, createOrganization, getUsers, deleteOrganization, updateOrganization } from "@/lib/api"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { OrganizationFilters } from "@/components/dashboard/organizations/organization-filters"
@@ -9,6 +10,7 @@ import { OrganizationCreateDialog } from "@/components/dashboard/organizations/o
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { Building2, BriefcaseBusiness, ShieldCheck } from "lucide-react"
 
 export default function OrganizationsPage() {
   const t = useTranslation()
@@ -45,7 +47,7 @@ export default function OrganizationsPage() {
       console.error("Tashkilotlarni yuklashda xatolik:", err)
       setError(t.pages.organizations.loadError)
     }
-  }, [])
+  }, [t.pages.organizations.loadError])
 
   useEffect(() => {
     let mounted = true
@@ -63,7 +65,7 @@ export default function OrganizationsPage() {
     return () => {
       mounted = false
     }
-  }, [loadOrganizations])
+  }, [loadOrganizations, t.pages.organizations.loadError])
 
   const handleFormChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -131,7 +133,15 @@ export default function OrganizationsPage() {
     } catch (err: any) {
       toast({ title: t.common.error, description: err?.message || t.pages.organizations.deleteError, variant: "destructive" })
     }
-  }, [loadOrganizations, toast])
+  }, [
+    loadOrganizations,
+    t.common.error,
+    t.common.success,
+    t.pages.organizations.deleteConfirm,
+    t.pages.organizations.deleteError,
+    t.pages.organizations.deleteSuccess,
+    toast,
+  ])
 
   const handleToggleStatus = useCallback(async (id: number, currentStatus: boolean) => {
     try {
@@ -144,12 +154,30 @@ export default function OrganizationsPage() {
     } catch (err: any) {
       toast({ title: t.common.error, description: err?.message || t.pages.organizations.toggleError, variant: "destructive" })
     }
-  }, [loadOrganizations, toast])
+  }, [
+    loadOrganizations,
+    t.common.error,
+    t.common.success,
+    t.pages.organizations.toggleActivated,
+    t.pages.organizations.toggleDeactivated,
+    t.pages.organizations.toggleError,
+    toast,
+  ])
 
   return (
     <>
       <Header title={t.pages.organizations.title} description={t.pages.organizations.description} />
-      <div ref={pageRef} className="space-y-6 p-4 sm:p-6">
+      <div ref={pageRef}>
+      <DashboardPageFrame
+        eyebrow="Tashkilotlar"
+        title="Tashkilotlar tuzilmasi, holati va sektorlarga bog‘lanishi yagona ko‘rinishda boshqariladi."
+        description="Faol tashkilotlar, sektorlar va mas’ullar kesimida tizimni nazorat qilish va yangilarini qo‘shish uchun toza ish maydoni."
+        stats={[
+          { label: "Jami", value: organizations.length, icon: Building2, tone: "from-cyan-500/18 to-cyan-100/70" },
+          { label: "Faol", value: organizations.filter((org) => org.is_active).length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
+          { label: "Mas'ullar", value: users.length, icon: BriefcaseBusiness, tone: "from-amber-400/24 to-amber-100/75" },
+        ]}
+      >
             {/* Filters and Actions */}
             <section data-gsap-section>
               <OrganizationFilters
@@ -177,12 +205,12 @@ export default function OrganizationsPage() {
             {/* Organizations Table */}
             <section data-gsap-section>
             {loading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center rounded-[26px] border border-white/70 bg-white/78 py-16 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                 <span className="ml-3 text-slate-500">{t.pages.organizations.loading}</span>
               </div>
             ) : error ? (
-              <div className="text-center py-16">
+              <div className="rounded-[26px] border border-white/70 bg-white/78 py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
                 <p className="text-red-500">{error}</p>
                 <button 
                   onClick={() => window.location.reload()} 
@@ -200,6 +228,7 @@ export default function OrganizationsPage() {
               />
             )}
             </section>
+      </DashboardPageFrame>
       </div>
     </>
   )

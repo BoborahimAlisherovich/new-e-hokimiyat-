@@ -6,6 +6,7 @@ import { Edit, Eye, Lock, MoreHorizontal, Building2, Trash2, Unlock, ChevronRigh
 import Link from "next/link"
 import { formatOrgId } from "./organization-helpers"
 import { useI18n } from "@/lib/i18n/context"
+import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
 
 interface OrganizationTableProps {
   organizations: any[]
@@ -105,34 +106,20 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
 
   if (organizations.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="rounded-2xl bg-gradient-to-br from-violet-100 to-purple-200 p-5 mb-5 shadow-inner">
-            <Building2 className="h-10 w-10 text-violet-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-700 mb-2">{tr.emptyTitle}</h3>
-          <p className="text-sm text-slate-500 text-center max-w-sm">
-            {tr.emptyDesc}
-          </p>
-        </div>
-      </div>
+      <PremiumEmptyState icon={Building2} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-violet-100 to-purple-200 text-violet-600" />
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] ring-1 ring-indigo-50/30 overflow-hidden">
-      {/* Table header with gradient */}
-      <div className="bg-gradient-to-r from-slate-50 via-violet-50/30 to-purple-50/30 px-4 py-3 border-b border-indigo-50/60 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-violet-600" />
-          <span className="font-medium text-slate-800">{tr.list}</span>
-        </div>
-        <span className="text-sm text-slate-500">{organizations.length} {tr.count}</span>
-      </div>
-      
+    <PremiumTableShell
+      icon={Building2}
+      title={tr.list}
+      countLabel={`${organizations.length} ${tr.count}`}
+      accentClassName="bg-gradient-to-r from-violet-50/55 via-white/30 to-purple-50/40"
+    >
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
+          <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.name}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.leader}</TableHead>
@@ -145,7 +132,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
           {organizations.map((org, index) => (
             <TableRow 
               key={org.id} 
-              className="border-b border-indigo-50/60/80 hover:bg-gradient-to-r hover:from-violet-50/50 hover:to-purple-50/50 transition-all duration-200 group"
+              className="group border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <TableCell className="py-4 px-4">
@@ -228,6 +215,6 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
           ))}
         </TableBody>
       </Table>
-    </div>
+    </PremiumTableShell>
   )
 }

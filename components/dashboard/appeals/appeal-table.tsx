@@ -8,6 +8,7 @@ import { Archive, Eye, MoreHorizontal, MessageSquare, MessageCircle } from "luci
 import { useRouter } from "next/navigation"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS } from "./appeal-constants"
 import { useI18n } from "@/lib/i18n/context"
+import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
 
 interface AppealTableProps {
   appeals: Appeal[]
@@ -72,23 +73,21 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
 
   if (appeals.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="rounded-full bg-indigo-50/50 p-5 mb-4">
-          <MessageSquare className="h-10 w-10 text-slate-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">{tr.emptyTitle}</h3>
-        <p className="text-sm text-slate-500 text-center max-w-sm">
-          {tr.emptyDesc}
-        </p>
-      </div>
+      <PremiumEmptyState icon={MessageSquare} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-cyan-50 to-teal-100 text-teal-600" />
     )
   }
 
   return (
+    <PremiumTableShell
+      icon={MessageSquare}
+      title="Murojaatlar ro'yxati"
+      countLabel={`${appeals.length} ta`}
+      accentClassName="bg-gradient-to-r from-cyan-50/60 via-white/30 to-teal-50/45"
+    >
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-indigo-50/60 to-indigo-50/30 border-b-2 border-indigo-100/40">
+          <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">ID</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.citizen}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.district}</TableHead>
@@ -102,7 +101,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
           {appeals.map((appeal, index) => (
             <TableRow 
               key={appeal.id} 
-              className="cursor-pointer transition-all duration-200 border-b border-indigo-50/60 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
+              className="cursor-pointer border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
@@ -151,7 +150,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               <TableCell className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-indigo-50/50">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-cyan-50/60">
                       <MoreHorizontal className="h-4 w-4 text-slate-500" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -172,5 +171,6 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
         </TableBody>
       </Table>
     </div>
+    </PremiumTableShell>
   )
 }

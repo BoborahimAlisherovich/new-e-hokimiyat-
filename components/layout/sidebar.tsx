@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
@@ -393,9 +394,11 @@ export function Sidebar() {
               <p className="truncate text-sm font-medium text-slate-900">
                 {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : t.common.user}
               </p>
-              <p className="truncate text-xs text-slate-500">
-                {currentUser?.role ? roleLabels[currentUser.role] : ""}
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-50 to-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-800 ring-1 ring-cyan-100/80">
+                  {currentUser?.role ? roleLabels[currentUser.role] : ""}
+                </span>
+              </div>
             </div>
           )}
         </motion.div>
@@ -436,74 +439,102 @@ function NavItem({ item, isActive, collapsed, index }: {
 }) {
   const hasBadge = item.badge && item.badge > 0
   const Icon = item.icon
-  
-  return (
-    <Link href={item.href}>
-      <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.03 }}
-        className={cn(
-          "group relative flex items-center gap-3 overflow-hidden rounded-[18px] px-3 py-2.5 transition-all duration-200",
-          collapsed ? "h-12 justify-center" : "h-12",
-          isActive
-            ? "border border-cyan-400/20 bg-[linear-gradient(135deg,#0f766e,#0891b2)] text-white shadow-[0_18px_34px_-20px_rgba(8,145,178,0.70)]"
-            : "border border-transparent text-slate-600 hover:border-white/80 hover:bg-white/85 hover:shadow-[0_18px_34px_-24px_rgba(14,165,233,0.28)] hover:text-cyan-800"
-        )}
-        whileHover={{ scale: collapsed ? 1.05 : 1.01 }}
-        whileTap={{ scale: 0.98 }}
-        role="menuitem"
-        aria-current={isActive ? "page" : undefined}
-      >
-        {!isActive && (
-          <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.72),rgba(240,253,250,0.92),rgba(255,251,235,0.82))]" />
-        )}
-        <div className="relative flex-shrink-0">
-          <div
-            className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
-              isActive
-                ? "bg-white/14 ring-1 ring-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
-                : "bg-[linear-gradient(135deg,rgba(248,250,252,0.98),rgba(236,254,255,0.82))] ring-1 ring-cyan-100/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] group-hover:scale-105 group-hover:bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(236,253,245,0.88))]"
-            )}
-          >
-            <Icon className={cn(
-              "h-[18px] w-[18px] transition-colors duration-200",
-              isActive ? "text-white" : "text-cyan-700 group-hover:text-emerald-700"
-            )} />
-          </div>
-          {/* Badge for collapsed state */}
-          {collapsed && hasBadge && (
-            <motion.span 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-[11px] font-bold text-white ring-2 ring-white shadow-sm"
-            >
-              {item.badge > 9 ? '9+' : item.badge}
-            </motion.span>
+
+  const content = (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.03 }}
+      className={cn(
+        "group relative flex items-center gap-3 overflow-hidden rounded-[18px] px-3 py-2.5 transition-all duration-200",
+        collapsed ? "h-12 justify-center" : "h-12",
+        isActive
+          ? "border border-cyan-400/20 bg-[linear-gradient(135deg,#0f766e,#0891b2)] text-white shadow-[0_18px_34px_-20px_rgba(8,145,178,0.70)]"
+          : "border border-transparent text-slate-600 hover:border-white/80 hover:bg-white/85 hover:shadow-[0_18px_34px_-24px_rgba(14,165,233,0.28)] hover:text-cyan-800"
+      )}
+      whileHover={{ scale: collapsed ? 1.05 : 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      role="menuitem"
+      aria-current={isActive ? "page" : undefined}
+    >
+      {isActive && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-2 h-8 w-1 rounded-r-full bg-white/85" />
+          <div className="pointer-events-none absolute inset-0 rounded-[18px] bg-[radial-gradient(circle_at_left,rgba(255,255,255,0.18),transparent_34%)]" />
+        </>
+      )}
+      {!isActive && (
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.72),rgba(240,253,250,0.92),rgba(255,251,235,0.82))]" />
+      )}
+      <div className="relative flex-shrink-0">
+        <div
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
+            isActive
+              ? "bg-white/14 ring-1 ring-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
+              : "bg-[linear-gradient(135deg,rgba(248,250,252,0.98),rgba(236,254,255,0.82))] ring-1 ring-cyan-100/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] group-hover:scale-105 group-hover:bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(236,253,245,0.88))]"
           )}
+        >
+          <Icon className={cn(
+            "h-[18px] w-[18px] transition-colors duration-200",
+            isActive ? "text-white" : "text-cyan-700 group-hover:text-emerald-700"
+          )} />
         </div>
-        
-        {!collapsed && (
-          <>
-            <span className={cn(
-              "relative z-10 flex-1 truncate text-[15px] font-medium transition-colors duration-200",
-              isActive ? "text-white" : "text-slate-700"
-            )}>
-              {item.title}
-            </span>
-            
-            {/* Badge for expanded state */}
-            {hasBadge && (
-              <Badge 
-                className="ml-auto h-[19px] min-w-[28px] px-2 text-[12px] font-semibold bg-red-500 text-white hover:bg-red-600 border-0 rounded-full shadow-sm"
-              >
-                {item.badge > 99 ? '99+' : item.badge}
-              </Badge>
-            )}
-          </>
+        {collapsed && hasBadge && (
+          <motion.span 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-[11px] font-bold text-white ring-2 ring-white shadow-sm"
+          >
+            {item.badge > 9 ? '9+' : item.badge}
+          </motion.span>
         )}
-      </motion.div>
-    </Link>
+      </div>
+      
+      {!collapsed && (
+        <>
+          <span className={cn(
+            "relative z-10 flex-1 truncate text-[15px] font-medium transition-colors duration-200",
+            isActive ? "text-white" : "text-slate-700"
+          )}>
+            {item.title}
+          </span>
+          
+          {hasBadge && (
+            <Badge 
+              className="ml-auto h-[19px] min-w-[28px] px-2 text-[12px] font-semibold bg-red-500 text-white hover:bg-red-600 border-0 rounded-full shadow-sm"
+            >
+              {item.badge > 99 ? '99+' : item.badge}
+            </Badge>
+          )}
+        </>
+      )}
+    </motion.div>
   )
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link href={item.href}>{content}</Link>
+        </TooltipTrigger>
+        <TooltipContent
+          side="right"
+          sideOffset={12}
+          className="rounded-xl border border-cyan-100/70 bg-white/96 px-3 py-2 text-slate-700 shadow-[0_20px_40px_-24px_rgba(14,165,233,0.35)]"
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{item.title}</span>
+            {hasBadge && (
+              <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return <Link href={item.href}>{content}</Link>
 }

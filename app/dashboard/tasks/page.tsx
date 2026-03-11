@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Header } from "@/components/layout/header"
+import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { Button } from "@/components/ui/button"
 import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialog"
 import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
@@ -12,6 +13,7 @@ import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
+import { CheckCircle2, Clock3, ListTodo } from "lucide-react"
 
 
 export default function TasksPage() {
@@ -152,7 +154,17 @@ export default function TasksPage() {
   return (
     <>
       <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div ref={pageRef}>
+      <DashboardPageFrame
+        eyebrow="Topshiriqlar"
+        title="Ijro intizomi, yuklama va nazorat bir joyda boshqariladi."
+        description="Filtrlash, nazorat va bajarilish holatini bir ekranda kuzatib, muhim topshiriqlarni tezroq boshqarish mumkin."
+        stats={[
+          { label: "Jami", value: totalCount, icon: ListTodo, tone: "from-cyan-500/18 to-cyan-100/70" },
+          { label: "Ijroda", value: stats.inProgress, icon: Clock3, tone: "from-amber-400/24 to-amber-100/75" },
+          { label: "Bajarildi", value: stats.completed, icon: CheckCircle2, tone: "from-emerald-500/18 to-emerald-100/70" },
+        ]}
+      >
         {/* Stats */}
         <section data-gsap-section>
           <TaskStats
@@ -165,7 +177,7 @@ export default function TasksPage() {
 
         {/* Filters */}
         <section data-gsap-section>
-          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] p-5 ring-1 ring-indigo-50/30">
+          <div className="rounded-[26px] border border-white/70 bg-white/78 p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
             <TaskFilters
             searchQuery={searchQuery}
@@ -194,8 +206,8 @@ export default function TasksPage() {
 
         {/* Tasks Table */}
         <section data-gsap-section>
-          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] overflow-hidden ring-1 ring-indigo-50/30">
-            <div className="px-6 py-4 border-b border-indigo-50/60 bg-gradient-to-r from-indigo-50/30 to-transparent">
+          <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <div className="border-b border-cyan-100/60 bg-gradient-to-r from-cyan-50/55 via-white/30 to-transparent px-6 py-4">
               <h2 className="text-lg font-semibold text-slate-800">{t.pages.tasks.tableTitle}</h2>
             </div>
             <TaskTable
@@ -209,7 +221,7 @@ export default function TasksPage() {
 
         {/* Pagination */}
         <section data-gsap-section>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/75 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] p-4 ring-1 ring-indigo-50/30">
+          <div className="flex flex-col items-center justify-between gap-4 rounded-[24px] border border-white/70 bg-white/78 p-4 shadow-[0_20px_46px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl sm:flex-row">
           <div className="text-sm text-slate-600">
             {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
             {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
@@ -239,6 +251,7 @@ export default function TasksPage() {
           </div>
         </div>
         </section>
+      </DashboardPageFrame>
       </div>
 
       <TaskDetailDialog
