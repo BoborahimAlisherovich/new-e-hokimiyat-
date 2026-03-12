@@ -1,0 +1,123 @@
+E-HOKIMIYAT PLATFORM — 10 SLAYD UCHUN PREZENTATSIYA MATNI (ODAMIY TILDA)
+(Gamma.app ga ko‘chirish uchun tayyor)
+Sana: 2026-03-12
+
+============================================================
+SLAYD 1. Sarlavha / Kirish
+Sarlavha: E-Hokimiyat Platform
+Tagline: Hokimlik va tashkilotlar ishini yagona tizimda boshqarish
+Qisqa ta’rif:
+- Hokimlik va unga qarashli tashkilotlar o‘rtasidagi topshiriqlarni tartibli yuritadi
+- Kim nima ish qilayotgani, qaysi bosqichdaligi aniq ko‘rinadi
+- Chat va eslatmalar orqali tezkor kelishuvni ta’minlaydi
+- Murojaatlar bilan ishlashni yengillashtiradi
+Ko‘rsatish (vizual g‘oya): “Bosh sahifa → Topshiriqlar → Chat/Eslatma” oqimi skrinlari
+
+============================================================
+SLAYD 2. Muammo va ehtiyoj
+Muammolar:
+- Topshiriqlar turli joyda yuradi (telefon, messenjər, qog‘oz) — tartib yo‘qoladi
+- Nazorat va hisobot kechikadi, holat (“bajarildimi?”) noaniq bo‘lib qoladi
+- “Kim mas’ul?” degan savol ko‘p vaqt oladi, javobgar shaxs aniq ko‘rinmaydi
+- Murojaatlar bo‘yicha ma’lumotlar tarqoq bo‘lib, umumiy manzara yo‘q
+Ehtiyoj:
+- Yagona tizimda topshiriq berish, ijro, hisobot va nazoratni ko‘rish
+- Tashkilotlar bilan tezkor aloqa (chat) va avtomatik eslatmalar
+
+============================================================
+SLAYD 3. Yechim: Platforma nimalarni qiladi?
+Asosiy imkoniyatlar:
+- Bosh sahifa: umumiy ko‘rinish va tezkor raqamlar
+- Topshiriqlar: yaratish, kimga berilganini belgilash, holatini yuritish, hisobot qabul qilish
+- Tashkilotlar: hokimlikka qarashli tashkilotlar ro‘yxati va tuzilmasi
+- Xodimlar: kim nima ko‘ra olishi va nima qila olishini tartibga solish
+- Murojaatlar: murojaatlarni ko‘rish, saralash, ijroga yo‘naltirish
+- Eslatmalar: muhim voqealar bo‘yicha xabardor qilish
+- Hisobotlar: qaysi soha yoki tashkilotda ishlar qanday ketayotgani
+Natija:
+- Jarayonlar shaffoflashadi (holat va tarix saqlanadi)
+- Mas’uliyat aniq bo‘ladi (kimga topshirilgani ko‘rinadi)
+
+============================================================
+SLAYD 4. Kimlar uchun? (rahbarlikdan ijrochigacha)
+Rollar:
+- Hokim: to‘liq nazorat, yakuniy tasdiqlash/yopish huquqi
+- Hokim yordamchisi: hokimga yaqin ish yuritadi, lekin yakuniy yopish hokimda qoladi
+- Hokimlik mas’uli: o‘z sohasi bo‘yicha topshiriq va murojaatlarni boshqaradi
+- Tashkilot rahbari: o‘z tashkilotiga kelgan topshiriqlarni qabul qiladi va ijroni tashkil qiladi
+- Tashkilot mas’uli: topshiriqni bajaradi, hisobot beradi
+Nima uchun muhim?
+- Har bir xodim faqat o‘z vazifasiga tegishli bo‘limlarni ko‘radi
+- “Keraksiz ruxsat”lar kamayadi, tartib va javobgarlik kuchayadi
+
+============================================================
+SLAYD 5. Topshiriq (Task) hayot sikli
+Oqim (oddiy ssenariy):
+1) Hokim / yordamchi / hokimlik mas’uli topshiriq beradi
+2) Topshiriq tegishli tashkilot(lar)ga yo‘naltiriladi
+3) Tashkilot rahbari/mas’uli ijroga oladi, jarayonni yuritadi
+4) Hisobot (izoh va kerakli fayllar) topshiriladi, holat yangilanadi (masalan: “Bajarildi”)
+5) Yakuniy nazorat: Hokim yakuniy tasdiqlaydi va yopadi
+Qo‘shimcha:
+- Muntazam topshiriqlarni oldindan rejalashtirish mumkin (masalan, haftalik nazorat)
+
+============================================================
+SLAYD 6. Tezkor aloqa: chat va eslatmalar
+Chat:
+- Har bir topshiriq bo‘yicha alohida chat bo‘ladi (hamma gaplar shu topshiriq ichida qoladi)
+- Xabarlar tarix bo‘lib saqlanadi, keyin ham topib o‘qish mumkin
+- Kerak bo‘lsa fayl, audio/video va manzil yuborish mumkin
+Eslatmalar:
+- Yangi xabar yoki muhim o‘zgarish bo‘lsa darhol xabardor qiladi
+- E’tibor qaratish uchun ovozli eslatma bo‘lishi mumkin
+Foyda:
+- Aloqa tarqoq bo‘lib ketmaydi, hammasi topshiriq bilan birga tartibli saqlanadi
+
+============================================================
+SLAYD 7. Fuqarolar murojaatlari: qabul qilish va ishlov berish
+Telegram orqali murojaat:
+- Fuqarolardan kelgan murojaatlar Telegram orqali qabul qilinib tizimda jamlanadi
+- Murojaatlarni mavzu/yo‘nalish bo‘yicha ajratish va mas’ulga biriktirish osonlashadi
+Aqlli yordamchi (ixtiyoriy):
+- Murojaat mazmunini qisqa xulosa qilib beradi
+- Javob matni bo‘yicha taklif beradi (yakuniy qaror mas’ul shaxsda qoladi)
+Qanday qiymat beradi?
+- Murojaatlarni tezroq saralash va ishlov berish
+- Takroriy murojaatlarda standart javoblarni tezroq tayyorlash
+
+============================================================
+SLAYD 8. Platforma qanday ishlaydi? (oddiy tushuntirish)
+Oddiy foydalanuvchi nuqtai nazaridan:
+- Har bir xodim tizimga kiradi va o‘ziga tegishli bo‘limlarni ko‘radi
+- Topshiriqlar bo‘yicha: kimga berilgan, muddati, holati va hisobotlar bitta joyda turadi
+- Murojaatlar bo‘yicha: kelgan murojaatlar yig‘iladi, yo‘naltiriladi, ijrosi kuzatiladi
+- Eslatmalar va chat: muhim o‘zgarishlar darhol yetkaziladi, savol-javob tezlashadi
+Boshqaruv uchun:
+- Rahbariyat “umumiy manzara”ni ko‘radi: qayerda kechikish bor, qaysi tashkilot faol
+- Hisobotlar tartibli bo‘lgani uchun tahlil qilish osonlashadi
+
+============================================================
+SLAYD 9. Ishonch va tartib: shaffoflik, javobgarlik, tarix
+Shaffoflik:
+- Har bir topshiriq va murojaatning holati ko‘rinadi: qabul qilindi / jarayonda / bajarildi
+Javobgarlik:
+- Kimga biriktirilgani va kim tasdiqlagani aniq bo‘ladi
+Tarix:
+- “Qachon, kim, nima qilgan?” degan savollarga tizim ichida javob bor
+Ishonch:
+- Muhim yozishmalar va hujjatlar yo‘qolib ketmaydi, bir joyda saqlanadi
+
+============================================================
+SLAYD 10. Taqdimot (demo) + joriy etish taklifi
+Demo (3–5 daqiqa):
+1) Login → Dashboard
+2) Tasks → bitta topshiriqni ochish → status/hisobot
+3) Shu topshiriq Chat’ida xabar yuborish (tezkor)
+4) Eslatmalar bo‘limida yangi xabar/voqeani ko‘rsatish
+5) (Ixtiyoriy) Murojaatlar bo‘limi: murojaatni qabul qilish va mas’ulga biriktirish
+Joriy etish taklifi (oddiy reja):
+- 1-hafta: ehtiyojlarni aniqlash va pilot bo‘lim tanlash
+- 2-hafta: xodimlarni o‘qitish, sinov rejimida ishga tushirish
+- 3–4-hafta: bosqichma-bosqich kengaytirish (tashkilotlar bo‘yicha)
+Natija (qisqa):
+- Topshiriqlar ijrosi tezlashadi, nazorat kuchayadi, murojaatlar bilan ishlash soddalashadi
