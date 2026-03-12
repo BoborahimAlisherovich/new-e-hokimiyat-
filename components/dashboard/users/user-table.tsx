@@ -108,11 +108,11 @@ export function UserTable({ users }: UserTableProps) {
           <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
             <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.fio}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.login}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.position}</TableHead>
+            <TableHead className="hidden font-bold text-slate-800 py-4 text-sm lg:table-cell">{tr.position}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.org}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.role}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.status}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 text-sm">{tr.date}</TableHead>
+            <TableHead className="hidden font-bold text-slate-800 py-4 text-sm xl:table-cell">{tr.date}</TableHead>
             <TableHead className="font-bold text-slate-800 py-4 text-sm w-8"></TableHead>
           </TableRow>
         </TableHeader>
@@ -125,18 +125,23 @@ export function UserTable({ users }: UserTableProps) {
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <TableCell className="py-4">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <UserAvatar
                     firstName={user.first_name}
                     lastName={user.last_name}
                     avatarUrl={user.avatar_url}
                     size="md"
                   />
-                  <div>
-                    <div className="font-semibold text-slate-900 text-base">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 text-base whitespace-normal leading-snug">
                       {user.last_name} {user.first_name} {user.middle_name}
                     </div>
-                    <div className="text-sm text-slate-500">{user.email || user.phone}</div>
+                    <div className="text-sm text-slate-500 truncate">{user.email || user.phone}</div>
+                    <div className="mt-1 text-xs text-slate-500 lg:hidden">
+                      {(user.position || "—") + " | " + new Date(user.created_at).toLocaleDateString(
+                        language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
+                      )}
+                    </div>
                   </div>
                 </div>
               </TableCell>
@@ -150,8 +155,10 @@ export function UserTable({ users }: UserTableProps) {
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="py-4 text-slate-700 text-sm font-medium">{user.position || "—"}</TableCell>
-              <TableCell className="py-4 text-slate-700 text-sm font-medium max-w-[200px] truncate">{user.organization?.name || user.organization_name || tr.notSet}</TableCell>
+              <TableCell className="hidden py-4 text-slate-700 text-sm font-medium lg:table-cell">{user.position || "—"}</TableCell>
+              <TableCell className="py-4 text-slate-700 text-sm font-medium max-w-[200px] whitespace-normal leading-snug">
+                {user.organization?.name || user.organization_name || tr.notSet}
+              </TableCell>
               <TableCell className="py-4">
                 <Badge variant="outline" className={cn("px-3 py-1.5 text-xs font-semibold border rounded-lg shadow-sm", ROLE_COLORS[user.role] || "bg-gray-50 text-gray-700 border-gray-200")}>
                   {ROLE_LABELS[user.role] || user.role || tr.unknown}
@@ -162,7 +169,11 @@ export function UserTable({ users }: UserTableProps) {
                   {STATUS_LABELS[getUserStatusKey(user)] || tr.unknown}
                 </Badge>
               </TableCell>
-              <TableCell className="py-4 text-slate-600 text-sm font-medium">{new Date(user.created_at).toLocaleDateString(language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ")}</TableCell>
+              <TableCell className="hidden py-4 text-slate-600 text-sm font-medium xl:table-cell">
+                {new Date(user.created_at).toLocaleDateString(
+                  language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
+                )}
+              </TableCell>
               <TableCell className="py-4">
                 <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all duration-200" />
               </TableCell>
