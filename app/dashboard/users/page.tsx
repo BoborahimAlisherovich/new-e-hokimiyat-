@@ -11,10 +11,13 @@ import { UserTable } from "@/components/dashboard/users/user-table"
 import { UserCreateDialog } from "@/components/dashboard/users/user-create-dialog"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
-import { Building2, ShieldCheck, UsersRound } from "lucide-react"
+import { Building2, Plus, ShieldCheck, UsersRound } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n/context"
 
 export default function UsersPage() {
   const t = useTranslation()
+  const { language } = useI18n()
   const pageRef = useGSAPPageEntrance()
   // State management
   const [users, setUsers] = useState<User[]>([])
@@ -130,7 +133,33 @@ export default function UsersPage() {
 
   return (
     <>
-      <Header title={t.pages.users.title} description={t.pages.users.description} />
+      <Header
+        title={t.pages.users.title}
+        description={t.pages.users.description}
+        actions={
+          <Button
+            data-gsap-action
+            onClick={handleCreateUser}
+            className="h-9 w-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
+            aria-label={{
+              uz: "Yangi foydalanuvchi",
+              "uz-cyrl": "Янги фойдаланувчи",
+              ru: "Новый пользователь",
+              en: "New user",
+            }[language]}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">
+              {{
+                uz: "Yangi foydalanuvchi",
+                "uz-cyrl": "Янги фойдаланувчи",
+                ru: "Новый пользователь",
+                en: "New user",
+              }[language]}
+            </span>
+          </Button>
+        }
+      />
       <div ref={pageRef}>
       <DashboardPageFrame
         eyebrow="Foydalanuvchilar"
