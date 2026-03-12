@@ -27,9 +27,10 @@ import { useAudioAlert } from "@/hooks/use-audio-alert"
 interface HeaderProps {
   title: string
   description?: string
+  actions?: React.ReactNode
 }
 
-export function Header({ title, description }: HeaderProps) {
+export function Header({ title, description, actions }: HeaderProps) {
   const router = useRouter()
   const playAlert = useAudioAlert()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -231,6 +232,8 @@ export function Header({ title, description }: HeaderProps) {
         >
           <Menu className="h-5 w-5 text-slate-600" />
         </Button>
+
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
 
  {/* Language Selector */}
  <DropdownMenu>

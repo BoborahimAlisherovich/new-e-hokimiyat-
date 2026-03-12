@@ -370,87 +370,139 @@ export function useGSAPPageEntrance() {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    let failsafeTimeout: number | undefined;
+
+    const ensureVisible = () => {
+      if (!containerRef.current) return;
+      const sections = containerRef.current.querySelectorAll("[data-gsap-section]");
+      const cards = containerRef.current.querySelectorAll("[data-gsap-card]");
+      const stats = containerRef.current.querySelectorAll("[data-gsap-stat]");
+      const actions = containerRef.current.querySelectorAll("[data-gsap-action]");
+
+      // If GSAP is interrupted (e.g., dev StrictMode, route transitions), avoid leaving content hidden.
+      const targets = [
+        containerRef.current,
+        ...Array.from(sections),
+        ...Array.from(cards),
+        ...Array.from(stats),
+        ...Array.from(actions),
+      ].filter(Boolean);
+
+      if (targets.length === 0) return;
+
+      gsap.set(targets, {
+        opacity: 1,
+        clearProps: "transform",
+      });
+    };
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+    // Reduced motion: no entrance animations, but keep everything visible.
+    if (prefersReducedMotion) {
+      ensureVisible();
+      return;
+    }
+
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: "power4.out" },
-      });
+      try {
+        const tl = gsap.timeline({
+          defaults: { ease: "power4.out" },
+          onComplete: ensureVisible,
+        });
 
-      // 1. Container fade in with slight upward motion
-      tl.from(containerRef.current, {
-        opacity: 0,
-        y: 8,
-        duration: 0.35,
-        ease: "power2.out",
-      });
+        // 1. Container fade in with slight upward motion
+        tl.from(containerRef.current, {
+          opacity: 0,
+          y: 8,
+          duration: 0.35,
+          ease: "power2.out",
+          immediateRender: false,
+        });
 
-      // 2. Stagger sections with smooth slide-up
-      const sections = containerRef.current!.querySelectorAll("[data-gsap-section]");
-      if (sections.length > 0) {
-        tl.from(
-          sections,
-          {
-            opacity: 0,
-            y: 30,
-            duration: 0.6,
-            stagger: 0.08,
-            ease: "power3.out",
-          },
-          "-=0.15"
-        );
-      }
+        // 2. Stagger sections with smooth slide-up
+        const sections = containerRef.current!.querySelectorAll("[data-gsap-section]");
+        if (sections.length > 0) {
+          tl.from(
+            sections,
+            {
+              opacity: 0,
+              y: 30,
+              duration: 0.6,
+              stagger: 0.08,
+              ease: "power3.out",
+              immediateRender: false,
+            },
+            "-=0.15"
+          );
+        }
 
-      // 3. Animate cards with scale bounce
-      const cards = containerRef.current!.querySelectorAll("[data-gsap-card]");
-      if (cards.length > 0) {
-        tl.from(
-          cards,
-          {
-            opacity: 0,
-            y: 16,
-            scale: 0.96,
-            duration: 0.5,
-            stagger: 0.05,
-            ease: "back.out(1.4)",
-          },
-          "-=0.4"
-        );
-      }
+        // 3. Animate cards with scale bounce
+        const cards = containerRef.current!.querySelectorAll("[data-gsap-card]");
+        if (cards.length > 0) {
+          tl.from(
+            cards,
+            {
+              opacity: 0,
+              y: 16,
+              scale: 0.96,
+              duration: 0.5,
+              stagger: 0.05,
+              ease: "back.out(1.4)",
+              immediateRender: false,
+            },
+            "-=0.4"
+          );
+        }
 
-      // 4. Animate stat numbers with counter effect
-      const stats = containerRef.current!.querySelectorAll("[data-gsap-stat]");
-      if (stats.length > 0) {
-        tl.from(
-          stats,
-          {
-            opacity: 0,
-            y: 10,
-            scale: 0.9,
-            duration: 0.4,
-            stagger: 0.04,
-            ease: "back.out(2)",
-          },
-          "-=0.35"
-        );
-      }
+        // 4. Animate stat numbers with counter effect
+        const stats = containerRef.current!.querySelectorAll("[data-gsap-stat]");
+        if (stats.length > 0) {
+          tl.from(
+            stats,
+            {
+              opacity: 0,
+              y: 10,
+              scale: 0.9,
+              duration: 0.4,
+              stagger: 0.04,
+              ease: "back.out(2)",
+              immediateRender: false,
+            },
+            "-=0.35"
+          );
+        }
 
-      // 5. Animate action buttons
-      const actions = containerRef.current!.querySelectorAll("[data-gsap-action]");
-      if (actions.length > 0) {
-        tl.from(
-          actions,
-          {
-            opacity: 0,
-            x: -10,
-            duration: 0.35,
-            stagger: 0.04,
-            ease: "power2.out",
-          },
-          "-=0.3"
-        );
+        // 5. Animate action buttons
+        const actions = containerRef.current!.querySelectorAll("[data-gsap-action]");
+        if (actions.length > 0) {
+          tl.from(
+            actions,
+            {
+              opacity: 0,
+              x: -10,
+              duration: 0.35,
+              stagger: 0.04,
+              ease: "power2.out",
+              immediateRender: false,
+            },
+            "-=0.3"
+          );
+        }
+
+        // Failsafe: if something interrupts early, force visibility shortly after.
+        failsafeTimeout = window.setTimeout(ensureVisible, 1200);
+      } catch {
+        ensureVisible();
       }
     }, containerRef);
 
-    return () => ctx.revert();
+    return () => {
+      if (failsafeTimeout) window.clearTimeout(failsafeTimeout);
+      ctx.revert();
+    };
   }, []);
 
   return containerRef;
