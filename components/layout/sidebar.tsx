@@ -35,6 +35,7 @@ import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount, TOKEN_
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
 import { canAccessDashboardPath, isDashboardNavItemActive } from "@/lib/dashboard-access"
+import { normalizeUserRole } from "@/lib/role-utils"
 
 function getCachedUser(): User | null {
   if (typeof window === "undefined") return null
@@ -133,7 +134,7 @@ export function Sidebar() {
   }, [])
 
   // Get user role - default to TASHKILOT_MASUL for minimal access
-  const userRole = currentUser?.role || 'TASHKILOT_MASUL'
+  const userRole = normalizeUserRole(currentUser?.role) || 'TASHKILOT_MASUL'
 
   const roleLabels: Record<UserRole, string> = {
     HOKIM: t.roles.HOKIM,
