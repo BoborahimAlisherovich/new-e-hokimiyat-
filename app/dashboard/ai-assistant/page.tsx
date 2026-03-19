@@ -206,16 +206,25 @@ export default function AIAssistantPage() {
   const deleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Ushbu suhbatni o'chirmoqchimisiz?")) return;
-    
+
+    // Optimistically remove the conversation from UI immediately
+    setConversations((prev) => prev.filter((conv) => conv.id !== conversationId));
+
+    if (currentConversation?.id === conversationId) {
+      setCurrentConversation(null);
+      setMessages([]);
+    }
+
     try {
       await api.delete(`/ai/conversations/${conversationId}/`);
-      if (currentConversation?.id === conversationId) {
-        setCurrentConversation(null);
-        setMessages([]);
-      }
-      loadConversations();
+
+      // Refresh list from server to ensure we stay in sync.
+      // (In case the server returns a different ordering or new items.)
+      void loadConversations();
     } catch (err) {
       console.error("Error deleting conversation:", err);
+      // If delete failed, reload the conversations to restore UI state.
+      void loadConversations();
     }
   }, [currentConversation, loadConversations]);
 
