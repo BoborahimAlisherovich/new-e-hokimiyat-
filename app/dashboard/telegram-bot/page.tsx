@@ -1160,7 +1160,7 @@ export default function TelegramBotPage() {
 
         <Card 
           className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer"
-          onClick={() => router.push("/dashboard/telegram-bot/appeals")}
+          onClick={() => router.push("/dashboard/appeals")}
         >
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
