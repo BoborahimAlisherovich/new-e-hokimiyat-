@@ -68,9 +68,6 @@ const buildConversationTitle = (text: string) => {
   return normalized.length > 60 ? `${normalized.slice(0, 60)}...` : normalized;
 };
 
-const toListTitle = (text: string, max = 32) =>
-  text.length > max ? `${text.slice(0, max)}...` : text;
-
 const commandLabels: Record<string, string> = {
   GENERATE_REPORT: "hisobot yaratish",
   CREATE_TASK: "yangi topshiriq yaratish",
@@ -722,39 +719,14 @@ function ChatSidebar({
             </div>
             <div className="space-y-1">
               {conversations.map((conv) => {
-                const displayTitle = conv.title && conv.title !== "Yangi suhbat"
-                  ? toListTitle(conv.title)
-                  : conv.last_message?.role === "user" && conv.last_message?.content
-                    ? toListTitle(conv.last_message.content)
-                    : "Yangi suhbat";
-                
                 return (
-                  <div key={conv.id} className="flex w-full items-center gap-1">
-                    <div
-                      onClick={() => onSelectConversation(conv)}
-                      className={`group flex flex-1 min-w-0 items-center gap-2 px-3 py-2 rounded-xl cursor-pointer border transition-all duration-200 ${
-                        currentConversation?.id === conv.id
-                          ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                          : "bg-white/80 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
-                      }`}
-                    >
-                      <button
-                        onClick={(e) => onDeleteConversation(conv.id, e)}
-                        className={`shrink-0 inline-flex h-6 w-6 min-w-6 items-center justify-center rounded-md border transition-colors ${
-                          currentConversation?.id === conv.id
-                            ? "border-white/40 bg-white/15 text-white hover:bg-white/25"
-                            : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                        }`}
-                        aria-label="Suhbatni o'chirish"
-                        title="Suhbatni o'chirish"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="block flex-1 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium">
-                        {displayTitle}
-                      </span>
-                    </div>
-                  </div>
+                  <ConversationListItem
+                    key={conv.id}
+                    conv={conv}
+                    isActive={currentConversation?.id === conv.id}
+                    onSelect={() => onSelectConversation(conv)}
+                    onDelete={(e) => onDeleteConversation(conv.id, e)}
+                  />
                 );
               })}
             </div>
@@ -840,39 +812,14 @@ function MobileSidebar({
                   </div>
                   <div className="space-y-1">
                     {conversations.map((conv) => {
-                      const displayTitle = conv.title && conv.title !== "Yangi suhbat"
-                        ? toListTitle(conv.title)
-                        : conv.last_message?.role === "user" && conv.last_message?.content
-                          ? toListTitle(conv.last_message.content)
-                          : "Yangi suhbat";
-                      
                       return (
-                        <div key={conv.id} className="flex w-full items-center gap-1">
-                          <div
-                            onClick={() => onSelectConversation(conv)}
-                            className={`group flex flex-1 min-w-0 items-center gap-2 px-3 py-2 rounded-xl cursor-pointer border transition-all duration-200 ${
-                              currentConversation?.id === conv.id
-                                ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                                : "bg-white/80 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                          >
-                            <button
-                              onClick={(e) => onDeleteConversation(conv.id, e)}
-                              className={`shrink-0 inline-flex h-6 w-6 min-w-6 items-center justify-center rounded-md border transition-colors ${
-                                currentConversation?.id === conv.id
-                                  ? "border-white/40 bg-white/15 text-white hover:bg-white/25"
-                                  : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                              }`}
-                              aria-label="Suhbatni o'chirish"
-                              title="Suhbatni o'chirish"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="block flex-1 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium">
-                              {displayTitle}
-                            </span>
-                          </div>
-                        </div>
+                        <ConversationListItem
+                          key={conv.id}
+                          conv={conv}
+                          isActive={currentConversation?.id === conv.id}
+                          onSelect={() => onSelectConversation(conv)}
+                          onDelete={(e) => onDeleteConversation(conv.id, e)}
+                        />
                       );
                     })}
                   </div>
@@ -883,6 +830,102 @@ function MobileSidebar({
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function getConversationDisplayTitle(conv: AIConversation) {
+  return conv.title && conv.title !== "Yangi suhbat"
+    ? conv.title
+    : conv.last_message?.role === "user" && conv.last_message?.content
+      ? conv.last_message.content
+      : "Yangi suhbat";
+}
+
+function getConversationSecondaryText(conv: AIConversation) {
+  if (conv.last_message?.created_at) {
+    return new Date(conv.last_message.created_at).toLocaleDateString("uz-UZ", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
+
+  return "Yangi suhbat";
+}
+
+function ConversationListItem({
+  conv,
+  isActive,
+  onSelect,
+  onDelete,
+}: {
+  conv: AIConversation;
+  isActive: boolean;
+  onSelect: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}) {
+  const displayTitle = getConversationDisplayTitle(conv);
+  const secondaryText = getConversationSecondaryText(conv);
+
+  return (
+    <div
+      className={`group flex items-center gap-2 rounded-lg px-2 py-1 ${
+        isActive ? "bg-blue-50/70" : "hover:bg-slate-100/80"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        className={`flex flex-1 min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
+          isActive
+            ? "bg-blue-100 text-blue-900"
+            : "bg-transparent text-slate-700"
+        }`}
+        title={displayTitle}
+      >
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+            isActive
+              ? "bg-blue-200 text-blue-700"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          <History className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className={`truncate text-sm ${
+              isActive ? "font-medium text-blue-950" : "font-medium text-slate-800"
+            }`}
+            title={displayTitle}
+          >
+            {displayTitle}
+          </p>
+          <p
+            className={`truncate text-xs ${
+              isActive ? "text-blue-700/80" : "text-slate-500"
+            }`}
+            title={secondaryText}
+          >
+            {secondaryText}
+          </p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors ${
+          isActive
+            ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
+            : "border-slate-200 bg-white text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+        }`}
+        aria-label="Suhbatni o'chirish"
+        title="Suhbatni o'chirish"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -955,12 +998,12 @@ function ChatArea({
                 <div className="mb-4 rounded-2xl border border-sky-100/80 bg-white/80 p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-700">
                     <Zap className="h-4 w-4" />
-                    Telefon uchun qulay ishlash
+                    Tezkor foydalanish
                   </div>
                   <p className="text-xs leading-relaxed text-slate-600">
-                    Mikrofon tugmasini bosib gapiring, matn avtomatik tushadi. Tayyor
-                    promptlardan foydalanib, topshiriq, murojaat va hisobot holatini tez
-                    so'rash mumkin.
+                    Mikrofon orqali savol berishingiz yoki tayyor tugmalarni bosib
+                    kerakli ma'lumotni tez ochishingiz mumkin. Topshiriq, murojaat va
+                    hisobotlar bo'yicha asosiy holat bir necha bosishda olinadi.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:gap-3 justify-center px-4">
