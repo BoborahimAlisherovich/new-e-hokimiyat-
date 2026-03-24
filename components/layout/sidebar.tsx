@@ -271,7 +271,7 @@ export function Sidebar() {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={cn(
-          "flex h-screen flex-col bg-linear-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
+          "flex min-h-dvh flex-col bg-linear-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
           isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "relative",
           collapsed 
             ? (isMobile ? "-translate-x-full w-70" : "w-19") 
@@ -280,7 +280,7 @@ export function Sidebar() {
       >
       
       {/* Header */}
-      <div className="relative z-10 flex h-17 items-center justify-between border-b border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.42))] px-4 backdrop-blur-2xl">
+      <div className="relative z-10 flex min-h-17 items-center justify-between border-b border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.42))] px-4 backdrop-blur-2xl">
         {!collapsed && (
           <Link href="/dashboard" className="flex min-w-0 items-center gap-3 hover:opacity-90 transition-opacity">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(236,254,255,0.88))] shadow-[0_16px_32px_-18px_rgba(14,165,233,0.35)]">
@@ -323,7 +323,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav
-        className="relative z-10 flex-1 overflow-y-auto px-3 py-2 sm:px-4 sm:py-3"
+        className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 sm:px-4 sm:py-3"
         role="navigation"
         aria-label={t.navigation.mainMenu}
       >

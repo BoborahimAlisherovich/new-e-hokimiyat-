@@ -1099,8 +1099,8 @@ export default function ChatPage() {
     return (
       <>
         <Header title={tr.title} />
-        <div className="p-6">
-          <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <div className="px-3 py-4 sm:px-4 lg:px-6">
+          <div className="flex min-h-[60vh] items-center justify-center rounded-[26px] border border-white/70 bg-white/75">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
               <p className="mt-4 text-slate-500">{tr.loading}</p>
@@ -1114,15 +1114,14 @@ export default function ChatPage() {
   return (
     <>
       <Header title={tr.title} />
-      <div ref={pageRef} className="p-6">
+      <div ref={pageRef} className="relative px-2 py-3 sm:px-3 lg:px-4">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/30 to-transparent blur-3xl" />
-          <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/22 to-transparent blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/20 to-transparent blur-3xl" />
-          <div className="absolute right-1/4 top-12 h-40 w-40 rotate-12 rounded-[32px] border border-white/50 bg-white/25 backdrop-blur-xl" />
+          <div className="absolute top-0 left-0 hidden h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/30 to-transparent blur-3xl md:block" />
+          <div className="absolute right-0 top-1/3 hidden h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/22 to-transparent blur-3xl lg:block" />
+          <div className="absolute bottom-0 left-1/4 hidden h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/20 to-transparent blur-3xl xl:block" />
         </div>
         
-        <div className="relative z-10 p-3 sm:p-4 lg:p-6">
+        <div className="relative z-10 p-1 sm:p-2 lg:p-3">
         <section data-gsap-section className="mb-4">
 	          <div className="grid gap-3 2xl:grid-cols-[1.45fr_1fr]">
             <div
@@ -1179,12 +1178,12 @@ export default function ChatPage() {
           </div>
         </section>
 
-        <div data-gsap-section className="flex h-[calc(100vh-190px)] min-h-0 flex-col gap-4 lg:flex-row lg:gap-6">
+        <div data-gsap-section className="flex min-h-[65vh] flex-col gap-4 lg:h-[calc(100dvh-190px)] lg:min-h-0 lg:flex-row lg:gap-6">
           {/* Users List */}
           <Card
             data-gsap-card
             className={cn(
-              "w-full min-h-0 overflow-hidden rounded-[28px] border border-white/75 bg-white/78 shadow-[0_28px_70px_-34px_rgba(14,165,233,0.30)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_80px_-32px_rgba(14,165,233,0.34)] lg:w-80 xl:w-96 flex flex-col",
+              "w-full min-h-0 overflow-hidden rounded-[28px] border border-white/75 bg-white/78 shadow-[0_28px_70px_-34px_rgba(14,165,233,0.30)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_80px_-32px_rgba(14,165,233,0.34)] lg:w-[320px] xl:w-[360px] flex flex-col",
               !showUserList && "hidden lg:flex"
             )}
           >
@@ -1293,8 +1292,8 @@ export default function ChatPage() {
                       showOnline={true}
                       isOnline={selectedUser.is_online}
                     />
-                    <div className="flex-1">
-                      <p className="font-bold text-slate-900">{selectedUser.first_name} {selectedUser.last_name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-slate-900">{selectedUser.first_name} {selectedUser.last_name}</p>
                       <div className="flex items-center gap-2">
                         {selectedUser.is_online ? (
                           <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">

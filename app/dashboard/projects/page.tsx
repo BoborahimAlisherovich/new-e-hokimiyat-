@@ -453,8 +453,8 @@ export default function ProjectsPage() {
               </div>
             </div>
             {canManage && (
-              <div className="flex flex-col items-start gap-2">
-                <Button onClick={openCreate} className="gap-2">
+              <div className="flex w-full flex-col items-start gap-2 lg:w-auto">
+                <Button onClick={openCreate} className="w-full gap-2 sm:w-auto">
                   <Plus className="h-4 w-4" />
                   Yangi loyiha
                 </Button>
@@ -464,7 +464,7 @@ export default function ProjectsPage() {
           </div>
         </section>
 
-        <section data-gsap-section className="rounded-[26px] border border-white/70 bg-white/78 p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+        <section data-gsap-section className="rounded-[26px] border border-white/70 bg-white/78 p-4 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-2">
@@ -534,11 +534,11 @@ export default function ProjectsPage() {
                   </div>
                 )}
                 {items.map((project) => (
-                  <article key={project.id} className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)]">
+                  <article key={project.id} className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] sm:p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{project.title}</h3>
+                          <h3 className="min-w-0 text-lg font-semibold text-slate-900">{project.title}</h3>
                           <Badge className={meta.badge}>{project.category_display || meta.label}</Badge>
                           <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">{project.status_display || project.status}</Badge>
                         </div>
@@ -559,20 +559,20 @@ export default function ProjectsPage() {
                       </div>
 
                       {canManage && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
                           {project.is_active ? (
                             <>
-                              <Button variant="outline" size="sm" onClick={() => openEdit(project)}>
+                              <Button variant="outline" size="sm" onClick={() => openEdit(project)} className="w-full sm:w-auto">
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Tahrirlash
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
+                              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto">
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Arxivlash
                               </Button>
                             </>
                           ) : (
-                            <Button variant="outline" size="sm" onClick={() => handleRestore(project)}>
+                            <Button variant="outline" size="sm" onClick={() => handleRestore(project)} className="w-full sm:w-auto">
                               <ArchiveRestore className="mr-2 h-4 w-4" />
                               Qayta tiklash
                             </Button>
