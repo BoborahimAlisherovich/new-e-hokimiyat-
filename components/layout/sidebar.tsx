@@ -271,7 +271,7 @@ export function Sidebar() {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={cn(
-          "flex min-h-dvh flex-col bg-linear-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
+          "flex h-dvh max-h-dvh flex-col bg-linear-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
           isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "relative",
           collapsed 
             ? (isMobile ? "-translate-x-full w-70" : "w-19") 
@@ -404,7 +404,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.50))] px-3 py-2.5 backdrop-blur-2xl sm:py-3.5">
+      <div className="sticky bottom-0 z-10 shrink-0 border-t border-cyan-100/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.50))] px-3 py-2.5 backdrop-blur-2xl sm:py-3.5">
         {/* User Profile */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
