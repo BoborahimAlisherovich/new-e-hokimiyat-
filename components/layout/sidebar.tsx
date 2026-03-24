@@ -8,6 +8,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import {
+  BriefcaseBusiness,
   LayoutGrid,
   CheckSquare2,
   Users2,
@@ -161,6 +162,12 @@ export function Sidebar() {
       title: t.navigation.tasks,
       href: "/dashboard/tasks",
       icon: CheckSquare2,
+      section: "main"
+    },
+    {
+      title: "Loyihalar",
+      href: "/dashboard/projects",
+      icon: BriefcaseBusiness,
       section: "main"
     },
     {

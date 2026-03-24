@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header"
 import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { User, Organization } from "@/types"
-import { getUsers, getOrganizations } from "@/lib/api"
+import { getUsers, getOrganizations, getCurrentUser, getSectors } from "@/lib/api"
 import { UserStats } from "@/components/dashboard/users/user-stats"
 import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
@@ -14,6 +14,7 @@ import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { Building2, Plus, ShieldCheck, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/lib/i18n/context"
+import { normalizeUserRole } from "@/lib/role-utils"
 
 export default function UsersPage() {
   const t = useTranslation()
@@ -22,12 +23,15 @@ export default function UsersPage() {
   // State management
   const [users, setUsers] = useState<User[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [sectors, setSectors] = useState<Array<{ id: string; name: string; is_active?: boolean }>>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [organizationFilter, setOrganizationFilter] = useState<string>("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [canManageUsers, setCanManageUsers] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [createFormData, setCreateFormData] = useState({
     login: "",
     firstName: "",
@@ -40,18 +44,26 @@ export default function UsersPage() {
     password: "",
     role: "TASHKILOT_MASUL" as User["role"],
     organizationId: "",
+    sectorId: "",
+    supervisorId: "",
   })
 
   // Data loading
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
- const [usersData, orgsData] = await Promise.all([
+ const [usersData, orgsData, sectorsData, me] = await Promise.all([
  getUsers(),
- getOrganizations()
+ getOrganizations(),
+ getSectors().catch(() => []),
+ getCurrentUser().catch(() => null)
  ])
  setUsers(Array.isArray(usersData) ? usersData : [])
  setOrganizations(Array.isArray(orgsData) ? orgsData : [])
+      setSectors(Array.isArray(sectorsData) ? sectorsData.filter((sector) => sector?.is_active !== false) : [])
+      setCurrentUser(me)
+      const role = normalizeUserRole(me?.role)
+      setCanManageUsers(Boolean(role && ["HOKIM", "HOKIM_YORDAMCHISI", "TASHKILOT_RAHBARI", "ADMIN"].includes(role)))
     } catch (error) {
       console.error("Error loading data:", error)
       setUsers([])
@@ -104,6 +116,8 @@ export default function UsersPage() {
       password: "",
       role: "TASHKILOT_MASUL",
       organizationId: "",
+      sectorId: "",
+      supervisorId: "",
     })
     await loadData()
   }
@@ -137,27 +151,29 @@ export default function UsersPage() {
         title={t.pages.users.title}
         description={t.pages.users.description}
         actions={
-          <Button
-            data-gsap-action
-            onClick={handleCreateUser}
-            className="h-9 w-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
-            aria-label={{
-              uz: "Yangi foydalanuvchi",
-              "uz-cyrl": "Янги фойдаланувчи",
-              ru: "Новый пользователь",
-              en: "New user",
-            }[language]}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden md:inline">
-              {{
+          canManageUsers ? (
+            <Button
+              data-gsap-action
+              onClick={handleCreateUser}
+              className="h-9 w-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
+              aria-label={{
                 uz: "Yangi foydalanuvchi",
                 "uz-cyrl": "Янги фойдаланувчи",
                 ru: "Новый пользователь",
                 en: "New user",
               }[language]}
-            </span>
-          </Button>
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:inline">
+                {{
+                  uz: "Yangi foydalanuvchi",
+                  "uz-cyrl": "Янги фойдаланувчи",
+                  ru: "Новый пользователь",
+                  en: "New user",
+                }[language]}
+              </span>
+            </Button>
+          ) : null
         }
       />
       <div ref={pageRef}>
@@ -171,6 +187,12 @@ export default function UsersPage() {
           { label: "Tashkilotlar", value: organizations.length, icon: Building2, tone: "from-amber-400/24 to-amber-100/75" },
         ]}
       >
+          <section data-gsap-section>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos foydalanuvchi ro'yxati</span>
+              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, tashkilot rahbari, administrator</span>
+            </div>
+          </section>
           {/* Stats Cards */}
           <section data-gsap-section>
             <UserStats
@@ -194,6 +216,7 @@ export default function UsersPage() {
             onOrganizationChange={setOrganizationFilter}
             organizations={organizations}
             onCreate={handleCreateUser}
+            showCreateButton={canManageUsers}
             totalCount={users.length}
             filteredCount={filteredUsers.length}
           />
@@ -210,6 +233,9 @@ export default function UsersPage() {
         onOpenChange={setIsCreateDialogOpen}
         formData={createFormData}
         organizations={organizations}
+        sectors={sectors}
+        users={users}
+        currentUser={currentUser}
         onChange={handleInputChange}
         onCreated={handleUserCreated}
       />

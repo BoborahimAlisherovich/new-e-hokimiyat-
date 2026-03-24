@@ -31,7 +31,8 @@ import { useEffect, useMemo, useState } from "react"
 
 const ROLE_LABELS: Record<string, string> = {
   HOKIM: "Hokim",
-  HOKIMLIK_MASUL: "Hokimlik mas'uli",
+  HOKIM_YORDAMCHISI: "Hokim o'rinbosari",
+  HOKIMLIK_MASUL: "Hokimlik mutaxassisi",
   TASHKILOT_RAHBARI: "Tashkilot rahbari",
   TASHKILOT_MASUL: "Tashkilot mas'uli",
   ADMIN: "Administrator",

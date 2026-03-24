@@ -235,7 +235,7 @@ class AppealReviewSerializer(serializers.Serializer):
     forward_to_site = serializers.BooleanField(default=False)
     create_task = serializers.BooleanField(default=False)
     organization_ids = serializers.ListField(
-        child=serializers.IntegerField(),
+        child=serializers.CharField(),
         required=False,
         default=list
     )

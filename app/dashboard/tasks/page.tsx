@@ -13,7 +13,7 @@ import type { Task } from "@/types"
 import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
-import { CheckCircle2, Clock3, ListTodo } from "lucide-react"
+import { CheckCircle2, Clock3, ListTodo, Mic, Plus, Sparkles } from "lucide-react"
 
 
 export default function TasksPage() {
@@ -33,6 +33,7 @@ export default function TasksPage() {
   const [organizationFilter, setOrganizationFilter] = useState<string>("all")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [createTaskMode, setCreateTaskMode] = useState<"manual" | "audio">("manual")
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -42,7 +43,28 @@ export default function TasksPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   
   // Rolga qarab topshiriq yaratish imkoniyati
-  const canCreateTask = currentUser?.role && ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'].includes(currentUser.role)
+  const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
+  const visibleOrganizations = useMemo(() => {
+    if (!currentUser) return organizations
+
+    if (currentUser.role === "TASHKILOT_RAHBARI") {
+      const currentOrgId =
+        typeof currentUser.organization === "object" && currentUser.organization?.id
+          ? String(currentUser.organization.id)
+          : String(currentUser.organization_id || "")
+      return organizations.filter((org) => String(org.id) === currentOrgId)
+    }
+
+    if (currentUser.role === "HOKIM_YORDAMCHISI") {
+      const currentSectorId =
+        typeof currentUser.sector === "object" && currentUser.sector?.id
+          ? String(currentUser.sector.id)
+          : String(currentUser.sector_id || "")
+      return organizations.filter((org: any) => String(org.sector ?? org.sector_id ?? "") === currentSectorId)
+    }
+
+    return organizations
+  }, [organizations, currentUser])
 
   // Build filters object - memoized to avoid recreation
   const buildTaskFilters = useCallback(() => {
@@ -116,7 +138,8 @@ export default function TasksPage() {
     setSelectedTask(task)
   }
 
-  const handleCreateTask = () => {
+  const handleCreateTask = (mode: "manual" | "audio" = "manual") => {
+    setCreateTaskMode(mode)
     setIsCreateDialogOpen(true)
   }
 
@@ -177,6 +200,10 @@ export default function TasksPage() {
 
         {/* Filters */}
         <section data-gsap-section>
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos topshiriq oqimi</span>
+            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
+          </div>
           <div className="rounded-[26px] border border-white/70 bg-white/78 p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
             <TaskFilters
@@ -185,7 +212,7 @@ export default function TasksPage() {
             priorityFilter={priorityFilter}
             categoryFilter={categoryFilter}
             organizationFilter={organizationFilter}
-            organizations={organizations}
+            organizations={visibleOrganizations}
             onSearchChange={setSearchQuery}
             onStatusChange={(value) => setStatusFilter(value as any)}
             onPriorityChange={(value) => setPriorityFilter(value as any)}
@@ -264,7 +291,36 @@ export default function TasksPage() {
         onOpenChange={setIsCreateDialogOpen}
         organizations={organizations}
         onCreated={loadData}
+        preferredInputMode={createTaskMode}
       />
+
+      {canCreateTask && (
+        <div className="fixed inset-x-0 bottom-4 z-30 px-4 sm:hidden">
+          <div className="mx-auto flex max-w-md items-center gap-2 rounded-2xl border border-cyan-100/70 bg-white/92 p-2 shadow-[0_22px_48px_-26px_rgba(2,132,199,0.45)] backdrop-blur-xl">
+            <Button
+              type="button"
+              onClick={() => handleCreateTask("audio")}
+              className="h-12 flex-1 rounded-xl bg-cyan-600 text-white shadow-sm hover:bg-cyan-700"
+            >
+              <Mic className="mr-2 h-4 w-4" />
+              Audio orqali
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleCreateTask("manual")}
+              className="h-12 flex-1 rounded-xl border-slate-200 bg-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Yangi topshiriq
+            </Button>
+          </div>
+          <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+            <Sparkles className="h-3.5 w-3.5 text-cyan-600" />
+            Telefon uchun tezkor yaratish pastki panel orqali ishlaydi
+          </div>
+        </div>
+      )}
     </>
   )
 }

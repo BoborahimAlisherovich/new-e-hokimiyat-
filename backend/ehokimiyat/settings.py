@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     'core',
     'users',
     'organizations',
+    'projects',
     'tasks',
     'audit',
     'analytics',

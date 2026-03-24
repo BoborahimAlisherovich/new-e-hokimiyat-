@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Eye,
   CalendarClock,
+  Star,
+  ShieldCheck,
 } from "lucide-react"
 import { getOrgDashboard, type OrgDashboardData } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -199,6 +201,37 @@ export default function OrgDashboard() {
     },
   ]
 
+  const serviceCards = [
+    {
+      label: "Ko'rib chiqish standarti",
+      value: `${data.service.target_review_days} kun`,
+      sub: "Yangi murojaatni dastlabki ko'rish muddati",
+      icon: ShieldCheck,
+      tone: "bg-cyan-50 text-cyan-700",
+    },
+    {
+      label: "Javob berish standarti",
+      value: `${data.service.target_response_days} kun`,
+      sub: "Fuqaroga rasmiy javob yuborish muddati",
+      icon: Clock,
+      tone: "bg-amber-50 text-amber-700",
+    },
+    {
+      label: "O'rtacha yechim vaqti",
+      value: appeals.avg_resolution_days ? `${appeals.avg_resolution_days} kun` : "—",
+      sub: "Yopilgan murojaatlar asosida hisoblandi",
+      icon: TrendingUp,
+      tone: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Fuqarolar bahosi",
+      value: appeals.average_rating ? `${appeals.average_rating}/5` : "Baholanmagan",
+      sub: appeals.rated_count > 0 ? `${appeals.rated_count} ta baholangan murojaat` : "Hali baho kelmagan",
+      icon: Star,
+      tone: "bg-rose-50 text-rose-700",
+    },
+  ]
+
   return (
     <div className="space-y-6">
       {/* Tashkilot info */}
@@ -339,6 +372,27 @@ export default function OrgDashboard() {
           </Card>
         </motion.div>
       )}
+
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {serviceCards.map((item) => (
+            <Card key={item.label} className="border-white/50 bg-white/75 backdrop-blur-xl">
+              <CardContent className="p-5">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-slate-600">{item.label}</p>
+                    <h3 className="mt-1 text-2xl font-bold text-slate-900">{item.value}</h3>
+                  </div>
+                  <div className={cn("rounded-2xl p-2.5", item.tone)}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                </div>
+                <p className="text-xs leading-5 text-slate-500">{item.sub}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Faol topshiriqlar ro'yxati */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>

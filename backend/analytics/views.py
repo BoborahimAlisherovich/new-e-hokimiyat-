@@ -210,6 +210,15 @@ class OrgDashboardView(views.APIView):
         approved_appeals = appeals.filter(status='approved').count()
         responded_appeals = appeals.filter(status='responded').count()
         resolved_appeals = appeals.filter(status='resolved').count()
+        avg_rating = appeals.filter(rating__isnull=False).aggregate(avg=Avg('rating'))['avg']
+        rated_count = appeals.filter(rating__isnull=False).count()
+
+        resolved_items = appeals.filter(closed_at__isnull=False)
+        resolution_days = []
+        for appeal in resolved_items:
+            if appeal.closed_at and appeal.created_at:
+                resolution_days.append((appeal.closed_at - appeal.created_at).total_seconds() / 86400)
+        avg_resolution_days = round(sum(resolution_days) / len(resolution_days), 1) if resolution_days else 0
         
         # Oxirgi 5 ta murojaat
         recent_appeals = appeals.order_by('-created_at')[:5]
@@ -260,7 +269,14 @@ class OrgDashboardView(views.APIView):
                 'approved': approved_appeals,
                 'responded': responded_appeals,
                 'resolved': resolved_appeals,
+                'avg_resolution_days': avg_resolution_days,
+                'average_rating': round(avg_rating, 1) if avg_rating is not None else None,
+                'rated_count': rated_count,
                 'recent': recent_appeals_data,
+            },
+            'service': {
+                'target_review_days': 3,
+                'target_response_days': 5,
             },
             'employees': {
                 'count': employee_count,

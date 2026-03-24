@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/header"
 import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
-import { getOrganizations, createOrganization, getUsers, deleteOrganization, updateOrganization } from "@/lib/api"
+import { getOrganizations, createOrganization, getUsers, deleteOrganization, updateOrganization, getCurrentUser } from "@/lib/api"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { OrganizationFilters } from "@/components/dashboard/organizations/organization-filters"
 import { OrganizationTable } from "@/components/dashboard/organizations/organization-table"
@@ -13,6 +13,7 @@ import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { Building2, BriefcaseBusiness, Plus, ShieldCheck } from "lucide-react"
 import { useI18n } from "@/lib/i18n/context"
 import { Button } from "@/components/ui/button"
+import { normalizeUserRole } from "@/lib/role-utils"
 
 export default function OrganizationsPage() {
   const t = useTranslation()
@@ -28,6 +29,7 @@ export default function OrganizationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [canManageOrganizations, setCanManageOrganizations] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     servicePhone: '',
@@ -37,14 +39,17 @@ export default function OrganizationsPage() {
 
   const loadOrganizations = useCallback(async () => {
     try {
-      const [orgsList, usersList] = await Promise.all([
+      const [orgsList, usersList, me] = await Promise.all([
         getOrganizations(),
-        getUsers()
+        getUsers(),
+        getCurrentUser().catch(() => null)
       ])
  const orgItems = Array.isArray(orgsList) ? orgsList : []
  const userItems = Array.isArray(usersList) ? usersList : []
       setOrganizations(orgItems)
       setUsers(userItems)
+      const role = normalizeUserRole(me?.role)
+      setCanManageOrganizations(Boolean(role && ["HOKIM", "HOKIM_YORDAMCHISI", "ADMIN"].includes(role)))
       setError(null)
     } catch (err) {
       console.error("Tashkilotlarni yuklashda xatolik:", err)
@@ -173,7 +178,7 @@ export default function OrganizationsPage() {
         title={t.pages.organizations.title}
         description={t.pages.organizations.description}
         actions={
-          <>
+          canManageOrganizations ? (
             <Button
               data-gsap-action
               onClick={() => setIsCreateOpen(true)}
@@ -195,7 +200,7 @@ export default function OrganizationsPage() {
               }[language]}
               </span>
             </Button>
-          </>
+          ) : null
         }
       />
       <div ref={pageRef}>
@@ -209,6 +214,12 @@ export default function OrganizationsPage() {
           { label: "Mas'ullar", value: users.length, icon: BriefcaseBusiness, tone: "from-amber-400/24 to-amber-100/75" },
         ]}
       >
+            <section data-gsap-section>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos tashkilotlar kesimi</span>
+                <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
+              </div>
+            </section>
             {/* Filters and Actions */}
             <section data-gsap-section>
               <OrganizationFilters
@@ -219,6 +230,7 @@ export default function OrganizationsPage() {
               statusFilter={statusFilter}
               onStatusChange={setStatusFilter}
               onCreate={() => setIsCreateOpen(true)}
+              showCreateButton={canManageOrganizations}
               totalCount={organizations.length}
               filteredCount={filteredOrganizations.length}
             />

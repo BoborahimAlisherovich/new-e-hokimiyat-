@@ -49,7 +49,7 @@ import {
   createTaskFromAppeal,
   getOrganizations
 } from "@/lib/api"
-import { 
+import {
   ArrowLeft, 
   Send, 
   Calendar, 
@@ -73,9 +73,10 @@ import {
   Trash2
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
-import { Appeal } from "@/types"
+import { Appeal, AppealAttachment } from "@/types"
 
 const FILE_TYPE_LABELS: Record<string, string> = {
   photo: "Rasm",
@@ -84,6 +85,16 @@ const FILE_TYPE_LABELS: Record<string, string> = {
   voice: "Ovozli xabar",
   document: "Hujjat",
   video_note: "Video xabar",
+}
+
+const PRIORITY_BANNER_STYLES: Record<string, string> = {
+  LOW: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  MEDIUM: "border-amber-200 bg-amber-50 text-amber-700",
+  HIGH: "border-orange-200 bg-orange-50 text-orange-700",
+  low: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  medium: "border-amber-200 bg-amber-50 text-amber-700",
+  high: "border-orange-200 bg-orange-50 text-orange-700",
+  urgent: "border-red-200 bg-red-50 text-red-700",
 }
 
 const formatFileSize = (size?: number) => {
@@ -143,9 +154,10 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDeadline, setTaskDeadline] = useState("")
   const [taskPriority, setTaskPriority] = useState("ODDIY")
-  const [selectedOrganizations, setSelectedOrganizations] = useState<number[]>([])
+  const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
   const [creatingTask, setCreatingTask] = useState(false)
+  const [activeAttachment, setActiveAttachment] = useState<AppealAttachment | null>(null)
   
   // File/Audio/Location state
   const [chatFile, setChatFile] = useState<File | null>(null)
@@ -300,12 +312,16 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     }
   }
 
-  const toggleOrganization = (orgId: number) => {
+  const toggleOrganization = (orgId: string) => {
     setSelectedOrganizations(prev => 
       prev.includes(orgId) 
         ? prev.filter(id => id !== orgId)
         : [...prev, orgId]
     )
+  }
+
+  const selectAllOrganizations = () => {
+    setSelectedOrganizations(organizations.map((org: any) => String(org.id)))
   }
 
   // Audio recording functions
@@ -607,6 +623,27 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 }
               >
                 <div className="space-y-5">
+                  <div
+                    className={cn(
+                      "rounded-[22px] border px-4 py-3",
+                      PRIORITY_BANNER_STYLES[appeal.priority] || "border-slate-200 bg-slate-50 text-slate-700"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-5 w-5" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Muhimlik darajasi</p>
+                        <p className="text-sm font-semibold">
+                          {appeal.priority === "HIGH" || appeal.priority === "urgent"
+                            ? "Yuqori nazorat talab qiladigan murojaat"
+                            : appeal.priority === "MEDIUM" || appeal.priority === "medium"
+                              ? "O'rta darajadagi murojaat"
+                              : "Oddiy ustuvorlikdagi murojaat"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <PremiumInfoItem icon={User} label="Fuqaro" value={appeal.citizenName} />
                     <PremiumInfoItem icon={Phone} label="Telefon" value={appeal.citizenPhone || "-"} />
@@ -641,11 +678,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                           return (
                             <PremiumAttachmentItem
                               key={attachment.id}
-                              href={fileHref || undefined}
+                              onClick={() => setActiveAttachment(attachment)}
                               icon={isImage ? ImageIcon : Paperclip}
                               title={fileName}
                               meta={`${fileLabel}${fileSize ? ` • ${fileSize}` : ""}`}
-                              actionLabel={fileHref ? "Ochish" : "Link yo'q"}
+                              actionLabel={fileHref ? "Ichida ochish" : "Link yo'q"}
                             />
                           )
                         })}
@@ -812,8 +849,8 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                               <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
                             </Button>
 
-                            <Input
-                              placeholder="Xabar yozing... (Ctrl+V - rasm)"
+                            <Textarea
+                              placeholder="Javob yozing... (Ctrl+V - rasm)"
                               value={messageText}
                               onChange={(e) => setMessageText(e.target.value)}
                               onKeyDown={(e) => {
@@ -823,7 +860,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                 }
                               }}
                               onPaste={handlePaste}
-                              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                              className="min-h-[96px] border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none"
                             />
                             <Button
                               onClick={handleSendMessage}
@@ -1010,7 +1047,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 placeholder="Javobingizni yozing..."
                 value={closeResponse}
                 onChange={(e) => setCloseResponse(e.target.value)}
-                className="min-h-[140px] rounded-2xl border-slate-200 bg-white"
+                className="min-h-[220px] rounded-2xl border-slate-200 bg-white text-sm leading-6"
               />
             </PremiumFieldGroup>
           </PremiumFormLayout>
@@ -1115,13 +1152,35 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   <SelectItem value="PAST">Past</SelectItem>
                   <SelectItem value="ODDIY">O'rta</SelectItem>
                   <SelectItem value="YUQORI">Yuqori</SelectItem>
-                  <SelectItem value="SHOSHILINCH">Shoshilinch</SelectItem>
+                  <SelectItem value="FAVQULODDA">Favqulodda</SelectItem>
                 </SelectContent>
               </Select>
               </PremiumFieldGroup>
             </div>
 
             <PremiumFieldGroup label="Mas'ul tashkilotlar *" hint="Bir yoki bir nechta tashkilotni belgilang.">
+              <div className="mb-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllOrganizations}
+                  className="rounded-xl"
+                >
+                  Barcha faol tashkilotlar
+                </Button>
+                {selectedOrganizations.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedOrganizations([])}
+                    className="rounded-xl"
+                  >
+                    Tozalash
+                  </Button>
+                )}
+              </div>
               <PremiumFieldSurface className="max-h-48 space-y-2 overflow-y-auto">
                 {organizations.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-2">
@@ -1131,10 +1190,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   organizations.map((org: any) => (
                     <PremiumChoiceItem
                       key={org.id}
-                      onClick={() => toggleOrganization(org.id)}
-                      selected={selectedOrganizations.includes(org.id)}
+                      onClick={() => toggleOrganization(String(org.id))}
+                      selected={selectedOrganizations.includes(String(org.id))}
                     >
-                      <span className="text-sm">{org.name}</span>
+                      <span className="text-sm">
+                        {org.short_name ? `${org.name} (${org.short_name})` : org.name}
+                      </span>
                     </PremiumChoiceItem>
                   ))
                 )}
@@ -1172,6 +1233,58 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 </>
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!activeAttachment} onOpenChange={(open) => !open && setActiveAttachment(null)}>
+        <DialogContent className="max-w-4xl border-white/70 bg-white/92 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle>{activeAttachment?.file_name || "Biriktirilgan fayl"}</DialogTitle>
+            <DialogDescription>Fayl platformaning o'zida ko'rsatilmoqda.</DialogDescription>
+          </DialogHeader>
+
+          {activeAttachment ? (
+            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 p-3">
+              {activeAttachment.file_type === "photo" && (activeAttachment.file_url || activeAttachment.file) ? (
+                <div className="relative h-[60vh] w-full overflow-hidden rounded-[20px] bg-white">
+                  <Image
+                    src={activeAttachment.file_url || activeAttachment.file || ""}
+                    alt={activeAttachment.file_name || "Murojaat rasmi"}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
+              ) : activeAttachment.file_type === "video" && (activeAttachment.file_url || activeAttachment.file) ? (
+                <video
+                  controls
+                  className="max-h-[60vh] w-full rounded-[20px] bg-black"
+                  src={activeAttachment.file_url || activeAttachment.file || ""}
+                />
+              ) : activeAttachment.file_type === "audio" || activeAttachment.file_type === "voice" ? (
+                <audio controls className="w-full" src={activeAttachment.file_url || activeAttachment.file || ""} />
+              ) : (
+                <iframe
+                  title={activeAttachment.file_name || "Murojaat fayli"}
+                  src={activeAttachment.file_url || activeAttachment.file || ""}
+                  className="h-[60vh] w-full rounded-[20px] bg-white"
+                />
+              )}
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActiveAttachment(null)}>
+              Yopish
+            </Button>
+            {(activeAttachment?.file_url || activeAttachment?.file) ? (
+              <Button asChild>
+                <a href={activeAttachment.file_url || activeAttachment.file || ""} target="_blank" rel="noreferrer">
+                  Yangi oynada ochish
+                </a>
+              </Button>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>

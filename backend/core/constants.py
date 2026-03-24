@@ -40,6 +40,7 @@ class UserRole:
     """Foydalanuvchi rollari."""
     
     HOKIM: Final[str] = 'HOKIM'
+    HOKIM_YORDAMCHISI: Final[str] = 'HOKIM_YORDAMCHISI'
     HOKIMLIK_MASUL: Final[str] = 'HOKIMLIK_MASUL'
     TASHKILOT_RAHBARI: Final[str] = 'TASHKILOT_RAHBARI'
     TASHKILOT_MASUL: Final[str] = 'TASHKILOT_MASUL'
@@ -47,14 +48,21 @@ class UserRole:
     
     CHOICES: Final = [
         (HOKIM, 'Hokim'),
-        (HOKIMLIK_MASUL, "Hokimlik mas'uli"),
+        (HOKIM_YORDAMCHISI, "Hokim o'rinbosari"),
+        (HOKIMLIK_MASUL, "Hokimlik mutaxassisi"),
         (TASHKILOT_RAHBARI, 'Tashkilot rahbari'),
         (TASHKILOT_MASUL, "Tashkilot mas'uli"),
         (ADMIN, 'Administrator'),
     ]
     
     # Barcha topshiriqlarni ko'ra oladigan rollar
-    ADMIN_ROLES: Final = [HOKIM, HOKIMLIK_MASUL, ADMIN]
+    ADMIN_ROLES: Final = [HOKIM, ADMIN]
+    
+    # Topshiriq yaratish huquqiga ega rollar
+    TASK_CREATOR_ROLES: Final = [HOKIM, HOKIM_YORDAMCHISI, TASHKILOT_RAHBARI, ADMIN]
+
+    # Loyiha portfelini boshqarish huquqiga ega rollar
+    PROJECT_MANAGER_ROLES: Final = [HOKIM, HOKIM_YORDAMCHISI, ADMIN]
     
     # Tashkilot xodimlari
     ORGANIZATION_ROLES: Final = [TASHKILOT_RAHBARI, TASHKILOT_MASUL]

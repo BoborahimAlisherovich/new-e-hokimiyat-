@@ -12,6 +12,8 @@ import {
   Building2,
   ArrowRight,
   Fingerprint,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +35,7 @@ export default function LoginPage() {
   const [loginValue, setLoginValue] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   
   // GSAP refs
   const pageRef = useRef<HTMLDivElement>(null)
@@ -276,24 +279,39 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                     Parol
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Parol"
-                    className="h-14 bg-indigo-50/30 border-2 border-indigo-200/60 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Parol"
+                      className="h-14 bg-indigo-50/30 border-2 border-indigo-200/60 pr-12 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all duration-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-indigo-600 transition hover:bg-indigo-100"
+                      aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <Button
-                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-500 group"
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-500 group disabled:cursor-not-allowed disabled:opacity-100 disabled:shadow-indigo-300/20 disabled:from-indigo-400 disabled:via-violet-500 disabled:to-indigo-400"
                   onClick={handleLogin}
                   disabled={!loginValue.trim() || !password}
                 >
                   <span>Tizimga kirish</span>
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
+                {!loginValue.trim() || !password ? (
+                  <p className="text-center text-xs font-medium text-indigo-500/80">
+                    Kirish uchun login va parolni to'ldiring
+                  </p>
+                ) : null}
 
                 <p
                   className="text-xs text-gray-400 text-center leading-relaxed pt-2"

@@ -23,6 +23,7 @@ import {
   X,
   Pencil,
   Check,
+  Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { API_BASE, getAccessToken } from "@/lib/api/client";
@@ -928,6 +929,13 @@ function ChatArea({
   sanitizeReportContent: (content?: string) => string;
   downloadReportPdfById: (reportId: string) => void;
 }) {
+  const quickActions = [
+    { label: "Bugungi holat", query: "Bugungi holat qanday?" },
+    { label: "Muddati o'tgan topshiriqlar", query: "Muddati o'tgan topshiriqlar nechta?" },
+    { label: "Haftalik hisobot", query: "Haftalik hisobot yarat" },
+    { label: "Murojaat holati", query: "Yangi murojaatlar holatini ko'rsat" },
+  ];
+
   return (
     <main className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-hidden">
       {/* Messages Scroll Area */}
@@ -944,19 +952,26 @@ function ChatArea({
                 <p className="text-slate-600 mb-6 sm:mb-8 max-w-md mx-auto px-4">
                   Topshiriqlar, murojaatlar va hisobotlar haqida so'rang.
                 </p>
+                <div className="mb-4 rounded-2xl border border-sky-100/80 bg-white/80 p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-700">
+                    <Zap className="h-4 w-4" />
+                    Telefon uchun qulay ishlash
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Mikrofon tugmasini bosib gapiring, matn avtomatik tushadi. Tayyor
+                    promptlardan foydalanib, topshiriq, murojaat va hisobot holatini tez
+                    so'rash mumkin.
+                  </p>
+                </div>
                 <div className="flex flex-wrap gap-2 sm:gap-3 justify-center px-4">
-                  {[
-                    { text: "Bugungi holat", query: "Bugungi holat qanday?" },
-                    { text: "Muddati o'tgan topshiriqlar", query: "Muddati o'tgan topshiriqlar nechta?" },
-                    { text: "Haftalik hisobot", query: "Haftalik hisobot yarat" }
-                  ].map((item, i) => (
+                  {quickActions.map((item, i) => (
                     <Button
                       key={i}
                       variant="outline"
                       onClick={() => onQuickChat(item.query)}
                       className="bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-sm text-xs sm:text-sm"
                     >
-                      {item.text}
+                      {item.label}
                     </Button>
                   ))}
                 </div>
@@ -1093,8 +1108,25 @@ function ChatInput({
   sendMessageWithAudio: () => void;
 }) {
   return (
-    <div className="p-3 sm:p-4 bg-white/70 backdrop-blur-xl border-t border-slate-200/80 shrink-0">
+    <div className="shrink-0 border-t border-slate-200/80 bg-white/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:p-4">
       <div className="max-w-3xl mx-auto">
+        <div className="mb-2 flex gap-2 overflow-x-auto pb-1 sm:hidden">
+          {[
+            "Bugungi topshiriqlar",
+            "Murojaatlar statistikasi",
+            "Hisobot yarat",
+          ].map((shortcut) => (
+            <button
+              key={shortcut}
+              type="button"
+              onClick={() => onInputChange(shortcut)}
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600"
+            >
+              {shortcut}
+            </button>
+          ))}
+        </div>
+
         {/* Recording Indicator */}
         {isRecording && (
           <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-red-50 border border-red-200">
@@ -1114,12 +1146,13 @@ function ChatInput({
               size="sm" 
               onClick={sendMessageWithAudio} 
               disabled={isSending} 
-              className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm"
+              className="h-10 bg-blue-600 text-xs hover:bg-blue-700 sm:text-sm"
             >
               <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
               <span className="hidden sm:inline">Yuborish</span>
+              <span className="sm:hidden">AIga</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onResetRecording} className="h-8 w-8">
+            <Button variant="ghost" size="sm" onClick={onResetRecording} className="h-10 w-10">
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -1132,7 +1165,7 @@ function ChatInput({
             size="icon"
             onClick={onRecordToggle}
             disabled={isSending}
-            className={`shrink-0 h-10 w-10 sm:h-11 sm:w-11 rounded-xl ${
+            className={`shrink-0 h-11 w-11 rounded-xl sm:h-11 sm:w-11 ${
               isRecording 
                 ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100" 
                 : "border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
@@ -1154,14 +1187,14 @@ function ChatInput({
               }}
               disabled={isSending || isRecording}
               rows={1}
-              className="w-full bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 resize-none min-h-10 sm:min-h-12 max-h-32 sm:max-h-50 pr-10 sm:pr-12 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 shadow-sm text-sm"
+              className="w-full bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 resize-none min-h-11 sm:min-h-12 max-h-32 sm:max-h-50 pr-10 sm:pr-12 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 shadow-sm text-sm"
             />
           </div>
           
           <Button
             onClick={onSendMessage}
             disabled={!inputMessage.trim() || isSending || isRecording}
-            className="shrink-0 h-10 w-10 sm:h-11 sm:px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm"
+            className="shrink-0 h-11 w-11 sm:h-11 sm:px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm"
           >
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

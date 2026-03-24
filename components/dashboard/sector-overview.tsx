@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { useTranslation } from "@/lib/i18n/context"
 
-function getCategoryLabel(category: string, t: any): string {
+function getCategoryLabel(category: string, unknownLabel: string): string {
   const labels: Record<string, string> = {
     'IJTIMOIY': 'Ijtimoiy',
     'IQTISODIY': 'Iqtisodiy',
@@ -25,11 +25,12 @@ function getCategoryLabel(category: string, t: any): string {
     'QISHLOQ_XOJALIGI': "Qishloq xo'jaligi",
     'BOSHQA': 'Boshqa',
   }
-  return labels[category] || category || t.common.unknown
+  return labels[category] || category || unknownLabel
 }
 
 export function SectorOverview() {
   const t = useTranslation()
+  const unknownLabel = t.common.unknown
   const [sectorStats, setSectorStats] = React.useState<any[]>([])
 
   React.useEffect(() => {
@@ -46,7 +47,7 @@ export function SectorOverview() {
             const late = cTasks.filter((t: any) => t.status === "MUDDATI_KECH").length
             return {
               sector: category,
-              label: getCategoryLabel(category as string, t),
+              label: getCategoryLabel(category as string, unknownLabel),
               total: cTasks.length,
               completed,
               late,
@@ -62,7 +63,7 @@ export function SectorOverview() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [unknownLabel])
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 80) return "from-emerald-500 to-emerald-600"

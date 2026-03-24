@@ -10,10 +10,13 @@ import AnalyticsSection from "@/components/dashboard/analytics-section"
 import DeadlineCriticalTasks from "@/components/dashboard/deadline-critical-tasks"
 import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics-charts"
 import OrgDashboard from "@/components/dashboard/org-dashboard"
+import { DashboardQuickRibbon } from "@/components/dashboard/dashboard-quick-ribbon"
+import { ProjectsShowcase } from "@/components/dashboard/projects-showcase"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { getCurrentUser } from "@/lib/api"
 import { isOrganizationRole } from "@/lib/role-utils"
+import { canAccessDashboardPath } from "@/lib/dashboard-access"
 
 export default function DashboardPage() {
   const t = useTranslation()
@@ -29,6 +32,7 @@ export default function DashboardPage() {
   }, [])
 
   const isOrgUser = isOrganizationRole(userRole)
+  const canViewProjects = canAccessDashboardPath(userRole as any, "/dashboard/projects")
 
   if (loading) {
     return (
@@ -75,8 +79,18 @@ export default function DashboardPage() {
 
             {/* 1. Task Summary (KPI) */}
             <section data-gsap-section>
+              <DashboardQuickRibbon />
+            </section>
+
+            <section data-gsap-section>
               <StatsCards />
             </section>
+
+            {canViewProjects && (
+              <section data-gsap-section>
+                <ProjectsShowcase />
+              </section>
+            )}
 
             {/* 2. Analytics (charts only if data) */}
             <section data-gsap-section>

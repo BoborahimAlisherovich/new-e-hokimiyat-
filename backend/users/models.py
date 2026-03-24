@@ -44,7 +44,8 @@ class Role(models.Model):
     """
     ROLE_CHOICES = [
         ('HOKIM', 'Hokim'),
-        ('HOKIMLIK_MASUL', "Hokimlik mas'uli"),
+        ('HOKIM_YORDAMCHISI', "Hokim o'rinbosari"),
+        ('HOKIMLIK_MASUL', "Hokimlik mutaxassisi"),
         ('TASHKILOT_RAHBARI', 'Tashkilot rahbari'),
         ('TASHKILOT_MASUL', "Tashkilot mas'uli"),
         ('ADMIN', 'Administrator'),
@@ -85,7 +86,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     ROLE_CHOICES = [
         ('HOKIM', 'Hokim'),
-        ('HOKIMLIK_MASUL', "Hokimlik mas'uli"),
+        ('HOKIM_YORDAMCHISI', "Hokim o'rinbosari"),
+        ('HOKIMLIK_MASUL', "Hokimlik mutaxassisi"),
         ('TASHKILOT_RAHBARI', 'Tashkilot rahbari'),
         ('TASHKILOT_MASUL', "Tashkilot mas'uli"),
         ('ADMIN', 'Administrator'),
@@ -127,6 +129,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     # Role and Organization
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name='Rol')
+    sector = models.ForeignKey(
+        'organizations.Sector',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+        verbose_name='Soha / kompleks'
+    )
     organization = models.ForeignKey(
         'organizations.Organization',
         on_delete=models.SET_NULL,
@@ -134,6 +144,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         related_name='employees',
         verbose_name='Tashkilot'
+    )
+    supervisor = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subordinates',
+        verbose_name="Bevosita rahbar"
     )
     position = models.CharField(max_length=200, blank=True, verbose_name='Lavozim')
     
@@ -205,6 +223,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Return cabinet type based on role."""
         cabinet_map = {
             'HOKIM': 'hokim',
+            'HOKIM_YORDAMCHISI': 'hokimlik',
             'HOKIMLIK_MASUL': 'hokimlik',
             'TASHKILOT_RAHBARI': 'tashkilot',
             'TASHKILOT_MASUL': 'tashkilot',
@@ -215,11 +234,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     def can_add_user_with_role(self, target_role):
         """Check if this user can add a user with the given role."""
         hierarchy = {
-            'HOKIM': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
-            'HOKIMLIK_MASUL': ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+            'HOKIM': ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+            'HOKIM_YORDAMCHISI': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+            'HOKIMLIK_MASUL': [],
             'TASHKILOT_RAHBARI': ['TASHKILOT_MASUL'],
             'TASHKILOT_MASUL': [],
-            'ADMIN': ['HOKIM', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+            'ADMIN': ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
         }
         return target_role in hierarchy.get(self.role, [])
     

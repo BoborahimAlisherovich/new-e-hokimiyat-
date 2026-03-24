@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -141,11 +141,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
     },
   }[language || "uz"]
 
-  useEffect(() => {
-    loadSectors()
-  }, [])
-
-  const loadSectors = async () => {
+  const loadSectors = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await api.get<unknown>("/organizations/sectors/")
@@ -162,7 +158,11 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast, t.common.error, tr.loadError])
+
+  useEffect(() => {
+    loadSectors()
+  }, [loadSectors])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -4,6 +4,7 @@ import { normalizeUserRole } from "@/lib/role-utils"
 export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
   HOKIM: [
     "/dashboard",
+    "/dashboard/projects",
     "/dashboard/tasks",
     "/dashboard/users",
     "/dashboard/organizations",
@@ -16,6 +17,7 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
   ],
   HOKIM_YORDAMCHISI: [
     "/dashboard",
+    "/dashboard/projects",
     "/dashboard/tasks",
     "/dashboard/users",
     "/dashboard/organizations",
@@ -30,10 +32,8 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
     "/dashboard",
     "/dashboard/tasks",
     "/dashboard/users",
-    "/dashboard/organizations",
     "/dashboard/notifications",
     "/dashboard/appeals",
-    "/dashboard/analytics",
     "/dashboard/chat",
     "/dashboard/ai-assistant",
     "/dashboard/settings",
@@ -60,11 +60,13 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
     "/dashboard",
     "/dashboard/tasks",
     "/dashboard/notifications",
+    "/dashboard/appeals",
     "/dashboard/chat",
     "/dashboard/settings",
   ],
   ADMIN: [
     "/dashboard",
+    "/dashboard/projects",
     "/dashboard/tasks",
     "/dashboard/users",
     "/dashboard/organizations",

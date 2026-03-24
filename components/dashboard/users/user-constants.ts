@@ -2,6 +2,7 @@ import { UserRole } from "@/types"
 
 export const ROLE_COLORS: Record<string, string> = {
   HOKIM: "bg-purple-100 text-purple-800 border-purple-200",
+  HOKIM_YORDAMCHISI: "bg-indigo-100 text-indigo-800 border-indigo-200",
   HOKIMLIK_MASUL: "bg-blue-100 text-blue-800 border-blue-200",
   TASHKILOT_RAHBARI: "bg-green-100 text-green-800 border-green-200",
   TASHKILOT_RAHBAR: "bg-green-100 text-green-800 border-green-200", // legacy
@@ -25,7 +26,8 @@ export const STATUS_COLORS: Record<string, string> = {
 
 export const ROLE_LABELS: Record<string, string> = {
   HOKIM: "Hokim",
-  HOKIMLIK_MASUL: "Hokimlik mas'uli",
+  HOKIM_YORDAMCHISI: "Hokim o'rinbosari",
+  HOKIMLIK_MASUL: "Hokimlik mutaxassisi",
   TASHKILOT_RAHBARI: "Tashkilot rahbari",
   TASHKILOT_RAHBAR: "Tashkilot rahbari", // legacy
   TASHKILOT_MASUL: "Tashkilot mas'uli",

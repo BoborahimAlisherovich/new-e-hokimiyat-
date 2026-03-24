@@ -20,6 +20,7 @@ from .serializers import (
     AppealReviewSerializer, BotStatsSerializer
 )
 from core.permissions import CanManageBotSettings
+from notifications.services import notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
 
 
 def _find_bot_pids() -> list:
@@ -914,12 +915,27 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
 
+        if user.role in ['HOKIM', 'ADMIN']:
+            return queryset
+
         # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga biriktirilgan murojaatlarni ko'radi
         if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
             if not user.organization:
                 return queryset.none()
 
             queryset = queryset.filter(assigned_organizations=user.organization)
+        elif user.role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL']:
+            organization_filter = Q(pk__isnull=True)
+            if user.organization:
+                organization_filter = Q(assigned_organizations=user.organization)
+
+            queryset = queryset.filter(
+                organization_filter |
+                Q(reviewed_by__user=user) |
+                Q(messages__sender_user=user)
+            ).distinct()
+        else:
+            queryset = queryset.none()
 
         return queryset
     
@@ -927,6 +943,88 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return TelegramAppealDetailSerializer
         return TelegramAppealListSerializer
+
+    def _normalize_task_priority(self, priority):
+        value = str(priority or 'ODDIY').upper()
+        if value == 'SHOSHILINCH':
+            value = 'FAVQULODDA'
+        return value if value in {'PAST', 'ODDIY', 'YUQORI', 'FAVQULODDA'} else 'ODDIY'
+
+    def _normalize_task_category(self, appeal):
+        raw = (
+            getattr(getattr(appeal, 'category', None), 'name_uz', '')
+            or getattr(getattr(appeal, 'ai_category_suggestion', None), 'name_uz', '')
+            or 'BOSHQA'
+        )
+        normalized = str(raw).upper().replace(" ", "_").replace("O‘", "O'").replace("`", "'")
+        category_map = {
+            'IJTIMOIY': 'IJTIMOIY',
+            'IQTISODIY': 'IQTISODIY',
+            'HUQUQIY': 'HUQUQIY',
+            'INFRASTRUKTURA': 'INFRASTRUKTURA',
+            "TA'LIM": 'TA_LIM',
+            'TA_LIM': 'TA_LIM',
+            "SOG'LIQNI_SAQLASH": 'SOG_LIQNI_SAQLASH',
+            'SOG_LIQNI_SAQLASH': 'SOG_LIQNI_SAQLASH',
+            'BANDLIK': 'IQTISODIY',
+        }
+        return category_map.get(normalized, 'BOSHQA')
+
+    def _normalize_organization_ids(self, organization_ids):
+        if organization_ids is None:
+            return []
+        if isinstance(organization_ids, str):
+            return [item.strip() for item in organization_ids.split(',') if item.strip()]
+        return [str(item).strip() for item in organization_ids if str(item).strip()]
+
+    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids):
+        from tasks.models import Task, TaskOrganization
+        from organizations.models import Organization
+        from notifications.models import Notification
+
+        normalized_org_ids = self._normalize_organization_ids(organization_ids)
+        organizations = list(Organization.objects.filter(id__in=normalized_org_ids, is_active=True))
+        if not organizations:
+            raise ValueError("Tashkilot tanlanmagan yoki topilmadi")
+        region_name = appeal.telegram_user.region.name_uz if appeal.telegram_user.region else "Noma'lum"
+
+        task = Task.objects.create(
+            title=title,
+            description=(
+                f"Telegram murojaat #{appeal.appeal_number}\n\n"
+                f"Fuqaro: {appeal.telegram_user.full_name}\n"
+                f"Telefon: {appeal.telegram_user.phone}\n"
+                f"Hudud: {region_name}\n\n"
+                f"Murojaat matni:\n{appeal.text}"
+            ),
+            priority=self._normalize_task_priority(priority),
+            deadline=deadline,
+            created_by=user,
+            category=self._normalize_task_category(appeal),
+            source='TELEGRAM',
+        )
+
+        for organization in organizations:
+            TaskOrganization.objects.create(task=task, organization=organization, status='YANGI')
+            for org_user in organization.employees.filter(
+                status='FAOL',
+                role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+            ):
+                Notification.objects.create(
+                    user=org_user,
+                    title='Yangi topshiriq',
+                    message=f"Murojaat asosida yangi topshiriq berildi: {task.title}",
+                    notification_type='TASK',
+                    related_task=task,
+                    link=f'/dashboard/tasks/{task.id}',
+                )
+
+        appeal.forwarded_to_site = True
+        appeal.status = 'forwarded'
+        appeal.site_task_id = str(task.id)
+        appeal.assigned_organizations.set([org.id for org in organizations])
+        appeal.save(update_fields=['forwarded_to_site', 'status', 'site_task_id', 'updated_at'])
+        return task, organizations
     
     @action(detail=True, methods=['post'])
     def review(self, request, pk=None):
@@ -964,7 +1062,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
 
         # Biriktirilgan tashkilotlarni yangilash (agar yuborilgan bo'lsa)
         if 'organization_ids' in request.data:
-            appeal.assigned_organizations.set(organization_ids)
+            appeal.assigned_organizations.set(self._normalize_organization_ids(organization_ids))
         
         # Javob xabarini saqlash
         if response_text:
@@ -978,22 +1076,50 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         
         # Saytga yuborish
         if forward_to_site:
-            self._forward_to_site(appeal, create_task, organization_ids)
+            self._forward_to_site(appeal, create_task, organization_ids, request.user)
+
+        status_messages = {
+            'approve': f"#{appeal.appeal_number} murojaati ko'rib chiqildi va tasdiqlandi.",
+            'reject': f"#{appeal.appeal_number} murojaati rad etildi.",
+            'respond': f"#{appeal.appeal_number} murojaatiga javob yozildi.",
+        }
+        notify_appeal_status_update(
+            appeal=appeal,
+            title="Murojaat holati yangilandi",
+            message=status_messages.get(action, f"#{appeal.appeal_number} murojaati yangilandi."),
+            exclude_user_ids=[request.user.id],
+        )
+
+        if response_text:
+            notify_appeal_message(
+                appeal=appeal,
+                sender_name=request.user.full_name,
+                preview=response_text,
+                exclude_user_ids=[request.user.id],
+            )
         
         return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
     
-    def _forward_to_site(self, appeal, create_task=False, organization_ids=None):
+    def _forward_to_site(self, appeal, create_task=False, organization_ids=None, user=None):
         """Murojaatni saytga yuborish"""
-        # Bu yerda saytdagi Appeal modeliga yozish logikasi
-        # Hozircha faqat flagni o'zgartiramiz
+        if create_task and organization_ids and user is not None:
+            default_title = f"Murojaat #{appeal.appeal_number}: {appeal.text[:100]}..."
+            deadline = timezone.now() + timedelta(days=7)
+            self._create_task_for_appeal(
+                appeal=appeal,
+                user=user,
+                title=default_title,
+                deadline=deadline,
+                priority='ODDIY',
+                organization_ids=organization_ids,
+            )
+            return
+
         appeal.forwarded_to_site = True
         appeal.status = 'forwarded'
+        if organization_ids:
+            appeal.assigned_organizations.set(self._normalize_organization_ids(organization_ids))
         appeal.save()
-        
-        # Agar topshiriq yaratish kerak bo'lsa
-        if create_task and organization_ids:
-            # Task yaratish logikasi
-            pass
     
     @action(detail=True, methods=['post'])
     def send_message(self, request, pk=None):
@@ -1110,6 +1236,13 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         except Exception as e:
             import logging
             logging.error(f"Telegram xabar yuborishda xato: {e}")
+
+        notify_appeal_message(
+            appeal=appeal,
+            sender_name=request.user.full_name,
+            preview=text,
+            exclude_user_ids=[request.user.id],
+        )
         
         return Response({'success': True, 'message_id': message.id})
     
@@ -1172,6 +1305,21 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 )
         except Exception as e:
             pass  # Log xato
+
+        notify_appeal_status_update(
+            appeal=appeal,
+            title="Murojaat bo'yicha yopish jarayoni boshlandi",
+            message=f"#{appeal.appeal_number} murojaati bo'yicha fuqaro qoniqishi so'raldi.",
+            exclude_user_ids=[request.user.id],
+        )
+
+        if response_text:
+            notify_appeal_message(
+                appeal=appeal,
+                sender_name=request.user.full_name,
+                preview=response_text,
+                exclude_user_ids=[request.user.id],
+            )
         
         return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
     
@@ -1272,15 +1420,18 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def create_task(self, request, pk=None):
         """Murojaatdan topshiriq yaratish"""
-        from tasks.models import Task, TaskOrganization
-        from organizations.models import Organization
-        
         appeal = self.get_object()
+
+        if request.user.role not in ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN']:
+            return Response(
+                {'error': "Faqat hokim va hokim o'rinbosari topshiriq yaratishi mumkin"},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Ma'lumotlarni olish
         title = request.data.get('title', '')
         deadline = request.data.get('deadline')
-        priority = request.data.get('priority', 'ODDIY')
+        priority = self._normalize_task_priority(request.data.get('priority', 'ODDIY'))
         organization_ids = request.data.get('organization_ids', [])
         
         if not title:
@@ -1299,40 +1450,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            # Topshiriq yaratish
-            task = Task.objects.create(
+            task, organizations = self._create_task_for_appeal(
+                appeal=appeal,
+                user=request.user,
                 title=title,
-                description=f"Telegram murojaat #{appeal.appeal_number}\n\n"
-                           f"Fuqaro: {appeal.telegram_user.full_name}\n"
-                           f"Telefon: {appeal.telegram_user.phone}\n"
-                           f"Hudud: {appeal.telegram_user.region.name_uz if appeal.telegram_user.region else 'Noma\'lum'}\n\n"
-                           f"Murojaat matni:\n{appeal.text}",
-                priority=priority,
                 deadline=deadline,
-                created_by=request.user,
-                category=appeal.category.name_uz if appeal.category else 'Boshqa'
+                priority=priority,
+                organization_ids=organization_ids,
             )
-            
-            # Tashkilotlarni biriktirish
-            for org_id in organization_ids:
-                try:
-                    organization = Organization.objects.get(id=org_id)
-                    TaskOrganization.objects.create(
-                        task=task,
-                        organization=organization,
-                        status='YANGI'
-                    )
-                except Organization.DoesNotExist:
-                    pass
-            
-            # Murojaatni yangilash
-            appeal.forwarded_to_site = True
-            appeal.status = 'forwarded'
-            appeal.site_task_id = task.id  # type: ignore[attr-defined]
-            appeal.save()
-
-            # Murojaatga tashkilotlarni biriktirish (yangilangan)
-            appeal.assigned_organizations.set(organization_ids)
             
             # Foydalanuvchiga xabar yuborish
             try:
@@ -1343,12 +1468,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                         f"✅ Sizning <b>#{appeal.appeal_number}</b> raqamli murojaatingiz "
                         f"topshiriq sifatida kiritildi!\n\n"
                         f"📋 <b>Sarlavha:</b> {title}\n"
-                        f"📅 <b>Muddat:</b> {deadline[:10] if isinstance(deadline, str) else deadline.strftime('%Y-%m-%d')}\n\n"
+                        f"📅 <b>Muddat:</b> {deadline[:10] if isinstance(deadline, str) else deadline.strftime('%Y-%m-%d')}\n"
+                        f"🏢 <b>Tashkilotlar:</b> {', '.join(org.name for org in organizations)}\n\n"
                         f"Murojaatingiz ijrosi ta'minlanadi."
                     )
                     requests.post(
                         f'https://api.telegram.org/bot{settings_obj.bot_token}/sendMessage',
                         json={
+                            'chat_id': appeal.telegram_user.telegram_id,
                             'text': message,
                             'parse_mode': 'HTML'
                         },
@@ -1356,6 +1483,13 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                     )
             except Exception as e:
                 pass  # Log xato
+
+            notify_appeal_status_update(
+                appeal=appeal,
+                title="Murojaatdan topshiriq yaratildi",
+                message=f"#{appeal.appeal_number} murojaati asosida yangi topshiriq shakllantirildi.",
+                exclude_user_ids=[request.user.id],
+            )
             
             return Response({
                 'success': True,
@@ -1508,6 +1642,19 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 )
         except Exception as e:
             pass  # Log xato
+
+        notify_appeal_status_update(
+            appeal=appeal,
+            title="AI tavsiyasi bilan javob yuborildi",
+            message=f"#{appeal.appeal_number} murojaatiga AI tavsiyasi asosida javob jo'natildi.",
+            exclude_user_ids=[request.user.id],
+        )
+        notify_appeal_message(
+            appeal=appeal,
+            sender_name=request.user.full_name,
+            preview=response_text,
+            exclude_user_ids=[request.user.id],
+        )
         
         return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
     

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getUserById, updateUser, getOrganizations } from "@/lib/api"
+import { getUserById, updateUser, getOrganizations, getSectors, getUsers } from "@/lib/api"
 import { User, Organization } from "@/types"
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
@@ -15,7 +15,8 @@ import { useEffect, useState } from "react"
 // Role and status options
 const ROLES = [
   { value: "HOKIM", label: "Hokim" },
-  { value: "HOKIMLIK_MASUL", label: "Hokimlik mas'uli" },
+  { value: "HOKIM_YORDAMCHISI", label: "Hokim o'rinbosari" },
+  { value: "HOKIMLIK_MASUL", label: "Hokimlik mutaxassisi" },
   { value: "TASHKILOT_RAHBARI", label: "Tashkilot rahbari" },
   { value: "TASHKILOT_MASUL", label: "Tashkilot mas'uli" },
   { value: "ADMIN", label: "Administrator" },
@@ -36,6 +37,8 @@ export default function UserEditPage() {
   
   const [user, setUser] = useState<User | null>(null)
   const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [sectors, setSectors] = useState<Array<{ id: string; name: string; is_active?: boolean }>>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,17 +56,23 @@ export default function UserEditPage() {
     role: "",
     status: "",
     organization: "",
+    sector: "",
+    supervisor: "",
   })
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [userData, orgsData] = await Promise.all([
+        const [userData, orgsData, sectorsData, usersData] = await Promise.all([
           getUserById(userId),
-          getOrganizations()
+          getOrganizations(),
+          getSectors().catch(() => []),
+          getUsers().catch(() => []),
         ])
         setUser(userData)
         setOrganizations(orgsData || [])
+        setSectors(Array.isArray(sectorsData) ? sectorsData.filter((sector) => sector?.is_active !== false) : [])
+        setAllUsers(Array.isArray(usersData) ? usersData : [])
         
         // Populate form with user data
         // organization can be either an object with id or a string (UUID)
@@ -71,6 +80,13 @@ export default function UserEditPage() {
           ? userData.organization.id.toString() 
           : (userData.organization || (userData as any).organization_id || "")
         
+        const sectorId = typeof userData.sector === 'object' && userData.sector?.id
+          ? String(userData.sector.id)
+          : String(userData.sector_id || "")
+        const supervisorId = typeof userData.supervisor === 'object' && userData.supervisor?.id
+          ? String(userData.supervisor.id)
+          : String(userData.supervisor_id || "")
+
         setFormData({
           login: userData.login || "",
           first_name: userData.first_name || "",
@@ -83,6 +99,8 @@ export default function UserEditPage() {
           role: userData.role || "",
           status: userData.status || "",
           organization: orgId,
+          sector: sectorId,
+          supervisor: supervisorId,
         })
       } catch (err) {
         console.error("Error loading user:", err)
@@ -120,9 +138,9 @@ export default function UserEditPage() {
         updateData.password = formData.password
       }
       
-      if (formData.organization) {
-        updateData.organization = formData.organization
-      }
+      updateData.organization = formData.organization || null
+      updateData.sector = formData.sector || null
+      updateData.supervisor = formData.supervisor || null
       
       await updateUser(userId, updateData)
       router.push(`/dashboard/users/${userId}`)
@@ -167,6 +185,15 @@ export default function UserEditPage() {
       </>
     )
   }
+
+  const availableSupervisors = allUsers.filter((item) => {
+    if (item.role !== "HOKIM_YORDAMCHISI") return false
+    const supervisorSectorId =
+      typeof item.sector === "object" && item.sector?.id
+        ? String(item.sector.id)
+        : String(item.sector_id || "")
+    return !formData.sector || !supervisorSectorId || supervisorSectorId === formData.sector
+  })
 
   return (
     <>
@@ -293,7 +320,7 @@ export default function UserEditPage() {
                 <CardDescription>Foydalanuvchining roli va tegishli tashkiloti</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <div className="space-y-2">
                     <Label>Rol</Label>
                     <Select value={formData.role} onValueChange={(v) => handleChange("role", v)}>
@@ -337,6 +364,38 @@ export default function UserEditPage() {
                         {organizations.map((org) => (
                           <SelectItem key={org.id} value={org.id.toString()}>
                             {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Soha / kompleks</Label>
+                    <Select value={formData.sector || "none"} onValueChange={(v) => handleChange("sector", v === "none" ? "" : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sohani tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Belgilanmagan</SelectItem>
+                        {sectors.map((sector) => (
+                          <SelectItem key={sector.id} value={String(sector.id)}>
+                            {sector.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bevosita rahbar</Label>
+                    <Select value={formData.supervisor || "none"} onValueChange={(v) => handleChange("supervisor", v === "none" ? "" : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Rahbarni tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Belgilanmagan</SelectItem>
+                        {availableSupervisors.map((item) => (
+                          <SelectItem key={item.id} value={String(item.id)}>
+                            {item.full_name || `${item.last_name} ${item.first_name}`}
                           </SelectItem>
                         ))}
                       </SelectContent>

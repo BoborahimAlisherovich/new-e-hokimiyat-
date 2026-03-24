@@ -41,11 +41,27 @@ export interface User extends BaseModel {
   phone?: string
   role: UserRole
   status: UserStatus
- position?: string
- organization?: Organization
- organization_id?: number
- organization_name?: string
- district?: District
+  position?: string
+  organization?: Organization
+  organization_id?: number | string
+  organization_name?: string
+  sector?: string | { id: string | number; name: string }
+  sector_id?: number | string
+  sector_name?: string
+  supervisor?: User | string
+  supervisor_id?: number | string
+  supervisor_name?: string
+  permissions?: {
+    can_create_tasks?: boolean
+    can_close_tasks?: boolean
+    can_manage_users?: boolean
+    can_manage_organizations?: boolean
+    can_execute_tasks?: boolean
+    can_view_analytics?: boolean
+    can_view_audit?: boolean
+  }
+  profile_guidance?: string
+  district?: District
   district_id?: number
   last_login?: string
   avatar?: string
@@ -382,6 +398,8 @@ export interface UserCreateInput {
   position?: string
   password: string
   organization?: string  // UUID string
+  sector?: string
+  supervisor?: string
   district_id?: string   // UUID string
 }
 
@@ -463,6 +481,69 @@ export interface FilterOptions {
   priority: Record<string, string>
   category: Record<string, string>
   districts: string[]
+}
+
+export interface Project extends BaseModel {
+  title: string
+  summary: string
+  category: 'MAHALLIY' | 'XALQARO' | 'DRIVER'
+  category_display?: string
+  status: 'REJA' | 'TASDIQLANGAN' | 'IJRODA' | 'MONITORING' | 'YAKUNLANGAN'
+  status_display?: string
+  progress: number
+  budget?: string
+  owner?: string
+  start_date?: string | null
+  end_date?: string | null
+  sort_order?: number
+  is_active?: boolean
+  history_entries?: ProjectHistory[]
+}
+
+export type ProjectScope = 'active' | 'archived' | 'all'
+
+export interface ProjectCreateInput {
+  title: string
+  summary?: string
+  category: 'MAHALLIY' | 'XALQARO' | 'DRIVER'
+  status: 'REJA' | 'TASDIQLANGAN' | 'IJRODA' | 'MONITORING' | 'YAKUNLANGAN'
+  progress: number
+  budget?: string
+  owner?: string
+  start_date?: string | null
+  end_date?: string | null
+  sort_order?: number
+  is_active?: boolean
+}
+
+export interface ProjectUpdateInput extends Partial<ProjectCreateInput> {}
+
+export interface ProjectHistory extends BaseModel {
+  action_type: 'CREATED' | 'UPDATED' | 'STATUS_CHANGED' | 'PROGRESS_CHANGED' | 'DELETED'
+  action_display?: string
+  title: string
+  description?: string
+  actor_name?: string
+}
+
+export interface ProjectAttachment extends BaseModel {
+  file_name: string
+  file_url?: string | null
+  uploaded_by_name?: string
+}
+
+export interface ProjectComment extends BaseModel {
+  message: string
+  author_name?: string
+}
+
+export interface ProjectSummary {
+  total: number
+  active_count: number
+  archived_count: number
+  completed_count: number
+  driver_count: number
+  average_progress: number
 }
 
 // ==================== Recurring Task Interfaces ====================

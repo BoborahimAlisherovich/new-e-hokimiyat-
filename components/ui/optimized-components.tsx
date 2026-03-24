@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client"
 
+import Image from "next/image"
 import React from "react"
 import { cn } from "@/lib/utils"
 
@@ -14,24 +15,26 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 export function LazyImage({ src, alt, fallback, className, ...props }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = React.useState(false)
   const [hasError, setHasError] = React.useState(false)
-  const imgRef = React.useRef<HTMLImageElement>(null)
+  const [shouldLoad, setShouldLoad] = React.useState(false)
+  const wrapperRef = React.useRef<HTMLDivElement>(null)
+  const numericWidth = typeof props.width === "number" ? props.width : 1200
+  const numericHeight = typeof props.height === "number" ? props.height : 800
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const img = entry.target as HTMLImageElement
-            img.src = src
-            observer.unobserve(img)
+            setShouldLoad(true)
+            observer.unobserve(entry.target)
           }
         })
       },
       { threshold: 0.1 }
     )
 
-    if (imgRef.current) {
-      observer.observe(imgRef.current)
+    if (wrapperRef.current) {
+      observer.observe(wrapperRef.current)
     }
 
     return () => observer.disconnect()
@@ -45,26 +48,26 @@ export function LazyImage({ src, alt, fallback, className, ...props }: LazyImage
     setHasError(true)
   }
 
-  if (hasError && fallback) {
-    return <img src={fallback} alt={alt} className={className} {...props} />
-  }
-
   return (
-    <div className={cn("relative overflow-hidden", className)}>
-      {!isLoaded && (
+    <div ref={wrapperRef} className={cn("relative overflow-hidden", className)}>
+      {!isLoaded && !hasError && (
         <div className="absolute inset-0 skeleton rounded-lg" />
       )}
-      <img
-        ref={imgRef}
-        alt={alt}
-        className={cn(
-          "transition-opacity duration-300",
-          isLoaded ? "opacity-100" : "opacity-0"
-        )}
-        onLoad={handleLoad}
-        onError={handleError}
-        {...props}
-      />
+      {shouldLoad && (
+        <Image
+          src={hasError && fallback ? fallback : src}
+          alt={alt}
+          width={numericWidth}
+          height={numericHeight}
+          unoptimized
+          className={cn(
+            "transition-opacity duration-300",
+            isLoaded ? "opacity-100" : "opacity-0"
+          )}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
     </div>
   )
 }

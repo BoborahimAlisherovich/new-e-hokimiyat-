@@ -1070,6 +1070,8 @@ def handle_rating_callback(user: TelegramUser, appeal_id: int, rating: int, chat
         
         # Adminlarga xabar
         notify_admins_appeal_closed(appeal, satisfied=True, rating=rating)
+        from notifications.services import notify_appeal_feedback
+        notify_appeal_feedback(appeal=appeal, rating=rating)
         
         logger.info(f"Appeal {appeal.appeal_number} rated {rating} stars by user {user.telegram_id}")
         
@@ -1221,6 +1223,17 @@ def notify_admins_appeal_reopened(appeal: TelegramAppeal):
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
 
+    try:
+        from notifications.services import notify_appeal_status_update
+
+        notify_appeal_status_update(
+            appeal=appeal,
+            title="Murojaat qayta ochildi",
+            message=f"#{appeal.appeal_number} murojaati fuqaro qoniqmagani uchun qayta ko'rib chiqishga qaytdi.",
+        )
+    except Exception as e:
+        logger.error(f"Dashboardga qayta ochilish bildirishnomasi yuborilmadi: {e}")
+
 
 def notify_admins_user_reply(appeal: TelegramAppeal, reply_text: str):
     """Adminlarga foydalanuvchi javobi haqida xabar"""
@@ -1245,6 +1258,17 @@ def notify_admins_user_reply(appeal: TelegramAppeal, reply_text: str):
             )
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
+
+    try:
+        from notifications.services import notify_appeal_message
+
+        notify_appeal_message(
+            appeal=appeal,
+            sender_name=appeal.telegram_user.full_name,
+            preview=reply_text,
+        )
+    except Exception as e:
+        logger.error(f"Dashboardga foydalanuvchi javobi bildirishnomasi yuborilmadi: {e}")
 
 
 def start_appeal(user: TelegramUser, chat_id: int):

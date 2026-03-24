@@ -4,6 +4,7 @@ Task serializers for E-Hokimiyat API.
 
 from rest_framework import serializers
 from django.utils import timezone
+from core.constants import UserRole
 from .models import (
     Task, TaskOrganization, TaskExecution, 
     TaskAttachment, TaskMessage, DeadlineExtensionRequest
@@ -198,8 +199,45 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         
         if missing:
             raise serializers.ValidationError(f"Tashkilotlar topilmadi: {missing}")
-        
+
         return uuid_list
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        organizations = attrs.get('organizations') or []
+
+        if not user:
+            return attrs
+
+        from organizations.models import Organization
+
+        orgs = list(Organization.objects.filter(id__in=organizations, is_active=True).select_related('sector'))
+
+        if user.role == UserRole.HOKIM_YORDAMCHISI:
+            if not user.sector_id:
+                raise serializers.ValidationError({
+                    'organizations': "Hokim o'rinbosariga soha/kompleks biriktirilmagan"
+                })
+            invalid_orgs = [org.name for org in orgs if org.sector_id != user.sector_id]
+            if invalid_orgs:
+                raise serializers.ValidationError({
+                    'organizations': f"Siz faqat o'z komplekisingizdagi tashkilotlarga topshiriq bera olasiz: {', '.join(invalid_orgs)}"
+                })
+
+        if user.role == UserRole.TASHKILOT_RAHBARI:
+            if not user.organization_id:
+                raise serializers.ValidationError({
+                    'organizations': "Tashkilot rahbariga tashkilot biriktirilmagan"
+                })
+            invalid_orgs = [org.name for org in orgs if org.id != user.organization_id]
+            if invalid_orgs:
+                raise serializers.ValidationError({
+                    'organizations': "Tashkilot rahbari faqat o'z tashkiloti doirasida topshiriq yaratishi mumkin"
+                })
+
+        return attrs
     
     def create(self, validated_data):
         """Create task with organization assignments."""

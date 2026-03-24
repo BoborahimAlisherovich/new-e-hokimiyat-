@@ -27,10 +27,11 @@ class UserMinimalSerializer(serializers.ModelSerializer):
     """
     full_name = serializers.CharField(read_only=True)
     avatar_url = serializers.SerializerMethodField()
+    sector_name = serializers.CharField(source='sector.name', read_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'role', 'position', 'avatar_url']
+        fields = ['id', 'full_name', 'role', 'position', 'avatar_url', 'sector_name']
     
     def get_avatar_url(self, obj):
         return _build_avatar_url(obj, self.context.get('request'))
@@ -44,6 +45,8 @@ class UserSerializer(serializers.ModelSerializer):
     masked_pnfl = serializers.CharField(read_only=True)
     cabinet_type = serializers.CharField(read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True)
+    supervisor_name = serializers.CharField(source='supervisor.full_name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     is_online = serializers.BooleanField(read_only=True)
     avatar_url = serializers.SerializerMethodField()
@@ -53,6 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'login', 'pnfl', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
+            'sector', 'sector_name', 'supervisor', 'supervisor_name',
             'position', 'status', 'cabinet_type',
             'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen',
             'avatar', 'avatar_url'
@@ -77,7 +81,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'login', 'pnfl', 'first_name', 'last_name', 'middle_name',
-            'phone', 'email', 'role', 'organization', 'position', 'password'
+            'phone', 'email', 'role', 'organization', 'sector', 'supervisor', 'position', 'password'
         ]
 
     def validate_login(self, value):
@@ -101,6 +105,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Validate role hierarchy."""
         request = self.context.get('request')
+        current_user = request.user if request else None
         if request and request.user:
             target_role = attrs.get('role')
             if not request.user.can_add_user_with_role(target_role):
@@ -108,13 +113,54 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     'role': f"Siz {target_role} roli bilan foydalanuvchi qo'sha olmaysiz"
                 })
         
-        # Validate organization for organization-level roles
         role = attrs.get('role')
         organization = attrs.get('organization')
+        sector = attrs.get('sector')
+        supervisor = attrs.get('supervisor')
+
         if role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and not organization:
             raise serializers.ValidationError({
                 'organization': "Tashkilot tanlanishi shart"
             })
+        if role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and organization:
+            attrs['sector'] = organization.sector
+
+        if role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'] and not sector:
+            raise serializers.ValidationError({
+                'sector': "Hokimlik profillari uchun soha/kompleks tanlanishi shart"
+            })
+
+        if role == 'HOKIMLIK_MASUL':
+            if not supervisor:
+                raise serializers.ValidationError({
+                    'supervisor': "Bosh mutaxassis uchun tegishli hokim o'rinbosari biriktirilishi shart"
+                })
+            if supervisor.role != 'HOKIM_YORDAMCHISI':
+                raise serializers.ValidationError({
+                    'supervisor': "Bosh mutaxassis faqat hokim o'rinbosariga biriktirilishi mumkin"
+                })
+            if sector and supervisor.sector_id and sector.id != supervisor.sector_id:
+                raise serializers.ValidationError({
+                    'sector': "Bosh mutaxassisning sohasi biriktirilgan o'rinbosar sohasi bilan bir xil bo'lishi kerak"
+                })
+            if current_user and current_user.role == 'HOKIM_YORDAMCHISI' and supervisor.id != current_user.id:
+                raise serializers.ValidationError({
+                    'supervisor': "Siz faqat o'zingizga biriktiriladigan bosh mutaxassis yaratishingiz mumkin"
+                })
+
+        if role == 'HOKIM_YORDAMCHISI' and current_user and current_user.role == 'HOKIM_YORDAMCHISI':
+            raise serializers.ValidationError({
+                'role': "Hokim o'rinbosari boshqa hokim o'rinbosari yarata olmaydi"
+            })
+
+        if role not in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            attrs['sector'] = None
+
+        if role != 'HOKIMLIK_MASUL':
+            attrs['supervisor'] = None
+
+        if role not in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            attrs['organization'] = None
         
         return attrs
     
@@ -155,7 +201,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'login',
             'first_name', 'last_name', 'middle_name',
             'phone', 'email', 'position',
-            'role', 'status', 'organization', 'password'
+            'role', 'status', 'organization', 'sector', 'supervisor', 'password'
         ]
 
     def validate_login(self, value):
@@ -174,6 +220,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         role = attrs.get('role', instance.role if instance else None)
         organization = attrs.get('organization', instance.organization if instance else None)
+        sector = attrs.get('sector', instance.sector if instance else None)
+        supervisor = attrs.get('supervisor', instance.supervisor if instance else None)
 
         if request and request.user and role:
             # Only allow role change if current user can assign that role
@@ -186,6 +234,40 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'organization': "Tashkilot tanlanishi shart"
             })
+        if role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and organization:
+            attrs['sector'] = organization.sector
+
+        if role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'] and not sector:
+            raise serializers.ValidationError({
+                'sector': "Hokimlik profillari uchun soha/kompleks tanlanishi shart"
+            })
+
+        if role == 'HOKIMLIK_MASUL':
+            if not supervisor:
+                raise serializers.ValidationError({
+                    'supervisor': "Bosh mutaxassis uchun tegishli hokim o'rinbosari biriktirilishi shart"
+                })
+            if supervisor.role != 'HOKIM_YORDAMCHISI':
+                raise serializers.ValidationError({
+                    'supervisor': "Bosh mutaxassis faqat hokim o'rinbosariga biriktirilishi mumkin"
+                })
+            if sector and supervisor.sector_id and sector.id != supervisor.sector_id:
+                raise serializers.ValidationError({
+                    'sector': "Bosh mutaxassisning sohasi biriktirilgan o'rinbosar sohasi bilan bir xil bo'lishi kerak"
+                })
+            if request and request.user.role == 'HOKIM_YORDAMCHISI' and supervisor.id != request.user.id:
+                raise serializers.ValidationError({
+                    'supervisor': "Siz faqat o'zingizga biriktirilgan bosh mutaxassisni boshqara olasiz"
+                })
+
+        if role not in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            attrs['sector'] = None
+
+        if role != 'HOKIMLIK_MASUL':
+            attrs['supervisor'] = None
+
+        if role not in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+            attrs['organization'] = None
 
         return attrs
 
@@ -255,7 +337,10 @@ class UserMeSerializer(serializers.ModelSerializer):
     masked_pnfl = serializers.CharField(read_only=True)
     cabinet_type = serializers.CharField(read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True)
+    supervisor_name = serializers.CharField(source='supervisor.full_name', read_only=True)
     permissions = serializers.SerializerMethodField()
+    profile_guidance = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
     
     class Meta:
@@ -263,7 +348,8 @@ class UserMeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'login', 'masked_pnfl', 'first_name', 'last_name', 'middle_name',
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
-            'position', 'status', 'cabinet_type', 'permissions',
+            'sector', 'sector_name', 'supervisor', 'supervisor_name',
+            'position', 'status', 'cabinet_type', 'permissions', 'profile_guidance',
             'avatar', 'avatar_url'
         ]
         extra_kwargs = {
@@ -276,15 +362,26 @@ class UserMeSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj):
         """Return user permissions based on role."""
         permissions = {
-            'can_create_tasks': obj.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'],
+            'can_create_tasks': obj.role in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN'],
             'can_close_tasks': obj.role == 'HOKIM',
-            'can_manage_users': obj.role in ['HOKIM', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'ADMIN'],
-            'can_manage_organizations': obj.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'],
+            'can_manage_users': obj.role in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN'],
+            'can_manage_organizations': obj.role in ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'],
             'can_execute_tasks': obj.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
-            'can_view_analytics': obj.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'],
+            'can_view_analytics': obj.role in ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'],
             'can_view_audit': obj.role in ['HOKIM', 'ADMIN'],
         }
         return permissions
+
+    def get_profile_guidance(self, obj):
+        guidance = {
+            'HOKIM': "Barcha topshiriqlarni ko'radi, topshiriq yaratadi va yakuniy nazoratdan yechadi.",
+            'HOKIM_YORDAMCHISI': "Faqat o'z sohasi bo'yicha topshiriq yaratadi, o'z kompleksidagi tashkilotlarga va biriktirilgan bosh mutaxassislarga ishlaydi.",
+            'HOKIMLIK_MASUL': "Faqat o'ziga biriktirilgan hokim o'rinbosari yuborgan topshiriqlarni ko'radi, lekin yangi topshiriq yaratmaydi.",
+            'TASHKILOT_RAHBARI': "Faqat o'z tashkilotiga oid topshiriqlarni ko'radi va zaruratda o'z tashkiloti ichida topshiriq yaratadi.",
+            'TASHKILOT_MASUL': "Faqat o'z tashkilotiga tegishli topshiriqlarni ko'radi va ijroga javob beradi.",
+            'ADMIN': "Tizimni to'liq boshqaradi va barcha rollarni nazorat qiladi.",
+        }
+        return guidance.get(obj.role, "")
 
 
 class UserAssignmentSerializer(serializers.ModelSerializer):

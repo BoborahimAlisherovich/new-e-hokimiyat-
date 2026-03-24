@@ -243,6 +243,9 @@ export interface OrgDashboardData {
     approved: number
     responded: number
     resolved: number
+    avg_resolution_days: number
+    average_rating: number | null
+    rated_count: number
     recent: Array<{
       id: number
       appeal_number: string
@@ -253,6 +256,10 @@ export interface OrgDashboardData {
       user_name: string
       category_name: string | null
     }>
+  }
+  service: {
+    target_review_days: number
+    target_response_days: number
   }
   employees: {
     count: number

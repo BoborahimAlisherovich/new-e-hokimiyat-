@@ -84,8 +84,8 @@ export const uzCyrlTranslations: Translations = {
   },
   roles: {
     HOKIM: 'Ҳоким',
-    HOKIM_YORDAMCHISI: 'Ҳоким ёрдамчиси',
-    HOKIMLIK_MASUL: 'Ҳокимлик масъули',
+    HOKIM_YORDAMCHISI: 'Ҳоким ўринбосари',
+    HOKIMLIK_MASUL: 'Ҳокимлик мутахассиси',
     TASHKILOT_RAHBAR: 'Ташкилот раҳбари',
     TASHKILOT_MASUL: 'Ташкилот масъули',
     ADMIN: 'Техник админ',
