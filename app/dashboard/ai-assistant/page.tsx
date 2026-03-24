@@ -702,14 +702,24 @@ function ChatSidebar({
 }) {
   const [isListVisible, setIsListVisible] = useState(true);
 
-  if (!isOpen) return null;
-
   return (
-    <aside className="hidden lg:flex flex-col w-80 h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 shrink-0 overflow-hidden">
+    <motion.aside
+      initial={false}
+      animate={{
+        width: isOpen ? 336 : 0,
+        x: isOpen ? 0 : -24,
+        opacity: isOpen ? 1 : 0,
+      }}
+      transition={{ duration: 0.22, ease: "easeInOut" }}
+      className="hidden lg:flex flex-col h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 shrink-0 overflow-hidden"
+      style={{ borderRightWidth: isOpen ? 1 : 0 }}
+      aria-hidden={!isOpen}
+    >
       {/* New Chat Button */}
       <div className="p-3 border-b border-slate-200/80 shrink-0">
         <Button
           onClick={onCreateConversation}
+          disabled={!isOpen}
           className="w-full justify-start gap-2 bg-slate-900 hover:bg-slate-800 text-white border-0 shadow-sm text-sm"
         >
           <Plus className="h-4 w-4" />
@@ -724,6 +734,7 @@ function ChatSidebar({
             <button
               type="button"
               onClick={() => setIsListVisible((prev) => !prev)}
+              disabled={!isOpen}
               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
             >
               <span>Suhbatlar</span>
@@ -750,7 +761,7 @@ function ChatSidebar({
 
       {/* Desktop input zone balance: keeps sidebar from visually running into chat input */}
       <div className="h-24 shrink-0 border-t border-slate-200/80 bg-white/70" />
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -892,62 +903,64 @@ function ConversationListItem({
 
   return (
     <div
-      className={`group flex items-center gap-2 rounded-lg px-2 py-1 ${
+      className={`group rounded-lg px-2 py-1 ${
         isActive ? "bg-blue-50/70" : "hover:bg-slate-100/80"
       }`}
     >
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`flex flex-1 min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-          isActive
-            ? "bg-blue-100 text-blue-900"
-            : "bg-transparent text-slate-700"
+      <div
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-2 transition-colors ${
+          isActive ? "bg-blue-100 text-blue-900" : "bg-transparent text-slate-700"
         }`}
-        title={displayTitle}
       >
-        <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-            isActive
-              ? "bg-blue-200 text-blue-700"
-              : "bg-slate-100 text-slate-500"
-          }`}
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex min-w-0 items-center gap-3 text-left"
+          title={displayTitle}
         >
-          <History className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className={`truncate text-sm ${
-              isActive ? "font-medium text-blue-950" : "font-medium text-slate-800"
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+              isActive
+                ? "bg-blue-200 text-blue-700"
+                : "bg-slate-100 text-slate-500"
             }`}
-            title={displayTitle}
           >
-            {displayTitle}
-          </p>
-          <p
-            className={`truncate text-xs ${
-              isActive ? "text-blue-700/80" : "text-slate-500"
-            }`}
-            title={secondaryText}
-          >
-            {secondaryText}
-          </p>
-        </div>
-      </button>
+            <History className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
+              className={`truncate text-sm ${
+                isActive ? "font-medium text-blue-950" : "font-medium text-slate-800"
+              }`}
+              title={displayTitle}
+            >
+              {displayTitle}
+            </p>
+            <p
+              className={`truncate text-xs ${
+                isActive ? "text-blue-700/80" : "text-slate-500"
+              }`}
+              title={secondaryText}
+            >
+              {secondaryText}
+            </p>
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={onDelete}
-        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-md border transition-colors ${
-          isActive
-            ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
-            : "border-slate-200 bg-white text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-        }`}
-        aria-label="Suhbatni o'chirish"
-        title="Suhbatni o'chirish"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
+            isActive
+              ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
+              : "border-slate-200 bg-white text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          }`}
+          aria-label="Suhbatni o'chirish"
+          title="Suhbatni o'chirish"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
