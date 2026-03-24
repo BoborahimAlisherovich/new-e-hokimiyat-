@@ -24,6 +24,8 @@ import {
   Pencil,
   Check,
   Zap,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { API_BASE, getAccessToken } from "@/lib/api/client";
@@ -503,6 +505,7 @@ export default function AIAssistantPage() {
           messages={messages}
           isLoading={isLoading}
           isSending={isSending}
+          error={error}
           messagesEndRef={messagesEndRef}
           inputMessage={inputMessage}
           isRecording={isRecording}
@@ -510,12 +513,14 @@ export default function AIAssistantPage() {
           audioBlob={audioBlob}
           audioUrl={audioUrl}
           speechText={speechText}
+          currentConversation={currentConversation}
           onInputChange={setInputMessage}
           onSendMessage={() => sendMessage()}
           onRecordToggle={handleRecordToggle}
           onQuickChat={quickChat}
           onResetRecording={resetRecording}
           sendMessageWithAudio={() => sendMessage(speechText)}
+          onRetry={loadConversations}
           getIntentBadge={getIntentBadge}
           extractReportId={extractReportId}
           sanitizeReportContent={sanitizeReportContent}
@@ -695,10 +700,12 @@ function ChatSidebar({
   onDeleteConversation: (id: string, e: React.MouseEvent) => void;
   onCreateConversation: () => void;
 }) {
+  const [isListVisible, setIsListVisible] = useState(true);
+
   if (!isOpen) return null;
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 shrink-0 overflow-hidden">
+    <aside className="hidden lg:flex flex-col w-80 h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 shrink-0 overflow-hidden">
       {/* New Chat Button */}
       <div className="p-3 border-b border-slate-200/80 shrink-0">
         <Button
@@ -714,22 +721,29 @@ function ChatSidebar({
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="px-2 py-2">
-            <div className="text-xs font-semibold text-slate-400 px-3 py-2 uppercase tracking-wider">
-              Suhbatlar
-            </div>
-            <div className="space-y-1">
-              {conversations.map((conv) => {
-                return (
-                  <ConversationListItem
-                    key={conv.id}
-                    conv={conv}
-                    isActive={currentConversation?.id === conv.id}
-                    onSelect={() => onSelectConversation(conv)}
-                    onDelete={(e) => onDeleteConversation(conv.id, e)}
-                  />
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsListVisible((prev) => !prev)}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <span>Suhbatlar</span>
+              {isListVisible ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+            {isListVisible && (
+              <div className="mt-1 space-y-1">
+                {conversations.map((conv) => {
+                  return (
+                    <ConversationListItem
+                      key={conv.id}
+                      conv={conv}
+                      isActive={currentConversation?.id === conv.id}
+                      onSelect={() => onSelectConversation(conv)}
+                      onDelete={(e) => onDeleteConversation(conv.id, e)}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         </ScrollArea>
       </div>
@@ -757,6 +771,8 @@ function MobileSidebar({
   onDeleteConversation: (id: string, e: React.MouseEvent) => void;
   onCreateConversation: () => void;
 }) {
+  const [isListVisible, setIsListVisible] = useState(true);
+
   return (
     <>
       {/* Backdrop */}
@@ -780,7 +796,7 @@ function MobileSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-72 min-h-0 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 lg:hidden flex flex-col pt-16"
+            className="fixed left-0 top-0 bottom-0 w-80 max-w-[86vw] min-h-0 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 lg:hidden flex flex-col pt-16"
           >
             {/* Close Button */}
             <Button
@@ -807,22 +823,29 @@ function MobileSidebar({
             <div className="flex-1 min-h-0">
               <ScrollArea className="h-full">
                 <div className="px-2 py-2">
-                  <div className="text-xs font-semibold text-slate-400 px-3 py-2 uppercase tracking-wider">
-                    Suhbatlar
-                  </div>
-                  <div className="space-y-1">
-                    {conversations.map((conv) => {
-                      return (
-                        <ConversationListItem
-                          key={conv.id}
-                          conv={conv}
-                          isActive={currentConversation?.id === conv.id}
-                          onSelect={() => onSelectConversation(conv)}
-                          onDelete={(e) => onDeleteConversation(conv.id, e)}
-                        />
-                      );
-                    })}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsListVisible((prev) => !prev)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    <span>Suhbatlar</span>
+                    {isListVisible ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {isListVisible && (
+                    <div className="mt-1 space-y-1">
+                      {conversations.map((conv) => {
+                        return (
+                          <ConversationListItem
+                            key={conv.id}
+                            conv={conv}
+                            isActive={currentConversation?.id === conv.id}
+                            onSelect={() => onSelectConversation(conv)}
+                            onDelete={(e) => onDeleteConversation(conv.id, e)}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </div>
@@ -915,7 +938,7 @@ function ConversationListItem({
       <button
         type="button"
         onClick={onDelete}
-        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors ${
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-md border transition-colors ${
           isActive
             ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
             : "border-slate-200 bg-white text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
@@ -933,6 +956,7 @@ function ChatArea({
   messages,
   isLoading,
   isSending,
+  error,
   messagesEndRef,
   inputMessage,
   isRecording,
@@ -940,12 +964,14 @@ function ChatArea({
   audioBlob,
   audioUrl,
   speechText,
+  currentConversation,
   onInputChange,
   onSendMessage,
   onRecordToggle,
   onQuickChat,
   onResetRecording,
   sendMessageWithAudio,
+  onRetry,
   getIntentBadge,
   extractReportId,
   sanitizeReportContent,
@@ -954,6 +980,7 @@ function ChatArea({
   messages: AIMessage[];
   isLoading: boolean;
   isSending: boolean;
+  error: string | null;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   inputMessage: string;
   isRecording: boolean;
@@ -961,12 +988,14 @@ function ChatArea({
   audioBlob: Blob | null;
   audioUrl: string | null;
   speechText: string;
+  currentConversation: AIConversation | null;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
   onRecordToggle: () => void;
   onQuickChat: (message: string) => void;
   onResetRecording: () => void;
   sendMessageWithAudio: () => void;
+  onRetry: () => void;
   getIntentBadge: (intent?: string) => React.ReactNode;
   extractReportId: (content?: string) => string | null;
   sanitizeReportContent: (content?: string) => string;
@@ -985,6 +1014,25 @@ function ChatArea({
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+            {error && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900">AI yordamchi bilan ulanishda uzilish bor</p>
+                    <p className="text-xs text-amber-800/80">{error}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onRetry}
+                    className="border-amber-200 bg-white text-amber-900 hover:bg-amber-100"
+                  >
+                    Qayta yuklash
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Welcome Screen */}
             {messages.length === 0 && !isLoading && (
               <div className="text-center py-8 sm:py-16">
@@ -1113,6 +1161,8 @@ function ChatArea({
         audioUrl={audioUrl}
         speechText={speechText}
         isSending={isSending}
+        currentConversation={currentConversation}
+        onQuickChat={onQuickChat}
         onInputChange={onInputChange}
         onSendMessage={onSendMessage}
         onRecordToggle={onRecordToggle}
@@ -1131,6 +1181,8 @@ function ChatInput({
   audioUrl,
   speechText,
   isSending,
+  currentConversation,
+  onQuickChat,
   onInputChange,
   onSendMessage,
   onRecordToggle,
@@ -1144,30 +1196,46 @@ function ChatInput({
   audioUrl: string | null;
   speechText: string;
   isSending: boolean;
+  currentConversation: AIConversation | null;
+  onQuickChat: (message: string) => void;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
   onRecordToggle: () => void;
   onResetRecording: () => void;
   sendMessageWithAudio: () => void;
 }) {
+  const inlinePrompts = [
+    "Bugungi topshiriqlar",
+    "Murojaatlar statistikasi",
+    "Hisobot yarat",
+    "Muddati o'tgan vazifalar",
+  ];
+
   return (
     <div className="shrink-0 border-t border-slate-200/80 bg-white/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:p-4">
       <div className="max-w-3xl mx-auto">
-        <div className="mb-2 flex gap-2 overflow-x-auto pb-1 sm:hidden">
-          {[
-            "Bugungi topshiriqlar",
-            "Murojaatlar statistikasi",
-            "Hisobot yarat",
-          ].map((shortcut) => (
+        <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+          {inlinePrompts.map((shortcut) => (
             <button
               key={shortcut}
               type="button"
-              onClick={() => onInputChange(shortcut)}
-              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600"
+              onClick={() => onQuickChat(shortcut)}
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               {shortcut}
             </button>
           ))}
+        </div>
+
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mb-3">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+            {currentConversation ? "Suhbat faol" : "Yangi suhbat"}
+          </span>
+          <span>
+            {isRecording
+              ? "Mikrofon yozuvni tugatgach, matn maydonga tushadi."
+              : "Enter yuboradi, Shift+Enter yangi qator ochadi."}
+          </span>
         </div>
 
         {/* Recording Indicator */}
@@ -1219,7 +1287,7 @@ function ChatInput({
           
           <div className="flex-1 relative">
             <Textarea
-              placeholder="Xabar yozing..."
+              placeholder="Masalan: bugungi topshiriqlar holatini qisqacha yozib bering"
               value={inputMessage}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={(e) => {
@@ -1246,10 +1314,6 @@ function ChatInput({
             )}
           </Button>
         </div>
-        
-        <p className="text-xs text-slate-400 text-center mt-1.5 sm:mt-2 hidden sm:block">
-          Enter bilan yuborish, Shift+Enter yangi qator
-        </p>
       </div>
     </div>
   );
