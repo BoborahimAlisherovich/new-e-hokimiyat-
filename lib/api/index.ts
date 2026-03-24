@@ -137,6 +137,22 @@ export type {
   OrganizationTreeNode,
 } from './organizations.api'
 
+export {
+  getProjects,
+  getProjectsSummary,
+  createProject,
+  updateProject,
+  deleteProject,
+  restoreProject,
+  getProjectById,
+  getProjectHistory,
+  getProjectComments,
+  addProjectComment,
+  getProjectAttachments,
+  uploadProjectAttachment,
+  getProjectKpi,
+} from './projects.api'
+
 // ============================================================================
 // Sectors
 // ============================================================================

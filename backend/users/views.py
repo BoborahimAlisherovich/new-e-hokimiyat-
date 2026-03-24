@@ -239,16 +239,23 @@ class UserViewSet(viewsets.ModelViewSet):
             Filtrlangan foydalanuvchilar queryset'i
         """
         user = self.request.user
-        queryset = User.objects.select_related('organization', 'created_by')
+        queryset = User.objects.select_related('organization', 'sector', 'supervisor', 'created_by')
         
         # Tashkilot rahbari - faqat o'z tashkiloti
         if user.role == UserRole.TASHKILOT_RAHBARI:
             return queryset.filter(organization=user.organization)
-        
+
         # Tashkilot mas'uli - faqat o'zi
         if user.role == UserRole.TASHKILOT_MASUL:
             return queryset.filter(id=user.id)
-        
+
+        if user.role == UserRole.HOKIM_YORDAMCHISI:
+            return queryset.filter(
+                Q(id=user.id) |
+                Q(supervisor=user) |
+                Q(role__in=[UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL], sector=user.sector)
+            ).distinct()
+
         return queryset
     
     def perform_create(self, serializer):
@@ -276,6 +283,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return True
         if actor.role == UserRole.ADMIN:
             return True
+        if actor.role == UserRole.HOKIM_YORDAMCHISI:
+            if target.role == UserRole.HOKIMLIK_MASUL:
+                return target.supervisor_id == actor.id
+            if target.role in [UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL]:
+                return bool(actor.sector_id and target.sector_id == actor.sector_id)
         return actor.can_add_user_with_role(target.role)
 
     def _ensure_can_manage_target_user(self, request: Request, target: User) -> None:
@@ -504,9 +516,9 @@ class UserViewSet(viewsets.ModelViewSet):
         Chat uchun foydalanuvchilar ro'yxati.
         
         Rolga qarab quyidagi foydalanuvchilarni ko'rsatadi:
-        - HOKIM, HOKIMLIK_MASUL, ADMIN: Barcha foydalanuvchilar
-        - TASHKILOT_RAHBARI: O'z tashkiloti + HOKIM/HOKIMLIK_MASUL
-        - TASHKILOT_MASUL: O'z tashkiloti + HOKIM/HOKIMLIK_MASUL
+        - HOKIM, HOKIM_YORDAMCHISI, HOKIMLIK_MASUL, ADMIN: Barcha foydalanuvchilar
+        - TASHKILOT_RAHBARI: O'z tashkiloti + hokimlik xodimlari
+        - TASHKILOT_MASUL: O'z tashkiloti + hokimlik xodimlari
         
         GET /api/users/chat_users/
         """
@@ -516,7 +528,7 @@ class UserViewSet(viewsets.ModelViewSet):
         ).exclude(id=user.id)
         
         # Hokim va admin barcha foydalanuvchilarni ko'radi
-        if user.role in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+        if user.role in ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'ADMIN']:
             pass  # Hech qanday filter qo'shilmaydi
         
         # Tashkilot xodimlari
@@ -525,7 +537,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # O'z tashkiloti + Hokimlik xodimlari
             queryset = queryset.filter(
                 Q(organization=user.organization) |  # O'z tashkiloti
-                Q(role__in=['HOKIM', 'HOKIMLIK_MASUL'])  # Hokimlik xodimlari
+                Q(role__in=['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'])  # Hokimlik xodimlari
             )
         else:
             queryset = queryset.none()

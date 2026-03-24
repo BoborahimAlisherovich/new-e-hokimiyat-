@@ -99,8 +99,8 @@ export type Sector =
 /** Rol nomlari */
 export const roleLabels: Readonly<Record<UserRole, string>> = Object.freeze({
   HOKIM: "Hokim",
-  HOKIM_YORDAMCHISI: "Hokim yordamchisi",
-  HOKIMLIK_MASUL: "Hokimlik mas'uli",
+  HOKIM_YORDAMCHISI: "Hokim o'rinbosari",
+  HOKIMLIK_MASUL: "Hokimlik mutaxassisi",
   TASHKILOT_RAHBAR: "Tashkilot rahbari",
   TASHKILOT_RAHBARI: "Tashkilot rahbari",
   TASHKILOT_MASUL: "Tashkilot mas'uli",

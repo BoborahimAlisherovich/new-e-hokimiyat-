@@ -146,3 +146,132 @@ def notify_new_appeal(
         create_notification(user=user, title=title, message=message, notification_type="INFO", link=link)
         created += 1
     return created
+
+
+def _appeal_recipients_queryset(*, appeal, include_assigned_orgs: bool = True):
+    from users.models import User
+
+    recipient_filter = Q(role__in=UserRole.ADMIN_ROLES)
+
+    if include_assigned_orgs:
+        org_ids = list(appeal.assigned_organizations.values_list("id", flat=True))
+        if org_ids:
+            recipient_filter |= Q(
+                role__in=UserRole.ORGANIZATION_ROLES,
+                organization_id__in=org_ids,
+            )
+
+    reviewer_user_id = getattr(getattr(appeal, "reviewed_by", None), "user_id", None)
+    if reviewer_user_id:
+        recipient_filter |= Q(id=reviewer_user_id)
+
+    participant_ids = list(
+        appeal.messages.filter(sender_user__isnull=False).values_list("sender_user_id", flat=True)
+    )
+    if participant_ids:
+        recipient_filter |= Q(id__in=participant_ids)
+
+    return (
+        User.objects.filter(status=UserStatus.FAOL, is_active=True)
+        .filter(recipient_filter)
+        .distinct()
+    )
+
+
+def notify_appeal_status_update(
+    *,
+    appeal,
+    title: str,
+    message: str,
+    exclude_user_ids: Optional[Iterable] = None,
+    include_assigned_orgs: bool = True,
+) -> int:
+    exclude_user_ids = set(exclude_user_ids or [])
+    link = f"/dashboard/appeals/{appeal.id}"
+    recipients = _appeal_recipients_queryset(
+        appeal=appeal,
+        include_assigned_orgs=include_assigned_orgs,
+    )
+    if exclude_user_ids:
+        recipients = recipients.exclude(id__in=list(exclude_user_ids))
+
+    created = 0
+    for user in recipients:
+        create_notification(
+            user=user,
+            title=title,
+            message=message,
+            notification_type="INFO",
+            link=link,
+        )
+        created += 1
+    return created
+
+
+def notify_appeal_message(
+    *,
+    appeal,
+    sender_name: str,
+    preview: str,
+    exclude_user_ids: Optional[Iterable] = None,
+) -> int:
+    safe_preview = (preview or "").strip()
+    if safe_preview:
+        safe_preview = safe_preview[:160] + ("..." if len(safe_preview) > 160 else "")
+        message = f'#{appeal.appeal_number} bo\'yicha {sender_name} yangi xabar yubordi: {safe_preview}'
+    else:
+        message = f"#{appeal.appeal_number} bo'yicha {sender_name} yangi xabar yubordi."
+
+    return notify_appeal_status_update(
+        appeal=appeal,
+        title="Murojaatda yangi xabar",
+        message=message,
+        exclude_user_ids=exclude_user_ids,
+    )
+
+
+def notify_appeal_feedback(
+    *,
+    appeal,
+    rating: Optional[int],
+    exclude_user_ids: Optional[Iterable] = None,
+) -> int:
+    stars = ("⭐" * rating) if rating else "bahosiz"
+    message = f"#{appeal.appeal_number} murojaati fuqaro tomonidan {stars} bilan yakunlandi."
+    return notify_appeal_status_update(
+        appeal=appeal,
+        title="Murojaat baholandi",
+        message=message,
+        exclude_user_ids=exclude_user_ids,
+    )
+
+
+def notify_project_update(
+    *,
+    project,
+    title: str,
+    message: str,
+    exclude_user_ids: Optional[Iterable] = None,
+) -> int:
+    from users.models import User
+
+    exclude_user_ids = set(exclude_user_ids or [])
+    recipients = User.objects.filter(
+        status=UserStatus.FAOL,
+        is_active=True,
+        role__in=UserRole.PROJECT_MANAGER_ROLES,
+    )
+    if exclude_user_ids:
+        recipients = recipients.exclude(id__in=list(exclude_user_ids))
+
+    created = 0
+    for user in recipients.distinct():
+        create_notification(
+            user=user,
+            title=title,
+            message=message,
+            notification_type="INFO",
+            link=f"/dashboard/projects/{project.id}",
+        )
+        created += 1
+    return created

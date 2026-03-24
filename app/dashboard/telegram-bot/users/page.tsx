@@ -16,7 +16,7 @@ import {
   MapPin,
   Calendar,
   Send,
-  Image,
+  Image as ImageIcon,
   Video,
   FileText,
   MessageSquare,
@@ -651,7 +651,7 @@ export default function TelegramBotUsersPage() {
                   <SelectItem value="none">Oddiy xabar</SelectItem>
                   <SelectItem value="photo">
                     <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4" /> Rasm
+                      <ImageIcon className="h-4 w-4" aria-hidden="true" /> Rasm
                     </div>
                   </SelectItem>
                   <SelectItem value="video">
@@ -805,7 +805,7 @@ export default function TelegramBotUsersPage() {
                   <SelectItem value="none">Oddiy xabar</SelectItem>
                   <SelectItem value="photo">
                     <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4" /> Rasm
+                      <ImageIcon className="h-4 w-4" aria-hidden="true" /> Rasm
                     </div>
                   </SelectItem>
                   <SelectItem value="video">

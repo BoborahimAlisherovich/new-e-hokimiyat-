@@ -188,7 +188,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
     const roleLabels: Record<string, string> = {
       ADMIN: "Администратор",
       HOKIM: "Ҳоким",
-      HOKIMLIK_MASUL: "Ҳокимлик масъули",
+      HOKIMLIK_MASUL: "Ҳокимлик мутахассиси",
       TASHKILOT_RAHBAR: "Ташкилот раҳбари",
       TASHKILOT_RAHBARI: "Ташкилот раҳбари",
       TASHKILOT_MASUL: "Ташкилот масъули",

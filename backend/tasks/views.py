@@ -204,10 +204,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Topshiriqni yangilash.
         
-        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        Faqat HOKIM, HOKIM_YORDAMCHISI va ADMIN tahrirlashi mumkin.
         """
         user = request.user
-        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+        if user.role not in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN']:
             return Response(
                 {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
                 status=status.HTTP_403_FORBIDDEN
@@ -217,10 +217,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Topshiriqni qisman yangilash.
         
-        Faqat HOKIM, HOKIMLIK_MASUL va ADMIN tahrirlashi mumkin.
+        Faqat HOKIM, HOKIM_YORDAMCHISI va ADMIN tahrirlashi mumkin.
         """
         user = request.user
-        if user.role not in ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']:
+        if user.role not in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN']:
             return Response(
                 {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
                 status=status.HTTP_403_FORBIDDEN
@@ -276,10 +276,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         # Tashkilotlar ro'yxatini olish
         from organizations.models import Organization, Sector
-        orgs = list(Organization.objects.filter(is_active=True).values('id', 'name', 'sector__name'))
+        orgs = list(Organization.objects.filter(is_active=True).values('id', 'name', 'short_name', 'sector__name'))
         sectors = list(Sector.objects.filter(is_active=True).values_list('name', flat=True))
         
-        org_list = "\n".join([f"- {o['name']} (ID: {o['id']}, Soha: {o['sector__name'] or 'Nomalum'})" for o in orgs])
+        org_list = "\n".join([
+            f"- {o['name']}{f' / {o['short_name']}' if o.get('short_name') else ''} "
+            f"(ID: {o['id']}, Soha: {o['sector__name'] or 'Nomalum'})"
+            for o in orgs
+        ])
         
         prompt = f"""Sen E-Hokimiyat tizimining professional AI yordamchisisan. 
 Quyidagi matn audio yozuvdan olingan bo'lishi mumkin. Unda imloviy, grammatik xatolar bo'lishi tabiiy.
@@ -288,6 +292,7 @@ Sening vazifang:
 2. Mazmunni tushunib, rasmiy topshiriq sifatida qayta yozish
 3. Tegishli tashkilotlarni aniqlash
 4. Agar topshiriq takrorlanuvchi (har kuni, har hafta, har oy va h.k.) bo'lsa — buni aniqlash
+5. Agar matnda barcha faol tashkilotlarga yuborish mazmuni bo'lsa, mavjud faol tashkilotlarning barchasini tanlash
 
 KIRITILGAN MATN (audio transkripsiyadan, xatolar bo'lishi mumkin):
 \"{text}\"
@@ -448,9 +453,24 @@ QOIDALAR:
             )
         ).order_by('status_order', 'deadline', '-created_at')
         
-        # Hokim va Hokimlik mas'uli barcha topshiriqlarni ko'radi
+        # Faqat hokim va admin barcha topshiriqlarni ko'radi
         if user.role in UserRole.ADMIN_ROLES:
             return queryset
+
+        # Hokim o'rinbosari faqat o'zi yaratgan topshiriqlarni ko'radi
+        if user.role == UserRole.HOKIM_YORDAMCHISI:
+            return queryset.filter(created_by=user)
+
+        # Hokimlik mutaxassisi faqat o'ziga biriktirilgan o'rinbosar topshiriqlarini ko'radi
+        if user.role == UserRole.HOKIMLIK_MASUL:
+            if user.supervisor_id:
+                return queryset.filter(created_by=user.supervisor)
+            if user.sector_id:
+                return queryset.filter(
+                    created_by__role=UserRole.HOKIM_YORDAMCHISI,
+                    created_by__sector_id=user.sector_id,
+                ).distinct()
+            return queryset.none()
         
         # Tashkilot xodimlari faqat o'z tashkilotiga berilgan topshiriqlarni ko'radi
         if user.role in UserRole.ORGANIZATION_ROLES:

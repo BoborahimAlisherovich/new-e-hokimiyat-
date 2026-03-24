@@ -22,6 +22,8 @@ interface CreateUserFormData {
   password: string
   role: User["role"]
   organizationId: string
+  sectorId: string
+  supervisorId: string
 }
 
 interface UserCreateDialogProps {
@@ -29,6 +31,9 @@ interface UserCreateDialogProps {
   onOpenChange: (open: boolean) => void
   formData: CreateUserFormData
   organizations: Organization[]
+  sectors: Array<{ id: string; name: string }>
+  users: User[]
+  currentUser: User | null
   onChange: (field: keyof CreateUserFormData, value: string) => void
   onCreated: () => void
 }
@@ -38,6 +43,9 @@ export function UserCreateDialog({
   onOpenChange,
   formData,
   organizations,
+  sectors,
+  users,
+  currentUser,
   onChange,
   onCreated,
 }: UserCreateDialogProps) {
@@ -48,6 +56,25 @@ export function UserCreateDialog({
   const organizationItems = Array.isArray(organizations)
     ? organizations
     : (organizations as { results?: Organization[] } | null | undefined)?.results || []
+  const isOrganizationRole = ["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role)
+  const isHokimlikRole = ["HOKIM_YORDAMCHISI", "HOKIMLIK_MASUL"].includes(formData.role)
+  const availableSupervisors = users.filter((user) => {
+    if (user.role !== "HOKIM_YORDAMCHISI") return false
+    const supervisorSectorId =
+      typeof user.sector === "object" && user.sector?.id
+        ? String(user.sector.id)
+        : String(user.sector_id || "")
+
+    if (formData.sectorId && supervisorSectorId && supervisorSectorId !== formData.sectorId) {
+      return false
+    }
+
+    if (currentUser?.role === "HOKIM_YORDAMCHISI") {
+      return String(user.id) === String(currentUser.id)
+    }
+
+    return true
+  })
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -59,9 +86,11 @@ export function UserCreateDialog({
     if (!formData.password.trim()) newErrors.password = "Parol majburiy"
     if (formData.password && formData.password.length < 6) newErrors.password = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
     if (formData.pnfl && formData.pnfl.length !== 14) newErrors.pnfl = "PNFL 14 ta raqamdan iborat bo'lishi kerak"
-    if (["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role) && !formData.organizationId) {
+    if (isOrganizationRole && !formData.organizationId) {
       newErrors.organizationId = "Tashkilot tanlang"
     }
+    if (isHokimlikRole && !formData.sectorId) newErrors.sectorId = "Soha yoki kompleksni tanlang"
+    if (formData.role === "HOKIMLIK_MASUL" && !formData.supervisorId) newErrors.supervisorId = "Bevosita rahbarni tanlang"
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -83,6 +112,8 @@ export function UserCreateDialog({
         password: formData.password,
         role: formData.role,
         organization: formData.organizationId || undefined,
+        sector: formData.sectorId || undefined,
+        supervisor: formData.supervisorId || undefined,
       })
       onCreated()
     } catch (error: any) {
@@ -99,6 +130,8 @@ export function UserCreateDialog({
           'last_name': 'lastName',
           'middle_name': 'middleName',
           'organization': 'organizationId',
+          'sector': 'sectorId',
+          'supervisor': 'supervisorId',
           'pnfl': 'pnfl',
           'phone': 'phone',
           'email': 'email',
@@ -254,23 +287,45 @@ export function UserCreateDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="HOKIM">Hokim</SelectItem>
-                  <SelectItem value="HOKIMLIK_MASUL">Hokimlik mas'uli</SelectItem>
+                  <SelectItem value="HOKIM_YORDAMCHISI">Hokim o'rinbosari</SelectItem>
+                  <SelectItem value="HOKIMLIK_MASUL">Hokimlik mutaxassisi</SelectItem>
                   <SelectItem value="TASHKILOT_RAHBARI">Tashkilot rahbari</SelectItem>
                   <SelectItem value="TASHKILOT_MASUL">Tashkilot mas'uli</SelectItem>
+                  <SelectItem value="ADMIN">Administrator</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && <p className="text-xs text-red-500">{errors.role}</p>}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="sectorId">
+                Soha / kompleks {isHokimlikRole && <span className="text-red-500">*</span>}
+              </Label>
+              <Select value={formData.sectorId || "none"} onValueChange={(value) => onChange("sectorId", value === "none" ? "" : value)}>
+                <SelectTrigger className={errors.sectorId ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Sohani tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Belgilanmagan</SelectItem>
+                  {sectors.map((sector) => (
+                    <SelectItem key={sector.id} value={String(sector.id)}>
+                      {sector.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.sectorId && <p className="text-xs text-red-500">{errors.sectorId}</p>}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="organizationId">
-              Tashkilot {["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role) && <span className="text-red-500">*</span>}
+              Tashkilot {isOrganizationRole && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={formData.organizationId} onValueChange={(value) => onChange("organizationId", value)}>
+            <Select value={formData.organizationId || "none"} onValueChange={(value) => onChange("organizationId", value === "none" ? "" : value)}>
               <SelectTrigger className={errors.organizationId ? "border-red-500" : ""}>
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">Belgilanmagan</SelectItem>
                 {organizationItems.map((org) => (
                   <SelectItem key={org.id} value={String(org.id)}>
                     {org.name}
@@ -279,6 +334,25 @@ export function UserCreateDialog({
               </SelectContent>
             </Select>
             {errors.organizationId && <p className="text-xs text-red-500">{errors.organizationId}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="supervisorId">
+              Bevosita rahbar {formData.role === "HOKIMLIK_MASUL" && <span className="text-red-500">*</span>}
+            </Label>
+            <Select value={formData.supervisorId || "none"} onValueChange={(value) => onChange("supervisorId", value === "none" ? "" : value)}>
+              <SelectTrigger className={errors.supervisorId ? "border-red-500" : ""}>
+                <SelectValue placeholder="Rahbarni tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Belgilanmagan</SelectItem>
+                {availableSupervisors.map((supervisor) => (
+                  <SelectItem key={supervisor.id} value={String(supervisor.id)}>
+                    {supervisor.full_name || `${supervisor.last_name} ${supervisor.first_name}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.supervisorId && <p className="text-xs text-red-500">{errors.supervisorId}</p>}
           </div>
         </div>
         <DialogFooter>

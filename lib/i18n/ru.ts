@@ -84,8 +84,8 @@ export const ruTranslations: Translations = {
   },
   roles: {
     HOKIM: 'Хоким',
-    HOKIM_YORDAMCHISI: 'Помощник хокима',
-    HOKIMLIK_MASUL: 'Ответственный хокимията',
+    HOKIM_YORDAMCHISI: 'Заместитель хокима',
+    HOKIMLIK_MASUL: 'Специалист хокимията',
     TASHKILOT_RAHBAR: 'Руководитель организации',
     TASHKILOT_MASUL: 'Ответственный организации',
     ADMIN: 'Технический админ',

@@ -19,6 +19,7 @@ export default function NotificationsPage() {
   const t = useTranslation()
   const { toast } = useToast()
   const pageRef = useGSAPPageEntrance()
+  const loadErrorText = t.pages.notifications.loadError
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<"all" | "unread">("all")
   const [loading, setLoading] = useState(true)
@@ -34,7 +35,7 @@ export default function NotificationsPage() {
         setError(null)
       } catch (err) {
         console.error("Bildirishnomalarni yuklashda xatolik:", err)
-        setError(t.pages.notifications.loadError)
+        setError(loadErrorText)
       } finally {
         if (mounted) setLoading(false)
       }
@@ -45,7 +46,7 @@ export default function NotificationsPage() {
       mounted = false
       window.clearInterval(interval)
     }
-  }, [])
+  }, [loadErrorText])
 
   const filteredNotifications = filter === "all" ? notifications : notifications.filter((n) => !n.is_read)
 

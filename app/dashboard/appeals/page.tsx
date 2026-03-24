@@ -165,6 +165,10 @@ export default function AppealsPage() {
 
         {/* Filters */}
         <section data-gsap-section>
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rol va biriktirish asosida</span>
+            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Jarayon boshqaruvi: hokimlik va tashkilot mas'ullari oqimida</span>
+          </div>
           <AppealFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}

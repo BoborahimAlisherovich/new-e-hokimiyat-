@@ -60,6 +60,7 @@ type CreateTaskDialogProps = {
   onOpenChange: (open: boolean) => void
   organizations: any[]
   onCreated: () => void | Promise<void>
+  preferredInputMode?: "manual" | "audio"
 }
 
 type CreateFormState = {
@@ -137,6 +138,7 @@ export function CreateTaskDialog({
   onOpenChange,
   organizations,
   onCreated,
+  preferredInputMode = "manual",
 }: CreateTaskDialogProps) {
   const organizationItems = Array.isArray(organizations)
     ? organizations
@@ -162,6 +164,7 @@ export function CreateTaskDialog({
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const audioPanelRef = useRef<HTMLDivElement | null>(null)
 
   // ==================== LIFECYCLE ====================
   useEffect(() => {
@@ -178,6 +181,15 @@ export function CreateTaskDialog({
       cleanupRecording()
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open || preferredInputMode !== "audio") return
+    const timeoutId = window.setTimeout(() => {
+      audioPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 180)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [open, preferredInputMode])
 
   // ==================== HELPERS ====================
   const setField = <K extends keyof CreateFormState>(field: K, value: CreateFormState[K]) => {
@@ -265,6 +277,18 @@ export function CreateTaskDialog({
       ...prev,
       organization_ids: prev.organization_ids.filter((id) => id !== orgId),
     }))
+  }
+
+  const selectAllOrganizations = () => {
+    const allIds = organizationItems.map((org: any) => String(org.id))
+    setForm((prev) => ({ ...prev, organization_ids: allIds }))
+    if (errors.organization_ids) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next.organization_ids
+        return next
+      })
+    }
   }
 
   // ==================== AUDIO RECORDING ====================
@@ -527,7 +551,13 @@ export function CreateTaskDialog({
         </DialogHeader>
 
         {/* ========== AI AUDIO PANEL ========== */}
-        <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 space-y-3">
+        <div
+          ref={audioPanelRef}
+          className={cn(
+            "rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 space-y-3",
+            preferredInputMode === "audio" && "border-indigo-400 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.7)]"
+          )}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4" />
@@ -549,6 +579,13 @@ export function CreateTaskDialog({
             aniqlaydi.
           </p>
 
+          {preferredInputMode === "audio" && (
+            <div className="rounded-lg border border-indigo-200/80 bg-white/80 p-3 text-xs text-indigo-700">
+              Telefon uchun tezkor rejim yoqilgan. Mikrofon tugmasi orqali gapirib
+              topshiriqni yaratish mumkin.
+            </div>
+          )}
+
           <div className="flex items-center gap-2 flex-wrap">
             {/* Mic button */}
             <Button
@@ -556,7 +593,7 @@ export function CreateTaskDialog({
               variant={isRecording ? "destructive" : "outline"}
               size="sm"
               className={cn(
-                "gap-2 min-w-[140px]",
+                "gap-2 min-w-[140px] min-h-11 sm:min-h-10",
                 isRecording && "animate-pulse"
               )}
               onClick={isRecording ? stopRecording : startRecording}
@@ -588,7 +625,7 @@ export function CreateTaskDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 min-h-11 sm:min-h-10"
                 disabled={aiAnalyzing || isRecording}
               >
                 <FileAudio className="h-4 w-4" />
@@ -602,7 +639,7 @@ export function CreateTaskDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50/60"
+                className="gap-2 min-h-11 sm:min-h-10 text-indigo-600 border-indigo-200 hover:bg-indigo-50/60"
                 onClick={() => analyzeWithAI(form.description)}
               >
                 <Sparkles className="h-4 w-4" />
@@ -741,6 +778,23 @@ export function CreateTaskDialog({
               Tashkilotlar <span className="text-destructive">*</span>
             </Label>
 
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" className="min-h-10" onClick={selectAllOrganizations}>
+                Barcha faol tashkilotlar
+              </Button>
+              {form.organization_ids.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="min-h-10"
+                  onClick={() => setField("organization_ids", [])}
+                >
+                  Tozalash
+                </Button>
+              )}
+            </div>
+
             {/* Selected org badges */}
             {form.organization_ids.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
@@ -824,7 +878,7 @@ export function CreateTaskDialog({
                                 isSelected && "font-medium"
                               )}
                             >
-                              {org.name}
+                              {org.short_name ? `${org.name} (${org.short_name})` : org.name}
                             </span>
                           </CommandItem>
                         )

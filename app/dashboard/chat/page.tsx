@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Header } from "@/components/layout/header"
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -88,7 +89,7 @@ const ALLOWED_FILE_TYPES = [
 const ROLE_LABELS: Record<string, Record<string, string>> = {
   uz: {
     HOKIM: "Hokim",
-    HOKIMLIK_MASUL: "Hokimlik mas'uli",
+    HOKIMLIK_MASUL: "Hokimlik mutaxassisi",
     TASHKILOT_RAHBAR: "Tashkilot rahbari",
     TASHKILOT_RAHBARI: "Tashkilot rahbari",
     TASHKILOT_MASUL: "Tashkilot mas'uli",
@@ -96,7 +97,7 @@ const ROLE_LABELS: Record<string, Record<string, string>> = {
   },
   "uz-cyrl": {
     HOKIM: "Ҳоким",
-    HOKIMLIK_MASUL: "Ҳокимлик масъули",
+    HOKIMLIK_MASUL: "Ҳокимлик мутахассиси",
     TASHKILOT_RAHBAR: "Ташкилот раҳбари",
     TASHKILOT_RAHBARI: "Ташкилот раҳбари",
     TASHKILOT_MASUL: "Ташкилот масъули",
@@ -104,7 +105,7 @@ const ROLE_LABELS: Record<string, Record<string, string>> = {
   },
   ru: {
     HOKIM: "Хоким",
-    HOKIMLIK_MASUL: "Ответственный хокимията",
+    HOKIMLIK_MASUL: "Специалист хокимията",
     TASHKILOT_RAHBAR: "Руководитель организации",
     TASHKILOT_RAHBARI: "Руководитель организации",
     TASHKILOT_MASUL: "Ответственный организации",
@@ -112,7 +113,7 @@ const ROLE_LABELS: Record<string, Record<string, string>> = {
   },
   en: {
     HOKIM: "Mayor",
-    HOKIMLIK_MASUL: "District officer",
+    HOKIMLIK_MASUL: "District specialist",
     TASHKILOT_RAHBAR: "Organization head",
     TASHKILOT_RAHBARI: "Organization head",
     TASHKILOT_MASUL: "Organization officer",
@@ -1368,10 +1369,13 @@ export default function ChatPage() {
                               {msg.attachment && (
                                 <div className="mt-2 space-y-2">
                                   {msg.attachment.type === 'IMAGE' && (
-                                    <img
+                                    <Image
                                       src={msg.attachment.url}
                                       alt={msg.attachment.name}
-                                      className="max-h-48 rounded-md border cursor-pointer hover:opacity-90 transition-opacity"
+                                      width={640}
+                                      height={360}
+                                      unoptimized
+                                      className="max-h-48 w-auto rounded-md border cursor-pointer hover:opacity-90 transition-opacity"
                                       onClick={() => setLightboxImage(msg.attachment!.url)}
                                     />
                                   )}
@@ -1502,7 +1506,7 @@ export default function ChatPage() {
                             {/* Preview rasm yoki video */}
                             {filePreview && chatFile.type.startsWith('image/') && (
                               <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
-                                <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
+                                <Image src={filePreview} alt="Preview" fill unoptimized className="object-cover" />
                               </div>
                             )}
                             {filePreview && chatFile.type.startsWith('video/') && (
@@ -1648,10 +1652,13 @@ export default function ChatPage() {
                 className="relative max-w-[90vw] max-h-[90vh] animate-in zoom-in-90 fade-in duration-300"
                 onClick={(e) => e.stopPropagation()}
               >
-                <img
+                <Image
                   src={lightboxImage}
                   alt={tr.imageAlt}
-                  className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                  width={1600}
+                  height={1200}
+                  unoptimized
+                  className="max-w-full max-h-[90vh] h-auto w-auto object-contain rounded-lg shadow-2xl"
                 />
                 <div className="absolute top-4 right-4 flex gap-2">
                   <a

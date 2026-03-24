@@ -84,8 +84,8 @@ export const enTranslations: Translations = {
   },
   roles: {
     HOKIM: 'Hokim',
-    HOKIM_YORDAMCHISI: 'Hokim assistant',
-    HOKIMLIK_MASUL: 'Hokimiyat officer',
+    HOKIM_YORDAMCHISI: 'Deputy hokim',
+    HOKIMLIK_MASUL: 'Hokimiyat specialist',
     TASHKILOT_RAHBAR: 'Organization head',
     TASHKILOT_MASUL: 'Organization officer',
     ADMIN: 'Technical admin',

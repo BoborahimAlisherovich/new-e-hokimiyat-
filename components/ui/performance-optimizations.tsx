@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import React, { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -60,9 +61,12 @@ export function LazyImage({ src, alt, className }: { src: string; alt: string; c
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
-      <img
+      <Image
         src={src}
         alt={alt}
+        width={1200}
+        height={800}
+        unoptimized
         className={cn(
           "transition-opacity duration-500",
           isLoaded ? "opacity-100" : "opacity-0",
@@ -70,7 +74,6 @@ export function LazyImage({ src, alt, className }: { src: string; alt: string; c
         )}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
-        loading="lazy"
       />
     </div>
   )

@@ -17,6 +17,7 @@ interface UserFiltersProps {
   onOrganizationChange: (value: string) => void
   organizations: Organization[]
   onCreate: () => void
+  showCreateButton?: boolean
   totalCount?: number
   filteredCount?: number
 }
@@ -32,6 +33,7 @@ export function UserFilters({
   onOrganizationChange,
   organizations,
   onCreate,
+  showCreateButton = true,
   totalCount = 0,
   filteredCount = 0,
 }: UserFiltersProps) {
@@ -82,10 +84,12 @@ export function UserFilters({
               className="w-full rounded-xl border-cyan-100/60 bg-white/90 pl-9 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
             />
           </div>
-          <Button onClick={onCreate} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md">
-            <Plus className="h-4 w-4 mr-1" />
-            Yangi foydalanuvchi
-          </Button>
+          {showCreateButton && (
+            <Button onClick={onCreate} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md">
+              <Plus className="h-4 w-4 mr-1" />
+              Yangi foydalanuvchi
+            </Button>
+          )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -98,7 +102,8 @@ export function UserFilters({
               <SelectContent>
               <SelectItem value="all">Barchasi</SelectItem>
               <SelectItem value="HOKIM">Hokim</SelectItem>
-              <SelectItem value="HOKIMLIK_MASUL">Hokimlik mas'uli</SelectItem>
+              <SelectItem value="HOKIM_YORDAMCHISI">Hokim o'rinbosari</SelectItem>
+              <SelectItem value="HOKIMLIK_MASUL">Hokimlik mutaxassisi</SelectItem>
               <SelectItem value="TASHKILOT_RAHBARI">Tashkilot rahbari</SelectItem>
               <SelectItem value="TASHKILOT_MASUL">Tashkilot mas'uli</SelectItem>
               <SelectItem value="ADMIN">Administrator</SelectItem>

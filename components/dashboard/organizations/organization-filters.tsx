@@ -16,6 +16,7 @@ interface OrganizationFiltersProps {
   statusFilter: string
   onStatusChange: (value: string) => void
   onCreate: () => void
+  showCreateButton?: boolean
   totalCount?: number
   filteredCount?: number
 }
@@ -28,6 +29,7 @@ export function OrganizationFilters({
   statusFilter,
   onStatusChange,
   onCreate,
+  showCreateButton = true,
   totalCount = 0,
   filteredCount = 0,
 }: OrganizationFiltersProps) {
@@ -168,13 +170,15 @@ export function OrganizationFilters({
               </SelectContent>
             </Select>
           </div>
-          <Button 
-            onClick={onCreate}
-            className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md sm:w-auto"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {tr.create}
-          </Button>
+          {showCreateButton && (
+            <Button 
+              onClick={onCreate}
+              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {tr.create}
+            </Button>
+          )}
         </div>
     </PremiumFilterShell>
   )

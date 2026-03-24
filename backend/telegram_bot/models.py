@@ -516,7 +516,8 @@ class TelegramAppeal(models.Model):
         blank=True,
         verbose_name="Saytdagi murojaat ID"
     )
-    site_task_id = models.IntegerField(
+    site_task_id = models.CharField(
+        max_length=64,
         null=True, 
         blank=True,
         verbose_name="Saytdagi topshiriq ID"

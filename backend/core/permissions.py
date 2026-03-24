@@ -67,7 +67,7 @@ class CanManageUsers(permissions.BasePermission):
     ROLE_HIERARCHY = {
         'HOKIM': ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
         'HOKIM_YORDAMCHISI': ['HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
-        'HOKIMLIK_MASUL': ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
+        'HOKIMLIK_MASUL': [],
         'TASHKILOT_RAHBARI': ['TASHKILOT_MASUL'],
         'TASHKILOT_MASUL': [],
         'ADMIN': ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
@@ -97,7 +97,7 @@ class CanManageOrganizations(permissions.BasePermission):
     Permission to manage organizations.
     Only Hokim and Hokimlik mas'uli can manage organizations.
     """
-    allowed_roles = ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN']
+    allowed_roles = ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -129,9 +129,9 @@ class CanManageBotSettings(permissions.BasePermission):
 class CanCreateTasks(permissions.BasePermission):
     """
     Permission to create tasks.
-    Only Hokim, Hokim yordamchisi, and Hokimlik mas'uli can create tasks.
+    Hokim, tegishli hokim o'rinbosari va tashkilot rahbari create qila oladi.
     """
-    allowed_roles = ['HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL', 'ADMIN']
+    allowed_roles = ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:

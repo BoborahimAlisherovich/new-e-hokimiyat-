@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { Task } from "@/types"
-import { PRIORITY_COLORS, STATUS_COLORS } from "@/components/dashboard/tasks/task-constants"
+import { PRIORITY_COLORS } from "@/components/dashboard/tasks/task-constants"
 import { FileX, AlertTriangle } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
 import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
@@ -17,7 +17,7 @@ type TaskTableProps = {
   onDelete?: (taskId: number) => void
 }
 
-export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
+export function TaskTable({ tasks }: TaskTableProps) {
   const router = useRouter()
   const t = useTranslation()
 
@@ -69,7 +69,72 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
       countLabel={`${tasks.length} ta topshiriq`}
       accentClassName="bg-gradient-to-r from-cyan-50/55 via-white/30 to-amber-50/35"
     >
-    <div className="overflow-x-auto">
+    <div className="grid gap-3 p-4 md:hidden">
+      {tasks.map((task) => {
+        const isOverdue = task.deadline && new Date(task.deadline) < new Date() &&
+          !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
+        const organizationsText = (task.assigned_organizations || []).map((org: any) =>
+          typeof org === "object" ? (org.organization?.name || org.name) : org
+        ).filter(Boolean).join(", ")
+
+        return (
+          <article
+            key={task.id}
+            className={cn(
+              "rounded-[22px] border bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]",
+              isOverdue ? "border-red-200" : "border-cyan-100/70",
+            )}
+          >
+            <button type="button" onClick={() => router.push(`/dashboard/tasks/${task.id}`)} className="w-full text-left">
+              <p className="break-words text-sm font-semibold text-slate-900">{task.title || "—"}</p>
+              <p className="mt-2 text-sm text-slate-600">{categoryLabels[task.category] || task.category || "—"}</p>
+              <p className="mt-1 break-words text-sm leading-6 text-slate-500">{organizationsText || "Tashkilot biriktirilmagan"}</p>
+            </button>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Badge className={cn(
+                "border-0",
+                task.status === "YANGI" && "bg-blue-100 text-blue-700",
+                task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
+                task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
+                task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
+                task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
+                task.status === "BAJARILMADI" && "bg-indigo-50/50 text-slate-700",
+                task.status === "NAZORATDAN_YECHILDI" && "bg-indigo-50/50 text-slate-700"
+              )}>
+                {statusLabels[task.status] || task.status}
+              </Badge>
+              <Badge className={cn("border-0", PRIORITY_COLORS[task.priority] || "bg-slate-100 text-slate-700")}>
+                {priorityLabels[task.priority] || task.priority}
+              </Badge>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+              <span className={cn("flex items-center gap-1", isOverdue && "font-semibold text-red-600")}>
+                {isOverdue && <AlertTriangle className="h-3.5 w-3.5" />}
+                Muddat: {(task.deadline || task.due_date)
+                  ? new Date(task.deadline || task.due_date || "").toLocaleDateString("uz-UZ", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : "—"}
+              </span>
+              <span>
+                Yaratilgan: {task.created_at
+                  ? new Date(task.created_at).toLocaleDateString("uz-UZ", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : "—"}
+              </span>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+    <div className="hidden overflow-x-auto md:block">
       <Table>
         <TableHeader>
           <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
@@ -82,7 +147,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task, index) => {
+          {tasks.map((task) => {
             const isOverdue = task.deadline && new Date(task.deadline) < new Date() && 
               !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
             
@@ -96,7 +161,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                 onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
               >
                 <TableCell className="py-4 px-6">
-                  <div className="max-w-[280px] truncate text-sm font-semibold text-slate-900" title={task.title}>
+                  <div className="max-w-[320px] break-words text-sm font-semibold text-slate-900" title={task.title}>
                     {task.title || '—'}
                   </div>
                 </TableCell>
@@ -106,7 +171,7 @@ export function TaskTable({ tasks, onView, onEdit, onDelete }: TaskTableProps) {
                   </span>
                 </TableCell>
                 <TableCell className="py-4 px-6">
-                  <div className="max-w-[200px] truncate text-sm text-slate-700 font-medium">
+                  <div className="max-w-[240px] break-words text-sm text-slate-700 font-medium">
                     {(task.assigned_organizations || []).map((org: any) => 
                       typeof org === 'object' ? (org.organization?.name || org.name) : org
                     ).filter(Boolean).join(", ") || '—'}

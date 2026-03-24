@@ -229,10 +229,10 @@ export default function TaskDetailPage() {
   const isClosed = CLOSED_STATUSES.includes(task.status)
   
   // Rolga qarab tahrirlash imkoniyatlarini cheklash
-  const isAdmin = currentUser?.role && ['HOKIM', 'HOKIMLIK_MASUL', 'ADMIN'].includes(currentUser.role)
+  const isAdmin = currentUser?.role && ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'].includes(currentUser.role)
   const isOrgUser = currentUser?.role && ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'].includes(currentUser.role)
   
-  // Faqat HOKIM, HOKIMLIK_MASUL, ADMIN tahrirlashi mumkin
+  // Faqat HOKIM, HOKIM_YORDAMCHISI, ADMIN tahrirlashi mumkin
   const canEdit = !isClosed && isAdmin
   const canChat = !isClosed
   // Faqat HOKIM tasdiqlashi/qayta ijroga yuborishi mumkin

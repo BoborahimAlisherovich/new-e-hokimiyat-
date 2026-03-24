@@ -15,6 +15,7 @@ import re
 import json
 import io
 import logging
+import unicodedata
 from typing import Optional, Dict, Any, List, Union, cast
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -185,6 +186,14 @@ Murojaatlar:
 """)
         
         return "\n".join(context_parts)
+
+    def _normalize_match_text(self, text: str) -> str:
+        normalized = unicodedata.normalize('NFKD', text or '').lower()
+        normalized = normalized.replace("’", "'").replace("`", "'").replace("ʻ", "'").replace("‘", "'")
+        normalized = normalized.replace("o'", "o ").replace("g'", "g ")
+        normalized = re.sub(r'[^a-z0-9а-яёўқғҳ\s]', ' ', normalized)
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
+        return normalized
     
     def detect_intent(self, text: str, user: Any = None, prefer_ai: bool = True) -> Dict[str, Any]:
         """
@@ -370,13 +379,16 @@ Murojaatlar:
         from organizations.models import Organization
         orgs = list(
             Organization.objects.filter(is_active=True)
-            .values('id', 'name', 'sector__name')
+            .values('id', 'name', 'short_name', 'sector__name')
         )
         org_map = {str(o['id']): o for o in orgs}
-        org_list = "\n".join(
-            f"- {o['name']} (ID: {o['id']}, soha: {o.get('sector__name') or 'Noma`lum'})"
-            for o in orgs
-        ) or "- Tashkilotlar mavjud emas"
+        org_list_lines = []
+        for o in orgs:
+            short_name = f" / {o.get('short_name')}" if o.get('short_name') else ""
+            org_list_lines.append(
+                f"- {o['name']}{short_name} (ID: {o['id']}, soha: {o.get('sector__name') or 'Noma`lum'})"
+            )
+        org_list = "\n".join(org_list_lines) or "- Tashkilotlar mavjud emas"
 
         prompt = f"""
 Foydalanuvchi yuborgan matn (ko'pincha audio transkripsiya):
@@ -462,8 +474,14 @@ Faqat JSON qaytaring:
             org_names = [str(name).strip() for name in (parsed.get('organization_names') or []) if str(name).strip()]
             if not org_ids and org_names:
                 for org in orgs:
-                    org_name_lower = (org.get('name') or '').lower()
-                    if any(name.lower() in org_name_lower or org_name_lower in name.lower() for name in org_names):
+                    org_name_lower = self._normalize_match_text(org.get('name') or '')
+                    org_short_name = self._normalize_match_text(org.get('short_name') or '')
+                    if any(
+                        self._normalize_match_text(name) in org_name_lower
+                        or org_name_lower in self._normalize_match_text(name)
+                        or (org_short_name and self._normalize_match_text(name) in org_short_name)
+                        for name in org_names
+                    ):
                         org_ids.append(str(org['id']))
 
             params: Dict[str, Any] = {
@@ -608,7 +626,7 @@ Faqat JSON qaytaring:
                     break
 
             # Barchaga tayinlash
-            if re.search(r'\b(barchaga|hamma|hammasiga)\b', normalized_text, re.IGNORECASE):
+            if re.search(r'\b(barchaga|hamma|hammasiga|barcha\s+tashkilot(?:lar)?ga|hamma\s+tashkilot(?:lar)?ga)\b', normalized_text, re.IGNORECASE):
                 params['assign_all'] = True
 
             # Fallback maydonlar
@@ -677,7 +695,7 @@ Faqat JSON qaytaring:
                 if parsed:
                     params['end_date'] = parsed
 
-            if re.search(r'\b(barchaga|hamma|hammasiga)\b', normalized_text, re.IGNORECASE):
+            if re.search(r'\b(barchaga|hamma|hammasiga|barcha\s+tashkilot(?:lar)?ga|hamma\s+tashkilot(?:lar)?ga)\b', normalized_text, re.IGNORECASE):
                 params['assign_all'] = True
 
             if not params.get('title'):
@@ -777,33 +795,55 @@ Faqat JSON qaytaring:
         """Matndan tashkilot nomlarini topish (oddiy fuzzy matching)."""
         from organizations.models import Organization
 
-        normalized = (text or '').lower()
+        normalized = self._normalize_match_text(text or '')
         if not normalized:
             return []
 
+        assign_all_phrases = [
+            'barcha tashkilot',
+            'hamma tashkilot',
+            'barcha faol tashkilot',
+            'hamma idora',
+            'barchasiga',
+        ]
+        if any(phrase in normalized for phrase in assign_all_phrases):
+            return [
+                {'id': str(org['id']), 'name': org['name']}
+                for org in Organization.objects.filter(is_active=True).values('id', 'name')[:500]
+            ]
+
         results: List[Dict[str, str]] = []
-        orgs = Organization.objects.filter(is_active=True).values('id', 'name')
+        orgs = Organization.objects.filter(is_active=True).values('id', 'name', 'short_name')
 
         for org in orgs:
             org_name = str(org.get('name') or '')
-            org_name_lower = org_name.lower()
-            if not org_name_lower:
+            org_short_name = str(org.get('short_name') or '')
+            org_name_lower = self._normalize_match_text(org_name)
+            org_short_name_lower = self._normalize_match_text(org_short_name)
+            if not org_name_lower and not org_short_name_lower:
                 continue
 
-            # To'liq yoki asosiy tokenlar bo'yicha moslik
-            if org_name_lower in normalized:
+            if (org_name_lower and org_name_lower in normalized) or (
+                org_short_name_lower and org_short_name_lower in normalized
+            ):
                 results.append({'id': str(org['id']), 'name': org_name})
                 continue
 
             tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_name_lower) if len(tok) >= 4]
-            if tokens and sum(1 for token in tokens if token in normalized) >= max(1, len(tokens) // 2):
+            short_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_short_name_lower) if len(tok) >= 3]
+            token_hits = sum(1 for token in tokens if token in normalized)
+            short_hits = sum(1 for token in short_tokens if token in normalized)
+            if (
+                (tokens and token_hits >= max(1, len(tokens) // 2))
+                or (short_tokens and short_hits >= max(1, len(short_tokens)))
+            ):
                 results.append({'id': str(org['id']), 'name': org_name})
 
         # Dublikatlarni olib tashlash
         unique: Dict[str, Dict[str, str]] = {}
         for item in results:
             unique[item['id']] = item
-        return list(unique.values())[:5]
+        return list(unique.values())[:500]
     
     def execute_action(self, action) -> Dict:
         """AI harakatini bajarish"""
@@ -1023,28 +1063,23 @@ Faqat JSON qaytaring:
             org_ids = [str(oid) for oid in org_ids]
 
         if not org_ids and org_names:
-            matched = Organization.objects.filter(
-                is_active=True,
-                name__iregex='|'.join(re.escape(name) for name in org_names[:10])
-            ).values_list('id', flat=True)
-            org_ids = [str(oid) for oid in matched]
+            for org_name in org_names[:20]:
+                for item in self._match_org_ids_from_text(org_name):
+                    org_ids.append(item['id'])
 
         if not org_ids and org_name:
-            org_ids = [
-                str(oid) for oid in
-                Organization.objects.filter(name__icontains=org_name, is_active=True).values_list('id', flat=True)
-            ]
+            org_ids = [item['id'] for item in self._match_org_ids_from_text(org_name)]
 
         if not org_ids:
             text_for_match = f"{title} {description}".strip()
             guessed = self._match_org_ids_from_text(text_for_match)
             org_ids = [item['id'] for item in guessed]
 
-        valid_orgs = list(Organization.objects.filter(id__in=org_ids, is_active=True))
+        valid_orgs = list(Organization.objects.filter(id__in=list(dict.fromkeys(org_ids)), is_active=True))
         if not valid_orgs:
             return {
                 'success': False,
-                'error': "Topshiriq uchun mos tashkilot aniqlanmadi. Tashkilot nomini aniqroq ayting."
+                'error': "Topshiriq uchun mos tashkilot aniqlanmadi. Tashkilot nomini yoki 'barcha tashkilotlar' deb aniq yozing."
             }
 
         task = Task.objects.create(
@@ -1620,7 +1655,7 @@ Foydalanuvchi: {user_name}
 
 Quyidagi formatda JSON javob ber:
 {{
-    "category": "infratuzilma|ijtimoiy|ta'lim|sog'liqni_saqlash|kommunal|boshqa",
+    "category": "infratuzilma|ijtimoiy|ta'lim|sog'liqni_saqlash|kommunal|bandlik|boshqa",
     "priority": "past|oddiy|yuqori|favqulodda",
     "sentiment": "ijobiy|neytral|salbiy",
     "summary": "Murojaatning qisqa mazmuni (1-2 gap)",
@@ -1674,10 +1709,11 @@ Faqat JSON formatda javob ber, boshqa matn bo'lmasin.
         # Oddiy keyword tahlil
         categories = {
             'infratuzilma': ['yo\'l', 'ko\'prik', 'bino', 'qurilish', 'ta\'mir'],
-            'ijtimoiy': ['yordam', 'nafaqa', 'kambag\'al', 'nogironlik'],
+            'ijtimoiy': ['yordam', 'nafaqa', 'kambag\'al', 'nogironlik', 'oila', 'oilamda', 'turmush o\'rtog\'im', 'janjallashaman', 'zo\'ravonlik'],
             'ta\'lim': ['maktab', 'bog\'cha', 'o\'qituvchi', 'ta\'lim'],
             'sog\'liqni_saqlash': ['shifoxona', 'shifokor', 'dori', 'kasallik'],
             'kommunal': ['suv', 'gaz', 'elektr', 'issiqlik', 'chiqindi'],
+            'bandlik': ['ish', 'ishsizlik', 'bandlik', 'mehnat', 'vakansiya', 'ishga joylash'],
         }
         
         detected_category = 'boshqa'

@@ -55,13 +55,15 @@ def main_menu_keyboard(language: str = 'uz') -> dict:
     from .messages import get_text
     
     return create_keyboard([
-        [{'text': get_text('btn_new_appeal', language)}],
-        [{'text': get_text('btn_my_appeals', language)}],
         [
-            {'text': get_text('btn_about', language)},
-            {'text': get_text('btn_settings', language)}
+            {'text': get_text('btn_new_appeal', language)},
+            {'text': get_text('btn_my_appeals', language)}
         ],
-        [{'text': get_text('btn_help', language)}]
+        [
+            {'text': get_text('btn_settings', language)},
+            {'text': get_text('btn_help', language)}
+        ],
+        [{'text': get_text('btn_about', language)}]
     ])
 
 

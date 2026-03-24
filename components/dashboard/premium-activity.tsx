@@ -172,12 +172,14 @@ export function PremiumActionButton({
 
 export function PremiumAttachmentItem({
   href,
+  onClick,
   icon: Icon,
   title,
   meta,
   actionLabel = "Ochish",
 }: {
   href?: string
+  onClick?: () => void
   icon: LucideIcon
   title: string
   meta?: string
@@ -195,6 +197,14 @@ export function PremiumAttachmentItem({
       <span className="text-xs font-medium text-cyan-700">{actionLabel}</span>
     </div>
   )
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block w-full text-left">
+        {content}
+      </button>
+    )
+  }
 
   if (!href) return content
 

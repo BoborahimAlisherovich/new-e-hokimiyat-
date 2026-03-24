@@ -104,7 +104,7 @@ export interface AppealReviewRequest {
   priority?: string
   forward_to_site?: boolean
   create_task?: boolean
-  organization_ids?: number[]
+  organization_ids?: string[]
 }
 
 /** Murojaatdan topshiriq yaratish so'rovi */
@@ -112,7 +112,7 @@ export interface CreateTaskFromAppealRequest {
   title: string
   deadline: string
   priority: string
-  organization_ids: number[]
+  organization_ids: string[]
 }
 
 // ============================================================================
@@ -445,10 +445,10 @@ export async function reviewAppeal(
 export async function createTaskFromAppeal(
   appealId: string, 
   data: CreateTaskFromAppealRequest
-): Promise<{ task_id: number }> {
+): Promise<{ task_id: string }> {
   const id = stripTelegramPrefix(appealId)
   
-  return fetchApi<{ task_id: number }>(
+  return fetchApi<{ task_id: string }>(
     `/telegram-bot/appeals/${id}/create_task/`,
     {
       method: 'POST',
