@@ -44,8 +44,8 @@ export default function OrganizationsPage() {
         getUsers(),
         getCurrentUser().catch(() => null)
       ])
- const orgItems = Array.isArray(orgsList) ? orgsList : []
- const userItems = Array.isArray(usersList) ? usersList : []
+      const orgItems = Array.isArray(orgsList) ? orgsList : []
+      const userItems = Array.isArray(usersList) ? usersList : []
       setOrganizations(orgItems)
       setUsers(userItems)
       const role = normalizeUserRole(me?.role)
@@ -53,9 +53,9 @@ export default function OrganizationsPage() {
       setError(null)
     } catch (err) {
       console.error("Tashkilotlarni yuklashda xatolik:", err)
-      setError(t.pages.organizations.loadError)
+      setError("load_error")
     }
-  }, [t.pages.organizations.loadError])
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -64,7 +64,7 @@ export default function OrganizationsPage() {
         await loadOrganizations()
       } catch (err) {
         console.error("Tashkilotlarni yuklashda xatolik:", err)
-        if (mounted) setError(t.pages.organizations.loadError)
+        if (mounted) setError("load_error")
       } finally {
         if (mounted) setLoading(false)
       }
@@ -73,7 +73,7 @@ export default function OrganizationsPage() {
     return () => {
       mounted = false
     }
-  }, [loadOrganizations, t.pages.organizations.loadError])
+  }, [loadOrganizations])
 
   const handleFormChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -254,7 +254,7 @@ export default function OrganizationsPage() {
               </div>
             ) : error ? (
               <div className="rounded-[26px] border border-white/70 bg-white/78 py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-                <p className="text-red-500">{error}</p>
+                <p className="text-red-500">{error === "load_error" ? t.pages.organizations.loadError : error}</p>
                 <button 
                   onClick={() => window.location.reload()} 
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
