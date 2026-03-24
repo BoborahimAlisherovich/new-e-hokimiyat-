@@ -108,6 +108,10 @@ body {
   letter-spacing: -0.01em;
 }
 
+#main-content {
+  -webkit-overflow-scrolling: touch;
+}
+
 ::selection {
   background: rgba(99, 102, 241, 0.18);
 }
@@ -374,6 +378,39 @@ body {
 .animate-fade-in { animation: fade-in 0.4s ease-out; }
 .animate-slide-in-right { animation: slide-in-right 0.5s ease-out; }
 .animate-float-gentle { animation: float-gentle 8s ease-in-out infinite; }
+
+@media (max-width: 767px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  .bg-grid-pattern {
+    background-size: 32px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-float-gentle,
+  .text-gradient-animated,
+  .hover-lift-effect,
+  .hover-scale-effect,
+  .hover-glow-effect {
+    animation: none !important;
+    transform: none !important;
+  }
+}
 .animate-float { animation: float-gentle 5s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
 .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }

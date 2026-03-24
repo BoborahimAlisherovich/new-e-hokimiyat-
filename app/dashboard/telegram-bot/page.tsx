@@ -433,14 +433,14 @@ export default function TelegramBotPage() {
 
   return (
     <AdminOnly title="Telegram Bot">
-      <div ref={pageRef} className="p-6 space-y-6">
+      <div ref={pageRef} className="px-3 py-4 space-y-5 sm:px-4 lg:px-6 sm:space-y-6">
       {/* Header */}
       <section 
         data-gsap-section
-        className="flex items-center justify-between"
+        className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
       >
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+        <div className="min-w-0">
+          <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold text-slate-900 sm:text-2xl">
             <Bot className="h-6 w-6 text-blue-500" />
             Telegram Bot
             {/* Bot holati ko'rsatkichi */}
@@ -465,9 +465,9 @@ export default function TelegramBotPage() {
             Bot sozlamalari va statistikasi
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
           {/* Yangilash tugmasi */}
-          <Button variant="outline" onClick={loadData} disabled={loading}>
+          <Button variant="outline" onClick={loadData} disabled={loading} className="w-full sm:w-auto">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Yangilash
           </Button>
@@ -479,13 +479,14 @@ export default function TelegramBotPage() {
                 variant="outline"
                 onClick={switchToPolling}
                 disabled={starting || (!settings?.bot_token && !settings?.has_token)}
+                className="w-full sm:w-auto"
               >
                 <Play className="h-4 w-4 mr-2" />
                 {starting ? "Pollingga o'tyapti..." : "Pollingga o'tish"}
               </Button>
               <Button 
                 variant="destructive" 
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
                 onClick={stopBot} 
                 disabled={stopping}
               >
@@ -498,7 +499,7 @@ export default function TelegramBotPage() {
               {botStatus?.is_running ? (
                 <Button 
                   variant="destructive" 
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
                   onClick={stopBot} 
                   disabled={stopping}
                 >
@@ -508,7 +509,7 @@ export default function TelegramBotPage() {
               ) : (
                 <Button 
                   variant="default"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="w-full bg-emerald-600 text-white hover:bg-emerald-700 sm:w-auto"
                   onClick={() => startBot(false)} 
                   disabled={starting || (!settings?.bot_token && !settings?.has_token)}
                 >
@@ -518,7 +519,7 @@ export default function TelegramBotPage() {
               )}
             </>
           )}
-          <Button onClick={saveSettings} disabled={saving}>
+          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
             <Save className="h-4 w-4 mr-2" />
             {saving ? "Saqlanmoqda..." : "Saqlash"}
           </Button>
@@ -540,7 +541,7 @@ export default function TelegramBotPage() {
       {/* Stats Cards */}
       <section 
         data-gsap-section
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
       >
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
           <CardContent className="pt-4">
@@ -608,20 +609,22 @@ export default function TelegramBotPage() {
         data-gsap-section
       >
         <Tabs defaultValue="connection" className="space-y-6">
-        <TabsList className="gap-2 p-1 bg-indigo-50/50 rounded-xl">
-          <TabsTrigger value="connection" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+        <div className="overflow-x-auto pb-1">
+        <TabsList className="inline-flex min-w-max gap-2 rounded-xl bg-indigo-50/50 p-1">
+          <TabsTrigger value="connection" className="gap-2 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
             <Link className="h-4 w-4" />
             Ulanish
           </TabsTrigger>
-          <TabsTrigger value="ai" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+          <TabsTrigger value="ai" className="gap-2 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
             <Brain className="h-4 w-4" />
             AI Sozlamalari
           </TabsTrigger>
-          <TabsTrigger value="messages" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
+          <TabsTrigger value="messages" className="gap-2 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:shadow-md px-4 py-2.5 rounded-lg transition-all duration-200">
             <MessageSquare className="h-4 w-4" />
             Xabarlar
           </TabsTrigger>
         </TabsList>
+        </div>
 
         {/* Connection Tab */}
         <TabsContent value="connection">
@@ -658,7 +661,7 @@ export default function TelegramBotPage() {
                 <p className="text-sm text-slate-500">
                   @BotFather dan olingan maxfiy token. Telegram'da /newbot buyrug'i orqali oling.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input 
                     id="bot_token"
                     type="password"
@@ -675,12 +678,12 @@ export default function TelegramBotPage() {
                     }
                     className="flex-1 font-mono"
                   />
-                  <Button 
-                    variant="outline" 
-                    onClick={testConnection}
-                    disabled={testing || !settings?.bot_token}
-                    className="min-w-[120px]"
-                  >
+                    <Button 
+                      variant="outline" 
+                      onClick={testConnection}
+                      disabled={testing || !settings?.bot_token}
+                      className="w-full sm:min-w-[120px] sm:w-auto"
+                    >
                     {testing ? (
                       <>
                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -754,7 +757,7 @@ export default function TelegramBotPage() {
                 <p className="text-sm text-slate-500">
                   Production uchun webhook tavsiya etiladi. Lokal ishlab chiqish uchun polling ishlatiladi.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input 
                     id="webhook_url"
                     placeholder="https://your-domain.com/api/telegram-bot/webhook/"
@@ -762,11 +765,11 @@ export default function TelegramBotPage() {
                     onChange={(e) => 
                       setSettings(prev => prev ? { ...prev, webhook_url: e.target.value } : null)
                     }
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                     disabled={settings?.use_webhook}
                   />
                   {settings?.use_webhook ? (
-                    <Button variant="destructive" onClick={deleteWebhook} className="min-w-[120px]">
+                    <Button variant="destructive" onClick={deleteWebhook} className="w-full sm:min-w-[120px] sm:w-auto">
                       <Unlink className="h-4 w-4 mr-2" />
                       O'chirish
                     </Button>
@@ -775,7 +778,7 @@ export default function TelegramBotPage() {
                       variant="outline" 
                       onClick={setWebhook}
                       disabled={!settings?.webhook_url}
-                      className="min-w-[120px]"
+                      className="w-full sm:min-w-[120px] sm:w-auto"
                     >
                       <Link className="h-4 w-4 mr-2" />
                       O'rnatish
@@ -803,13 +806,13 @@ export default function TelegramBotPage() {
                 </div>
                 {settings?.use_webhook && webhookInfo && (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <span className="font-medium">Webhook holati</span>
                       <Button size="sm" variant="ghost" onClick={loadWebhookInfo}>
                         Yangilash
                       </Button>
                     </div>
-                    <div className="mt-2 grid gap-1">
+                    <div className="mt-2 grid gap-1 break-words">
                       <div>URL: {webhookInfo.url || "-"}</div>
                       <div>Pending: {webhookInfo.pending_update_count ?? 0}</div>
                       {webhookInfo.last_error_message && (

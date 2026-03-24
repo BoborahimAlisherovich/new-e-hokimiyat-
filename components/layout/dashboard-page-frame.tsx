@@ -28,21 +28,21 @@ export function DashboardPageFrame({
   className,
 }: DashboardPageFrameProps) {
   return (
-    <div className={cn("relative px-2.5 py-2.5 sm:px-3 sm:py-3", className)}>
+    <div className={cn("relative px-2 py-2 sm:px-3 sm:py-3 lg:px-4", className)}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/24 to-transparent blur-3xl" />
         <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/18 to-transparent blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/16 to-transparent blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl space-y-3">
+      <div className="relative z-10 mx-auto max-w-7xl space-y-3 sm:space-y-4">
         <section
           data-gsap-section
-          className="grid gap-3 xl:grid-cols-[1.5fr_1fr]"
+          className="grid gap-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]"
         >
           <div
             data-gsap-card
-            className="relative overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.96),rgba(15,118,110,0.92))] p-3.5 text-white shadow-[0_24px_60px_-30px_rgba(15,118,110,0.62)]"
+            className="relative overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.96),rgba(15,118,110,0.92))] p-3.5 text-white shadow-[0_24px_60px_-30px_rgba(15,118,110,0.62)] sm:p-4 lg:p-5"
           >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_32%)]" />
             <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full border border-white/15" />
@@ -50,10 +50,10 @@ export function DashboardPageFrame({
               <div className="mb-1.5 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-50/90">
                 {eyebrow}
               </div>
-              <h2 className="max-w-3xl text-lg font-semibold tracking-tight text-white sm:text-[24px]">
+              <h2 className="max-w-3xl text-lg font-semibold tracking-tight text-white sm:text-[24px] lg:text-[28px]">
                 {title}
               </h2>
-              <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-cyan-50/84">
+              <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-cyan-50/84 sm:text-sm sm:leading-6">
                 {description}
               </p>
             </div>
@@ -65,7 +65,7 @@ export function DashboardPageFrame({
                 key={stat.label}
                 data-gsap-card
                 className={cn(
-                  "rounded-[18px] border border-white/75 bg-gradient-to-br p-3 shadow-[0_18px_44px_-30px_rgba(15,23,42,0.22)] backdrop-blur-xl",
+                  "rounded-[18px] border border-white/75 bg-gradient-to-br p-3 shadow-[0_18px_44px_-30px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:p-4",
                   stat.tone,
                 )}
               >
