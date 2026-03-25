@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { TabsContent } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 import { AlertCircle, Bell, Mail, MessageSquare, Save, Smartphone, Loader2 } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
 
@@ -41,104 +42,87 @@ export function SettingsNotificationsTab({
 }: SettingsNotificationsTabProps) {
   return (
     <TabsContent value="notifications" className="animate-fade-in">
-      <Card className="bg-white border border-gray-200 shadow-sm hover:border-blue-300 transition-all duration-250">
-        <CardHeader className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-blue-600/3 to-blue-700/5" />
-          <CardTitle className="relative flex items-center gap-3 text-2xl">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-              <Bell className="h-4 w-4 text-white" />
+      <Card className="overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_26px_60px_-34px_rgba(14,165,233,0.24)] backdrop-blur-xl">
+        <CardHeader className="relative overflow-hidden border-b border-cyan-100/50 pb-6">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.08),transparent_28%),linear-gradient(135deg,rgba(6,182,212,0.10),rgba(59,130,246,0.03)_45%,transparent_80%)]" />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <CardTitle className="flex items-center gap-3 text-xl font-semibold text-slate-900 sm:text-2xl">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_16px_30px_-18px_rgba(14,165,233,0.65)]">
+                  <Bell className="h-5 w-5" />
+                </div>
+                {t.settings.notificationSettings}
+              </CardTitle>
+              <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                {t.settings.notificationDescription}
+              </CardDescription>
             </div>
-            {t.settings.notificationSettings}
-          </CardTitle>
-          <CardDescription className="relative">{t.settings.notificationDescription}</CardDescription>
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-cyan-100 bg-white/80 px-3 py-2 text-xs font-medium text-cyan-700 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Bildirishnomalar boshqaruvi
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-8 p-8">
-          <div className="space-y-6">
-            <h4 className="text-xl font-semibold text-blue-600 bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+        <CardContent className="space-y-8 p-5 sm:p-8">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700/80">
               {t.settings.notificationChannels}
             </h4>
 
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
-                  <Mail className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">{t.settings.emailNotifications}</p>
-                  <p className="text-sm text-muted-foreground">{t.settings.emailNotificationsDesc}</p>
-                </div>
-              </div>
-              <Switch checked={emailNotifications} onCheckedChange={onEmailChange} className="scale-125" />
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
-                  <MessageSquare className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">{t.settings.telegramNotifications}</p>
-                  <p className="text-sm text-muted-foreground">{t.settings.telegramNotificationsDesc}</p>
-                </div>
-              </div>
-              <Switch checked={telegramNotifications} onCheckedChange={onTelegramChange} className="scale-125" />
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-amber-50 hover:bg-amber-100 transition-all duration-250">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-600 shadow-sm">
-                  <Smartphone className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">{t.settings.pushNotifications}</p>
-                  <p className="text-sm text-muted-foreground">{t.settings.pushNotificationsDesc}</p>
-                </div>
-              </div>
-              <Switch checked={pushNotifications} onCheckedChange={onPushChange} className="scale-125" />
-            </div>
+            <NotificationSettingRow
+              icon={Mail}
+              title={t.settings.emailNotifications}
+              description={t.settings.emailNotificationsDesc}
+              checked={emailNotifications}
+              onCheckedChange={onEmailChange}
+            />
+            <NotificationSettingRow
+              icon={MessageSquare}
+              title={t.settings.telegramNotifications}
+              description={t.settings.telegramNotificationsDesc}
+              checked={telegramNotifications}
+              onCheckedChange={onTelegramChange}
+            />
+            <NotificationSettingRow
+              icon={Smartphone}
+              title={t.settings.pushNotifications}
+              description={t.settings.pushNotificationsDesc}
+              checked={pushNotifications}
+              onCheckedChange={onPushChange}
+              tone="amber"
+            />
           </div>
 
-          <Separator className="my-8" />
+          <Separator className="my-2 bg-cyan-100/70" />
 
-          <div className="space-y-6">
-            <h4 className="font-medium text-blue-600">{t.settings.notificationTypes}</h4>
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
-                  <AlertCircle className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">{t.settings.newTasks}</p>
-                  <p className="text-sm text-muted-foreground">{t.settings.newTasksDesc}</p>
-                </div>
-              </div>
-              <Switch checked={newTaskNotification} onCheckedChange={onNewTaskChange} className="scale-125" />
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 p-6 bg-blue-50 hover:bg-blue-100 transition-all duration-250">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
-                  <AlertCircle className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">{t.settings.deadlineReminders}</p>
-                  <p className="text-sm text-muted-foreground">{t.settings.deadlineRemindersDesc}</p>
-                </div>
-              </div>
-              <Switch checked={taskDeadlineReminder} onCheckedChange={onDeadlineChange} className="scale-125" />
-            </div>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700/80">{t.settings.notificationTypes}</h4>
+            <NotificationSettingRow
+              icon={AlertCircle}
+              title={t.settings.newTasks}
+              description={t.settings.newTasksDesc}
+              checked={newTaskNotification}
+              onCheckedChange={onNewTaskChange}
+            />
+            <NotificationSettingRow
+              icon={AlertCircle}
+              title={t.settings.deadlineReminders}
+              description={t.settings.deadlineRemindersDesc}
+              checked={taskDeadlineReminder}
+              onCheckedChange={onDeadlineChange}
+            />
           </div>
 
-          <div className="flex justify-end pt-6">
+          <div className="flex justify-end pt-2">
             <Button
               onClick={onSave}
               disabled={saving}
-              className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-250 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              className="h-11 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 px-6 text-sm font-semibold text-white shadow-[0_16px_32px_-18px_rgba(37,99,235,0.7)] transition hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50"
             >
               {saving ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Save className="mr-2 h-5 w-5" />
+                <Save className="mr-2 h-4 w-4" />
               )}
               {saving ? "Saqlanmoqda..." : t.common.save}
             </Button>
@@ -146,5 +130,48 @@ export function SettingsNotificationsTab({
         </CardContent>
       </Card>
     </TabsContent>
+  )
+}
+
+function NotificationSettingRow({
+  icon: Icon,
+  title,
+  description,
+  checked,
+  onCheckedChange,
+  tone = "cyan",
+}: {
+  icon: typeof Bell
+  title: string
+  description: string
+  checked: boolean
+  onCheckedChange: (value: boolean) => void
+  tone?: "cyan" | "amber"
+}) {
+  const toneClasses = tone === "amber"
+    ? {
+        wrapper: "border-amber-100/80 bg-gradient-to-r from-amber-50/90 to-orange-50/70 hover:border-amber-200 hover:bg-amber-50",
+        icon: "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
+      }
+    : {
+        wrapper: "border-cyan-100/80 bg-gradient-to-r from-cyan-50/90 to-blue-50/65 hover:border-cyan-200 hover:bg-cyan-50",
+        icon: "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
+      }
+
+  return (
+    <div className={cn("flex flex-col gap-4 rounded-[24px] border p-4 transition sm:flex-row sm:items-center sm:justify-between sm:p-5", toneClasses.wrapper)}>
+      <div className="flex items-start gap-4">
+        <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", toneClasses.icon)}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
+          <p className="text-sm leading-6 text-slate-600">{description}</p>
+        </div>
+      </div>
+      <div className="flex justify-end sm:block">
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      </div>
+    </div>
   )
 }

@@ -289,14 +289,19 @@ export function Header({ title, description, actions }: HeaderProps) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative h-9 w-9 rounded-xl hover:bg-cyan-50 hidden md:flex"
+                className={cn(
+                  "relative hidden h-10 w-10 rounded-2xl border shadow-sm transition md:flex",
+                  unreadCount > 0
+                    ? "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700 shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)] hover:from-amber-100 hover:to-orange-100"
+                    : "border-cyan-100 bg-white/85 text-slate-700 hover:border-cyan-200 hover:bg-cyan-50"
+                )}
               >
                 <Bell className={cn(
-                  "h-5 w-5 text-slate-700",
+                  "h-5 w-5",
                   unreadCount > 0 ? "animate-pulse" : ""
                 )} />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -right-1 -top-1 h-4 w-4 p-0 flex items-center justify-center bg-amber-500 text-white text-[9px] font-semibold border-2 border-white rounded-full">
+                  <Badge className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-semibold text-white shadow-sm">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}

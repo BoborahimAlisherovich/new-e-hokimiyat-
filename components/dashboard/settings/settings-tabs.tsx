@@ -13,49 +13,50 @@ interface SettingsTabsProps {
 
 export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
   return (
-    <TabsList className="h-auto w-full justify-start flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-transparent p-0 shadow-none">
-      <TabsTrigger
-        value="profile"
-        className="min-h-10 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-100/70 data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-none transition-colors"
-      >
-        <User className="h-4 w-4 mr-2" />
-        {t.settings.profile}
-      </TabsTrigger>
-
-      <TabsTrigger
-        value="notifications"
-        className="min-h-10 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-100/70 data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-none transition-colors"
-      >
-        <Bell className="h-4 w-4 mr-2" />
-        {t.settings.notifications}
-      </TabsTrigger>
-
-      <TabsTrigger
-        value="security"
-        className="min-h-10 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-100/70 data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-none transition-colors"
-      >
-        <Shield className="h-4 w-4 mr-2" />
-        {t.settings.security}
-      </TabsTrigger>
-
-      <TabsTrigger
-        value="appearance"
-        className="min-h-10 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-100/70 data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-none transition-colors"
-      >
-        <Globe className="h-4 w-4 mr-2" />
-        {t.settings.appearance}
-      </TabsTrigger>
-
-      {canAccessSettingsTab(userRole, "sectors") && (
+    <div className="sticky top-20 z-20 rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.92))] p-3 shadow-[0_24px_60px_-40px_rgba(14,165,233,0.38)] backdrop-blur-xl">
+      <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-[22px] bg-transparent p-0 shadow-none">
         <TabsTrigger
-          value="sectors"
-          className="min-h-10 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-100/70 data-[state=active]:border-violet-200 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-700 data-[state=active]:shadow-none transition-colors"
+          value="profile"
+          className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-cyan-200 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:shadow-none"
         >
-          <Layers className="h-4 w-4 mr-2" />
-          {t.settings.sectors}
+          <User className="mr-2 h-4 w-4" />
+          {t.settings.profile}
         </TabsTrigger>
-      )}
 
-    </TabsList>
+        <TabsTrigger
+          value="notifications"
+          className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-cyan-200 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:shadow-none"
+        >
+          <Bell className="mr-2 h-4 w-4" />
+          {t.settings.notifications}
+        </TabsTrigger>
+
+        <TabsTrigger
+          value="security"
+          className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-cyan-200 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:shadow-none"
+        >
+          <Shield className="mr-2 h-4 w-4" />
+          {t.settings.security}
+        </TabsTrigger>
+
+        <TabsTrigger
+          value="appearance"
+          className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-cyan-200 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:shadow-none"
+        >
+          <Globe className="mr-2 h-4 w-4" />
+          {t.settings.appearance}
+        </TabsTrigger>
+
+        {canAccessSettingsTab(userRole, "sectors") && (
+          <TabsTrigger
+            value="sectors"
+            className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-violet-200 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-700 data-[state=active]:shadow-none"
+          >
+            <Layers className="mr-2 h-4 w-4" />
+            {t.settings.sectors}
+          </TabsTrigger>
+        )}
+      </TabsList>
+    </div>
   )
 }
