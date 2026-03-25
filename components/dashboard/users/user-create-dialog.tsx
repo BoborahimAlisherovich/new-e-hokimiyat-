@@ -58,6 +58,7 @@ export function UserCreateDialog({
     : (organizations as { results?: Organization[] } | null | undefined)?.results || []
   const isOrganizationRole = ["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"].includes(formData.role)
   const isHokimlikRole = ["HOKIM_YORDAMCHISI", "HOKIMLIK_MASUL"].includes(formData.role)
+  const requiresSupervisor = formData.role === "HOKIMLIK_MASUL"
   const availableSupervisors = users.filter((user) => {
     if (user.role !== "HOKIM_YORDAMCHISI") return false
     const supervisorSectorId =
@@ -281,7 +282,15 @@ export function UserCreateDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Rol <span className="text-red-500">*</span></Label>
-              <Select value={formData.role} onValueChange={(value) => onChange("role", value)}>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => {
+                  onChange("role", value)
+                  if (value !== "HOKIMLIK_MASUL") {
+                    onChange("supervisorId", "")
+                  }
+                }}
+              >
                 <SelectTrigger className={errors.role ? "border-red-500" : ""}>
                   <SelectValue />
                 </SelectTrigger>
@@ -335,25 +344,27 @@ export function UserCreateDialog({
             </Select>
             {errors.organizationId && <p className="text-xs text-red-500">{errors.organizationId}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="supervisorId">
-              Bevosita rahbar {formData.role === "HOKIMLIK_MASUL" && <span className="text-red-500">*</span>}
-            </Label>
-            <Select value={formData.supervisorId || "none"} onValueChange={(value) => onChange("supervisorId", value === "none" ? "" : value)}>
-              <SelectTrigger className={errors.supervisorId ? "border-red-500" : ""}>
-                <SelectValue placeholder="Rahbarni tanlang" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Belgilanmagan</SelectItem>
-                {availableSupervisors.map((supervisor) => (
-                  <SelectItem key={supervisor.id} value={String(supervisor.id)}>
-                    {supervisor.full_name || `${supervisor.last_name} ${supervisor.first_name}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.supervisorId && <p className="text-xs text-red-500">{errors.supervisorId}</p>}
-          </div>
+          {requiresSupervisor && (
+            <div className="space-y-2">
+              <Label htmlFor="supervisorId">
+                Bevosita rahbar <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.supervisorId || "none"} onValueChange={(value) => onChange("supervisorId", value === "none" ? "" : value)}>
+                <SelectTrigger className={errors.supervisorId ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Rahbarni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Belgilanmagan</SelectItem>
+                  {availableSupervisors.map((supervisor) => (
+                    <SelectItem key={supervisor.id} value={String(supervisor.id)}>
+                      {supervisor.full_name || `${supervisor.last_name} ${supervisor.first_name}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.supervisorId && <p className="text-xs text-red-500">{errors.supervisorId}</p>}
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
