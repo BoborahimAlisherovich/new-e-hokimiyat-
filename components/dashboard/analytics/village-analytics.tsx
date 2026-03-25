@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState, useCallback, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapPin, Users, CheckCircle2, Clock, AlertCircle, Search, TrendingUp, BarChart3 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useI18n } from "@/lib/i18n/context"
 
 // Til bo'yicha tarjimalar
@@ -140,27 +139,26 @@ interface MapPathItem {
   path: string
 }
 
-const hashString = (value: string) =>
-  value.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) % 10000, 7)
+const getPercent = (value: number, total: number) => {
+  if (!total) return 0
+  return (value / total) * 100
+}
 
-const buildStats = (seed: number): VillageStats => {
-  const normalized = Math.abs(seed) || 1
-  const total = 40 + (normalized % 260)
-  const resolved = Math.floor(total * (0.48 + (normalized % 17) / 100))
-  const inProgress = Math.floor(total * (0.2 + (normalized % 11) / 100))
-  const pending = Math.max(0, total - resolved - inProgress)
-  return { total, resolved, inProgress, pending }
+const EMPTY_STATS: VillageStats = {
+  total: 0,
+  resolved: 0,
+  inProgress: 0,
+  pending: 0,
 }
 
 const buildFeaturesFromPaths = (items: MapPathItem[], language: string): VillageFeature[] =>
   items.map((item) => {
-    const seed = hashString(item.name)
     return {
       id: item.id || item.name,
       name: formatVillageName(item.name, language),
       originalName: item.name,
       path: item.path,
-      stats: buildStats(seed),
+      stats: EMPTY_STATS,
     }
   })
 
@@ -217,15 +215,15 @@ const VillageListItem = memo(function VillageListItem({
         <div className="flex gap-1 h-1.5 rounded-full overflow-hidden bg-indigo-50/50">
           <div 
             className="bg-emerald-500 transition-all duration-500" 
-            style={{ width: `${(village.stats.resolved / village.stats.total) * 100}%` }} 
+            style={{ width: `${getPercent(village.stats.resolved, village.stats.total)}%` }} 
           />
           <div 
             className="bg-amber-500 transition-all duration-500" 
-            style={{ width: `${(village.stats.inProgress / village.stats.total) * 100}%` }} 
+            style={{ width: `${getPercent(village.stats.inProgress, village.stats.total)}%` }} 
           />
           <div 
             className="bg-blue-500 transition-all duration-500" 
-            style={{ width: `${(village.stats.pending / village.stats.total) * 100}%` }} 
+            style={{ width: `${getPercent(village.stats.pending, village.stats.total)}%` }} 
           />
         </div>
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -296,6 +294,7 @@ export function VillageAnalytics() {
   const [rawData, setRawData] = useState<MapPathItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [villagePage, setVillagePage] = useState(1)
   const [tooltip, setTooltip] = useState<{
     x: number
     y: number
@@ -335,6 +334,14 @@ export function VillageAnalytics() {
       v.originalName.toLowerCase().includes(query)
     )
   }, [villages, searchQuery])
+
+  const villagesPerPage = 10
+  const totalVillagePages = Math.max(1, Math.ceil(filteredVillages.length / villagesPerPage))
+  const currentVillagePage = Math.min(villagePage, totalVillagePages)
+  const paginatedVillages = useMemo(() => {
+    const start = (currentVillagePage - 1) * villagesPerPage
+    return filteredVillages.slice(start, start + villagesPerPage)
+  }, [currentVillagePage, filteredVillages])
 
   const aggregated = useMemo(() => {
     return villages.reduce(
@@ -549,9 +556,9 @@ export function VillageAnalytics() {
                     {/* Mini progress */}
                     <div className="mt-3 pt-3 border-t border-slate-100">
                       <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-indigo-50/50">
-                        <div className="bg-emerald-500" style={{ width: `${(tooltip.village.stats.resolved / tooltip.village.stats.total) * 100}%` }} />
-                        <div className="bg-amber-500" style={{ width: `${(tooltip.village.stats.inProgress / tooltip.village.stats.total) * 100}%` }} />
-                        <div className="bg-blue-500" style={{ width: `${(tooltip.village.stats.pending / tooltip.village.stats.total) * 100}%` }} />
+                        <div className="bg-emerald-500" style={{ width: `${getPercent(tooltip.village.stats.resolved, tooltip.village.stats.total)}%` }} />
+                        <div className="bg-amber-500" style={{ width: `${getPercent(tooltip.village.stats.inProgress, tooltip.village.stats.total)}%` }} />
+                        <div className="bg-blue-500" style={{ width: `${getPercent(tooltip.village.stats.pending, tooltip.village.stats.total)}%` }} />
                       </div>
                     </div>
                   </motion.div>
@@ -638,22 +645,22 @@ export function VillageAnalytics() {
                       <div className="p-4 rounded-xl bg-white border border-indigo-100/40">
                         <p className="text-sm font-medium text-slate-600 mb-3">{t.completed}</p>
                         <div className="flex gap-1 h-4 rounded-full overflow-hidden bg-indigo-50/50 mb-3">
-                          <motion.div className="bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${(selectedVillage.stats.resolved / selectedVillage.stats.total) * 100}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
-                          <motion.div className="bg-amber-500" initial={{ width: 0 }} animate={{ width: `${(selectedVillage.stats.inProgress / selectedVillage.stats.total) * 100}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }} />
-                          <motion.div className="bg-blue-500" initial={{ width: 0 }} animate={{ width: `${(selectedVillage.stats.pending / selectedVillage.stats.total) * 100}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }} />
+                          <motion.div className="bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${getPercent(selectedVillage.stats.resolved, selectedVillage.stats.total)}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
+                          <motion.div className="bg-amber-500" initial={{ width: 0 }} animate={{ width: `${getPercent(selectedVillage.stats.inProgress, selectedVillage.stats.total)}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }} />
+                          <motion.div className="bg-blue-500" initial={{ width: 0 }} animate={{ width: `${getPercent(selectedVillage.stats.pending, selectedVillage.stats.total)}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }} />
                         </div>
                         <div className="flex justify-between text-xs">
                           <span className="flex items-center gap-1 text-emerald-600">
                             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                            {t.resolved} ({Math.round((selectedVillage.stats.resolved / selectedVillage.stats.total) * 100)}%)
+                            {t.resolved} ({Math.round(getPercent(selectedVillage.stats.resolved, selectedVillage.stats.total))}%)
                           </span>
                           <span className="flex items-center gap-1 text-amber-600">
                             <div className="w-2 h-2 rounded-full bg-amber-500" />
-                            {t.inProgress} ({Math.round((selectedVillage.stats.inProgress / selectedVillage.stats.total) * 100)}%)
+                            {t.inProgress} ({Math.round(getPercent(selectedVillage.stats.inProgress, selectedVillage.stats.total))}%)
                           </span>
                           <span className="flex items-center gap-1 text-blue-600">
                             <div className="w-2 h-2 rounded-full bg-blue-500" />
-                            {t.pending} ({Math.round((selectedVillage.stats.pending / selectedVillage.stats.total) * 100)}%)
+                            {t.pending} ({Math.round(getPercent(selectedVillage.stats.pending, selectedVillage.stats.total))}%)
                           </span>
                         </div>
                       </div>
@@ -662,7 +669,7 @@ export function VillageAnalytics() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm opacity-80">{t.completed}</p>
-                            <p className="text-3xl font-bold">{Math.round((selectedVillage.stats.resolved / selectedVillage.stats.total) * 100)}%</p>
+                            <p className="text-3xl font-bold">{Math.round(getPercent(selectedVillage.stats.resolved, selectedVillage.stats.total))}%</p>
                           </div>
                           <div className="p-3 rounded-xl bg-white/20">
                             <TrendingUp className="w-8 h-8" />
@@ -702,13 +709,16 @@ export function VillageAnalytics() {
               <Input
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setVillagePage(1)
+                }}
                 className="pl-9 h-9 bg-indigo-50/30 border-indigo-100/40 focus:bg-white text-sm"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {filteredVillages.length > 0 ? (
-                filteredVillages.map((village) => (
+            <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+              {paginatedVillages.length > 0 ? (
+                paginatedVillages.map((village) => (
                   <VillageListItem
                     key={village.id}
                     village={village}
@@ -724,6 +734,34 @@ export function VillageAnalytics() {
                 </div>
               )}
             </div>
+            {filteredVillages.length > villagesPerPage && (
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <p className="text-xs text-slate-500">
+                  {(currentVillagePage - 1) * villagesPerPage + 1}-{Math.min(currentVillagePage * villagesPerPage, filteredVillages.length)} / {filteredVillages.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVillagePage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentVillagePage === 1}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 disabled:opacity-50"
+                  >
+                    Oldingi
+                  </button>
+                  <span className="text-xs font-medium text-slate-600">
+                    {currentVillagePage} / {totalVillagePages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setVillagePage((prev) => Math.min(totalVillagePages, prev + 1))}
+                    disabled={currentVillagePage === totalVillagePages}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 disabled:opacity-50"
+                  >
+                    Keyingi
+                  </button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

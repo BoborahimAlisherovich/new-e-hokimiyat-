@@ -385,7 +385,7 @@ export default function LoginPage() {
               O'zbekiston Respublikasi Raqamli texnologiyalar vazirligi
             </p>
             <p className="text-xs text-gray-300">
-              E-Hokimiyat tizimi v2.0 • 2026
+              Aura group tomonidan ishlab chiqildi
             </p>
           </div>
         </div>

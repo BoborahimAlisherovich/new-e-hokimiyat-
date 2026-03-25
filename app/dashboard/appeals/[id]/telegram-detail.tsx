@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import {
   Dialog,
   DialogContent,
@@ -74,7 +75,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Appeal, AppealAttachment } from "@/types"
 
@@ -105,6 +106,8 @@ const formatFileSize = (size?: number) => {
   const mb = kb / 1024
   return `${mb.toFixed(1)} MB`
 }
+
+const getAttachmentUrl = (attachment?: AppealAttachment | null) => attachment?.file_url || attachment?.file || ""
 
 interface AppealMessage {
   id: number
@@ -154,10 +157,13 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDeadline, setTaskDeadline] = useState("")
   const [taskPriority, setTaskPriority] = useState("ODDIY")
+  const [taskComment, setTaskComment] = useState("")
   const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
   const [creatingTask, setCreatingTask] = useState(false)
   const [activeAttachment, setActiveAttachment] = useState<AppealAttachment | null>(null)
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
+  const [imageCarouselApi, setImageCarouselApi] = useState<CarouselApi | null>(null)
   
   // File/Audio/Location state
   const [chatFile, setChatFile] = useState<File | null>(null)
@@ -169,6 +175,16 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+
+  const imageAttachments = useMemo(
+    () => (appeal?.attachments || []).filter((attachment) => attachment.file_type === "photo" && Boolean(getAttachmentUrl(attachment))),
+    [appeal?.attachments]
+  )
+
+  const otherAttachments = useMemo(
+    () => (appeal?.attachments || []).filter((attachment) => attachment.file_type !== "photo"),
+    [appeal?.attachments]
+  )
 
   const loadData = useCallback(async () => {
     try {
@@ -195,6 +211,23 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    if (activeImageIndex === null || !imageCarouselApi) return
+    imageCarouselApi.scrollTo(activeImageIndex)
+  }, [activeImageIndex, imageCarouselApi])
+
+  useEffect(() => {
+    if (!imageCarouselApi) return
+
+    const syncActiveIndex = () => setActiveImageIndex(imageCarouselApi.selectedScrollSnap())
+    syncActiveIndex()
+    imageCarouselApi.on("select", syncActiveIndex)
+
+    return () => {
+      imageCarouselApi.off("select", syncActiveIndex)
+    }
+  }, [imageCarouselApi])
 
   const handleSendMessage = async () => {
     const hasText = messageText.trim()
@@ -289,7 +322,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   }
 
   const handleCreateTask = async () => {
-    if (creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0) return
+    if (creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0 || !taskComment.trim()) return
 
     try {
       setCreatingTask(true)
@@ -297,12 +330,14 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
         title: taskTitle,
         deadline: taskDeadline,
         priority: taskPriority,
-        organization_ids: selectedOrganizations
+        organization_ids: selectedOrganizations,
+        comment: taskComment.trim() || undefined,
       })
       setTaskDialogOpen(false)
       setTaskTitle("")
       setTaskDeadline("")
       setTaskPriority("ODDIY")
+      setTaskComment("")
       setSelectedOrganizations([])
       await loadData()
     } catch (error) {
@@ -668,24 +703,71 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   <div>
                     <p className="mb-2 text-sm text-muted-foreground">Murojaat fayllari</p>
                     {appeal.attachments && appeal.attachments.length > 0 ? (
-                      <div className="space-y-2">
-                        {appeal.attachments.map((attachment) => {
-                          const fileHref = attachment.file_url || attachment.file || ""
-                          const fileLabel = FILE_TYPE_LABELS[attachment.file_type] || "Fayl"
-                          const fileName = attachment.file_name || fileHref.split("/").pop() || "Fayl"
-                          const fileSize = formatFileSize(attachment.file_size)
-                          const isImage = attachment.file_type === "photo"
-                          return (
-                            <PremiumAttachmentItem
-                              key={attachment.id}
-                              onClick={() => setActiveAttachment(attachment)}
-                              icon={isImage ? ImageIcon : Paperclip}
-                              title={fileName}
-                              meta={`${fileLabel}${fileSize ? ` • ${fileSize}` : ""}`}
-                              actionLabel={fileHref ? "Ichida ochish" : "Link yo'q"}
-                            />
-                          )
-                        })}
+                      <div className="space-y-3">
+                        {imageAttachments.length > 0 && (
+                          <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-3">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-slate-700">Rasmlar</p>
+                              <span className="text-xs text-slate-500">{imageAttachments.length} ta</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                              {imageAttachments.map((attachment, index) => {
+                                const fileHref = getAttachmentUrl(attachment)
+                                const fileName = attachment.file_name || fileHref.split("/").pop() || `Rasm ${index + 1}`
+                                const fileSize = formatFileSize(attachment.file_size)
+
+                                return (
+                                  <button
+                                    key={attachment.id}
+                                    type="button"
+                                    onClick={() => setActiveImageIndex(index)}
+                                    className="group overflow-hidden rounded-[20px] border border-white/80 bg-white text-left shadow-sm transition-all hover:border-cyan-200 hover:shadow-md"
+                                  >
+                                    <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
+                                      <Image
+                                        src={fileHref}
+                                        alt={fileName}
+                                        fill
+                                        unoptimized
+                                        className="object-cover transition duration-300 group-hover:scale-105"
+                                      />
+                                    </div>
+                                    <div className="p-2.5">
+                                      <p className="truncate text-xs font-medium text-slate-800">{fileName}</p>
+                                      {fileSize && <p className="mt-0.5 text-[11px] text-slate-500">{fileSize}</p>}
+                                    </div>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {otherAttachments.length > 0 && (
+                          <div className="space-y-2">
+                            {otherAttachments.map((attachment) => {
+                              const fileHref = getAttachmentUrl(attachment)
+                              const fileLabel = FILE_TYPE_LABELS[attachment.file_type] || "Fayl"
+                              const fileName = attachment.file_name || fileHref.split("/").pop() || "Fayl"
+                              const fileSize = formatFileSize(attachment.file_size)
+
+                              return (
+                                <PremiumAttachmentItem
+                                  key={attachment.id}
+                                  onClick={() => setActiveAttachment(attachment)}
+                                  icon={Paperclip}
+                                  title={fileName}
+                                  meta={`${fileLabel}${fileSize ? ` • ${fileSize}` : ""}`}
+                                  actionLabel={fileHref ? "Ichida ochish" : "Link yo'q"}
+                                />
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {imageAttachments.length === 0 && otherAttachments.length === 0 && (
+                          <p className="text-sm text-muted-foreground">Fayl biriktirilmagan</p>
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">Fayl biriktirilmagan</p>
@@ -1158,6 +1240,18 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               </PremiumFieldGroup>
             </div>
 
+            <PremiumFieldGroup
+              label="Hokim yoki AI izohi *"
+              hint="Topshiriqqa qo'shimcha ko'rsatma, sabab yoki izoh yozing."
+            >
+              <Textarea
+                placeholder="Masalan: bugunning o'zida joyiga chiqib o'rganilsin, natija bo'yicha alohida axborot kiritilsin..."
+                value={taskComment}
+                onChange={(e) => setTaskComment(e.target.value)}
+                className="min-h-[110px] rounded-2xl border-slate-200 bg-white"
+              />
+            </PremiumFieldGroup>
+
             <PremiumFieldGroup label="Mas'ul tashkilotlar *" hint="Bir yoki bir nechta tashkilotni belgilang.">
               <div className="mb-2 flex flex-wrap gap-2">
                 <Button
@@ -1218,7 +1312,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             </Button>
             <Button 
               onClick={handleCreateTask} 
-              disabled={creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0}
+              disabled={creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0 || !taskComment.trim()}
               className="rounded-2xl bg-blue-600 hover:bg-blue-700"
             >
               {creatingTask ? (
@@ -1237,6 +1331,87 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
         </DialogContent>
       </Dialog>
 
+      <Dialog open={activeImageIndex !== null} onOpenChange={(open) => !open && setActiveImageIndex(null)}>
+        <DialogContent className="h-screen w-screen max-w-none border-0 bg-black/95 p-0 text-white backdrop-blur-sm">
+          <DialogHeader className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between border-b border-white/10 bg-black/35 px-5 py-4 backdrop-blur-md">
+            <div>
+              <DialogTitle className="text-white">
+                {activeImageIndex !== null ? imageAttachments[activeImageIndex]?.file_name || `Rasm ${activeImageIndex + 1}` : "Rasm"}
+              </DialogTitle>
+              <DialogDescription className="text-white/70">
+                {activeImageIndex !== null ? `${activeImageIndex + 1} / ${imageAttachments.length}` : ""}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {imageAttachments.length > 0 ? (
+            <div className="flex h-full flex-col justify-center px-4 pb-6 pt-24 sm:px-8">
+              <Carousel
+                setApi={setImageCarouselApi}
+                opts={{ startIndex: activeImageIndex ?? 0 }}
+                className="mx-auto w-full max-w-6xl"
+              >
+                <CarouselContent>
+                  {imageAttachments.map((attachment, index) => {
+                    const fileHref = getAttachmentUrl(attachment)
+                    const fileName = attachment.file_name || `Rasm ${index + 1}`
+
+                    return (
+                      <CarouselItem key={attachment.id}>
+                        <div className="flex h-[62vh] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-black/40 sm:h-[70vh]">
+                          <div className="relative h-full w-full">
+                            <Image
+                              src={fileHref}
+                              alt={fileName}
+                              fill
+                              unoptimized
+                              className="object-contain"
+                            />
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    )
+                  })}
+                </CarouselContent>
+                {imageAttachments.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-2 h-11 w-11 border-white/20 bg-black/45 text-white hover:bg-black/60 disabled:opacity-30 sm:left-4" />
+                    <CarouselNext className="right-2 h-11 w-11 border-white/20 bg-black/45 text-white hover:bg-black/60 disabled:opacity-30 sm:right-4" />
+                  </>
+                )}
+              </Carousel>
+
+              {imageAttachments.length > 1 && (
+                <div className="mx-auto mt-4 grid max-w-5xl grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
+                  {imageAttachments.map((attachment, index) => {
+                    const fileHref = getAttachmentUrl(attachment)
+                    const fileName = attachment.file_name || `Rasm ${index + 1}`
+                    const isActive = index === activeImageIndex
+
+                    return (
+                      <button
+                        key={attachment.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveImageIndex(index)
+                          imageCarouselApi?.scrollTo(index)
+                        }}
+                        className={cn(
+                          "relative aspect-square overflow-hidden rounded-2xl border transition-all",
+                          isActive ? "border-cyan-300 ring-2 ring-cyan-300/50" : "border-white/10 opacity-70 hover:opacity-100"
+                        )}
+                      >
+                        <Image src={fileHref} alt={fileName} fill unoptimized className="object-cover" />
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!activeAttachment} onOpenChange={(open) => !open && setActiveAttachment(null)}>
         <DialogContent className="max-w-4xl border-white/70 bg-white/92 backdrop-blur-2xl">
           <DialogHeader>
@@ -1246,28 +1421,28 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
           {activeAttachment ? (
             <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 p-3">
-              {activeAttachment.file_type === "photo" && (activeAttachment.file_url || activeAttachment.file) ? (
+              {activeAttachment.file_type === "photo" && getAttachmentUrl(activeAttachment) ? (
                 <div className="relative h-[60vh] w-full overflow-hidden rounded-[20px] bg-white">
                   <Image
-                    src={activeAttachment.file_url || activeAttachment.file || ""}
+                    src={getAttachmentUrl(activeAttachment)}
                     alt={activeAttachment.file_name || "Murojaat rasmi"}
                     fill
                     unoptimized
                     className="object-contain"
                   />
                 </div>
-              ) : activeAttachment.file_type === "video" && (activeAttachment.file_url || activeAttachment.file) ? (
+              ) : activeAttachment.file_type === "video" && getAttachmentUrl(activeAttachment) ? (
                 <video
                   controls
                   className="max-h-[60vh] w-full rounded-[20px] bg-black"
-                  src={activeAttachment.file_url || activeAttachment.file || ""}
+                  src={getAttachmentUrl(activeAttachment)}
                 />
               ) : activeAttachment.file_type === "audio" || activeAttachment.file_type === "voice" ? (
-                <audio controls className="w-full" src={activeAttachment.file_url || activeAttachment.file || ""} />
+                <audio controls className="w-full" src={getAttachmentUrl(activeAttachment)} />
               ) : (
                 <iframe
                   title={activeAttachment.file_name || "Murojaat fayli"}
-                  src={activeAttachment.file_url || activeAttachment.file || ""}
+                  src={getAttachmentUrl(activeAttachment)}
                   className="h-[60vh] w-full rounded-[20px] bg-white"
                 />
               )}
@@ -1278,9 +1453,9 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             <Button variant="outline" onClick={() => setActiveAttachment(null)}>
               Yopish
             </Button>
-            {(activeAttachment?.file_url || activeAttachment?.file) ? (
+            {getAttachmentUrl(activeAttachment) ? (
               <Button asChild>
-                <a href={activeAttachment.file_url || activeAttachment.file || ""} target="_blank" rel="noreferrer">
+                <a href={getAttachmentUrl(activeAttachment)} target="_blank" rel="noreferrer">
                   Yangi oynada ochish
                 </a>
               </Button>

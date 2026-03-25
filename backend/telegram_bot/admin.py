@@ -21,7 +21,10 @@ class BotSettingsAdmin(admin.ModelAdmin):
             'fields': ('ai_provider', 'ai_api_key', 'ai_model')
         }),
         ('Xabar shablonlari', {
-            'fields': ('welcome_message_uz', 'welcome_message_ru', 'welcome_message_en'),
+            'fields': (
+                'welcome_message_uz', 'welcome_message_ru', 'welcome_message_en',
+                'about_text_uz', 'about_text_ru', 'about_text_en'
+            ),
             'classes': ('collapse',)
         }),
     )

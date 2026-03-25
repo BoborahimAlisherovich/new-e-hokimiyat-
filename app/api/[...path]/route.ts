@@ -68,6 +68,13 @@ async function proxyRequest(
     }
   })
 
+  if (!headers.Authorization && !headers.authorization) {
+    const accessToken = request.cookies.get('access_token')?.value
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+  }
+
   try {
     let body: BodyInit | undefined = undefined
     if (method !== 'GET' && method !== 'DELETE') {

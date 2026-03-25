@@ -205,6 +205,7 @@ export interface CreateTaskFromAppealRequest {
   deadline: string
   priority: string
   organization_ids: string[]
+  comment?: string
 }
 
 // ============================================================================

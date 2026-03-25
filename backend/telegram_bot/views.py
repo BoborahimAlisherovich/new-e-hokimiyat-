@@ -977,7 +977,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             return [item.strip() for item in organization_ids.split(',') if item.strip()]
         return [str(item).strip() for item in organization_ids if str(item).strip()]
 
-    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids):
+    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment=''):
         from tasks.models import Task, TaskOrganization
         from organizations.models import Organization
         from notifications.models import Notification
@@ -988,15 +988,29 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             raise ValueError("Tashkilot tanlanmagan yoki topilmadi")
         region_name = appeal.telegram_user.region.name_uz if appeal.telegram_user.region else "Noma'lum"
 
+        normalized_comment = (comment or '').strip()
+        description_parts = [
+            f"Telegram murojaat #{appeal.appeal_number}",
+            "",
+            f"Fuqaro: {appeal.telegram_user.full_name}",
+            f"Telefon: {appeal.telegram_user.phone}",
+            f"Hudud: {region_name}",
+        ]
+        if normalized_comment:
+            description_parts.extend([
+                "",
+                "Hokim/AI izohi:",
+                normalized_comment,
+            ])
+        description_parts.extend([
+            "",
+            "Murojaat matni:",
+            appeal.text,
+        ])
+
         task = Task.objects.create(
             title=title,
-            description=(
-                f"Telegram murojaat #{appeal.appeal_number}\n\n"
-                f"Fuqaro: {appeal.telegram_user.full_name}\n"
-                f"Telefon: {appeal.telegram_user.phone}\n"
-                f"Hudud: {region_name}\n\n"
-                f"Murojaat matni:\n{appeal.text}"
-            ),
+            description="\n".join(description_parts),
             priority=self._normalize_task_priority(priority),
             deadline=deadline,
             created_by=user,
@@ -1433,6 +1447,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         deadline = request.data.get('deadline')
         priority = self._normalize_task_priority(request.data.get('priority', 'ODDIY'))
         organization_ids = request.data.get('organization_ids', [])
+        comment = request.data.get('comment', '')
         
         if not title:
             title = f"Murojaat #{appeal.appeal_number}: {appeal.text[:100]}..."
@@ -1448,6 +1463,12 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 {'error': 'Tashkilot tanlanmagan'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        if not str(comment or '').strip():
+            return Response(
+                {'error': 'Hokim yoki AI izohi kiritilmagan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         try:
             task, organizations = self._create_task_for_appeal(
@@ -1457,6 +1478,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 deadline=deadline,
                 priority=priority,
                 organization_ids=organization_ids,
+                comment=comment,
             )
             
             # Foydalanuvchiga xabar yuborish
