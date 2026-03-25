@@ -19,6 +19,7 @@ type TaskFiltersProps = {
   statusFilter: string
   priorityFilter: string
   categoryFilter: string
+  showCategoryFilter?: boolean
   organizationFilter?: string
   organizations?: Organization[]
   onSearchChange: (value: string) => void
@@ -36,6 +37,7 @@ export function TaskFilters({
   statusFilter,
   priorityFilter,
   categoryFilter,
+  showCategoryFilter = true,
   organizationFilter = "all",
   organizations = [],
   onSearchChange,
@@ -50,7 +52,7 @@ export function TaskFilters({
   const t = useTranslation()
   
   const hasActiveFilters = statusFilter !== "all" || priorityFilter !== "all" || 
-    categoryFilter !== "all" || organizationFilter !== "all" || searchQuery !== ""
+    (showCategoryFilter && categoryFilter !== "all") || organizationFilter !== "all" || searchQuery !== ""
 
   const statusLabels: Record<string, string> = {
     YANGI: t.task.statuses.NEW,
@@ -91,7 +93,7 @@ export function TaskFilters({
     priorityFilter !== "all"
       ? { label: "Muhimlik", value: priorityLabels[priorityFilter] || priorityFilter }
       : null,
-    categoryFilter !== "all"
+    showCategoryFilter && categoryFilter !== "all"
       ? { label: "Soha", value: categoryLabels[categoryFilter] || categoryFilter }
       : null,
     organizationFilter !== "all"
@@ -154,7 +156,7 @@ export function TaskFilters({
         </div>
 
         {/* Filters */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={`grid gap-3 sm:grid-cols-2 ${showCategoryFilter ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Holat bo'yicha</Label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
@@ -190,24 +192,26 @@ export function TaskFilters({
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
-            <Select value={categoryFilter} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
-                <SelectValue placeholder="Soha bo'yicha" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-                <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
-                <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
-                <SelectItem value="HUQUQIY">{t.task.categories.HUQUQIY}</SelectItem>
-                <SelectItem value="INFRASTRUKTURA">{t.task.categories.INFRASTRUKTURA}</SelectItem>
-                <SelectItem value="TA_LIM">{t.task.categories.TA_LIM}</SelectItem>
-                <SelectItem value="SOG_LIQNI_SAQLASH">{t.task.categories.SOG_LIQNI_SAQLASH}</SelectItem>
-                <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {showCategoryFilter && (
+            <div className="space-y-1">
+              <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
+              <Select value={categoryFilter} onValueChange={onCategoryChange}>
+                <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
+                  <SelectValue placeholder="Soha bo'yicha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.tasks.allOption}</SelectItem>
+                  <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
+                  <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
+                  <SelectItem value="HUQUQIY">{t.task.categories.HUQUQIY}</SelectItem>
+                  <SelectItem value="INFRASTRUKTURA">{t.task.categories.INFRASTRUKTURA}</SelectItem>
+                  <SelectItem value="TA_LIM">{t.task.categories.TA_LIM}</SelectItem>
+                  <SelectItem value="SOG_LIQNI_SAQLASH">{t.task.categories.SOG_LIQNI_SAQLASH}</SelectItem>
+                  <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {onOrganizationChange && (
             <div className="space-y-1">
