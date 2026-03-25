@@ -3,6 +3,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/layout/sidebar"
 import { getCurrentUser } from "@/lib/api"
 import { canAccessDashboardPath, getFirstAllowedDashboardPath } from "@/lib/dashboard-access"
@@ -11,6 +12,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isCheckingAccess, setIsCheckingAccess] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    const syncSidebarLayout = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      setIsSidebarCollapsed(mobile)
+    }
+
+    syncSidebarLayout()
+    window.addEventListener("resize", syncSidebarLayout)
+
+    return () => {
+      window.removeEventListener("resize", syncSidebarLayout)
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -54,8 +72,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.10),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(251,191,36,0.10),_transparent_26%),linear-gradient(160deg,_#f6fbff_0%,_#eef7f5_50%,_#fffaf2_100%)]">
-      <Sidebar />
-      <main id="main-content" className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+      <Sidebar
+        collapsed={isSidebarCollapsed}
+        isMobile={isMobile}
+        onCollapsedChange={setIsSidebarCollapsed}
+      />
+      <main
+        id="main-content"
+        className={cn(
+          "relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto transition-[margin] duration-300",
+          !isMobile && (isSidebarCollapsed ? "md:ml-19" : "md:ml-70")
+        )}
+      >
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute -top-[8%] left-[10%] hidden h-[520px] w-[520px] rounded-full bg-cyan-200/22 blur-3xl md:block animate-float-gentle" />
           <div

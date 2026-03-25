@@ -520,6 +520,15 @@ export default function TaskDetailPage() {
     })
   }
 
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return "-"
+    return new Date(dateStr).toLocaleDateString("uz-UZ", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+  }
+
   const isOverdue = new Date(task.deadline) < new Date() && !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
 
   return (
@@ -545,7 +554,7 @@ export default function TaskDetailPage() {
           },
           {
             label: "Muddat",
-            value: task.deadline ? new Date(task.deadline).toLocaleDateString("uz-UZ") : "Belgilanmagan",
+            value: task.deadline ? formatDate(task.deadline) : "Belgilanmagan",
             icon: Calendar,
             tone: "from-amber-50 via-white to-amber-100/70",
           },
@@ -753,7 +762,7 @@ export default function TaskDetailPage() {
                   label="Muddat"
                   value={
                     <>
-                      {new Date(task.deadline).toLocaleDateString("en-GB")}
+                      {formatDate(task.deadline)}
                       {isOverdue && " (kechiktirilgan)"}
                     </>
                   }
@@ -782,7 +791,7 @@ export default function TaskDetailPage() {
                 <PremiumInfoItem
                   icon={Clock}
                   label="Yaratilgan"
-                  value={(task.createdAt || task.created_at) ? new Date(task.createdAt || task.created_at).toLocaleDateString("uz-UZ") : "-"}
+                  value={formatDate(task.createdAt || task.created_at)}
                 />
                 {task.location && (
                   <PremiumInfoItem

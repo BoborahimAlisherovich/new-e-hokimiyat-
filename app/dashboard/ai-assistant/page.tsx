@@ -518,6 +518,7 @@ export default function AIAssistantPage() {
           onSendMessage={() => sendMessage()}
           onRecordToggle={handleRecordToggle}
           onQuickChat={quickChat}
+          onQuickAction={sendMessage}
           onResetRecording={resetRecording}
           sendMessageWithAudio={() => sendMessage(speechText)}
           onRetry={loadConversations}
@@ -593,11 +594,17 @@ function ChatHeader({
         {/* Desktop Sidebar Toggle */}
         <Button
           variant="ghost"
-          size="icon"
           onClick={onToggleDesktopSidebar}
-          className="hidden lg:flex h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+          aria-label={isDesktopSidebarOpen ? "Suhbatlar tarixini yashirish" : "Suhbatlar tarixini ko'rsatish"}
+          title={isDesktopSidebarOpen ? "Suhbatlar tarixini yashirish" : "Suhbatlar tarixini ko'rsatish"}
+          className={`hidden lg:inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold shadow-sm transition-all ${
+            isDesktopSidebarOpen
+              ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              : "border-slate-300 bg-white text-slate-700 hover:border-blue-200 hover:bg-slate-50 hover:text-blue-700"
+          }`}
         >
-          <History className={`h-5 w-5 ${isDesktopSidebarOpen ? "text-blue-600" : ""}`} />
+          <History className={`h-4 w-4 ${isDesktopSidebarOpen ? "text-blue-600" : "text-slate-600"}`} />
+          <span>{isDesktopSidebarOpen ? "Tarixni yashirish" : "Tarix"}</span>
         </Button>
 
         {/* Logo & Title */}
@@ -982,6 +989,7 @@ function ChatArea({
   onSendMessage,
   onRecordToggle,
   onQuickChat,
+  onQuickAction,
   onResetRecording,
   sendMessageWithAudio,
   onRetry,
@@ -1006,6 +1014,7 @@ function ChatArea({
   onSendMessage: () => void;
   onRecordToggle: () => void;
   onQuickChat: (message: string) => void;
+  onQuickAction: (message: string) => void;
   onResetRecording: () => void;
   sendMessageWithAudio: () => void;
   onRetry: () => void;
@@ -1127,6 +1136,27 @@ function ChatArea({
                           </button>
                         </div>
                       )}
+                      {message.role === "assistant" &&
+                        /Tasdiqlash uchun 'ha'|xohlaysizmi\?/i.test(message.content) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onQuickAction("ha")}
+                              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                            >
+                              <Check className="h-4 w-4" />
+                              Tasdiqlash
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onQuickAction("yo'q")}
+                              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs sm:text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100"
+                            >
+                              <X className="h-4 w-4" />
+                              Bekor qilish
+                            </button>
+                          </div>
+                        )}
                     </div>
                     <p className="text-xs text-slate-400 mt-1.5 px-1">
                       {new Date(message.created_at).toLocaleTimeString("uz-UZ", { hour: '2-digit', minute: '2-digit' })}

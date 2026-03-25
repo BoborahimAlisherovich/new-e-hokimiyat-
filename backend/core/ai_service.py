@@ -815,6 +815,8 @@ Faqat JSON qaytaring:
         results: List[Dict[str, str]] = []
         orgs = Organization.objects.filter(is_active=True).values('id', 'name', 'short_name')
 
+        query_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', normalized) if len(tok) >= 3]
+
         for org in orgs:
             org_name = str(org.get('name') or '')
             org_short_name = str(org.get('short_name') or '')
@@ -837,6 +839,25 @@ Faqat JSON qaytaring:
                 (tokens and token_hits >= max(1, len(tokens) // 2))
                 or (short_tokens and short_hits >= max(1, len(short_tokens)))
             ):
+                results.append({'id': str(org['id']), 'name': org_name})
+                continue
+
+            org_tokens = list(dict.fromkeys(tokens + short_tokens))
+            if not org_tokens or not query_tokens:
+                continue
+
+            fuzzy_hits = 0
+            for query_token in query_tokens:
+                if any(
+                    query_token in org_token
+                    or org_token in query_token
+                    or query_token.startswith(org_token[: max(3, min(len(org_token), len(query_token)))])
+                    for org_token in org_tokens
+                ):
+                    fuzzy_hits += 1
+
+            threshold = 1 if len(org_tokens) <= 3 else 2
+            if fuzzy_hits >= threshold:
                 results.append({'id': str(org['id']), 'name': org_name})
 
         # Dublikatlarni olib tashlash

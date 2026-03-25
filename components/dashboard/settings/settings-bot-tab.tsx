@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { TabsContent } from "@/components/ui/tabs"
 import { Bot, Save, RefreshCw } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/context"
@@ -21,6 +22,9 @@ interface BotSettings {
   bot_username: string
   webhook_url: string
   is_active: boolean
+  about_text_uz: string
+  about_text_ru: string
+  about_text_en: string
 }
 
 export function SettingsBotTab({ t }: SettingsBotTabProps) {
@@ -29,6 +33,9 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
     bot_username: "",
     webhook_url: "",
     is_active: false,
+    about_text_uz: "",
+    about_text_ru: "",
+    about_text_en: "",
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -167,6 +174,39 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
               <Label htmlFor="is_active" className="cursor-pointer">
                 Bot faol
               </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="about_text_uz">"Biz haqimizda" matni (UZ)</Label>
+              <Textarea
+                id="about_text_uz"
+                value={settings.about_text_uz}
+                onChange={(e) => setSettings({ ...settings, about_text_uz: e.target.value })}
+                placeholder="Botdagi Biz haqimizda bo'limi uchun matn"
+                className="min-h-28"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="about_text_ru">"О нас" matni (RU)</Label>
+              <Textarea
+                id="about_text_ru"
+                value={settings.about_text_ru}
+                onChange={(e) => setSettings({ ...settings, about_text_ru: e.target.value })}
+                placeholder="Текст для раздела О нас"
+                className="min-h-28"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="about_text_en">"About us" matni (EN)</Label>
+              <Textarea
+                id="about_text_en"
+                value={settings.about_text_en}
+                onChange={(e) => setSettings({ ...settings, about_text_en: e.target.value })}
+                placeholder="Text for About us section"
+                className="min-h-28"
+              />
             </div>
           </div>
 

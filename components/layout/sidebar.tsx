@@ -13,17 +13,13 @@ import {
   CheckSquare2,
   Users2,
   Building,
-  Bell,
   BarChart4,
-  FileCheck,
   Settings,
   ChevronLeft,
   ChevronRight,
   Menu,
   MessageCircle,
   MessageSquare,
-  Shield,
-  UserCog,
   Bot,
   Sparkles,
 } from "lucide-react"
@@ -32,7 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { getCurrentUser, getUnreadChatCount, getUnreadNotificationsCount, TOKEN_KEYS } from "@/lib/api"
+import { getCurrentUser, getUnreadChatCount, TOKEN_KEYS } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
 import { canAccessDashboardPath, isDashboardNavItemActive } from "@/lib/dashboard-access"
@@ -52,41 +48,27 @@ function getCachedUser(): User | null {
   }
 }
 
-export function Sidebar() {
+type SidebarProps = {
+  collapsed: boolean
+  isMobile: boolean
+  onCollapsedChange: (value: boolean) => void
+}
+
+export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps) {
   const t = useTranslation()
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(() => getCachedUser())
   const [unreadChatCount, setUnreadChatCount] = useState(0)
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
 
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768
-      setIsMobile(mobile)
-      if (mobile) {
-        setCollapsed(true)
-      } else {
-        setCollapsed(false)
-      }
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    
     // Fetch current user
     let isMounted = true
 
     const fetchUnreadCounts = async () => {
       try {
-        const [chatCount, notifCount] = await Promise.all([
-          getUnreadChatCount().catch(() => 0),
-          getUnreadNotificationsCount().catch(() => 0),
-        ])
+        const chatCount = await getUnreadChatCount().catch(() => 0)
         if (isMounted) {
           setUnreadChatCount(chatCount)
-          setUnreadNotificationsCount(notifCount)
         }
       } catch (e) {}
     }
@@ -116,20 +98,14 @@ export function Sidebar() {
     const handleChatRead = () => fetchUnreadCounts()
     window.addEventListener('chatRead', handleChatRead)
     
-    // Refresh quickly when header detects a new notification
-    const handleNotificationReceived = () => fetchUnreadCounts()
-    window.addEventListener('notificationReceived', handleNotificationReceived)
-    
     fetchUnreadCounts()
     // Refresh every 30 seconds
     const interval = setInterval(fetchUnreadCounts, 30000)
     
     return () => {
       isMounted = false
-      window.removeEventListener("resize", handleResize)
       window.removeEventListener('userUpdated', handleUserUpdated)
       window.removeEventListener('chatRead', handleChatRead)
-      window.removeEventListener('notificationReceived', handleNotificationReceived)
       clearInterval(interval)
     }
   }, [])
@@ -183,13 +159,6 @@ export function Sidebar() {
       icon: Building,
       adminOnly: true,
       section: "main"
-    },
-    {
-      title: t.navigation.notifications,
-      href: "/dashboard/notifications",
-      icon: Bell,
-      badge: unreadNotificationsCount,
-      section: "communication"
     },
     {
       title: t.navigation.appeals,
@@ -250,7 +219,7 @@ export function Sidebar() {
       {isMobile && !collapsed && (
         <div 
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
-          onClick={() => setCollapsed(true)}
+          onClick={() => onCollapsedChange(true)}
         />
       )}
 
@@ -259,7 +228,7 @@ export function Sidebar() {
         <Button
           variant="secondary"
           size="icon"
-          onClick={() => setCollapsed(false)}
+          onClick={() => onCollapsedChange(false)}
           className="fixed left-4 top-4 z-50 h-11 w-11 rounded-2xl border border-sky-100/80 bg-white/90 shadow-[0_12px_30px_-18px_rgba(14,165,233,0.55)] backdrop-blur"
         >
           <Menu className="h-5 w-5" />
@@ -272,7 +241,7 @@ export function Sidebar() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className={cn(
           "flex h-dvh max-h-dvh flex-col bg-linear-to-b from-white/96 via-sky-50/60 to-white/92 text-slate-800 border-r border-sky-100/60 transition-all duration-300 shadow-[8px_0_40px_-20px_rgba(14,165,233,0.18)] backdrop-blur-2xl",
-          isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "relative",
+          isMobile ? "fixed inset-y-0 left-0 z-50 transform" : "fixed inset-y-0 left-0 z-30",
           collapsed 
             ? (isMobile ? "-translate-x-full w-70" : "w-19") 
             : "w-70"
@@ -296,7 +265,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => onCollapsedChange(!collapsed)}
           className="h-8.5 w-8.5 shrink-0 rounded-xl border border-white/60 bg-white/60 transition-all duration-200 hover:bg-white"
         >
           <ChevronLeft className={cn(

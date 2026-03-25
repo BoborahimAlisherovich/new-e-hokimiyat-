@@ -242,6 +242,19 @@ def clear_user_state(user: TelegramUser):
     UserState.objects.filter(telegram_id=user.telegram_id).delete()
 
 
+def get_bot_about_text(language: str = "uz") -> str:
+    """Bot sozlamalaridan 'Biz haqimizda' matnini olish."""
+    settings = BotSettings.objects.first()
+    field_name = f"about_text_{language}"
+
+    if settings and hasattr(settings, field_name):
+        text = getattr(settings, field_name, "")
+        if text:
+            return text
+
+    return get_text("about_text", language)
+
+
 def process_update(update: Dict):
     """Telegram update'ni qayta ishlash"""
     try:
@@ -294,7 +307,7 @@ def process_message(message: Dict):
     if text in [get_text('btn_about', lang) for lang in ['uz', 'ru', 'en']]:
         bot.send_message(
             chat_id,
-            get_text('about_text', user.language),
+            get_bot_about_text(user.language),
             reply_markup=main_menu_keyboard(user.language)
         )
         return

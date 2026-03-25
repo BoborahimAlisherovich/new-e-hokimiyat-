@@ -117,51 +117,29 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       countLabel={`${organizations.length} ${tr.count}`}
       accentClassName="bg-gradient-to-r from-violet-50/55 via-white/30 to-purple-50/40"
     >
-      <Table>
-        <TableHeader>
-          <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.name}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.leader}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.phone}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.status}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm w-[70px]">{tr.actions}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {organizations.map((org, index) => (
-            <TableRow 
-              key={org.id} 
-              className="group border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
+      <div className="grid gap-3 p-3 md:hidden">
+        {organizations.map((org, index) => {
+          const leader = org.director_name || org.head || getResponsibleUser(org, users) || "—"
+
+          return (
+            <div
+              key={org.id}
+              className="rounded-[22px] border border-violet-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,245,255,0.92))] p-4 shadow-[0_16px_34px_-28px_rgba(139,92,246,0.28)]"
               style={{ animationDelay: `${index * 30}ms` }}
             >
-              <TableCell className="py-4 px-4">
-                <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-3 py-1.5 text-sm font-mono font-bold text-violet-700 shadow-sm">
-                  {formatOrgId(String(org.id))}
-                </code>
-              </TableCell>
-              <TableCell className="py-4 px-4">
-                <div>
-                  <p className="font-semibold text-slate-900 text-base">
-                    {org.name}
-                  </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-2.5 py-1 text-xs font-mono font-bold text-violet-700 shadow-sm">
+                    {formatOrgId(String(org.id))}
+                  </code>
+                  <p className="mt-3 text-sm font-semibold leading-snug text-slate-900">{org.name}</p>
                   {org.sector_name && (
-                    <p className="text-sm text-slate-500 mt-0.5 font-medium">{org.sector_name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{org.sector_name}</p>
                   )}
                 </div>
-              </TableCell>
-              <TableCell className="py-4 px-4">
-                <span className="text-sm text-slate-700 font-medium">
-                  {org.director_name || org.head || getResponsibleUser(org, users) || "—"}
-                </span>
-              </TableCell>
-              <TableCell className="py-4 px-4">
-                <span className="text-sm text-slate-700 font-medium">{org.phone || "—"}</span>
-              </TableCell>
-              <TableCell className="py-3.5 px-4">
                 <Badge
                   variant="outline"
-                  className={`font-medium text-xs border rounded-lg ${
+                  className={`shrink-0 font-medium text-[11px] border rounded-lg ${
                     org.is_active
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-indigo-50/30 text-slate-600 border-indigo-100/40"
@@ -169,21 +147,34 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                 >
                   {org.is_active ? tr.active : tr.inactive}
                 </Badge>
-              </TableCell>
-              <TableCell className="py-3.5 px-4">
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-slate-600">
+                <div className="rounded-xl bg-slate-50/80 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{tr.leader}</p>
+                  <p className="mt-1 truncate text-slate-700">{leader}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50/80 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{tr.phone}</p>
+                  <p className="mt-1 truncate text-slate-700">{org.phone || "—"}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <Button asChild variant="outline" size="sm" className="flex-1">
+                  <Link href={`/dashboard/organizations/${org.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    {tr.details}
+                  </Link>
+                </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-violet-50 group-hover:bg-violet-100/50 transition-colors">
-                      <MoreHorizontal className="h-4 w-4 text-slate-500 group-hover:text-violet-600" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 hover:bg-violet-50">
+                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <Link href={`/dashboard/organizations/${org.id}`}>
-                      <DropdownMenuItem className="cursor-pointer">
-                        <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                        {tr.details}
-                      </DropdownMenuItem>
-                    </Link>
                     <Link href={`/dashboard/organizations/${org.id}`}>
                       <DropdownMenuItem className="cursor-pointer">
                         <Edit className="mr-2 h-4 w-4 text-slate-500" />
@@ -210,11 +201,114 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </TableCell>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
+              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
+              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.name}</TableHead>
+              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.leader}</TableHead>
+              <TableHead className="hidden font-bold text-slate-800 py-4 px-4 text-sm lg:table-cell">{tr.phone}</TableHead>
+              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.status}</TableHead>
+              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm w-[70px]">{tr.actions}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {organizations.map((org, index) => {
+              const leader = org.director_name || org.head || getResponsibleUser(org, users) || "—"
+
+              return (
+                <TableRow
+                  key={org.id}
+                  className="group border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
+                  style={{ animationDelay: `${index * 30}ms` }}
+                >
+                  <TableCell className="py-4 px-4">
+                    <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-3 py-1.5 text-sm font-mono font-bold text-violet-700 shadow-sm">
+                      {formatOrgId(String(org.id))}
+                    </code>
+                  </TableCell>
+                  <TableCell className="py-4 px-4 whitespace-normal">
+                    <div>
+                      <p className="font-semibold text-slate-900 text-base leading-snug">
+                        {org.name}
+                      </p>
+                      {org.sector_name && (
+                        <p className="text-sm text-slate-500 mt-0.5 font-medium">{org.sector_name}</p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 px-4 text-sm text-slate-700 font-medium max-w-[220px] whitespace-normal">
+                    <div className="line-clamp-2 leading-snug">{leader}</div>
+                  </TableCell>
+                  <TableCell className="hidden py-4 px-4 text-sm text-slate-700 font-medium lg:table-cell">
+                    {org.phone || "—"}
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4">
+                    <Badge
+                      variant="outline"
+                      className={`font-medium text-xs border rounded-lg ${
+                        org.is_active
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-indigo-50/30 text-slate-600 border-indigo-100/40"
+                      }`}
+                    >
+                      {org.is_active ? tr.active : tr.inactive}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-violet-50 group-hover:bg-violet-100/50 transition-colors">
+                          <MoreHorizontal className="h-4 w-4 text-slate-500 group-hover:text-violet-600" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <Link href={`/dashboard/organizations/${org.id}`}>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                            {tr.details}
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href={`/dashboard/organizations/${org.id}`}>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                            {tr.edit}
+                          </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onToggleStatus?.(org.id, org.is_active)}
+                          className="cursor-pointer"
+                        >
+                          {org.is_active ? (
+                            <><Lock className="mr-2 h-4 w-4 text-amber-500" /> {tr.deactivate}</>
+                          ) : (
+                            <><Unlock className="mr-2 h-4 w-4 text-emerald-500" /> {tr.activate}</>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDelete?.(org.id)}
+                          className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {tr.delete}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </PremiumTableShell>
   )
 }

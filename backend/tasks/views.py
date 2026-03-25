@@ -16,6 +16,7 @@ Endpointlar:
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 from asgiref.sync import async_to_sync
@@ -102,6 +103,56 @@ def _guess_attachment_type(file_obj: 'UploadedFile') -> str:
     name = getattr(file_obj, 'name', '') or ''
     
     return FileType.get_type_from_content_type(content_type, name)
+
+
+def _normalize_match_text(value: str) -> str:
+    return re.sub(r'\s+', ' ', (value or '').strip().lower())
+
+
+def _match_organizations_from_text(text: str, organizations: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    normalized = _normalize_match_text(text)
+    if not normalized:
+        return []
+
+    query_tokens = [token for token in re.split(r'[^a-z0-9а-яёўқғҳ]+', normalized) if len(token) >= 3]
+    results: List[Dict[str, str]] = []
+
+    for org in organizations:
+        org_name = str(org.get('name') or '')
+        org_short_name = str(org.get('short_name') or '')
+        name_norm = _normalize_match_text(org_name)
+        short_norm = _normalize_match_text(org_short_name)
+
+        if (name_norm and name_norm in normalized) or (short_norm and short_norm in normalized):
+            results.append({'id': str(org['id']), 'name': org_name})
+            continue
+
+        org_tokens = [
+            token
+            for token in re.split(r'[^a-z0-9а-яёўқғҳ]+', f'{name_norm} {short_norm}')
+            if len(token) >= 3
+        ]
+        if not org_tokens or not query_tokens:
+            continue
+
+        hits = 0
+        for query_token in query_tokens:
+            if any(
+                query_token in org_token
+                or org_token in query_token
+                or query_token.startswith(org_token[: max(3, min(len(org_token), len(query_token)))])
+                for org_token in org_tokens
+            ):
+                hits += 1
+
+        threshold = 1 if len(org_tokens) <= 3 else 2
+        if hits >= threshold:
+            results.append({'id': str(org['id']), 'name': org_name})
+
+    unique: Dict[str, Dict[str, str]] = {}
+    for item in results:
+        unique[item['id']] = item
+    return list(unique.values())
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -394,6 +445,24 @@ QOIDALAR:
                     oid for oid in suggestions['organization_ids'] 
                     if str(oid) in valid_org_ids
                 ]
+
+            if not suggestions['organization_ids'] and suggestions['organization_names']:
+                matched_orgs: List[Dict[str, str]] = []
+                for org_name in suggestions['organization_names'][:20]:
+                    matched_orgs.extend(_match_organizations_from_text(str(org_name), orgs))
+                if matched_orgs:
+                    deduped = {item['id']: item for item in matched_orgs}
+                    suggestions['organization_ids'] = list(deduped.keys())
+                    suggestions['organization_names'] = [item['name'] for item in deduped.values()]
+
+            if not suggestions['organization_ids']:
+                inferred_orgs = _match_organizations_from_text(
+                    f"{suggestions['title']} {suggestions['description']}",
+                    orgs,
+                )
+                if inferred_orgs:
+                    suggestions['organization_ids'] = [item['id'] for item in inferred_orgs]
+                    suggestions['organization_names'] = [item['name'] for item in inferred_orgs]
             
             return Response({
                 'transcription': text,

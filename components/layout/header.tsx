@@ -320,26 +320,31 @@ export function Header({ title, description, actions }: HeaderProps) {
             </DropdownMenuLabel>
             <div className="max-h-64 overflow-y-auto">
               {recentNotifications.map((notification) => (
-                <DropdownMenuItem 
-                  key={notification.id} 
-                  className="flex flex-col items-start gap-1.5 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0"
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      notification.type === "TASK_OVERDUE" ? "bg-red-500" : "bg-indigo-600"
-                    )} />
-                    <span className={cn(
-                      "font-medium text-xs flex-1",
-                      notification.type === "TASK_OVERDUE" ? "text-red-600" : "text-slate-900"
-                    )}>
-                      {notification.title}
-                    </span>
-                    {!notification.is_read && (
-                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></div>
-                    )}
-                  </div>
-                  <span className="text-xs text-slate-600 line-clamp-2">{notification.message}</span>
+                <DropdownMenuItem key={notification.id} asChild>
+                  <Link
+                    href={
+                      notification.link ||
+                      (notification.related_task_id ? `/dashboard/tasks/${notification.related_task_id}` : `/dashboard/notifications/${notification.id}`)
+                    }
+                    className="flex flex-col items-start gap-1.5 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                        notification.type === "TASK_OVERDUE" ? "bg-red-500" : "bg-indigo-600"
+                      )} />
+                      <span className={cn(
+                        "font-medium text-xs flex-1",
+                        notification.type === "TASK_OVERDUE" ? "text-red-600" : "text-slate-900"
+                      )}>
+                        {notification.title}
+                      </span>
+                      {!notification.is_read && (
+                        <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></div>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-600 line-clamp-2">{notification.message}</span>
+                  </Link>
                 </DropdownMenuItem>
               ))}
             </div>

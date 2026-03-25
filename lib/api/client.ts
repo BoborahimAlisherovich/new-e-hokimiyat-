@@ -107,6 +107,19 @@ export const WS_BASE = resolveWsBaseUrl()
 /** Xotiradagi access token (tezkor kirish uchun) */
 let cachedAccessToken: string | null = null
 
+function setCookieItem(key: string, value: string | null): void {
+  if (typeof document === 'undefined') return
+
+  const encodedKey = encodeURIComponent(key)
+  if (value !== null) {
+    const encodedValue = encodeURIComponent(value)
+    document.cookie = `${encodedKey}=${encodedValue}; path=/; SameSite=Lax`
+    return
+  }
+
+  document.cookie = `${encodedKey}=; path=/; Max-Age=0; SameSite=Lax`
+}
+
 /**
  * LocalStorage dan qiymat oladi (SSR-safe)
  */
@@ -126,6 +139,8 @@ function setStorageItem(key: string, value: string | null): void {
   } else {
     localStorage.removeItem(key)
   }
+
+  setCookieItem(key, value)
 }
 
 /**
