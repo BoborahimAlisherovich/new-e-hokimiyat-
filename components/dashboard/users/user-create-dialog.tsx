@@ -35,7 +35,7 @@ interface UserCreateDialogProps {
   users: User[]
   currentUser: User | null
   onChange: (field: keyof CreateUserFormData, value: string) => void
-  onCreated: () => void
+  onCreated: (createdUser: User, plainPassword: string) => void
 }
 
 export function UserCreateDialog({
@@ -101,7 +101,7 @@ export function UserCreateDialog({
     
     setIsSubmitting(true)
     try {
-      await createUser({
+      const createdUser = await createUser({
         login: formData.login.trim(),
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -116,7 +116,7 @@ export function UserCreateDialog({
         sector: formData.sectorId || undefined,
         supervisor: formData.supervisorId || undefined,
       })
-      onCreated()
+      onCreated(createdUser, formData.password)
     } catch (error: any) {
       console.error("Create user error:", error)
       

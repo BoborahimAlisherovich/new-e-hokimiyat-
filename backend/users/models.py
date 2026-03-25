@@ -154,6 +154,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Bevosita rahbar"
     )
     position = models.CharField(max_length=200, blank=True, verbose_name='Lavozim')
+    visible_password = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        verbose_name="Ko'rinadigan parol"
+    )
     
     # Status
     status = models.CharField(

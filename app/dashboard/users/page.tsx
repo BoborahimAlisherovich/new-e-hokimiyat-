@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { Building2, Plus, ShieldCheck, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useI18n } from "@/lib/i18n/context"
 import { normalizeUserRole } from "@/lib/role-utils"
 
@@ -30,6 +31,7 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [organizationFilter, setOrganizationFilter] = useState<string>("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [createdCredentials, setCreatedCredentials] = useState<{ name: string; login: string; password: string } | null>(null)
   const [canManageUsers, setCanManageUsers] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [createFormData, setCreateFormData] = useState({
@@ -102,8 +104,13 @@ export default function UsersPage() {
     setIsCreateDialogOpen(true)
   }
 
-  const handleUserCreated = async () => {
+  const handleUserCreated = async (createdUser: User, plainPassword: string) => {
     setIsCreateDialogOpen(false)
+    setCreatedCredentials({
+      name: createdUser.full_name || `${createdUser.last_name || ""} ${createdUser.first_name || ""}`.trim() || "Yangi foydalanuvchi",
+      login: createdUser.login,
+      password: plainPassword,
+    })
     setCreateFormData({
       login: "",
       firstName: "",
@@ -239,6 +246,21 @@ export default function UsersPage() {
         onChange={handleInputChange}
         onCreated={handleUserCreated}
       />
+      <Dialog open={Boolean(createdCredentials)} onOpenChange={(open) => !open && setCreatedCredentials(null)}>
+        <DialogContent className="max-w-md rounded-2xl border-white/60 bg-white/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle>Foydalanuvchi yaratildi</DialogTitle>
+            <DialogDescription>Login va parolni admin/hokim keyin ham foydalanuvchi profilida ko'ra oladi.</DialogDescription>
+          </DialogHeader>
+          {createdCredentials && (
+            <div className="space-y-3 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4 text-sm text-slate-700">
+              <p><span className="font-semibold text-slate-900">Foydalanuvchi:</span> {createdCredentials.name}</p>
+              <p><span className="font-semibold text-slate-900">Login:</span> {createdCredentials.login}</p>
+              <p><span className="font-semibold text-slate-900">Parol:</span> {createdCredentials.password}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
