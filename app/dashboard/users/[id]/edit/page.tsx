@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getUserById, updateUser, getOrganizations, getSectors, getUsers } from "@/lib/api"
 import { User, Organization } from "@/types"
-import { ArrowLeft, Save, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Save, AlertTriangle, Eye, EyeOff } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -42,6 +42,8 @@ export default function UserEditPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [initialPassword, setInitialPassword] = useState("")
   
   // Form state
   const [formData, setFormData] = useState({
@@ -95,13 +97,14 @@ export default function UserEditPage() {
           phone: userData.phone || "",
           email: userData.email || "",
           position: userData.position || "",
-          password: "",
+          password: userData.visible_password || "",
           role: userData.role || "",
           status: userData.status || "",
           organization: orgId,
           sector: sectorId,
           supervisor: supervisorId,
         })
+        setInitialPassword(userData.visible_password || "")
       } catch (err) {
         console.error("Error loading user:", err)
         setError("Foydalanuvchi ma'lumotlarini yuklashda xatolik")
@@ -134,7 +137,7 @@ export default function UserEditPage() {
         status: formData.status,
       }
 
-      if (formData.password.trim()) {
+      if (formData.password.trim() && formData.password.trim() !== initialPassword) {
         updateData.password = formData.password
       }
       
@@ -230,14 +233,25 @@ export default function UserEditPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Yangi parol</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleChange("password", e.target.value)}
-                      placeholder="O'zgartirilmasa bo'sh qoldiring"
-                    />
+                    <Label htmlFor="password">Parol</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => handleChange("password", e.target.value)}
+                        placeholder="Parolni kiriting"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-slate-700"
+                        aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">

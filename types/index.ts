@@ -66,6 +66,7 @@ export interface User extends BaseModel {
   last_login?: string
   avatar?: string
   avatar_url?: string
+  visible_password?: string
   full_name: string
 }
 

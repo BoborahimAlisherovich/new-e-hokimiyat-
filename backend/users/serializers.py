@@ -5,6 +5,7 @@ User serializers for E-Hokimiyat API.
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User, UserAssignment
+from core.constants import UserRole
 
 
 import os
@@ -50,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     is_online = serializers.BooleanField(read_only=True)
     avatar_url = serializers.SerializerMethodField()
+    visible_password = serializers.SerializerMethodField()
     
     class Meta:
         model = User
@@ -59,7 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
             'sector', 'sector_name', 'supervisor', 'supervisor_name',
             'position', 'status', 'cabinet_type',
             'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen',
-            'avatar', 'avatar_url'
+            'avatar', 'avatar_url', 'visible_password'
         ]
         read_only_fields = ['id', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
         extra_kwargs = {
@@ -69,6 +71,14 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_avatar_url(self, obj):
         return _build_avatar_url(obj, self.context.get('request'))
+
+    def get_visible_password(self, obj):
+        request = self.context.get('request')
+        if not request or not getattr(request, 'user', None) or not request.user.is_authenticated:
+            return ""
+        if request.user.role not in [UserRole.HOKIM, UserRole.ADMIN]:
+            return ""
+        return obj.visible_password or ""
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -176,6 +186,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         user = User(**validated_data)
         user.set_password(password)
+        user.visible_password = password
         user.save()
         
         # Create assignment record
@@ -285,6 +296,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         if password:
             instance.set_password(password)
+            instance.visible_password = password
 
         instance.save()
         return instance

@@ -16,6 +16,8 @@ import {
   Building,
   Calendar,
   Edit,
+  Eye,
+  EyeOff,
   Lock,
   Mail,
   Phone,
@@ -79,6 +81,7 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const loadUser = async () => {
@@ -271,6 +274,32 @@ export default function UserDetailPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <DetailItem icon={UserIcon} label="Login" value={user.login || "—"} />
+                {user.visible_password ? (
+                  <div className="rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-600">
+                          <Lock className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Parol</p>
+                          <p className="mt-1 break-words text-sm font-medium text-slate-800">
+                            {showPassword ? user.visible_password : "•".repeat(Math.max(8, user.visible_password.length))}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
                 <DetailItem icon={UserIcon} label="PNFL" value={user.masked_pnfl || user.pnfl || "—"} />
                 <DetailItem icon={Phone} label="Telefon" value={user.phone || "—"} />
                 <DetailItem icon={Mail} label="Elektron pochta" value={user.email || "—"} />
