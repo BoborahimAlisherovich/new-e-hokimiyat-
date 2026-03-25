@@ -44,6 +44,7 @@ export default function TasksPage() {
   
   // Rolga qarab topshiriq yaratish imkoniyati
   const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
+  const isDistrictGovernor = currentUser?.role === "HOKIM"
   const visibleOrganizations = useMemo(() => {
     if (!currentUser) return organizations
 
@@ -122,6 +123,12 @@ export default function TasksPage() {
   useEffect(() => {
     setPage(1)
   }, [statusFilter, priorityFilter, categoryFilter])
+
+  useEffect(() => {
+    if (!isDistrictGovernor && categoryFilter !== "all") {
+      setCategoryFilter("all")
+    }
+  }, [categoryFilter, isDistrictGovernor])
 
   // Client-side search filter only (status/priority/category are handled server-side)
   const filteredTasks = useMemo(() => {
@@ -211,6 +218,7 @@ export default function TasksPage() {
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
             categoryFilter={categoryFilter}
+            showCategoryFilter={isDistrictGovernor}
             organizationFilter={organizationFilter}
             organizations={visibleOrganizations}
             onSearchChange={setSearchQuery}

@@ -19,7 +19,6 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
     "/dashboard",
     "/dashboard/projects",
     "/dashboard/tasks",
-    "/dashboard/users",
     "/dashboard/organizations",
     "/dashboard/notifications",
     "/dashboard/appeals",
@@ -31,7 +30,6 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
   HOKIMLIK_MASUL: [
     "/dashboard",
     "/dashboard/tasks",
-    "/dashboard/users",
     "/dashboard/notifications",
     "/dashboard/appeals",
     "/dashboard/chat",
@@ -41,7 +39,6 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
   TASHKILOT_RAHBAR: [
     "/dashboard",
     "/dashboard/tasks",
-    "/dashboard/users",
     "/dashboard/notifications",
     "/dashboard/appeals",
     "/dashboard/chat",
@@ -50,7 +47,6 @@ export const DASHBOARD_ROUTE_ACCESS: Record<UserRole, string[]> = {
   TASHKILOT_RAHBARI: [
     "/dashboard",
     "/dashboard/tasks",
-    "/dashboard/users",
     "/dashboard/notifications",
     "/dashboard/appeals",
     "/dashboard/chat",

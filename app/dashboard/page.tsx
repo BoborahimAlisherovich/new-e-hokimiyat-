@@ -33,6 +33,7 @@ export default function DashboardPage() {
 
   const isOrgUser = isOrganizationRole(userRole)
   const canViewProjects = canAccessDashboardPath(userRole as any, "/dashboard/projects")
+  const canViewSectorOverview = userRole === "HOKIM"
 
   if (loading) {
     return (
@@ -108,9 +109,11 @@ export default function DashboardPage() {
             </section>
 
             {/* 3.1 Sector Overview */}
-            <section data-gsap-section>
-              <SectorOverview />
-            </section>
+            {canViewSectorOverview && (
+              <section data-gsap-section>
+                <SectorOverview />
+              </section>
+            )}
 
             {/* 4. Deadline‑Critical Tasks */}
             <section data-gsap-section>
