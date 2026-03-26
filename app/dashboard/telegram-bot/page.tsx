@@ -56,6 +56,12 @@ interface BotSettings {
   welcome_message_uz: string;
   welcome_message_ru: string;
   welcome_message_en: string;
+  about_text_uz: string;
+  about_text_ru: string;
+  about_text_en: string;
+  help_text_uz: string;
+  help_text_ru: string;
+  help_text_en: string;
 }
 
 interface BotStats {
@@ -1123,6 +1129,114 @@ export default function TelegramBotPage() {
                   }
                   className="resize-none"
                 />
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-3">
+                  <Label htmlFor="about_uz" className="text-base font-medium flex items-center gap-2">
+                    ℹ️ Biz haqimizda (O'zbekcha)
+                  </Label>
+                  <Textarea
+                    id="about_uz"
+                    rows={6}
+                    placeholder="Hatirchi tumani hokimiyati haqida ma'lumot..."
+                    value={settings?.about_text_uz || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, about_text_uz: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Foydalanuvchi botdagi ℹ️ Biz haqimizda tugmasini bosganda ko'rsatiladi
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="help_uz" className="text-base font-medium flex items-center gap-2">
+                    ❓ Yordam (O'zbekcha)
+                  </Label>
+                  <Textarea
+                    id="help_uz"
+                    rows={6}
+                    placeholder="Bot imkoniyatlari va aloqa ma'lumotlari..."
+                    value={settings?.help_text_uz || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, help_text_uz: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Foydalanuvchi ❓ Yordam tugmasini bosganda ko'rsatiladi
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-3">
+                  <Label htmlFor="about_ru" className="text-base font-medium flex items-center gap-2">
+                    ℹ️ Biz haqimizda (Ruscha)
+                  </Label>
+                  <Textarea
+                    id="about_ru"
+                    rows={6}
+                    placeholder="Информация о хокимияте Хатырчинского района..."
+                    value={settings?.about_text_ru || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, about_text_ru: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="help_ru" className="text-base font-medium flex items-center gap-2">
+                    ❓ Yordam (Ruscha)
+                  </Label>
+                  <Textarea
+                    id="help_ru"
+                    rows={6}
+                    placeholder="Возможности бота и контакты для связи..."
+                    value={settings?.help_text_ru || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, help_text_ru: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-3">
+                  <Label htmlFor="about_en" className="text-base font-medium flex items-center gap-2">
+                    ℹ️ Biz haqimizda (English)
+                  </Label>
+                  <Textarea
+                    id="about_en"
+                    rows={6}
+                    placeholder="Information about Hatirchi District Administration..."
+                    value={settings?.about_text_en || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, about_text_en: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="help_en" className="text-base font-medium flex items-center gap-2">
+                    ❓ Yordam (English)
+                  </Label>
+                  <Textarea
+                    id="help_en"
+                    rows={6}
+                    placeholder="Bot capabilities and contact details..."
+                    value={settings?.help_text_en || ""}
+                    onChange={(e) =>
+                      setSettings(prev => prev ? { ...prev, help_text_en: e.target.value } : null)
+                    }
+                    className="resize-none"
+                  />
+                </div>
               </div>
 
               {/* Info */}
