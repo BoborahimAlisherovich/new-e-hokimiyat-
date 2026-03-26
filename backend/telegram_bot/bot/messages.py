@@ -253,6 +253,7 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_my_appeals': "📋 Мои обращения",
         'btn_about': "ℹ️ О нас",
         'btn_settings': "⚙️ Настройки",
+        'btn_help': "❓ Помощь",
         'language_changed': "✅ Язык успешно изменен!",
         'change_name_prompt': """📝 <b>Изменение имени</b>
 
@@ -280,6 +281,7 @@ Please register to continue.""",
         'btn_my_appeals': "📋 My Appeals",
         'btn_about': "ℹ️ About Us",
         'btn_settings': "⚙️ Settings",
+        'btn_help': "❓ Help",
         'language_changed': "✅ Language successfully changed!",
         'change_name_prompt': """📝 <b>Change name</b>
 
