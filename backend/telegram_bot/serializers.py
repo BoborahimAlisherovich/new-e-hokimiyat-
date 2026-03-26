@@ -24,6 +24,7 @@ class BotSettingsSerializer(serializers.ModelSerializer):
             'auto_response_enabled', 'auto_response_timeout_minutes',
             'welcome_message_uz', 'welcome_message_ru', 'welcome_message_en',
             'about_text_uz', 'about_text_ru', 'about_text_en',
+            'help_text_uz', 'help_text_ru', 'help_text_en',
             'created_at', 'updated_at'
         ]
         extra_kwargs = {

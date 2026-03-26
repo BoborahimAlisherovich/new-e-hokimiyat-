@@ -179,7 +179,7 @@ Bu bot orqali siz murojaatlar yuborishingiz va ularning holatini kuzatishingiz m
 /settings - Sozlamalar
 
 <b>Muammo bo'lsa:</b>
-+998 XX XXX XX XX raqamiga qo'ng'iroq qiling.""",
++99879 544-40-10 raqamiga qo'ng'iroq qiling.""",
         
         # Xatolar
         'error_not_registered': """⚠️ Siz hali ro'yxatdan o'tmagansiz.
