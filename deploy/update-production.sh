@@ -84,9 +84,28 @@ acquire_lock() {
   if command -v flock >/dev/null 2>&1; then
     exec 9>"$LOCK_FILE"
     if ! flock -n 9; then
-      err "Boshqa deploy jarayoni allaqachon ishlayapti."
-      exit 1
+      local lock_pid=""
+
+      if [[ -f "$LOCK_FILE" ]]; then
+        lock_pid="$(tr -dc '0-9' < "$LOCK_FILE" 2>/dev/null || true)"
+      fi
+
+      if [[ -n "$lock_pid" ]] && ps -p "$lock_pid" >/dev/null 2>&1; then
+        err "Boshqa deploy jarayoni allaqachon ishlayapti. PID: $lock_pid"
+        exit 1
+      fi
+
+      warn "Stale lock aniqlandi. Tozalanib qayta urinilmoqda..."
+      rm -f "$LOCK_FILE"
+      exec 9>"$LOCK_FILE"
+      if ! flock -n 9; then
+        err "Lock faylni egallab bo'lmadi."
+        exit 1
+      fi
     fi
+    echo "$$" 1>&9
+    : > "$LOCK_FILE"
+    echo "$$" > "$LOCK_FILE"
   fi
 }
 
