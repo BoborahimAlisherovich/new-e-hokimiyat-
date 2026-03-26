@@ -50,6 +50,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createTask, aiAnalyzeTask, createRecurringTask } from "@/lib/api"
+import { resolveOrganizationIdsByNames } from "@/lib/organization-matching"
 
 // ============================================================================
 // Types
@@ -404,24 +405,28 @@ export function CreateTaskDialog({
       }
 
       const s = result.suggestions
+      const validOrgIdsFromIds = s.organization_ids?.length
+        ? s.organization_ids.filter((id: string) =>
+            organizationItems.some((o: any) => String(o.id) === String(id))
+          )
+        : []
+      const resolvedOrgIdsFromNames = resolveOrganizationIdsByNames(
+        s.organization_names,
+        organizationItems,
+      )
+      const suggestedOrgIds = Array.from(
+        new Set([...validOrgIdsFromIds, ...resolvedOrgIdsFromNames])
+      )
 
       // Apply all AI suggestions to form
       setForm((prev) => {
-        const validOrgIds = s.organization_ids?.length
-          ? s.organization_ids.filter((id: string) =>
-              organizationItems.some(
-                (o: any) => String(o.id) === String(id)
-              )
-            )
-          : prev.organization_ids
-
         const newForm: CreateFormState = {
           ...prev,
           title: s.title || prev.title,
           description: s.description || prev.description,
           priority: s.priority || prev.priority,
           category: s.category || prev.category,
-          organization_ids: validOrgIds,
+          organization_ids: suggestedOrgIds.length ? suggestedOrgIds : prev.organization_ids,
           is_recurring: s.is_recurring ?? prev.is_recurring,
           frequency: s.frequency || prev.frequency,
           deadline_days: s.deadline_days || prev.deadline_days,
@@ -444,7 +449,14 @@ export function CreateTaskDialog({
       })
 
       setAiApplied(true)
-      setErrors({})
+      if ((s.organization_names?.length || s.organization_ids?.length) && suggestedOrgIds.length === 0) {
+        setErrors((prev) => ({
+          ...prev,
+          organization_ids: "AI tashkilotni topa olmadi. Qidiruv orqali qo'lda tanlang.",
+        }))
+      } else {
+        setErrors({})
+      }
     } catch (err: any) {
       console.error("AI analysis error:", err)
       setAiError(

@@ -815,7 +815,18 @@ Faqat JSON qaytaring:
         results: List[Dict[str, str]] = []
         orgs = Organization.objects.filter(is_active=True).values('id', 'name', 'short_name')
 
-        query_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', normalized) if len(tok) >= 3]
+        # Juda umumiy so'zlar bo'yicha match ko'payib ketmasligi uchun stopword'lar
+        stopwords = {
+            'tuman', 'shahar', 'viloyat', 'respublika', 'hokimlik', 'hokimi', 'hokim',
+            'bo lim', 'bolim', 'boshqarma', 'markaz', 'idora', 'tashkilot', 'muassasa',
+            'davlat', 'mchj', 'aj', 'ooo', 'llc', 'ltd', 'inc',
+        }
+
+        raw_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', normalized) if tok]
+        query_tokens = [tok for tok in raw_tokens if len(tok) >= 2 and tok not in stopwords]
+        strong_query_tokens = [tok for tok in query_tokens if len(tok) >= 3]
+        # Asosan 3+ uzunlikdagi tokenlar bilan ishlaymiz, bo'lmasa 2+ tokenlar fallback
+        query_tokens = strong_query_tokens or query_tokens
 
         for org in orgs:
             org_name = str(org.get('name') or '')
@@ -831,8 +842,8 @@ Faqat JSON qaytaring:
                 results.append({'id': str(org['id']), 'name': org_name})
                 continue
 
-            tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_name_lower) if len(tok) >= 4]
-            short_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_short_name_lower) if len(tok) >= 3]
+            tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_name_lower) if len(tok) >= 3]
+            short_tokens = [tok for tok in re.split(r'[^a-z0-9а-яёўқғҳ]+', org_short_name_lower) if len(tok) >= 2]
             token_hits = sum(1 for token in tokens if token in normalized)
             short_hits = sum(1 for token in short_tokens if token in normalized)
             if (
@@ -856,7 +867,12 @@ Faqat JSON qaytaring:
                 ):
                     fuzzy_hits += 1
 
-            threshold = 1 if len(org_tokens) <= 3 else 2
+            # Agar foydalanuvchi bitta kalit so'z aytgan bo'lsa ham (masalan: "suv", "elektr"),
+            # tashkilotlarni topishga imkon beramiz. Ko'p tokenli orglarda esa 2 ta moslik talab qilamiz.
+            if len(query_tokens) <= 1:
+                threshold = 1
+            else:
+                threshold = 1 if len(org_tokens) <= 3 else 2
             if fuzzy_hits >= threshold:
                 results.append({'id': str(org['id']), 'name': org_name})
 
@@ -1165,9 +1181,7 @@ Faqat JSON qaytaring:
         if assign_all:
             org_ids = list(Organization.objects.values_list('id', flat=True))
         elif not org_ids and org_name:
-            org_ids = list(
-                Organization.objects.filter(name__icontains=org_name).values_list('id', flat=True)
-            )
+            org_ids = [item['id'] for item in self._match_org_ids_from_text(str(org_name))]
 
         if org_ids:
             recurring.organizations.set(org_ids)
