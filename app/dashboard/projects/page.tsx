@@ -454,7 +454,10 @@ export default function ProjectsPage() {
             </div>
             {canManage && (
               <div className="flex w-full flex-col items-start gap-2 lg:w-auto">
-                <Button onClick={openCreate} className="w-full gap-2 sm:w-auto">
+                <Button
+                  onClick={openCreate}
+                  className="w-full gap-2 rounded-full bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 sm:w-auto"
+                >
                   <Plus className="h-4 w-4" />
                   Yangi loyiha
                 </Button>
