@@ -155,11 +155,11 @@ Iltimos, ismingiz va familiyangizni kiriting.
         # Yordam va biz haqimizda
         'about_text': """🏛 <b>Hatirchi tumani Hokimiyati</b>
 
-📍 Manzil: Hatirchi tumani, Hatirchi shaharchasi
+📍 Manzil: Xatirchi tumani, Mustaqillik ko‘chasi 34-uy
 
-📞 Telefon: +998 XX XXX XX XX
-📧 Email: info@hatirchi.uz
-🌐 Sayt: hokimiyat.hatirchi.uz
+📞 Telefon: +99879 544-40-10
+📧 Email: xatirchi@nv.uz
+🌐 Sayt: https://gov.uz/uz/xatirchi
 
 🕐 Ish vaqti: Dushanba - Juma, 9:00 - 18:00
 

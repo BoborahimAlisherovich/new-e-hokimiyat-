@@ -89,11 +89,12 @@ class BotSettings(models.Model):
     about_text_uz = models.TextField(
         default=(
             "🏛 <b>Hatirchi tumani Hokimiyati</b>\n\n"
-            "Fuqarolar murojaatlarini qabul qilish, ko'rib chiqish va nazorat qilish uchun raqamli platforma.\n\n"
-            "📍 Manzil: Hatirchi tumani\n"
-            "📞 Telefon: +998 XX XXX XX XX\n"
-            "🌐 Platforma: ehokimiyat.uz\n\n"
-            "Platforma Aura group tomonidan ishlab chiqilgan."
+            "📍 Manzil: Xatirchi tumani, Mustaqillik ko‘chasi 34-uy\n\n"
+            "📞 Telefon: +99879 544-40-10\n"
+            "📧 Email: xatirchi@nv.uz\n"
+            "🌐 Sayt: https://gov.uz/uz/xatirchi\n\n"
+            "🕐 Ish vaqti: Dushanba - Juma, 9:00 - 18:00\n\n"
+            "Bu bot orqali siz murojaatlar yuborishingiz va ularning holatini kuzatishingiz mumkin."
         ),
         verbose_name="Biz haqimizda matni (O'zbekcha)"
     )

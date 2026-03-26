@@ -175,7 +175,7 @@ def get_or_create_user(telegram_data: Dict) -> TelegramUser:
             'first_name': telegram_data.get('first_name', ''),
             'last_name': telegram_data.get('last_name', ''),
             'username': telegram_data.get('username', ''),
-            'language': telegram_data.get('language_code', 'uz')[:2]
+            'language': 'uz'
         }
     )
     
@@ -355,6 +355,10 @@ def handle_command(user: TelegramUser, command: str, chat_id: int):
     
     if command == '/start':
         clear_user_state(user)
+
+        if not user.is_registered and user.language != 'uz':
+            user.language = 'uz'
+            user.save(update_fields=['language'])
         
         if user.is_registered:
             bot.send_message(
