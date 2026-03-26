@@ -572,7 +572,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             clear_user_state(user)
             bot.send_message(
                 chat_id,
-                "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.",
+                get_text('reply_state_error', lang),
                 reply_markup=main_menu_keyboard(lang)
             )
             return
@@ -593,8 +593,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             # Foydalanuvchiga tasdiqlash
             bot.send_message(
                 chat_id,
-                f"✅ Javobingiz #{appeal.appeal_number} raqamli murojaatga yuborildi.\n\n"
-                f"Tez orada sizga javob beriladi.",
+                get_text('reply_sent', lang, number=appeal.appeal_number),
                 reply_markup=main_menu_keyboard(lang)
             )
             
@@ -605,7 +604,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             clear_user_state(user)
             bot.send_message(
                 chat_id,
-                "❌ Murojaat topilmadi.",
+                get_text('appeal_not_found', lang),
                 reply_markup=main_menu_keyboard(lang)
             )
 
@@ -798,7 +797,7 @@ def process_callback_query(callback_query: Dict):
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                "✅ Boshqa hudud"
+                get_text('region_other_selected', lang)
             )
             if is_settings_flow:
                 clear_user_state(user)
@@ -819,7 +818,7 @@ def process_callback_query(callback_query: Dict):
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"✅ {region.name_uz}"
+                f"✅ {getattr(region, f'name_{lang}', None) or region.name_uz}"
             )
 
             if is_settings_flow:
@@ -947,12 +946,11 @@ def process_callback_query(callback_query: Dict):
                 bot.edit_message_text(
                     chat_id,
                     message_id,
-                    f"✅ #{appeal.appeal_number} raqamli murojaatingiz yopildi.\n\n"
-                    f"Bizga murojaat qilganingiz uchun tashakkur!"
+                    get_text('appeal_closed_without_rating', lang, number=appeal.appeal_number)
                 )
                 notify_admins_appeal_closed(appeal, satisfied=True)
             except TelegramAppeal.DoesNotExist:
-                bot.edit_message_text(chat_id, message_id, "❌ Murojaat topilmadi.")
+                bot.edit_message_text(chat_id, message_id, get_text('appeal_not_found', lang))
         else:
             rating = int(rating_value)
             handle_rating_callback(user, appeal_id, rating, chat_id, message_id)
@@ -973,7 +971,7 @@ def process_callback_query(callback_query: Dict):
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                "🌐 Tilni tanlang / Выберите язык / Choose language:",
+                get_text('language_prompt', lang),
                 reply_markup=language_keyboard()
             )
             return
@@ -1034,10 +1032,7 @@ def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfie
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"⭐ <b>#{appeal.appeal_number} raqamli murojaat</b>\n\n"
-                f"Xizmat ko'rsatishni qanday baholaysiz?\n\n"
-                f"1 yulduz - Juda yomon\n"
-                f"5 yulduz - A'lo",
+                get_text('rating_prompt', lang, number=appeal.appeal_number),
                 parse_mode='HTML',
                 reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
             )
@@ -1049,7 +1044,7 @@ def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfie
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"❌ #{appeal.appeal_number} raqamli murojaatingiz qayta ko'rib chiqish uchun yuborildi.\n\nTez orada sizga javob beriladi."
+                get_text('appeal_reopened_for_review', lang, number=appeal.appeal_number)
             )
             
             # Adminlarga xabar
@@ -1059,7 +1054,7 @@ def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfie
         bot.edit_message_text(
             chat_id,
             message_id,
-            "❌ Murojaat topilmadi yoki siz ushbu murojaatning egasi emassiz."
+            get_text('appeal_not_found_or_denied', lang)
         )
 
 
@@ -1083,10 +1078,7 @@ def handle_rating_callback(user: TelegramUser, appeal_id: int, rating: int, chat
         bot.edit_message_text(
             chat_id,
             message_id,
-            f"✅ <b>Rahmat!</b>\n\n"
-            f"#{appeal.appeal_number} raqamli murojaatingiz yopildi.\n"
-            f"Sizning bahoyingiz: {stars}\n\n"
-            f"Bizga murojaat qilganingiz uchun tashakkur!",
+            get_text('rating_thanks', user.language, number=appeal.appeal_number, stars=stars),
             parse_mode='HTML'
         )
         
@@ -1101,7 +1093,7 @@ def handle_rating_callback(user: TelegramUser, appeal_id: int, rating: int, chat
         bot.edit_message_text(
             chat_id,
             message_id,
-            "❌ Murojaat topilmadi."
+            get_text('appeal_not_found', user.language)
         )
 
 
@@ -1117,10 +1109,7 @@ def handle_close_appeal_callback(user: TelegramUser, appeal_id: int, is_satisfie
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"⭐ <b>#{appeal.appeal_number} raqamli murojaat</b>\n\n"
-                f"Xizmat ko'rsatishni qanday baholaysiz?\n\n"
-                f"1 yulduz - Juda yomon\n"
-                f"5 yulduz - A'lo",
+                get_text('rating_prompt', user.language, number=appeal.appeal_number),
                 parse_mode='HTML',
                 reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
             )
@@ -1132,7 +1121,7 @@ def handle_close_appeal_callback(user: TelegramUser, appeal_id: int, is_satisfie
             bot.edit_message_text(
                 chat_id,
                 message_id,
-                f"❌ #{appeal.appeal_number} raqamli murojaatingiz qayta ko'rib chiqish uchun yuborildi.\n\nTez orada sizga javob beriladi."
+                get_text('appeal_reopened_for_review', user.language, number=appeal.appeal_number)
             )
             
             notify_admins_appeal_reopened(appeal)
@@ -1141,7 +1130,7 @@ def handle_close_appeal_callback(user: TelegramUser, appeal_id: int, is_satisfie
         bot.edit_message_text(
             chat_id,
             message_id,
-            "❌ Murojaat topilmadi."
+            get_text('appeal_not_found', user.language)
         )
 
 
@@ -1157,7 +1146,7 @@ def handle_user_reply_callback(user: TelegramUser, appeal_id: int, chat_id: int,
             logger.info(f"Murojaat yopilgan: {appeal.status}")
             bot.send_message(
                 chat_id,
-                "❌ Bu murojaat allaqachon yopilgan",
+                get_text('appeal_already_closed', user.language),
             )
             return
         
@@ -1166,9 +1155,7 @@ def handle_user_reply_callback(user: TelegramUser, appeal_id: int, chat_id: int,
         logger.info(f"User state set: user_reply, appeal_id={appeal_id}")
         
         reply_prompt = (
-            f"✍️ <b>#{appeal.appeal_number} raqamli murojaatga javob</b>\n\n"
-            f"Javobingizni yozing va yuboring.\n\n"
-            f"Bekor qilish uchun /cancel buyrug'ini yuboring."
+            get_text('reply_prompt', user.language, number=appeal.appeal_number)
         )
         
         # Avval matnli xabarni tahrirlashga urinamiz
@@ -1195,7 +1182,7 @@ def handle_user_reply_callback(user: TelegramUser, appeal_id: int, chat_id: int,
         bot.edit_message_text(
             chat_id,
             message_id,
-            "❌ Murojaat topilmadi yoki siz ushbu murojaatning egasi emassiz."
+            get_text('appeal_not_found_or_denied', user.language)
         )
 
 
@@ -1557,22 +1544,10 @@ def send_ai_rejection_warning(user: TelegramUser, appeal: TelegramAppeal, reason
         user.save()
         
         # Bloklash xabari
-        warning_text = f"""🚫 <b>Siz bloklangansiz!</b>
-
-Sizning #{appeal.appeal_number} raqamli murojaatingiz AI tomonidan rad etildi.
-
-<b>Sabab:</b> {reason}
-
-⚠️ Siz 3 marta noto'g'ri murojaat yubordingiz:
-• Xaqorat, haqoratli so'zlar
-• Mazmuni bo'lmagan xabarlar
-• Mazmunsiz/keraksiz murojaatlar
-
-❌ <b>Siz endi murojaat yuborolmaysiz.</b>
-
-Agar bu xato deb hisoblasangiz, hokimiyatga shaxsan murojaat qiling."""
-
-        bot.send_message(chat_id, warning_text)
+        bot.send_message(
+            chat_id,
+            get_text('warning_blocked', lang, number=appeal.appeal_number, reason=reason)
+        )
         
         # Adminlarga xabar
         notify_admins_user_blocked(user, appeal, reason)
@@ -1582,22 +1557,17 @@ Agar bu xato deb hisoblasangiz, hokimiyatga shaxsan murojaat qiling."""
         remaining = 3 - user.warning_count
         
         # Ogohlantirish xabari
-        warning_text = f"""⚠️ <b>Ogohlantirish! ({user.warning_count}/3)</b>
-
-Sizning #{appeal.appeal_number} raqamli murojaatingiz AI tomonidan rad etildi.
-
-<b>Sabab:</b> {reason}
-
-🚨 Quyidagi holatlarda murojaatlar rad etiladi:
-• Xaqorat, haqoratli so'zlar ishlatilsa
-• Mazmuni bo'lmagan xabarlar
-• Mazmunsiz/keraksiz murojaatlar
-
-⚠️ <b>Yana {remaining} marta noto'g'ri murojaat yuborsangiz bloklanasiiz!</b>
-
-Iltimos, murojaatlaringizni to'g'ri va aniq yozing."""
-
-        bot.send_message(chat_id, warning_text)
+        bot.send_message(
+            chat_id,
+            get_text(
+                'warning_notice',
+                lang,
+                count=user.warning_count,
+                number=appeal.appeal_number,
+                reason=reason,
+                remaining=remaining,
+            )
+        )
 
 
 def notify_admins_user_blocked(user: TelegramUser, appeal: TelegramAppeal, reason: str):

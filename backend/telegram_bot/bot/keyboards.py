@@ -245,34 +245,40 @@ def back_keyboard(language: str = 'uz') -> dict:
 
 def admin_review_keyboard(appeal_id: int, language: str = 'uz') -> dict:
     """Admin ko'rib chiqish klaviaturasi"""
+    from .messages import get_text
+
     return create_inline_keyboard([
         [
-            {'text': '✅ Tasdiqlash', 'callback_data': f'review:{appeal_id}:approve'},
-            {'text': '❌ Rad etish', 'callback_data': f'review:{appeal_id}:reject'}
+            {'text': get_text('btn_admin_approve', language), 'callback_data': f'review:{appeal_id}:approve'},
+            {'text': get_text('btn_admin_reject', language), 'callback_data': f'review:{appeal_id}:reject'}
         ],
         [
-            {'text': '💬 Javob yozish', 'callback_data': f'review:{appeal_id}:respond'},
-            {'text': '📤 Saytga yuborish', 'callback_data': f'review:{appeal_id}:forward'}
+            {'text': get_text('btn_admin_respond', language), 'callback_data': f'review:{appeal_id}:respond'},
+            {'text': get_text('btn_admin_forward', language), 'callback_data': f'review:{appeal_id}:forward'}
         ],
         [
-            {'text': '🔴 Yuqori', 'callback_data': f'priority:{appeal_id}:high'},
-            {'text': '🟡 O\'rta', 'callback_data': f'priority:{appeal_id}:medium'},
-            {'text': '🟢 Past', 'callback_data': f'priority:{appeal_id}:low'}
+            {'text': get_text('btn_priority_high', language), 'callback_data': f'priority:{appeal_id}:high'},
+            {'text': get_text('btn_priority_medium', language), 'callback_data': f'priority:{appeal_id}:medium'},
+            {'text': get_text('btn_priority_low', language), 'callback_data': f'priority:{appeal_id}:low'}
         ]
     ])
 
 
 def user_reply_keyboard(appeal_id: int, language: str = 'uz') -> dict:
     """Foydalanuvchi javob berish klaviaturasi"""
+    from .messages import get_text
+
     return create_inline_keyboard([
         [
-            {'text': '💬 Javob berish', 'callback_data': f'user_reply:{appeal_id}'}
+            {'text': get_text('btn_user_reply', language), 'callback_data': f'user_reply:{appeal_id}'}
         ]
     ])
 
 
 def rating_keyboard(appeal_id: int, language: str = 'uz') -> dict:
     """Xizmatni baholash klaviaturasi (1-5 yulduz)"""
+    from .messages import get_text
+
     return create_inline_keyboard([
         [
             {'text': '⭐', 'callback_data': f'rate:{appeal_id}:1'},
@@ -284,16 +290,18 @@ def rating_keyboard(appeal_id: int, language: str = 'uz') -> dict:
             {'text': '⭐⭐⭐⭐⭐', 'callback_data': f'rate:{appeal_id}:5'},
         ],
         [
-            {'text': '⏭ Baholamasdan yopish', 'callback_data': f'rate:{appeal_id}:skip'}
+            {'text': get_text('btn_skip_rating', language), 'callback_data': f'rate:{appeal_id}:skip'}
         ]
     ])
 
 
 def satisfaction_with_rating_keyboard(appeal_id: int, language: str = 'uz') -> dict:
     """Qoniqish va baholash so'rash klaviaturasi"""
+    from .messages import get_text
+
     return create_inline_keyboard([
         [
-            {'text': '✅ Ha, rahmat', 'callback_data': f'close_satisfied:{appeal_id}'},
-            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'close_unsatisfied:{appeal_id}'}
+            {'text': get_text('btn_satisfied_yes', language), 'callback_data': f'close_satisfied:{appeal_id}'},
+            {'text': get_text('btn_satisfied_no', language), 'callback_data': f'close_unsatisfied:{appeal_id}'}
         ]
     ])
