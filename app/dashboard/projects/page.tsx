@@ -92,14 +92,16 @@ const SCOPE_OPTIONS: Array<{ value: ProjectScope; label: string }> = [
   { value: "all", label: "Barchasi" },
 ]
 
-type FormState = ProjectCreateInput
+type FormState = Omit<ProjectCreateInput, "progress"> & {
+  progress: number | ""
+}
 
 const INITIAL_FORM: FormState = {
   title: "",
   summary: "",
   category: "MAHALLIY",
   status: "REJA",
-  progress: 0,
+  progress: "",
   budget: "",
   owner: "",
   start_date: "",
@@ -180,7 +182,16 @@ function ProjectFormDialog({
               min={0}
               max={100}
               value={form.progress}
-              onChange={(e) => setField("progress", Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+              onChange={(e) => {
+                const raw = e.target.value
+                if (raw === "") {
+                  setField("progress", "")
+                  return
+                }
+                const parsed = Number(raw)
+                const next = Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0
+                setField("progress", next)
+              }}
             />
           </div>
 
@@ -300,11 +311,13 @@ export default function ProjectsPage() {
     })
   }, [projects, search, categoryFilter, statusFilter])
 
-  const groupedProjects = useMemo(() => {
-    return (Object.keys(CATEGORY_META) as Array<Project["category"]>).map((category) => ({
-      category,
-      items: filteredProjects.filter((project) => project.category === category),
-    }))
+  const sortedProjects = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => {
+      const aOrder = a.sort_order ?? 0
+      const bOrder = b.sort_order ?? 0
+      if (aOrder !== bOrder) return aOrder - bOrder
+      return String(a.title).localeCompare(String(b.title))
+    })
   }, [filteredProjects])
 
   const openCreate = () => {
@@ -320,11 +333,15 @@ export default function ProjectsPage() {
   const handleSubmit = async (data: FormState) => {
     try {
       setSaving(true)
+      const payload: ProjectCreateInput = {
+        ...(data as Omit<ProjectCreateInput, "progress">),
+        progress: data.progress === "" ? 0 : data.progress,
+      }
       if (editingProject) {
-        await updateProject(editingProject.id, data)
+        await updateProject(editingProject.id, payload)
         toast({ title: "Muvaffaqiyat", description: "Loyiha yangilandi" })
       } else {
-        await createProject(data)
+        await createProject(payload)
         toast({ title: "Muvaffaqiyat", description: "Yangi loyiha qo'shildi" })
       }
       setFormOpen(false)
@@ -514,81 +531,86 @@ export default function ProjectsPage() {
           </div>
         </section>
 
-        {groupedProjects.map(({ category, items }) => {
-          const meta = CATEGORY_META[category]
-          const Icon = meta.icon
-          return (
-            <PremiumTableShell
-              key={category}
-              icon={Icon}
-              title={`${meta.label} loyihalar`}
-              countLabel={`${items.length} ta`}
-              accentClassName="bg-gradient-to-r from-slate-50 via-white to-slate-50"
-            >
-              <div className="grid gap-4 p-4">
-                {loading && items.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-                    Loyihalar yuklanmoqda...
-                  </div>
-                )}
-                {!loading && items.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-                    Bu toifada hozircha loyiha topilmadi.
-                  </div>
-                )}
-                {items.map((project) => (
-                  <article key={project.id} className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] sm:p-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="min-w-0 text-lg font-semibold text-slate-900">{project.title}</h3>
-                          <Badge className={meta.badge}>{project.category_display || meta.label}</Badge>
-                          <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">{project.status_display || project.status}</Badge>
-                        </div>
-                        {project.summary && <p className="mt-3 text-sm leading-6 text-slate-600">{project.summary}</p>}
-                        <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                          <span>Mas'ul: <span className="font-medium text-slate-700">{project.owner || "Belgilanmagan"}</span></span>
-                          <span>Resurs: <span className="font-medium text-slate-700">{project.budget || "Belgilanmagan"}</span></span>
-                          <span>Progress: <span className="font-medium text-slate-700">{project.progress}%</span></span>
-                        </div>
-                        <div className="mt-4 h-2 rounded-full bg-slate-100">
-                          <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500" style={{ width: `${project.progress}%` }} />
-                        </div>
-                        <div className="mt-4">
-                          <Button asChild variant="link" className="h-auto px-0 text-cyan-700">
-                            <Link href={`/dashboard/projects/${project.id}`}>Batafsil ko'rish</Link>
-                          </Button>
-                        </div>
-                      </div>
-
-                      {canManage && (
-                        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
-                          {project.is_active ? (
-                            <>
-                              <Button variant="outline" size="sm" onClick={() => openEdit(project)} className="w-full sm:w-auto">
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Tahrirlash
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Arxivlash
-                              </Button>
-                            </>
-                          ) : (
-                            <Button variant="outline" size="sm" onClick={() => handleRestore(project)} className="w-full sm:w-auto">
-                              <ArchiveRestore className="mr-2 h-4 w-4" />
-                              Qayta tiklash
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                ))}
+        <PremiumTableShell
+          icon={FolderKanban}
+          title="Loyihalar ro'yxati"
+          countLabel={`${sortedProjects.length} ta`}
+          accentClassName="bg-gradient-to-r from-slate-50 via-white to-slate-50"
+        >
+          <div className="grid gap-4 p-4">
+            {loading && sortedProjects.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+                Loyihalar yuklanmoqda...
               </div>
-            </PremiumTableShell>
-          )
-        })}
+            )}
+            {!loading && sortedProjects.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+                Hozircha loyiha topilmadi.
+              </div>
+            )}
+
+            {sortedProjects.map((project) => {
+              const meta = CATEGORY_META[project.category]
+              return (
+                <article key={project.id} className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] sm:p-5">
+                  <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-semibold text-slate-900">{project.title}</h3>
+                    </div>
+                    <div className="flex sm:justify-center">
+                      <Badge className={meta.badge}>{project.category_display || meta.label}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                        {project.status_display || project.status}
+                      </Badge>
+                      <span className="text-sm font-medium text-slate-700">{project.progress}%</span>
+                    </div>
+                  </div>
+
+                  {project.summary && <p className="mt-3 text-sm leading-6 text-slate-600">{project.summary}</p>}
+
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <span>Mas'ul: <span className="font-medium text-slate-700">{project.owner || "Belgilanmagan"}</span></span>
+                    <span>Resurs: <span className="font-medium text-slate-700">{project.budget || "Belgilanmagan"}</span></span>
+                  </div>
+
+                  <div className="mt-4 h-2 rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500" style={{ width: `${project.progress}%` }} />
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <Button asChild variant="link" className="h-auto px-0 text-cyan-700">
+                      <Link href={`/dashboard/projects/${project.id}`}>Batafsil ko'rish</Link>
+                    </Button>
+
+                    {canManage && (
+                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                        {project.is_active ? (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => openEdit(project)} className="w-full sm:w-auto">
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Tahrirlash
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Arxivlash
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => handleRestore(project)} className="w-full sm:w-auto">
+                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                            Qayta tiklash
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </PremiumTableShell>
       </DashboardPageFrame>
 
       <ProjectFormDialog
