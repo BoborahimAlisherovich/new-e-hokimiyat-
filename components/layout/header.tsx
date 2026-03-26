@@ -171,7 +171,7 @@ export function Header({ title, description, actions }: HeaderProps) {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-cyan-100/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.72))] backdrop-blur-2xl px-6 shadow-[0_1px_24px_-10px_rgba(14,165,233,0.20)]" 
+        className="sticky top-0 z-50 isolate flex h-16 w-full items-center justify-between border-b border-cyan-100/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.72))] backdrop-blur-2xl px-6 shadow-[0_1px_24px_-10px_rgba(14,165,233,0.20)]" 
         role="banner"
       >
 
