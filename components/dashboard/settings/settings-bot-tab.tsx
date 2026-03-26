@@ -22,9 +22,15 @@ interface BotSettings {
   bot_username: string
   webhook_url: string
   is_active: boolean
+  welcome_message_uz: string
+  welcome_message_ru: string
+  welcome_message_en: string
   about_text_uz: string
   about_text_ru: string
   about_text_en: string
+  help_text_uz: string
+  help_text_ru: string
+  help_text_en: string
 }
 
 export function SettingsBotTab({ t }: SettingsBotTabProps) {
@@ -33,9 +39,15 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
     bot_username: "",
     webhook_url: "",
     is_active: false,
+    welcome_message_uz: "",
+    welcome_message_ru: "",
+    welcome_message_en: "",
     about_text_uz: "",
     about_text_ru: "",
     about_text_en: "",
+    help_text_uz: "",
+    help_text_ru: "",
+    help_text_en: "",
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -177,6 +189,17 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="welcome_message_uz">Welcome matni (UZ)</Label>
+              <Textarea
+                id="welcome_message_uz"
+                value={settings.welcome_message_uz}
+                onChange={(e) => setSettings({ ...settings, welcome_message_uz: e.target.value })}
+                placeholder="Bot start bosilganda chiqadigan asosiy matn"
+                className="min-h-28"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="about_text_uz">"Biz haqimizda" matni (UZ)</Label>
               <Textarea
                 id="about_text_uz"
@@ -206,6 +229,17 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
                 onChange={(e) => setSettings({ ...settings, about_text_en: e.target.value })}
                 placeholder="Text for About us section"
                 className="min-h-28"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="help_text_uz">"Yordam" matni (UZ)</Label>
+              <Textarea
+                id="help_text_uz"
+                value={settings.help_text_uz}
+                onChange={(e) => setSettings({ ...settings, help_text_uz: e.target.value })}
+                placeholder="Botdagi yordam bo'limi uchun matn"
+                className="min-h-32"
               />
             </div>
           </div>

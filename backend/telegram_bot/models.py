@@ -120,6 +120,31 @@ class BotSettings(models.Model):
         ),
         verbose_name="Biz haqimizda matni (Inglizcha)"
     )
+    help_text_uz = models.TextField(
+        default=(
+            "❓ <b>Yordam</b>\n\n"
+            "<b>Bot imkoniyatlari:</b>\n"
+            "📝 Murojaat yuborish - Hokimiyatga shikoyat, taklif yoki savollar yuborish\n"
+            "📋 Murojaatlarim - O'z murojaatlaringiz holatini kuzatish\n"
+            "⚙️ Sozlamalar - Shaxsiy ma'lumotlarni tahrirlash\n\n"
+            "<b>Buyruqlar:</b>\n"
+            "/start - Botni qayta ishga tushirish\n"
+            "/menu - Asosiy menyu\n"
+            "/help - Yordam\n"
+            "/settings - Sozlamalar\n\n"
+            "<b>Muammo bo'lsa:</b>\n"
+            "+99879 544-40-10 raqamiga qo'ng'iroq qiling."
+        ),
+        verbose_name="Yordam matni (O'zbekcha)"
+    )
+    help_text_ru = models.TextField(
+        default="❓ <b>Помощь</b>",
+        verbose_name="Yordam matni (Ruscha)"
+    )
+    help_text_en = models.TextField(
+        default="❓ <b>Help</b>",
+        verbose_name="Yordam matni (Inglizcha)"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

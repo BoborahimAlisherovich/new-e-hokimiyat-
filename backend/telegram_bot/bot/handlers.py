@@ -244,15 +244,20 @@ def clear_user_state(user: TelegramUser):
 
 def get_bot_about_text(language: str = "uz") -> str:
     """Bot sozlamalaridan 'Biz haqimizda' matnini olish."""
+    return get_bot_template_text("about_text", language, "about_text")
+
+
+def get_bot_template_text(prefix: str, language: str = "uz", fallback_key: str | None = None) -> str:
+    """Bot sozlamalaridan matn shablonini olish."""
     settings = BotSettings.objects.first()
-    field_name = f"about_text_{language}"
+    field_name = f"{prefix}_{language}"
 
     if settings and hasattr(settings, field_name):
         text = getattr(settings, field_name, "")
         if text:
             return text
 
-    return get_text("about_text", language)
+    return get_text(fallback_key or prefix, language)
 
 
 def process_update(update: Dict):
@@ -323,7 +328,7 @@ def process_message(message: Dict):
     if text in [get_text('btn_help', lang) for lang in ['uz', 'ru', 'en']]:
         bot.send_message(
             chat_id,
-            get_text('help_text', user.language),
+            get_bot_template_text('help_text', user.language, 'help_text'),
             reply_markup=main_menu_keyboard(user.language)
         )
         return
@@ -344,7 +349,7 @@ def process_message(message: Dict):
     else:
         bot.send_message(
             chat_id,
-            get_text('welcome', user.language),
+            get_bot_template_text('welcome_message', user.language, 'welcome'),
             reply_markup=main_menu_keyboard(user.language)
         )
 
@@ -370,7 +375,7 @@ def handle_command(user: TelegramUser, command: str, chat_id: int):
             # Ro'yxatdan o'tishni boshlash
             bot.send_message(
                 chat_id,
-                get_text('welcome', user.language)
+                get_bot_template_text('welcome_message', user.language, 'welcome')
             )
             bot.send_message(
                 chat_id,
@@ -395,7 +400,7 @@ def handle_command(user: TelegramUser, command: str, chat_id: int):
     elif command == '/help':
         bot.send_message(
             chat_id,
-            get_text('help_text', user.language),
+            get_bot_template_text('help_text', user.language, 'help_text'),
             reply_markup=main_menu_keyboard(user.language) if user.is_registered else None
         )
     
