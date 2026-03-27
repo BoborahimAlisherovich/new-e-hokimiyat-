@@ -181,10 +181,17 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
 
     def get_new_messages_count(self, obj):
         """Fuqarodan kelgan yangi (o'qilmagan) xabarlar soni.
-        
-        Oxirgi admin xabaridan keyin kelgan fuqaro xabarlari sonini hisoblaydi.
-        Agar admin hech qachon javob bermagan bo'lsa, barcha fuqaro xabarlari yangi.
+
+        Agar queryset annotate qilingan bo'lsa `unread_user_messages_count` dan oladi,
+        aks holda eski usul (oxirgi admin xabaridan keyingi fuqarolik xabarlari).
         """
+        annotated = getattr(obj, 'unread_user_messages_count', None)
+        if annotated is not None:
+            try:
+                return int(annotated)
+            except Exception:
+                return 0
+
         messages = obj.messages.all()
         last_admin_msg = messages.filter(is_from_admin=True).order_by('-created_at').first()
         if last_admin_msg:

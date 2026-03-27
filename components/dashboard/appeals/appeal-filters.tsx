@@ -49,7 +49,7 @@ export function AppealFilters({
       status: "Holat",
       priority: "Muhimlik",
       category: "Soha",
-      district: "Hudud",
+      district: "Mahalla",
       all: "Barchasi",
     },
     "uz-cyrl": {
@@ -61,7 +61,7 @@ export function AppealFilters({
       status: "Ҳолат",
       priority: "Муҳимлик",
       category: "Соҳa",
-      district: "Ҳудуд",
+      district: "Маҳалла",
       all: "Барчаси",
     },
     ru: {
@@ -73,7 +73,7 @@ export function AppealFilters({
       status: "Статус",
       priority: "Приоритет",
       category: "Категория",
-      district: "Район",
+      district: "Махалля",
       all: "Все",
     },
     en: {
@@ -85,7 +85,7 @@ export function AppealFilters({
       status: "Status",
       priority: "Priority",
       category: "Category",
-      district: "District",
+      district: "Mahalla",
       all: "All",
     },
   }[language]

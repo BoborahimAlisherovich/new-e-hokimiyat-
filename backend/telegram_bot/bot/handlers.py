@@ -608,6 +608,16 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
                 is_from_admin=False,
                 text="\n".join(feedback_lines)
             )
+            try:
+                from notifications.services import notify_appeal_message
+
+                notify_appeal_message(
+                    appeal=appeal,
+                    sender_name=appeal.telegram_user.full_name,
+                    preview="\n".join(feedback_lines)[:500],
+                )
+            except Exception:
+                pass
 
             appeal.rating = int(rating) if rating else None
             appeal.rating_comment = comment
@@ -738,6 +748,16 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             
             # Adminlarga xabar yuborish
             notify_admins_user_reply(appeal, text)
+            try:
+                from notifications.services import notify_appeal_message
+
+                notify_appeal_message(
+                    appeal=appeal,
+                    sender_name=appeal.telegram_user.full_name,
+                    preview=text,
+                )
+            except Exception:
+                pass
             
         except TelegramAppeal.DoesNotExist:
             clear_user_state(user)
@@ -1611,6 +1631,16 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
             status='pending_ai'
         )
 
+        # Boshlang'ich xabar (dashboardda "yangi xabar" kabi ko'rinishi uchun)
+        try:
+            AppealMessage.objects.create(
+                appeal=appeal,
+                is_from_admin=False,
+                text=appeal.text,
+            )
+        except Exception:
+            pass
+
         def _norm(value: str) -> str:
             return re.sub(r'[^a-z0-9]+', '', str(value or '').lower())
 
@@ -1632,6 +1662,10 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                         part = part.strip()
                         if part:
                             candidate_terms.append(part)
+                    for word in re.split(r'\s+', uz, flags=re.IGNORECASE):
+                        word = word.strip()
+                        if len(word) >= 3:
+                            candidate_terms.append(word)
 
                 normalized_terms = [_norm(t) for t in candidate_terms if _norm(t)]
                 normalized_terms = list(dict.fromkeys(normalized_terms))
@@ -1667,6 +1701,20 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                 logger.warning(f"Auto-assign organizations failed for appeal_id={appeal.id}: {e}")
 
         _auto_assign_organizations()
+
+        # Dashboardga bildirishnoma (admin + biriktirilgan tashkilotlar)
+        try:
+            from notifications.services import notify_appeal_status_update
+
+            cat_name = getattr(category, 'name_uz', '') or ''
+            type_name = getattr(appeal_type, 'name_uz', '') or ''
+            notify_appeal_status_update(
+                appeal=appeal,
+                title="Yangi murojaat",
+                message=f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) {cat_name} / {type_name}",
+            )
+        except Exception:
+            pass
         
         # Fayllarni saqlash
         attachments = data.get('attachments', [])
@@ -1886,14 +1934,12 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
     """Adminlarga yangi murojaat haqida xabar"""
     from django.utils import timezone as tz
     admins = BotAdmin.objects.filter(is_active=True)
-    from notifications.services import create_notification, notify_new_appeal
     appeal_id = getattr(appeal, "id", None) or getattr(appeal, "pk", None)
     
     # Admin xabardor qilingan vaqtni belgilash (auto-response timeout uchun)
     appeal.admin_notified_at = tz.now()
     appeal.save(update_fields=['admin_notified_at'])
     
-    bot_admin_user_ids = set()
     for admin in admins:
         try:
             user = appeal.telegram_user
@@ -1942,36 +1988,5 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
                     int(admin.telegram_id),
                     text,
                 )
-
-            if admin.user and admin.user.is_active:
-                bot_admin_user_ids.add(admin.user_id)
-                create_notification(
-                    user=admin.user,
-                    title="Yangi murojaat",
-                    message=(
-                        f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) "
-                        f"{cat_name} / {type_name}"
-                    ),
-                    notification_type="INFO",
-                    link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals",
-                )
         except Exception as e:
             logger.error(f"Admin {admin.telegram_id} ga xabar yuborishda xato: {e}")
-
-    # Dashboard admin rollariga ham bildirishnoma (BotAdmin ga bog'lanmaganlar).
-    try:
-        user = appeal.telegram_user
-        appeal_type = appeal.appeal_type
-        category = appeal.category
-        type_name = appeal_type.name_uz if appeal_type else ""
-        cat_name = category.name_uz if category else ""
-        notify_new_appeal(
-            title="Yangi murojaat",
-            message=(
-                f"#{appeal.appeal_number} - {user.full_name} ({user.phone or '-'}) {cat_name} / {type_name}"
-            ),
-            link=f"/dashboard/appeals/{appeal_id}" if appeal_id is not None else "/dashboard/appeals",
-            exclude_user_ids=bot_admin_user_ids,
-        )
-    except Exception:
-        pass
