@@ -1545,12 +1545,14 @@ def show_my_appeals(user: TelegramUser, chat_id: int):
     
     lang = user.language
     status_map = {
+        'draft': get_text('appeal_status_pending', lang),
         'pending_ai': get_text('appeal_status_pending', lang),
         'pending_review': get_text('appeal_status_pending', lang),
         'approved': get_text('appeal_status_approved', lang),
         'rejected': get_text('appeal_status_rejected', lang),
         'responded': get_text('appeal_status_responded', lang),
         'forwarded': get_text('appeal_status_forwarded', lang),
+        'resolved': get_text('appeal_status_completed', lang),
         'completed': get_text('appeal_status_completed', lang),
     }
     
