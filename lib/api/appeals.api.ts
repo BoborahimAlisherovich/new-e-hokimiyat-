@@ -25,6 +25,9 @@ interface TelegramAppealResponse {
   status: string
   priority: string
   category_name?: string
+  latitude?: string | number | null
+  longitude?: string | number | null
+  address?: string
   category_detail?: {
     name_uz?: string
     name_ru?: string
@@ -193,6 +196,9 @@ function extractSubject(appeal: TelegramAppealResponse): string {
  */
 function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
   const telegramUser = appeal.telegram_user
+  const latitude = appeal.latitude === null || appeal.latitude === undefined ? null : Number(appeal.latitude)
+  const longitude = appeal.longitude === null || appeal.longitude === undefined ? null : Number(appeal.longitude)
+  const hasLocation = Number.isFinite(latitude) && Number.isFinite(longitude)
   const attachments: AppealAttachment[] | undefined = appeal.attachments?.map((att) => ({
     id: att.id,
     file_type: att.file_type,
@@ -219,7 +225,9 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     assignedTo: undefined,
     organization: undefined,
     district: telegramUser?.region_name || '',
-    address: '',
+    address: appeal.address || '',
+    latitude: hasLocation ? (latitude as number) : null,
+    longitude: hasLocation ? (longitude as number) : null,
     createdAt: appeal.created_at,
     updatedAt: appeal.updated_at,
     attachments,

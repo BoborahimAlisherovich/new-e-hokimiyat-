@@ -474,6 +474,27 @@ class TelegramAppeal(models.Model):
     text = models.TextField(
         verbose_name="Murojaat matni"
     )
+
+    # Lokatsiya (ixtiyoriy)
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+        verbose_name="Kenglik (latitude)",
+    )
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+        verbose_name="Uzunlik (longitude)",
+    )
+    address = models.TextField(
+        blank=True,
+        default='',
+        verbose_name="Manzil (ixtiyoriy)",
+    )
     
     # Holat va muhimlik
     status = models.CharField(

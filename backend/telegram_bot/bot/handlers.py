@@ -23,7 +23,8 @@ from .keyboards import (
     regions_keyboard, appeal_types_keyboard, categories_keyboard,
     confirm_keyboard, attachment_keyboard, settings_keyboard,
     language_keyboard, back_keyboard, admin_review_keyboard,
-    remove_keyboard, rating_keyboard, satisfaction_with_rating_keyboard
+    remove_keyboard, rating_keyboard, satisfaction_with_rating_keyboard,
+    location_keyboard, comment_keyboard
 )
 
 logger = logging.getLogger(__name__)
@@ -287,6 +288,11 @@ def process_message(message: Dict):
     if 'contact' in message:
         handle_contact(user, message, chat_id)
         return
+
+    # Lokatsiya xabari
+    if 'location' in message:
+        handle_location(user, message, chat_id)
+        return
     
     # Fayl xabarlari
     if any(key in message for key in ['photo', 'video', 'audio', 'document', 'voice']):
@@ -525,6 +531,128 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             bot.send_message(chat_id, get_text('error_invalid_input', lang))
     
     # Murojaat holatlari
+    elif current_state == 'appeal:location':
+        # Lokatsiyani o'tkazib yuborish
+        if text in [get_text('btn_skip_location', l) for l in ['uz', 'ru', 'en']]:
+            set_user_state(user, 'appeal:text', data)
+            bot.send_message(
+                chat_id,
+                get_text('enter_appeal_text', lang),
+                reply_markup=remove_keyboard()
+            )
+            return
+
+        # Boshqa matn kiritilsa, lokatsiya tugmasidan foydalanishni eslatamiz
+        bot.send_message(
+            chat_id,
+            get_text('ask_location', lang),
+            reply_markup=location_keyboard(lang)
+        )
+        return
+
+    elif current_state == 'appeal:feedback_comment':
+        appeal_id = data.get('appeal_id')
+        if not appeal_id:
+            clear_user_state(user)
+            bot.send_message(chat_id, get_text('error_something_wrong', lang), reply_markup=main_menu_keyboard(lang))
+            return
+
+        if text in [get_text('btn_skip_comment', l) for l in ['uz', 'ru', 'en']]:
+            data['comment'] = ''
+        else:
+            data['comment'] = (text or '').strip()
+
+        set_user_state(user, 'appeal:feedback_attachments', data)
+        try:
+            appeal = TelegramAppeal.objects.get(id=int(appeal_id), telegram_user=user)
+            number = appeal.appeal_number
+        except Exception:
+            number = str(appeal_id)
+
+        bot.send_message(
+            chat_id,
+            get_text('feedback_attachments_prompt', lang, number=number),
+            reply_markup=attachment_keyboard(lang)
+        )
+        return
+
+    elif current_state == 'appeal:feedback_attachments':
+        # "Tugatish" tugmasi
+        if text in [get_text('btn_finish', l) for l in ['uz', 'ru', 'en']]:
+            from django.utils import timezone
+            appeal_id = data.get('appeal_id')
+            satisfied = bool(data.get('satisfied', True))
+            rating = data.get('rating')
+            comment = (data.get('comment') or '').strip()
+
+            try:
+                appeal = TelegramAppeal.objects.get(id=int(appeal_id), telegram_user=user)
+            except Exception:
+                clear_user_state(user)
+                bot.send_message(chat_id, get_text('appeal_not_found', lang), reply_markup=main_menu_keyboard(lang))
+                return
+
+            stars = ('⭐' * int(rating)) if rating else '-'
+
+            feedback_lines = []
+            feedback_lines.append("Fuqaro feedback:")
+            feedback_lines.append("✅ Ha, mamnunman" if satisfied else "❌ Yo'q, mamnun emasman")
+            if rating:
+                feedback_lines.append(f"⭐ Baho: {stars} ({int(rating)}/5)")
+            if comment:
+                feedback_lines.append("")
+                feedback_lines.append("Izoh:")
+                feedback_lines.append(comment)
+            AppealMessage.objects.create(
+                appeal=appeal,
+                is_from_admin=False,
+                text="\n".join(feedback_lines)
+            )
+
+            appeal.rating = int(rating) if rating else None
+            appeal.rating_comment = comment
+            appeal.rated_at = timezone.now()
+
+            if satisfied:
+                appeal.status = 'resolved'
+                appeal.closed_at = timezone.now()
+                appeal.save(update_fields=['rating', 'rating_comment', 'rated_at', 'status', 'closed_at', 'updated_at'])
+
+                bot.send_message(
+                    chat_id,
+                    get_text('feedback_received_resolved', lang, number=appeal.appeal_number, stars=stars),
+                    reply_markup=main_menu_keyboard(lang)
+                )
+                notify_admins_appeal_closed(appeal, satisfied=True, rating=int(rating) if rating else None)
+            else:
+                appeal.status = 'pending_review'
+                appeal.closed_at = None
+                appeal.save(update_fields=['rating', 'rating_comment', 'rated_at', 'status', 'closed_at', 'updated_at'])
+
+                bot.send_message(
+                    chat_id,
+                    get_text('feedback_received_reopened', lang, number=appeal.appeal_number),
+                    reply_markup=main_menu_keyboard(lang)
+                )
+                notify_admins_appeal_reopened(appeal)
+
+            try:
+                from notifications.services import notify_appeal_feedback
+                if satisfied:
+                    notify_appeal_feedback(appeal=appeal, rating=int(rating) if rating else None)
+            except Exception:
+                pass
+
+            clear_user_state(user)
+            return
+
+        bot.send_message(
+            chat_id,
+            get_text('feedback_attachments_prompt', lang, number=data.get('appeal_number') or data.get('appeal_id')),
+            reply_markup=attachment_keyboard(lang)
+        )
+        return
+
     elif current_state == 'appeal:text':
         # Murojaat matni
         if len(text) < 20:
@@ -551,6 +679,15 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
             cat_name = getattr(category, f'name_{lang}', None) or category.name_uz
             
             attachments = data.get('attachments', [])
+            loc = data.get('location') or {}
+            location_text = '-'
+            try:
+                lat = loc.get('latitude')
+                lon = loc.get('longitude')
+                if lat is not None and lon is not None:
+                    location_text = f"{lat}, {lon}"
+            except Exception:
+                location_text = '-'
             
             bot.send_message(
                 chat_id,
@@ -559,6 +696,7 @@ def handle_state_input(user: TelegramUser, state: UserState, text: str, chat_id:
                     lang,
                     type=type_name,
                     category=cat_name,
+                    location=location_text,
                     text=data.get('text', '')[:500],
                     attachments_count=len(attachments)
                 ),
@@ -643,14 +781,39 @@ def handle_contact(user: TelegramUser, message: Dict, chat_id: int):
             reply_markup=regions_keyboard(regions, user.language, page=0)
         )
         set_user_state(user, 'registration:region')
-    else:
-        complete_registration(user, chat_id)
+        return
+
+    complete_registration(user, chat_id)
+
+
+def handle_location(user: TelegramUser, message: Dict, chat_id: int):
+    """Lokatsiya xabarini qayta ishlash"""
+    state = get_user_state(user)
+    if not state or state.state != 'appeal:location':
+        return
+
+    location = message.get('location') or {}
+    data = state.data if state else {}
+    try:
+        data['location'] = {
+            'latitude': location.get('latitude'),
+            'longitude': location.get('longitude'),
+        }
+    except Exception:
+        data['location'] = {}
+
+    set_user_state(user, 'appeal:text', data)
+    bot.send_message(
+        chat_id,
+        get_text('enter_appeal_text', user.language),
+        reply_markup=remove_keyboard()
+    )
 
 
 def handle_media(user: TelegramUser, message: Dict, chat_id: int):
     """Media fayllarni qayta ishlash"""
     state = get_user_state(user)
-    if not state or state.state != 'appeal:attachments':
+    if not state or state.state not in ['appeal:attachments', 'appeal:feedback_attachments']:
         return
     
     data = state.data or {}
@@ -694,10 +857,70 @@ def handle_media(user: TelegramUser, message: Dict, chat_id: int):
         'file_name': file_name,
         'mime_type': mime_type
     })
-    
-    data['attachments'] = attachments
-    set_user_state(user, 'appeal:attachments', data)
-    
+
+    if state.state == 'appeal:attachments':
+        data['attachments'] = attachments
+        set_user_state(user, 'appeal:attachments', data)
+
+        bot.send_message(
+            chat_id,
+            get_text('attachment_received', user.language),
+            reply_markup=attachment_keyboard(user.language)
+        )
+        return
+
+    appeal_id = data.get('appeal_id')
+    try:
+        appeal = TelegramAppeal.objects.get(id=int(appeal_id), telegram_user=user)
+    except Exception:
+        bot.send_message(chat_id, get_text('appeal_not_found', user.language), reply_markup=main_menu_keyboard(user.language))
+        return
+
+    try:
+        file_url = bot.get_file(file_id)
+        attachment = AppealAttachment(
+            appeal=appeal,
+            file_type=file_type,
+            telegram_file_id=file_id
+        )
+        if file_name:
+            attachment.file_name = file_name
+        if mime_type:
+            attachment.mime_type = mime_type
+
+        if file_url:
+            import os
+            from django.core.files.base import ContentFile
+
+            response = requests.get(file_url, timeout=30)
+            if response.status_code == 200:
+                file_ext = file_type
+                if file_ext == 'photo':
+                    file_ext = 'jpg'
+                elif file_ext == 'voice':
+                    file_ext = 'ogg'
+                elif file_ext in {'video', 'video_note'}:
+                    file_ext = 'mp4'
+                elif file_ext == 'audio':
+                    file_ext = 'mp3'
+                elif file_ext == 'document':
+                    if file_name:
+                        _, ext = os.path.splitext(file_name)
+                        file_ext = ext.lstrip('.') or 'bin'
+                    else:
+                        file_ext = 'bin'
+                else:
+                    file_ext = 'bin'
+
+                stored_name = f"{file_id[:20]}.{file_ext}"
+                attachment.file_name = attachment.file_name or stored_name
+                attachment.file_size = len(response.content)
+                attachment.file.save(stored_name, ContentFile(response.content), save=False)
+
+        attachment.save()
+    except Exception as e:
+        logger.error(f"Feedback attachment save error: {e}")
+
     bot.send_message(
         chat_id,
         get_text('attachment_received', user.language),
@@ -862,13 +1085,14 @@ def process_callback_query(callback_query: Dict):
         state = get_user_state(user)
         state_data = state.data if state else {}
         state_data['category_id'] = category_id
-        
-        bot.edit_message_text(
+
+        # Lokatsiya (ixtiyoriy)
+        bot.send_message(
             chat_id,
-            message_id,
-            get_text('enter_appeal_text', lang)
+            get_text('ask_location', lang),
+            reply_markup=location_keyboard(lang)
         )
-        set_user_state(user, 'appeal:text', state_data)
+        set_user_state(user, 'appeal:location', state_data)
         return
     
     # Murojaatni tasdiqlash
@@ -934,27 +1158,38 @@ def process_callback_query(callback_query: Dict):
         parts = data.split(':')
         appeal_id = int(parts[1])
         rating_value = parts[2]
-        
-        if rating_value == 'skip':
-            # Baholamasdan yopish
-            from django.utils import timezone
-            try:
-                appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
-                appeal.status = 'resolved'
-                appeal.closed_at = timezone.now()
-                appeal.save()
-                
-                bot.edit_message_text(
-                    chat_id,
-                    message_id,
-                    get_text('appeal_closed_without_rating', lang, number=appeal.appeal_number)
-                )
-                notify_admins_appeal_closed(appeal, satisfied=True)
-            except TelegramAppeal.DoesNotExist:
-                bot.edit_message_text(chat_id, message_id, get_text('appeal_not_found', lang))
-        else:
-            rating = int(rating_value)
-            handle_rating_callback(user, appeal_id, rating, chat_id, message_id)
+
+        state = get_user_state(user)
+        feedback_data = {}
+        if state and state.state in ['appeal:feedback_rating', 'appeal:feedback_comment', 'appeal:feedback_attachments']:
+            feedback_data = state.data or {}
+
+        if str(feedback_data.get('appeal_id')) != str(appeal_id):
+            feedback_data = {'appeal_id': appeal_id, 'satisfied': True}
+
+        rating = None if rating_value == 'skip' else int(rating_value)
+        feedback_data['rating'] = rating
+        set_user_state(user, 'appeal:feedback_comment', feedback_data)
+
+        try:
+            appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
+            number = appeal.appeal_number
+        except TelegramAppeal.DoesNotExist:
+            bot.edit_message_text(chat_id, message_id, get_text('appeal_not_found', lang))
+            return
+
+        prompt = get_text('feedback_comment_prompt', lang, number=number)
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            prompt,
+            parse_mode='HTML'
+        )
+        bot.send_message(
+            chat_id,
+            prompt,
+            reply_markup=comment_keyboard(lang)
+        )
         return
     
     # Foydalanuvchi javob berish callbacki
@@ -1027,29 +1262,15 @@ def handle_satisfaction_callback(user: TelegramUser, appeal_id: int, is_satisfie
     try:
         appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
         lang = user.language
-        
-        if is_satisfied:
-            # Baholash so'rash
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                get_text('rating_prompt', lang, number=appeal.appeal_number),
-                parse_mode='HTML',
-                reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
-            )
-        else:
-            # Murojaat qayta ochiladi
-            appeal.status = 'pending_review'
-            appeal.save()
-            
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                get_text('appeal_reopened_for_review', lang, number=appeal.appeal_number)
-            )
-            
-            # Adminlarga xabar
-            notify_admins_appeal_reopened(appeal)
+
+        set_user_state(user, 'appeal:feedback_rating', {'appeal_id': appeal.id, 'satisfied': is_satisfied})
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            get_text('rating_prompt', lang, number=appeal.appeal_number),
+            parse_mode='HTML',
+            reply_markup=rating_keyboard(appeal.id, lang)  # type: ignore[attr-defined]
+        )
             
     except TelegramAppeal.DoesNotExist:
         bot.edit_message_text(
@@ -1104,28 +1325,15 @@ def handle_close_appeal_callback(user: TelegramUser, appeal_id: int, is_satisfie
     
     try:
         appeal = TelegramAppeal.objects.get(id=appeal_id, telegram_user=user)
-        
-        if is_satisfied:
-            # Baholash so'rash
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                get_text('rating_prompt', user.language, number=appeal.appeal_number),
-                parse_mode='HTML',
-                reply_markup=rating_keyboard(appeal.id)  # type: ignore[attr-defined]
-            )
-        else:
-            # Murojaat qayta ochiladi
-            appeal.status = 'pending_review'
-            appeal.save()
-            
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                get_text('appeal_reopened_for_review', user.language, number=appeal.appeal_number)
-            )
-            
-            notify_admins_appeal_reopened(appeal)
+
+        set_user_state(user, 'appeal:feedback_rating', {'appeal_id': appeal.id, 'satisfied': is_satisfied})
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            get_text('rating_prompt', user.language, number=appeal.appeal_number),
+            parse_mode='HTML',
+            reply_markup=rating_keyboard(appeal.id, user.language)  # type: ignore[attr-defined]
+        )
             
     except TelegramAppeal.DoesNotExist:
         bot.edit_message_text(
@@ -1203,6 +1411,11 @@ def notify_admins_appeal_closed(appeal: TelegramAppeal, satisfied: bool = True, 
             if rating:
                 stars = '⭐' * rating
                 message += f"\n📊 <b>Baho:</b> {stars} ({rating}/5)"
+
+            comment = (getattr(appeal, 'rating_comment', '') or '').strip()
+            if comment:
+                safe_comment = comment[:500] + ('...' if len(comment) > 500 else '')
+                message += f"\n\n💬 <b>Izoh:</b>\n{safe_comment}"
             
             bot.send_message(int(admin.telegram_id), message, parse_mode='HTML')
         except Exception as e:
@@ -1224,6 +1437,14 @@ def notify_admins_appeal_reopened(appeal: TelegramAppeal):
             message += f"📞 {user.phone or '-'}\n"
             message += f"🏘 {region_name}\n\n"
             message += f"❌ Foydalanuvchi javobdan qoniqmadi.\nIltimos, qayta ko'rib chiqing."
+
+            if getattr(appeal, 'rating', None):
+                stars = '⭐' * int(appeal.rating)
+                message += f"\n\n📊 <b>Baho:</b> {stars} ({int(appeal.rating)}/5)"
+            comment = (getattr(appeal, 'rating_comment', '') or '').strip()
+            if comment:
+                safe_comment = comment[:500] + ('...' if len(comment) > 500 else '')
+                message += f"\n\n💬 <b>Izoh:</b>\n{safe_comment}"
             
             bot.send_message(
                 int(admin.telegram_id),
@@ -1371,6 +1592,10 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         
         appeal_type = AppealType.objects.get(id=type_id)
         category = AppealCategory.objects.get(id=category_id)
+
+        loc = data.get('location') or {}
+        lat = loc.get('latitude')
+        lon = loc.get('longitude')
         
         # Murojaat yaratish
         appeal = TelegramAppeal.objects.create(
@@ -1378,6 +1603,8 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
             appeal_type=appeal_type,
             category=category,
             text=data.get('text', ''),
+            latitude=str(lat) if lat is not None else None,
+            longitude=str(lon) if lon is not None else None,
             source='telegram',
             status='pending_ai'
         )
@@ -1674,6 +1901,9 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
             type_name = appeal_type.name_uz if appeal_type else ''
             cat_name = category.name_uz if category else ''
             region_name = user.region.name_uz if user.region else '-'
+            location_text = '-'
+            if getattr(appeal, 'latitude', None) is not None and getattr(appeal, 'longitude', None) is not None:
+                location_text = f"{appeal.latitude}, {appeal.longitude}"
             
             text = get_text(
                 'admin_new_appeal',
@@ -1682,6 +1912,7 @@ def notify_admins_about_appeal(appeal: TelegramAppeal):
                 user_name=user.full_name,
                 phone=user.phone or '-',
                 region=region_name,
+                location=location_text,
                 category=cat_name,
                 type=type_name,
                 text=appeal.text[:500],

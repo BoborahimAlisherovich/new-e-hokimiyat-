@@ -212,6 +212,27 @@ def attachment_keyboard(language: str = 'uz') -> dict:
     ])
 
 
+def comment_keyboard(language: str = 'uz') -> dict:
+    """Feedback izohini kiritish uchun klaviatura"""
+    from .messages import get_text
+
+    return create_keyboard([
+        [{'text': get_text('btn_skip_comment', language)}],
+        [{'text': get_text('btn_cancel', language)}],
+    ], one_time=True)
+
+
+def location_keyboard(language: str = 'uz') -> dict:
+    """Lokatsiya so'rash klaviaturasi"""
+    from .messages import get_text
+
+    return create_keyboard([
+        [{'text': get_text('btn_share_location', language), 'request_location': True}],
+        [{'text': get_text('btn_skip_location', language)}],
+        [{'text': get_text('btn_cancel', language)}],
+    ], one_time=True)
+
+
 def settings_keyboard(language: str = 'uz') -> dict:
     """Sozlamalar klaviaturasi"""
     from .messages import get_text

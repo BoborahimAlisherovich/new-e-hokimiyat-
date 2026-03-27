@@ -67,6 +67,12 @@ Murojaat turini tanlang:""",
         'select_category': """📁 <b>Soha tanlang</b>
 
 Murojaatingiz qaysi sohaga tegishli?""",
+
+        'ask_location': """📍 <b>Lokatsiya (ixtiyoriy)</b>
+
+Muammo joylashgan joy lokatsiyasini yuboring.
+
+Agar hozir yubora olmasangiz, “⏭ Lokatsiyasiz davom etish” ni bosing.""",
         
         'enter_appeal_text': """✍️ <b>Murojaat matni</b>
 
@@ -88,6 +94,7 @@ Yana fayl qo'shishingiz yoki "✅ Tugatish" tugmasini bosishingiz mumkin.""",
 
 <b>Tur:</b> {type}
 <b>Soha:</b> {category}
+<b>Lokatsiya:</b> {location}
 <b>Matn:</b>
 {text}
 
@@ -160,8 +167,9 @@ Iltimos, ismingiz va familiyangizni kiriting.
         'btn_priority_low': "🟢 Past",
         'btn_user_reply': "💬 Javob berish",
         'btn_skip_rating': "⏭ Baholamasdan yopish",
-        'btn_satisfied_yes': "✅ Ha, rahmat",
-        'btn_satisfied_no': "❌ Yo'q, qayta ko'ring",
+        'btn_skip_comment': "⏭ Izohsiz davom etish",
+        'btn_satisfied_yes': "✅ Ha, mamnunman",
+        'btn_satisfied_no': "❌ Yo'q, mamnun emasman",
         'btn_region_other': "🔹 Boshqa",
         'language_prompt': "🌐 Tilni tanlang / Выберите язык / Choose language:",
         'region_other_selected': "✅ Boshqa hudud",
@@ -172,6 +180,10 @@ Iltimos, ismingiz va familiyangizni kiriting.
         'appeal_already_closed': "❌ Bu murojaat allaqachon yopilgan",
         'reply_prompt': "✍️ <b>#{number} raqamli murojaatga javob</b>\n\nJavobingizni yozing va yuboring.\n\nBekor qilish uchun /cancel buyrug'ini yuboring.",
         'rating_prompt': "⭐ <b>#{number} raqamli murojaat</b>\n\nXizmat ko'rsatishni qanday baholaysiz?\n\n1 yulduz - Juda yomon\n5 yulduz - A'lo",
+        'feedback_comment_prompt': "✍️ <b>#{number} raqamli murojaat</b>\n\nQisqacha fikringizni yozing (ixtiyoriy).\n\nO‘tkazib yuborish uchun “⏭ Izohsiz davom etish” ni bosing.",
+        'feedback_attachments_prompt': "📎 <b>#{number} raqamli murojaat</b>\n\nIsbot uchun rasm/video/fayl yuborishingiz mumkin.\n\nYakunlash uchun “✅ Tugatish” ni bosing.",
+        'feedback_received_resolved': "✅ <b>Rahmat!</b>\n\n#{number} raqamli murojaatingiz yopildi.\nBahoyingiz: {stars}\n\nFikringiz qabul qilindi.",
+        'feedback_received_reopened': "✅ <b>Rahmat!</b>\n\n#{number} raqamli murojaatingiz bo‘yicha fikringiz qabul qilindi va qayta ko‘rib chiqish uchun yuborildi.",
         'appeal_reopened_for_review': "❌ #{number} raqamli murojaatingiz qayta ko'rib chiqish uchun yuborildi.\n\nTez orada sizga javob beriladi.",
         'appeal_closed_without_rating': "✅ #{number} raqamli murojaatingiz yopildi.\n\nBizga murojaat qilganingiz uchun tashakkur!",
         'rating_thanks': "✅ <b>Rahmat!</b>\n\n#{number} raqamli murojaatingiz yopildi.\nSizning bahoyingiz: {stars}\n\nBizga murojaat qilganingiz uchun tashakkur!",
@@ -262,6 +274,8 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_finish': "✅ Tugatish",
         'btn_main_menu': "🏠 Asosiy menyu",
         'btn_share_phone': "📱 Telefon raqamni yuborish",
+        'btn_share_location': "📍 Lokatsiyani yuborish",
+        'btn_skip_location': "⏭ Lokatsiyasiz davom etish",
         
         # Jinslar
         'gender_male': "👨 Erkak",
@@ -274,6 +288,7 @@ Savollar uchun: +998 XX XXX XX XX""",
 👤 <b>Foydalanuvchi:</b> {user_name}
 📱 <b>Telefon:</b> {phone}
 🏘 <b>Hudud:</b> {region}
+📍 <b>Lokatsiya:</b> {location}
 
 📁 <b>Soha:</b> {category}
 📝 <b>Tur:</b> {type}
@@ -340,6 +355,12 @@ Savollar uchun: +998 XX XXX XX XX""",
         'select_category': """📁 <b>Выберите сферу</b>
 
 К какой сфере относится ваше обращение?""",
+
+        'ask_location': """📍 <b>Локация (необязательно)</b>
+
+Отправьте локацию места, где возникла проблема.
+
+Если сейчас не можете — нажмите “⏭ Продолжить без локации”.""",
         'enter_appeal_text': """✍️ <b>Текст обращения</b>
 
 Напишите содержание вашего обращения.
@@ -357,6 +378,7 @@ Savollar uchun: +998 XX XXX XX XX""",
 
 <b>Тип:</b> {type}
 <b>Сфера:</b> {category}
+<b>Локация:</b> {location}
 <b>Текст:</b>
 {text}
 
@@ -454,6 +476,8 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_finish': "✅ Завершить",
         'btn_main_menu': "🏠 Главное меню",
         'btn_share_phone': "📱 Отправить номер телефона",
+        'btn_share_location': "📍 Отправить локацию",
+        'btn_skip_location': "⏭ Продолжить без локации",
         'gender_male': "👨 Мужчина",
         'gender_female': "👩 Женщина",
         'admin_new_appeal': """🆕 <b>Новое обращение!</b>
@@ -462,6 +486,7 @@ Savollar uchun: +998 XX XXX XX XX""",
 👤 <b>Пользователь:</b> {user_name}
 📱 <b>Телефон:</b> {phone}
 🏘 <b>Регион:</b> {region}
+📍 <b>Локация:</b> {location}
 
 📁 <b>Сфера:</b> {category}
 📝 <b>Тип:</b> {type}
@@ -485,8 +510,9 @@ Savollar uchun: +998 XX XXX XX XX""",
         'btn_priority_low': "🟢 Низкий",
         'btn_user_reply': "💬 Ответить",
         'btn_skip_rating': "⏭ Закрыть без оценки",
-        'btn_satisfied_yes': "✅ Да, спасибо",
-        'btn_satisfied_no': "❌ Нет, пересмотрите",
+        'btn_skip_comment': "⏭ Без комментария",
+        'btn_satisfied_yes': "✅ Да, я доволен",
+        'btn_satisfied_no': "❌ Нет, я не доволен",
         'btn_region_other': "🔹 Другое",
         'language_prompt': "🌐 Выберите язык:",
         'region_other_selected': "✅ Другой регион",
@@ -497,6 +523,10 @@ Savollar uchun: +998 XX XXX XX XX""",
         'appeal_already_closed': "❌ Это обращение уже закрыто",
         'reply_prompt': "✍️ <b>Ответ на обращение №{number}</b>\n\nНапишите и отправьте ваш ответ.\n\nДля отмены отправьте команду /cancel.",
         'rating_prompt': "⭐ <b>Обращение №{number}</b>\n\nКак вы оцените качество обслуживания?\n\n1 звезда - Очень плохо\n5 звезд - Отлично",
+        'feedback_comment_prompt': "✍️ <b>Обращение №{number}</b>\n\nНапишите ваш комментарий (необязательно).\n\nЧтобы пропустить — нажмите “⏭ Без комментария”.",
+        'feedback_attachments_prompt': "📎 <b>Обращение №{number}</b>\n\nВы можете отправить фото/видео/файл как доказательство.\n\nЧтобы завершить — нажмите “✅ Завершить”.",
+        'feedback_received_resolved': "✅ <b>Спасибо!</b>\n\nОбращение №{number} закрыто.\nВаша оценка: {stars}\n\nВаш отзыв принят.",
+        'feedback_received_reopened': "✅ <b>Спасибо!</b>\n\nВаш отзыв по обращению №{number} принят и отправлен на повторное рассмотрение.",
         'appeal_reopened_for_review': "❌ Ваше обращение №{number} отправлено на повторное рассмотрение.\n\nСкоро вам ответят.",
         'appeal_closed_without_rating': "✅ Ваше обращение №{number} закрыто.\n\nСпасибо за обращение!",
         'rating_thanks': "✅ <b>Спасибо!</b>\n\nВаше обращение №{number} закрыто.\nВаша оценка: {stars}\n\nСпасибо, что обратились к нам!",
@@ -579,6 +609,12 @@ Select the appeal type:""",
         'select_category': """📁 <b>Select Sector</b>
 
 Which sector does your appeal belong to?""",
+
+        'ask_location': """📍 <b>Location (optional)</b>
+
+Send the location where the problem occurred.
+
+If you can’t send it now, tap “⏭ Continue without location”.""",
         'enter_appeal_text': """✍️ <b>Appeal Text</b>
 
 Write the details of your appeal.
@@ -596,6 +632,7 @@ You can add another file or press "✅ Finish".""",
 
 <b>Type:</b> {type}
 <b>Sector:</b> {category}
+<b>Location:</b> {location}
 <b>Text:</b>
 {text}
 
@@ -693,6 +730,8 @@ For questions: +99879 544-40-10""",
         'btn_finish': "✅ Finish",
         'btn_main_menu': "🏠 Main menu",
         'btn_share_phone': "📱 Send phone number",
+        'btn_share_location': "📍 Send location",
+        'btn_skip_location': "⏭ Continue without location",
         'gender_male': "👨 Male",
         'gender_female': "👩 Female",
         'admin_new_appeal': """🆕 <b>New appeal!</b>
@@ -701,6 +740,7 @@ For questions: +99879 544-40-10""",
 👤 <b>User:</b> {user_name}
 📱 <b>Phone:</b> {phone}
 🏘 <b>Region:</b> {region}
+📍 <b>Location:</b> {location}
 
 📁 <b>Sector:</b> {category}
 📝 <b>Type:</b> {type}
@@ -724,8 +764,9 @@ For questions: +99879 544-40-10""",
         'btn_priority_low': "🟢 Low",
         'btn_user_reply': "💬 Reply",
         'btn_skip_rating': "⏭ Close without rating",
-        'btn_satisfied_yes': "✅ Yes, thanks",
-        'btn_satisfied_no': "❌ No, review again",
+        'btn_skip_comment': "⏭ Continue without comment",
+        'btn_satisfied_yes': "✅ Yes, I'm satisfied",
+        'btn_satisfied_no': "❌ No, I'm not satisfied",
         'btn_region_other': "🔹 Other",
         'language_prompt': "🌐 Choose language:",
         'region_other_selected': "✅ Other region",
@@ -736,6 +777,10 @@ For questions: +99879 544-40-10""",
         'appeal_already_closed': "❌ This appeal has already been closed",
         'reply_prompt': "✍️ <b>Reply to appeal #{number}</b>\n\nWrite and send your reply.\n\nSend /cancel to cancel.",
         'rating_prompt': "⭐ <b>Appeal #{number}</b>\n\nHow would you rate the service?\n\n1 star - Very poor\n5 stars - Excellent",
+        'feedback_comment_prompt': "✍️ <b>Appeal #{number}</b>\n\nWrite your comment (optional).\n\nTo skip, tap “⏭ Continue without comment”.",
+        'feedback_attachments_prompt': "📎 <b>Appeal #{number}</b>\n\nYou can send photo/video/file as proof.\n\nTo finish, tap “✅ Finish”.",
+        'feedback_received_resolved': "✅ <b>Thank you!</b>\n\nAppeal #{number} is closed.\nYour rating: {stars}\n\nYour feedback has been received.",
+        'feedback_received_reopened': "✅ <b>Thank you!</b>\n\nYour feedback for appeal #{number} has been received and sent for re-review.",
         'appeal_reopened_for_review': "❌ Your appeal #{number} has been sent for re-review.\n\nYou will receive a response soon.",
         'appeal_closed_without_rating': "✅ Your appeal #{number} has been closed.\n\nThank you for contacting us!",
         'rating_thanks': "✅ <b>Thank you!</b>\n\nYour appeal #{number} has been closed.\nYour rating: {stars}\n\nThank you for contacting us!",

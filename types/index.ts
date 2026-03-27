@@ -445,6 +445,8 @@ export interface Appeal {
   organization?: Organization
   district: string
   address: string
+  latitude?: number | null
+  longitude?: number | null
   createdAt: string
   updatedAt: string
   // Baholash maydonlari
