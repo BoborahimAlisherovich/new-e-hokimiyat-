@@ -9,6 +9,7 @@ from datetime import datetime
 import requests
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 
 from ..models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
@@ -1380,6 +1381,63 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
             source='telegram',
             status='pending_ai'
         )
+
+        def _norm(value: str) -> str:
+            return re.sub(r'[^a-z0-9]+', '', str(value or '').lower())
+
+        def _auto_assign_organizations() -> None:
+            try:
+                from organizations.models import Organization, Sector
+
+                if appeal.assigned_organizations.exists():
+                    return
+
+                candidate_terms = [
+                    getattr(category, 'name_uz', '') or '',
+                    getattr(category, 'name_en', '') or '',
+                    getattr(category, 'code', '') or '',
+                ]
+                if getattr(category, 'name_uz', None):
+                    uz = str(category.name_uz)
+                    for part in re.split(r'\s+va\s+|,|/|&', uz, flags=re.IGNORECASE):
+                        part = part.strip()
+                        if part:
+                            candidate_terms.append(part)
+
+                normalized_terms = [_norm(t) for t in candidate_terms if _norm(t)]
+                normalized_terms = list(dict.fromkeys(normalized_terms))
+                if not normalized_terms:
+                    return
+
+                sector_match = None
+                for sector in Sector.objects.filter(is_active=True).only('id', 'name'):
+                    sector_key = _norm(sector.name)
+                    if not sector_key:
+                        continue
+                    if any(sector_key == term or sector_key in term or term in sector_key for term in normalized_terms):
+                        sector_match = sector
+                        break
+
+                org_qs = Organization.objects.none()
+                if sector_match is not None:
+                    org_qs = Organization.objects.filter(is_active=True, sector=sector_match)
+
+                if not org_qs.exists():
+                    query = Q()
+                    for raw in candidate_terms:
+                        raw = str(raw or '').strip()
+                        if len(raw) < 3:
+                            continue
+                        query |= Q(name__icontains=raw) | Q(short_name__icontains=raw)
+                    if query:
+                        org_qs = Organization.objects.filter(is_active=True).filter(query)
+
+                if org_qs.exists():
+                    appeal.assigned_organizations.set(org_qs)
+            except Exception as e:
+                logger.warning(f"Auto-assign organizations failed for appeal_id={appeal.id}: {e}")
+
+        _auto_assign_organizations()
         
         # Fayllarni saqlash
         attachments = data.get('attachments', [])

@@ -251,6 +251,13 @@ Topshiriq ichidagi chat orqali:
 - dalillar/faktlar bo‘yicha tezkor aloqa
 qilinadi.
 
+### 7.4) Murojaatlar (Telegram botdan kelgan)
+
+Tashkilot rahbari/mas’uli `Murojaatlar` bo‘limida **faqat o‘z tashkilotiga biriktirilgan** murojaatlarni ko‘radi.  
+Agar murojaat Admin/Hokimda ko‘rinib, sizda ko‘rinmasa:
+- foydalanuvchi profilingizda **tashkilot biriktirilganini** tekshiring (Admin qiladi),
+- murojaat tegishli tashkilot(lar)ga biriktirilganini tekshiring (kategoriya asosida avtomatik/qo‘lda).
+
 **Tezkor checklist (Tashkilot tomoni):**
 - Yangi topshiriq: qabul qilish → reja → ijro izohi
 - Jarayon: progress/hisobot → hujjat biriktirish → “bajarildi”ga yuborish
