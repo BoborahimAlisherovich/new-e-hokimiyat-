@@ -1,6 +1,6 @@
 # E-Hokimiyat “Hatirchi” — To‘liq foydalanuvchi yo‘riqnomasi
 
-Sana: 2026-03-26  
+Sana: 2026-03-27  
 Tizimlar: Dashboard (Veb) + Telegram bot
 
 Bu hujjat “Hatirchi” loyihasining **barcha bo‘limlari** bo‘yicha (Topshiriqlar, Loyihalar, Murojaatlar, Chat, Analitika, AI yordamchi, Telegram bot, Sozlamalar, Foydalanuvchilar/Tashkilotlar) **professional, sodda va tushunarli** yo‘riqnoma hisoblanadi.
@@ -343,3 +343,31 @@ So‘rovni qisqa va aniq qiling: “Tashkilot: X, Muddat: 3 kun, Vazifa: …”.
 
 **4) Telegram botda jarayon “qotib qoldi”**  
 `/cancel` yuboring va qaytadan menyudan boshlang.
+
+**5) Murojaat Admin/Hokimda bor, lekin Tashkilot rahbarida ko‘rinmayapti**  
+Tashkilot rahbari/mas’uli faqat **o‘z tashkilotiga biriktirilgan** murojaatlarni ko‘radi. Tekshiring:
+- foydalanuvchi profilingizda **tashkilot** biriktirilganmi,
+- murojaat tegishli tashkilot(lar)ga biriktirilganmi (kategoriya/soha asosida avtomatik yoki qo‘lda).
+
+**6) “Yer masalalari” (yoki boshqa soha) murojaati Hokim o‘rinbosariga ko‘rinmayapti**  
+Hokim o‘rinbosari/hokimlik mas’uli ko‘rishi uchun quyidagilar mos bo‘lishi kerak:
+- foydalanuvchida **soha (sector)** biriktirilgan bo‘lishi,
+- murojaat biriktirilgan tashkilot(lar)da ham **soha (sector)** to‘g‘ri ko‘rsatilgan bo‘lishi.  
+Bu mos bo‘lsa, murojaatlar soha bo‘yicha avtomatik ko‘rinadi.
+
+**7) “resolved” inglizcha chiqyapti / holat tarjimasi noto‘g‘ri**  
+Telegram botda holatlar tarjima qilinadi. Agar holat kodi ko‘rinsa, odatda u yangi holat bo‘lib, map’ga qo‘shilmagan bo‘ladi (Admin dasturchiga xabar beradi).
+
+**8) Yangi murojaat keldi, lekin sidebar’da (Murojaatlar) badge chiqmayapti**  
+`Murojaatlar` badge — **o‘qilmagan fuqaro xabarlari** soni. Murojaat detallari ichidagi xabarlar ochilganda u **o‘qilgan** deb belgilanadi.  
+Agar badge yangilanmasa: sahifani yangilang yoki `Murojaatlar` bo‘limiga kirib chiqing.
+
+**9) “Kelgan xabar o‘qilgan” bo‘lib qolmayapti (badge 1 tushmayapti)**  
+Murojaat detalida `Xabarlar` yuklanganda tizim o‘qilgan vaqtni saqlaydi. Agar tushmasa:
+- foydalanuvchi roli/huquqlarini tekshiring,
+- qayta kirib chiqing (cache bo‘lishi mumkin),
+- texnik tomondan migratsiyalar ishlaganini tekshiring.
+
+**10) Texnik: yangilanishdan keyin DB migratsiya kerak bo‘lsa**  
+Agar lokatsiya yoki “o‘qilgan” holati yangiligi kiritilgan bo‘lsa, backend’da migratsiyalarni yuriting:  
+`backend/venv/bin/python backend/manage.py migrate`
