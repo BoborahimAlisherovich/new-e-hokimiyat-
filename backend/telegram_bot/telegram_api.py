@@ -434,8 +434,8 @@ class TelegramAPI:
         """
         return TelegramAPI.create_inline_keyboard([
             [
-                {'text': '✅ Qoniqarli', 'callback_data': f'satisfied:{appeal_id}'},
-                {'text': '❌ Qoniqarsiz', 'callback_data': f'unsatisfied:{appeal_id}'}
+                {'text': '✅ Ha, mamnunman', 'callback_data': f'satisfied:{appeal_id}'},
+                {'text': "❌ Yo'q, mamnun emasman", 'callback_data': f'unsatisfied:{appeal_id}'}
             ]
         ])
     

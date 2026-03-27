@@ -1296,8 +1296,8 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 keyboard = {
                     'inline_keyboard': [
                         [
-                            {'text': '✅ Ha, rahmat', 'callback_data': f'satisfied:{appeal.id}'},  # type: ignore[attr-defined]
-                            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'unsatisfied:{appeal.id}'}  # type: ignore[attr-defined]
+                            {'text': '✅ Ha, mamnunman', 'callback_data': f'satisfied:{appeal.id}'},  # type: ignore[attr-defined]
+                            {'text': "❌ Yo'q, mamnun emasman", 'callback_data': f'unsatisfied:{appeal.id}'}  # type: ignore[attr-defined]
                         ]
                     ]
                 }
@@ -1641,8 +1641,8 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 keyboard = {
                     'inline_keyboard': [
                         [
-                            {'text': '✅ Ha, rahmat', 'callback_data': f'satisfied:{appeal.id}'},
-                            {'text': '❌ Yo\'q, qayta ko\'ring', 'callback_data': f'unsatisfied:{appeal.id}'}
+                            {'text': '✅ Ha, mamnunman', 'callback_data': f'satisfied:{appeal.id}'},
+                            {'text': "❌ Yo'q, mamnun emasman", 'callback_data': f'unsatisfied:{appeal.id}'}
                         ],
                         [
                             {'text': '⭐️ Baholash', 'callback_data': f'rate_appeal:{appeal.id}'}

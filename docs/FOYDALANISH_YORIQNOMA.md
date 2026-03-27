@@ -134,9 +134,10 @@ Ro‘yxatdan o‘tish tugagach asosiy menyu chiqadi.
 Asosiy menyudan `Yangi murojaat` tanlanadi va quyidagilar bajariladi:
 1. **Murojaat turi** tanlanadi
 2. **Kategoriya** tanlanadi
-3. **Murojaat matni** yoziladi (kamida ~20 ta belgi; juda qisqa bo‘lsa bot qayta so‘raydi)
-4. Zarur bo‘lsa **ilova** yuboriladi (rasm/video/audio/hu jj at), so‘ng `Tugatish`
-5. Bot yakuniy **tasdiqlash** oynasini chiqaradi → `Tasdiqlash`
+3. (Ixtiyoriy) **Lokatsiya** yuboriladi (muammo joylashgan manzil)
+4. **Murojaat matni** yoziladi (kamida ~20 ta belgi; juda qisqa bo‘lsa bot qayta so‘raydi)
+5. Zarur bo‘lsa **ilova** yuboriladi (rasm/video/audio/hu jj at), so‘ng `Tugatish`
+6. Bot yakuniy **tasdiqlash** oynasini chiqaradi → `Tasdiqlash`
 
 ### 4.4) Mening murojaatlarim / holatni tekshirish
 
@@ -152,8 +153,10 @@ Agar murojaat bo‘yicha operator savol berib qayta aloqa so‘rasa:
 ### 4.6) Murojaat yopish va baholash
 
 Muammo hal etilgach bot fuqarodan:
-- **qoniqish** (ha/yo‘q),
-- **baholash** (yulduzcha)
+- **mamnunlik** (✅ Ha, mamnunman / ❌ Yo‘q, mamnun emasman),
+- **baholash** (⭐️ 1–5),
+- (ixtiyoriy) **izoh** (comment),
+- (ixtiyoriy) **rasm/video/fayl** (isbot uchun)
 kabi feedback so‘rashi mumkin.
 
 ---

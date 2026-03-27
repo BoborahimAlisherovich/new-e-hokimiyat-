@@ -57,6 +57,7 @@ import {
   User, 
   Phone, 
   MapPin,
+  Navigation,
   MessageSquare,
   History,
   FileText,
@@ -185,6 +186,14 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     () => (appeal?.attachments || []).filter((attachment) => attachment.file_type !== "photo"),
     [appeal?.attachments]
   )
+
+  const locationUrl = useMemo(() => {
+    const lat = appeal?.latitude
+    const lon = appeal?.longitude
+    if (typeof lat !== "number" || typeof lon !== "number") return null
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
+    return `https://maps.google.com/maps?q=${lat},${lon}`
+  }, [appeal?.latitude, appeal?.longitude])
 
   const loadData = useCallback(async () => {
     try {
@@ -684,6 +693,24 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     <PremiumInfoItem icon={Phone} label="Telefon" value={appeal.citizenPhone || "-"} />
                     <PremiumInfoItem icon={MapPin} label="Hudud" value={appeal.district || "-"} />
                     <PremiumInfoItem icon={Calendar} label="Sana" value={formatDate(appeal.createdAt)} />
+                    <PremiumInfoItem
+                      icon={Navigation}
+                      label="Lokatsiya"
+                      value={
+                        locationUrl ? (
+                          <a
+                            href={locationUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-cyan-700 underline decoration-cyan-200 underline-offset-4"
+                          >
+                            {appeal.latitude}, {appeal.longitude}
+                          </a>
+                        ) : (
+                          "-"
+                        )
+                      }
+                    />
                   </div>
 
                   <Separator />
