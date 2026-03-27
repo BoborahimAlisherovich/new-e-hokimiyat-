@@ -65,6 +65,12 @@ export default function AppealsPage() {
   }, [loadAppeals])
 
   useEffect(() => {
+    const handleAppealsRead = () => loadAppeals()
+    window.addEventListener("appealsRead", handleAppealsRead)
+    return () => window.removeEventListener("appealsRead", handleAppealsRead)
+  }, [loadAppeals])
+
+  useEffect(() => {
     const statusOptions: Record<string, string> = { all: t.common.all }
     const priorityOptions: Record<string, string> = { all: t.common.all }
     const categoryOptions: Record<string, string> = { all: t.common.all }

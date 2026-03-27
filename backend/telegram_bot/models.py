@@ -769,6 +769,36 @@ class AppealMessage(models.Model):
         return f"{sender}: {self.text[:50]}..."
 
 
+class AppealReadState(models.Model):
+    """Dashboard foydalanuvchisi uchun murojaat xabarlarini o'qilgan holati."""
+
+    appeal = models.ForeignKey(
+        TelegramAppeal,
+        on_delete=models.CASCADE,
+        related_name='read_states',
+        verbose_name="Murojaat",
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='appeal_read_states',
+        verbose_name="Foydalanuvchi",
+    )
+    last_read_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Oxirgi o'qilgan vaqt",
+    )
+
+    class Meta:
+        verbose_name = "Murojaat o'qilgan holati"
+        verbose_name_plural = "Murojaat o'qilgan holatlari"
+        unique_together = ['appeal', 'user']
+
+    def __str__(self):
+        return f"{self.user_id} -> {self.appeal_id} ({self.last_read_at})"
+
+
 class UserState(models.Model):
     """Foydalanuvchi holati (FSM uchun)"""
     

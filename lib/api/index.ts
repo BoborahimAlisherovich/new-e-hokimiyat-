@@ -250,6 +250,7 @@ export {
   getAppealById,
   getAppealMessages,
   getAppealHistory,
+  getUnreadAppealsCount,
   sendAppealMessage,
   closeAppeal,
   reviewAppeal,

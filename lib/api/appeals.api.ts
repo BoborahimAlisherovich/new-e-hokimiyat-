@@ -300,6 +300,10 @@ export async function getAppealById(id: string): Promise<Appeal> {
 export async function getAppealMessages(appealId: string): Promise<AppealMessage[]> {
   const id = stripTelegramPrefix(appealId)
   const messages = await fetchApi<any[]>(`/telegram-bot/appeals/${id}/messages/`)
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("appealsRead"))
+  }
   
   // Normalize to expected format
   return messages.map(msg => ({
@@ -313,6 +317,14 @@ export async function getAppealMessages(appealId: string): Promise<AppealMessage
     admin_name: msg.admin_name ?? msg.sender_name ?? null,
     sender_avatar_url: msg.sender_avatar_url || null,
   }))
+}
+
+/**
+ * O'qilmagan murojaat xabarlar sonini oladi
+ */
+export async function getUnreadAppealsCount(): Promise<number> {
+  const data = await fetchApi<{ unread_count: number }>('/telegram-bot/appeals/unread-count/')
+  return data.unread_count ?? 0
 }
 
 /**

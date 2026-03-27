@@ -28,7 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { getCurrentUser, getUnreadChatCount, TOKEN_KEYS } from "@/lib/api"
+import { getCurrentUser, getUnreadChatCount, getUnreadAppealsCount, TOKEN_KEYS } from "@/lib/api"
 import type { User, UserRole } from "@/types"
 import { useTranslation } from "@/lib/i18n/context"
 import { canAccessDashboardPath, isDashboardNavItemActive } from "@/lib/dashboard-access"
@@ -59,6 +59,7 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
   const pathname = usePathname()
   const [currentUser, setCurrentUser] = useState<User | null>(() => getCachedUser())
   const [unreadChatCount, setUnreadChatCount] = useState(0)
+  const [unreadAppealsCount, setUnreadAppealsCount] = useState(0)
 
   useEffect(() => {
     // Fetch current user
@@ -67,8 +68,10 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
     const fetchUnreadCounts = async () => {
       try {
         const chatCount = await getUnreadChatCount().catch(() => 0)
+        const appealsCount = await getUnreadAppealsCount().catch(() => 0)
         if (isMounted) {
           setUnreadChatCount(chatCount)
+          setUnreadAppealsCount(appealsCount)
         }
       } catch (e) {}
     }
@@ -97,6 +100,9 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
     // Listen for chat read events
     const handleChatRead = () => fetchUnreadCounts()
     window.addEventListener('chatRead', handleChatRead)
+
+    const handleAppealsRead = () => fetchUnreadCounts()
+    window.addEventListener('appealsRead', handleAppealsRead)
     
     fetchUnreadCounts()
     // Refresh every 30 seconds
@@ -106,6 +112,7 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
       isMounted = false
       window.removeEventListener('userUpdated', handleUserUpdated)
       window.removeEventListener('chatRead', handleChatRead)
+      window.removeEventListener('appealsRead', handleAppealsRead)
       clearInterval(interval)
     }
   }, [])
@@ -164,6 +171,7 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
       title: t.navigation.appeals,
       href: "/dashboard/appeals",
       icon: MessageCircle,
+      badge: unreadAppealsCount,
       section: "communication"
     },
     {

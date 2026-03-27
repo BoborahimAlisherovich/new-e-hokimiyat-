@@ -3,7 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, Value, OuterRef, Subquery, DateTimeField, Sum
+from django.db.models.functions import Coalesce
+import datetime
 from datetime import timedelta
 import json
 import subprocess
@@ -11,7 +13,7 @@ import subprocess
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
-    AppealAttachment, AppealMessage
+    AppealAttachment, AppealMessage, AppealReadState
 )
 from .serializers import (
     BotSettingsSerializer, BotAdminSerializer, BotRegionSerializer,
@@ -915,27 +917,46 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
 
-        if user.role in ['HOKIM', 'ADMIN']:
-            return queryset
+        if user.role not in ['HOKIM', 'ADMIN']:
+            # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga biriktirilgan murojaatlarni ko'radi
+            if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
+                if not user.organization:
+                    queryset = queryset.none()
+                else:
+                    queryset = queryset.filter(assigned_organizations=user.organization)
+            elif user.role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL']:
+                visibility_filter = Q(reviewed_by__user=user) | Q(messages__sender_user=user)
+                if user.organization:
+                    visibility_filter |= Q(assigned_organizations=user.organization)
+                if getattr(user, 'sector_id', None):
+                    visibility_filter |= Q(assigned_organizations__sector_id=user.sector_id)
 
-        # Tashkilot rahbari/mas'uli faqat o'z tashkilotiga biriktirilgan murojaatlarni ko'radi
-        if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']:
-            if not user.organization:
-                return queryset.none()
+                queryset = queryset.filter(visibility_filter).distinct()
+            else:
+                queryset = queryset.none()
 
-            queryset = queryset.filter(assigned_organizations=user.organization)
-        elif user.role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL']:
-            organization_filter = Q(pk__isnull=True)
-            if user.organization:
-                organization_filter = Q(assigned_organizations=user.organization)
-
-            queryset = queryset.filter(
-                organization_filter |
-                Q(reviewed_by__user=user) |
-                Q(messages__sender_user=user)
-            ).distinct()
-        else:
-            queryset = queryset.none()
+        # Unread messages count (fuqarodan kelgan) - current dashboard user uchun
+        try:
+            if getattr(user, 'is_authenticated', False) and getattr(user, 'id', None):
+                last_read_at = Subquery(
+                    AppealReadState.objects.filter(appeal_id=OuterRef('pk'), user_id=user.id)
+                    .values('last_read_at')[:1],
+                    output_field=DateTimeField(),
+                )
+                epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+                queryset = queryset.annotate(
+                    _last_read_at=last_read_at,
+                ).annotate(
+                    _last_read_at_c=Coalesce(F('_last_read_at'), Value(epoch, output_field=DateTimeField()))
+                ).annotate(
+                    unread_user_messages_count=Count(
+                        'messages',
+                        filter=Q(messages__is_from_admin=False, messages__created_at__gt=F('_last_read_at_c')),
+                        distinct=True,
+                    )
+                )
+        except Exception:
+            pass
 
         return queryset
     
@@ -1341,6 +1362,16 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     def messages(self, request, pk=None):
         """Murojaat xabarlari"""
         appeal = self.get_object()
+        # O'qildi deb belgilash (dashboard tomoni)
+        try:
+            if request.user and request.user.is_authenticated:
+                AppealReadState.objects.update_or_create(
+                    appeal=appeal,
+                    user=request.user,
+                    defaults={'last_read_at': timezone.now()},
+                )
+        except Exception:
+            pass
         messages = AppealMessage.objects.filter(appeal=appeal).select_related('admin', 'sender_user', 'appeal__telegram_user').order_by('created_at')
         
         # Fuqaro ismi
@@ -1383,6 +1414,20 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             })
         
         return Response(data)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        """O'qilmagan murojaat xabarlar soni (fuqaro xabarlari)."""
+        user = request.user
+        if not user or not user.is_authenticated:
+            return Response({'unread_count': 0})
+
+        try:
+            qs = self.get_queryset()
+            total = qs.aggregate(total=Coalesce(Sum('unread_user_messages_count'), 0))['total']  # type: ignore[index]
+            return Response({'unread_count': int(total or 0)})
+        except Exception:
+            return Response({'unread_count': 0})
     
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
