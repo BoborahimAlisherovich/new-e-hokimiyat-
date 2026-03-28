@@ -615,6 +615,7 @@ QOIDALAR:
         
         old_status = task_org.status
         task_org.accept(user)
+        task.sync_status_from_assignments()
         
         # Create execution record
         TaskExecution.objects.create(
@@ -669,6 +670,7 @@ QOIDALAR:
         
         old_status = task_org.status
         task_org.complete()
+        task.sync_status_from_assignments()
         
         # Create execution record
         execution = TaskExecution.objects.create(
@@ -797,6 +799,7 @@ QOIDALAR:
         task_org.status = 'QAYTA_IJROGA_YUBORILDI'
         task_org.completed_at = None
         task_org.save()
+        task.sync_status_from_assignments()
         
         TaskExecution.objects.create(
             task=task,
@@ -916,6 +919,8 @@ QOIDALAR:
         if all_completed:
             task.status = 'BAJARILDI'
             task.save()
+        else:
+            task.sync_status_from_assignments()
         
         # HOKIM va HOKIMLIK_MASUL larga bildirishnoma yuborish
         from users.models import User as UserModel

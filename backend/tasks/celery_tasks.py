@@ -30,15 +30,18 @@ def check_overdue_tasks():
     
     # Mark tasks as overdue
     overdue_task_orgs = TaskOrganization.objects.filter(
-        status='IJRODA',
+        status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI'],
         task__deadline__lt=now
     )
+
+    touched_task_ids = set()
     
     for task_org in overdue_task_orgs:
         old_status = task_org.status
         task_org.status = 'MUDDATI_KECH'
         task_org.save()
         updated_to_overdue += 1
+        touched_task_ids.add(task_org.task_id)
         
         AuditLog.log(
             user=None,
@@ -75,6 +78,7 @@ def check_overdue_tasks():
         task_org.status = 'BAJARILMADI'
         task_org.save()
         updated_to_failed += 1
+        touched_task_ids.add(task_org.task_id)
         
         AuditLog.log(
             user=None,
@@ -85,6 +89,10 @@ def check_overdue_tasks():
             old_values={'status': old_status},
             new_values={'status': task_org.status}
         )
+
+    # Sync parent Task.status for creator/admin dashboards
+    for task in Task.objects.filter(id__in=touched_task_ids):
+        task.sync_status_from_assignments()
     
     return {
         'overdue': updated_to_overdue,
