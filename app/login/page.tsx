@@ -93,7 +93,6 @@ export default function LoginPage() {
       if (headerRef.current) {
         tl.from(headerRef.current.children, {
           y: 30,
-          opacity: 0,
           duration: 0.7,
           stagger: 0.1,
         }, 0.5)
@@ -103,7 +102,6 @@ export default function LoginPage() {
       if (formCardRef.current) {
         tl.from(formCardRef.current, {
           y: 40,
-          opacity: 0,
           scale: 0.96,
           duration: 0.8,
         }, 0.7)
@@ -113,7 +111,6 @@ export default function LoginPage() {
       if (footerRef.current) {
         tl.from(footerRef.current, {
           y: 20,
-          opacity: 0,
           duration: 0.5,
         }, 1)
       }
