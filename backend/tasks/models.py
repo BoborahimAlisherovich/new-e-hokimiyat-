@@ -125,11 +125,47 @@ class Task(BaseModel):
     
     def __str__(self):
         return self.title[:50]
+
+    def sync_status_from_assignments(self, *, save: bool = True) -> str:
+        """
+        Sync Task.status from related TaskOrganization statuses.
+
+        This keeps "creator/admin" views consistent, because they rely on Task.status
+        while organization users rely on TaskOrganization.status.
+        """
+        if self.status == 'NAZORATDAN_YECHILDI':
+            return self.status
+
+        statuses = list(self.assigned_organizations.values_list('status', flat=True))
+        if not statuses:
+            return self.status
+
+        # Final/terminal states first
+        if all(s == 'NAZORATDAN_YECHILDI' for s in statuses):
+            desired = 'NAZORATDAN_YECHILDI'
+        elif all(s == 'BAJARILDI' for s in statuses):
+            desired = 'BAJARILDI'
+        elif any(s == 'BAJARILMADI' for s in statuses):
+            desired = 'BAJARILMADI'
+        elif any(s == 'MUDDATI_KECH' for s in statuses):
+            desired = 'MUDDATI_KECH'
+        elif any(s == 'QAYTA_IJROGA_YUBORILDI' for s in statuses):
+            desired = 'QAYTA_IJROGA_YUBORILDI'
+        elif any(s in ['IJRODA', 'BAJARILDI'] for s in statuses):
+            desired = 'IJRODA'
+        else:
+            desired = 'YANGI'
+
+        if desired != self.status:
+            self.status = desired
+            if save:
+                self.save(update_fields=['status', 'updated_at'])
+        return desired
     
     @property
     def is_overdue(self):
         """Check if task is overdue."""
-        if self.status in ['NAZORATDAN_YECHILDI', 'BAJARILDI']:
+        if self.status in ['NAZORATDAN_YECHILDI', 'BAJARILDI', 'BAJARILMADI']:
             return False
         return timezone.now() > self.deadline
     
