@@ -4,6 +4,7 @@ Task serializers for E-Hokimiyat API.
 
 from rest_framework import serializers
 from django.utils import timezone
+from datetime import timedelta
 from core.constants import UserRole
 from .models import (
     Task, TaskOrganization, TaskExecution, 
@@ -107,9 +108,54 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     created_by = UserMinimalSerializer(read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     assigned_organizations = TaskOrganizationSerializer(many=True, read_only=True)
-    is_overdue = serializers.BooleanField(read_only=True)
+    status = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
     days_remaining = serializers.IntegerField(read_only=True)
-    
+
+    def _effective_status(self, task: Task) -> str:
+        """
+        Return task status adjusted for the current user context.
+
+        - Organization users see their own TaskOrganization.status.
+        - Admin/creator roles see Task.status.
+        - Overdue is computed from deadline even if background jobs are not running.
+        """
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        base_status = task.status
+        task_org_status = None
+
+        if user and getattr(user, 'role', None) in [UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL] and getattr(user, 'organization_id', None):
+            task_org = task.assigned_organizations.filter(organization_id=user.organization_id).only('status').first()
+            if task_org:
+                task_org_status = task_org.status
+                base_status = task_org_status
+
+        if base_status in ['NAZORATDAN_YECHILDI', 'BAJARILDI', 'BAJARILMADI']:
+            return base_status
+
+        now = timezone.now()
+        if task.deadline and task.deadline < now:
+            # If it's overdue, reflect it even when DB status wasn't updated yet.
+            if base_status == 'MUDDATI_KECH':
+                if task.deadline < (now - timedelta(days=7)):
+                    return 'BAJARILMADI'
+                return 'MUDDATI_KECH'
+            if base_status in ['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA']:
+                return 'MUDDATI_KECH'
+
+        return base_status
+
+    def get_status(self, obj: Task) -> str:
+        return self._effective_status(obj)
+
+    def get_is_overdue(self, obj: Task) -> bool:
+        status_value = self._effective_status(obj)
+        if status_value in ['NAZORATDAN_YECHILDI', 'BAJARILDI', 'BAJARILMADI']:
+            return False
+        return bool(obj.deadline and timezone.now() > obj.deadline)
+
     class Meta:
         model = Task
         fields = [
@@ -126,8 +172,43 @@ class TaskSerializer(serializers.ModelSerializer):
     created_by = UserMinimalSerializer(read_only=True)
     closed_by = UserMinimalSerializer(read_only=True)
     assigned_organizations = TaskOrganizationSerializer(many=True, read_only=True)
-    is_overdue = serializers.BooleanField(read_only=True)
+    status = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
     days_remaining = serializers.IntegerField(read_only=True)
+
+    def _effective_status(self, task: Task) -> str:
+        # Keep logic in sync with TaskMinimalSerializer.
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        base_status = task.status
+        if user and getattr(user, 'role', None) in [UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL] and getattr(user, 'organization_id', None):
+            task_org = task.assigned_organizations.filter(organization_id=user.organization_id).only('status').first()
+            if task_org:
+                base_status = task_org.status
+
+        if base_status in ['NAZORATDAN_YECHILDI', 'BAJARILDI', 'BAJARILMADI']:
+            return base_status
+
+        now = timezone.now()
+        if task.deadline and task.deadline < now:
+            if base_status == 'MUDDATI_KECH':
+                if task.deadline < (now - timedelta(days=7)):
+                    return 'BAJARILMADI'
+                return 'MUDDATI_KECH'
+            if base_status in ['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA']:
+                return 'MUDDATI_KECH'
+
+        return base_status
+
+    def get_status(self, obj: Task) -> str:
+        return self._effective_status(obj)
+
+    def get_is_overdue(self, obj: Task) -> bool:
+        status_value = self._effective_status(obj)
+        if status_value in ['NAZORATDAN_YECHILDI', 'BAJARILDI', 'BAJARILMADI']:
+            return False
+        return bool(obj.deadline and timezone.now() > obj.deadline)
     
     class Meta:
         model = Task
