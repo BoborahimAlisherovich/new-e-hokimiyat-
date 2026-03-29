@@ -10,18 +10,12 @@ export const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-100 text-red-800 border-red-200",
 }
 
-// Backend status values: DRAFT, KUTILMOQDA, FAOL, BLOKLANGAN, ARXIV
+// Users page shows a simplified 2-state "holat":
+// - ACTIVE: user has logged in at least once (first_login_at exists) and not blocked/archived
+// - INACTIVE: never logged in yet, or blocked/archived
 export const STATUS_COLORS: Record<string, string> = {
-  // Backend statuses
-  DRAFT: "bg-gray-100 text-gray-800 border-gray-200",
-  KUTILMOQDA: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  FAOL: "bg-green-100 text-green-800 border-green-200",
-  BLOKLANGAN: "bg-red-100 text-red-800 border-red-200",
-  ARXIV: "bg-gray-100 text-gray-600 border-gray-200",
-  // Legacy frontend statuses
   ACTIVE: "bg-green-100 text-green-800 border-green-200",
   INACTIVE: "bg-red-100 text-red-800 border-red-200",
-  BLOCKED: "bg-yellow-100 text-yellow-800 border-yellow-200",
 }
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -35,19 +29,19 @@ export const ROLE_LABELS: Record<string, string> = {
 }
 
 export const STATUS_LABELS: Record<string, string> = {
-  // Backend statuses
-  DRAFT: "Qoralama",
-  KUTILMOQDA: "Kutilmoqda",
-  FAOL: "Faol",
-  BLOKLANGAN: "Bloklangan",
-  ARXIV: "Arxiv",
-  // Legacy frontend statuses
   ACTIVE: "Faol",
-  INACTIVE: "Nofaol",
-  BLOCKED: "Bloklangan",
+  INACTIVE: "Faol emas",
 }
 
 // Helper to get status key from user object
 export function getUserStatusKey(user: any): string {
-  return user.status || 'DRAFT'
+  const backendStatus = String(user?.status || "")
+  if (backendStatus === "BLOKLANGAN" || backendStatus === "ARXIV") return "INACTIVE"
+
+  const hasLoggedIn =
+    Boolean(user?.first_login_at) ||
+    Boolean(user?.activated_at) ||
+    Boolean(user?.last_login)
+
+  return hasLoggedIn ? "ACTIVE" : "INACTIVE"
 }

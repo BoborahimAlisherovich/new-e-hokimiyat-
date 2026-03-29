@@ -119,11 +119,8 @@ export function UserFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barchasi</SelectItem>
-                <SelectItem value="FAOL">Faol</SelectItem>
-                <SelectItem value="KUTILMOQDA">Kutilmoqda</SelectItem>
-                <SelectItem value="BLOKLANGAN">Bloklangan</SelectItem>
-                <SelectItem value="ARXIV">Arxiv</SelectItem>
-                <SelectItem value="DRAFT">Qoralama</SelectItem>
+                <SelectItem value="ACTIVE">Faol</SelectItem>
+                <SelectItem value="INACTIVE">Faol emas</SelectItem>
               </SelectContent>
             </Select>
           </div>

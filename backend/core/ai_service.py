@@ -377,18 +377,34 @@ Murojaatlar:
             return {"intent": "UNKNOWN", "confidence": 0.0, "parameters": {}}
 
         from organizations.models import Organization
-        orgs = list(
-            Organization.objects.filter(is_active=True)
-            .values('id', 'name', 'short_name', 'sector__name')
-        )
-        org_map = {str(o['id']): o for o in orgs}
-        org_list_lines = []
-        for o in orgs:
-            short_name = f" / {o.get('short_name')}" if o.get('short_name') else ""
-            org_list_lines.append(
-                f"- {o['name']}{short_name} (ID: {o['id']}, soha: {o.get('sector__name') or 'Noma`lum'})"
-            )
-        org_list = "\n".join(org_list_lines) or "- Tashkilotlar mavjud emas"
+
+        # Keep prompt small for performance and to avoid context overflow.
+        normalized_text = (text or "").lower()
+        assign_all_hint = bool(re.search(r'\b(barchaga|hamma|hammasiga|barcha\s+tashkilot(?:lar)?|hamma\s+tashkilot(?:lar)?)\b', normalized_text))
+
+        if assign_all_hint:
+            org_list = "- (Foydalanuvchi 'barcha tashkilotlar' dedi)"
+        else:
+            matched = self._match_org_ids_from_text(text)[:40]
+            if matched:
+                org_rows = list(
+                    Organization.objects.filter(id__in=[m['id'] for m in matched], is_active=True)
+                    .values('id', 'name', 'short_name', 'sector__name')
+                )
+            else:
+                org_rows = list(
+                    Organization.objects.filter(is_active=True)
+                    .order_by('name')
+                    .values('id', 'name', 'short_name', 'sector__name')[:40]
+                )
+
+            org_list_lines: list[str] = []
+            for o in org_rows:
+                short_name = f" / {o.get('short_name')}" if o.get('short_name') else ""
+                org_list_lines.append(
+                    f"- {o['name']}{short_name} (ID: {o['id']}, soha: {o.get('sector__name') or 'Noma`lum'})"
+                )
+            org_list = "\n".join(org_list_lines) or "- Tashkilotlar mavjud emas"
 
         prompt = f"""
 Foydalanuvchi yuborgan matn (ko'pincha audio transkripsiya):
@@ -466,30 +482,15 @@ Faqat JSON qaytaring:
             }
             allowed_freq = {'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'}
 
-            org_ids: List[str] = []
-            for oid in parsed.get('organization_ids', []) or []:
-                if str(oid) in org_map:
-                    org_ids.append(str(oid))
-
             org_names = [str(name).strip() for name in (parsed.get('organization_names') or []) if str(name).strip()]
-            if not org_ids and org_names:
-                for org in orgs:
-                    org_name_lower = self._normalize_match_text(org.get('name') or '')
-                    org_short_name = self._normalize_match_text(org.get('short_name') or '')
-                    if any(
-                        self._normalize_match_text(name) in org_name_lower
-                        or org_name_lower in self._normalize_match_text(name)
-                        or (org_short_name and self._normalize_match_text(name) in org_short_name)
-                        for name in org_names
-                    ):
-                        org_ids.append(str(org['id']))
+            org_ids = [str(oid) for oid in (parsed.get('organization_ids') or []) if oid]
 
             params: Dict[str, Any] = {
                 'title': str(parsed.get('title', '')).strip(),
                 'description': str(parsed.get('description', '')).strip(),
                 'priority': str(parsed.get('priority', 'ODDIY')).upper(),
                 'category': str(parsed.get('category', 'BOSHQA')).upper(),
-                'organization_ids': list(dict.fromkeys(org_ids)),
+                'organization_ids': list(dict.fromkeys([oid for oid in org_ids if oid])),
                 'organization_names': org_names,
                 'assign_all': bool(parsed.get('assign_all', False)),
             }
@@ -515,8 +516,33 @@ Faqat JSON qaytaring:
                 params['category'] = 'BOSHQA'
             params['deadline_days'] = min(max(params['deadline_days'], 1), 365)
 
-            if intent == 'CREATE_TASK' and params.get('frequency') in {'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'}:
+            def _text_implies_recurring(source_text: str) -> bool:
+                st = (source_text or "").lower()
+                # Uzbek keywords for recurrence; also cover "har 3 kunda" patterns.
+                return bool(
+                    re.search(
+                        r'\b(takror|takrorlanuvchi|har\s*kuni|kunlik|har\s*hafta|haftalik|har\s*oy|oylik|har\s*yil|yillik|har\s*\d+\s*kun|cron)\b',
+                        st,
+                    )
+                )
+
+            # Prevent accidental conversion to recurring when the user asked a one-off task.
+            if intent == 'CREATE_TASK' and params.get('frequency') in allowed_freq and not _text_implies_recurring(text):
+                params.pop('frequency', None)
+                params.pop('start_date', None)
+                params.pop('end_date', None)
+                params.pop('cron_expression', None)
+
+            if intent == 'CREATE_TASK' and params.get('frequency') in allowed_freq and _text_implies_recurring(text):
                 intent = 'CREATE_RECURRING_TASK'
+
+            if intent == 'CREATE_RECURRING_TASK' and not _text_implies_recurring(text):
+                # LLM sometimes hallucinates recurrence; fall back to a normal task.
+                intent = 'CREATE_TASK'
+                params.pop('frequency', None)
+                params.pop('start_date', None)
+                params.pop('end_date', None)
+                params.pop('cron_expression', None)
 
             if intent == 'CREATE_RECURRING_TASK' and 'frequency' not in params:
                 params['frequency'] = 'WEEKLY'
@@ -1093,11 +1119,21 @@ Faqat JSON qaytaring:
         org_name = str(params.get('organization_name') or '').strip()
         assign_all = bool(params.get('assign_all', False))
 
-        if assign_all:
-            org_ids = list(
-                Organization.objects.filter(is_active=True).values_list('id', flat=True)
-            )
-            org_ids = [str(oid) for oid in org_ids]
+        def _bulk_create_assignments(task: Task, org_id_iter, *, batch_size: int = 1000) -> int:
+            buffer: list[TaskOrganization] = []
+            created = 0
+            for oid in org_id_iter:
+                if not oid:
+                    continue
+                buffer.append(TaskOrganization(task=task, organization_id=oid))
+                if len(buffer) >= batch_size:
+                    TaskOrganization.objects.bulk_create(buffer, batch_size=batch_size)
+                    created += len(buffer)
+                    buffer = []
+            if buffer:
+                TaskOrganization.objects.bulk_create(buffer, batch_size=batch_size)
+                created += len(buffer)
+            return created
 
         if not org_ids and org_names:
             for org_name in org_names[:20]:
@@ -1112,12 +1148,23 @@ Faqat JSON qaytaring:
             guessed = self._match_org_ids_from_text(text_for_match)
             org_ids = [item['id'] for item in guessed]
 
-        valid_orgs = list(Organization.objects.filter(id__in=list(dict.fromkeys(org_ids)), is_active=True))
-        if not valid_orgs:
-            return {
-                'success': False,
-                'error': "Topshiriq uchun mos tashkilot aniqlanmadi. Tashkilot nomini yoki 'barcha tashkilotlar' deb aniq yozing."
-            }
+        if assign_all:
+            org_qs = Organization.objects.filter(is_active=True).values_list('id', flat=True)
+            org_count = org_qs.count()
+            if org_count == 0:
+                return {
+                    'success': False,
+                    'error': "Faol tashkilotlar topilmadi.",
+                }
+        else:
+            valid_org_ids = list(
+                Organization.objects.filter(id__in=list(dict.fromkeys(org_ids)), is_active=True).values_list('id', flat=True)
+            )
+            if not valid_org_ids:
+                return {
+                    'success': False,
+                    'error': "Topshiriq uchun mos tashkilot aniqlanmadi. Tashkilot nomini yoki 'barcha tashkilotlar' deb aniq yozing."
+                }
 
         task = Task.objects.create(
             title=title,
@@ -1129,14 +1176,16 @@ Faqat JSON qaytaring:
             source='AI'
         )
 
-        for org in valid_orgs:
-            TaskOrganization.objects.create(task=task, organization=org)
+        if assign_all:
+            created_count = _bulk_create_assignments(task, org_qs.iterator())
+        else:
+            created_count = _bulk_create_assignments(task, valid_org_ids)
 
         task_id = str(task.id)
         return {
             'success': True,
             'task_id': task_id,
-            'message': f"Topshiriq #{task_id} yaratildi ({len(valid_orgs)} ta tashkilotga biriktirildi)"
+            'message': f"Topshiriq #{task_id} yaratildi ({created_count} ta tashkilotga biriktirildi)"
         }
 
     def _create_recurring_task(self, params: Dict, user) -> Dict:

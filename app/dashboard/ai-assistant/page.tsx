@@ -265,9 +265,15 @@ export default function AIAssistantPage() {
         { message: userMessage }
       );
 
-      loadConversations();
-      const conv = conversations.find(c => c.id === convId);
-      if (conv) setCurrentConversation(conv);
+      // Optimistic sidebar update (avoid refetch on every message for performance)
+      setConversations((prev) => {
+        const now = new Date().toISOString();
+        const existing = prev.find((c) => c.id === convId);
+        const updated = existing
+          ? { ...existing, updated_at: now }
+          : ({ id: convId, title: buildConversationTitle(userMessage), updated_at: now } as any);
+        return [updated, ...prev.filter((c) => c.id !== convId)];
+      });
 
       shouldScrollRef.current = true;
       setMessages((prev) => [

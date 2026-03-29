@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useI18n } from "@/lib/i18n/context"
 import { normalizeUserRole } from "@/lib/role-utils"
+import { getUserStatusKey } from "@/components/dashboard/users/user-constants"
 
 export default function UsersPage() {
   const t = useTranslation()
@@ -92,7 +93,7 @@ export default function UsersPage() {
              (user.pnfl || '').includes(searchQuery)
       
       const matchesRole = roleFilter === "all" || user.role === roleFilter
-      const matchesStatus = statusFilter === "all" || user.status === statusFilter
+      const matchesStatus = statusFilter === "all" || getUserStatusKey(user) === statusFilter
       const matchesOrganization = organizationFilter === "all" || String(user.organization?.id) === organizationFilter
 
       return matchesSearch && matchesRole && matchesStatus && matchesOrganization
@@ -190,7 +191,7 @@ export default function UsersPage() {
         description="Faol xodimlar, tashkilotlar bo‘yicha taqsimot va yangi foydalanuvchi yaratish jarayoni bir oqimda boshqariladi."
         stats={[
           { label: "Jami", value: users.length, icon: UsersRound, tone: "from-cyan-500/18 to-cyan-100/70" },
-          { label: "Faol", value: users.filter((u) => u.status === "FAOL").length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
+          { label: "Faol", value: users.filter((u) => getUserStatusKey(u) === "ACTIVE").length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
           { label: "Tashkilotlar", value: organizations.length, icon: Building2, tone: "from-amber-400/24 to-amber-100/75" },
         ]}
       >
@@ -204,8 +205,8 @@ export default function UsersPage() {
           <section data-gsap-section>
             <UserStats
               total={users.length}
-              active={users.filter((u) => u.status === "FAOL").length}
-              inactive={users.filter((u) => u.status === "BLOKLANGAN" || u.status === "ARXIV" || u.status === "DRAFT").length}
+              active={users.filter((u) => getUserStatusKey(u) === "ACTIVE").length}
+              inactive={users.filter((u) => getUserStatusKey(u) === "INACTIVE").length}
               organizations={organizations.length}
             />
           </section>

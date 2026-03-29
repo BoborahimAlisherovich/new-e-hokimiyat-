@@ -60,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name', 'phone', 'email', 'role', 'organization', 'organization_name',
             'sector', 'sector_name', 'supervisor', 'supervisor_name',
             'position', 'status', 'cabinet_type',
-            'created_by', 'created_by_name', 'created_at', 'activated_at', 'is_online', 'last_seen',
+            'created_by', 'created_by_name', 'created_at', 'activated_at', 'first_login_at', 'is_online', 'last_seen',
             'avatar', 'avatar_url', 'visible_password'
         ]
         read_only_fields = ['id', 'created_at', 'activated_at', 'created_by', 'is_online', 'last_seen']
