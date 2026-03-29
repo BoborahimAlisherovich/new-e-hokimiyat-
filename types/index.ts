@@ -41,6 +41,8 @@ export interface User extends BaseModel {
   phone?: string
   role: UserRole
   status: UserStatus
+  activated_at?: string
+  first_login_at?: string
   position?: string
   organization?: Organization
   organization_id?: number | string

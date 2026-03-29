@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { User } from "@/types"
 import { Building, Mail, Phone } from "lucide-react"
-import { ROLE_COLORS, ROLE_LABELS, STATUS_COLORS, STATUS_LABELS } from "./user-constants"
+import { ROLE_COLORS, ROLE_LABELS, STATUS_COLORS, STATUS_LABELS, getUserStatusKey } from "./user-constants"
 import { maskPnfl } from "./user-helpers"
 
 interface UserDetailDialogProps {
@@ -40,9 +40,14 @@ export function UserDetailDialog({ user, onClose }: UserDetailDialogProps) {
                   <Badge className={cn("px-2 py-1 text-xs font-medium", ROLE_COLORS[user.role])}>
                     {ROLE_LABELS[user.role]}
                   </Badge>
-                  <Badge className={cn("px-2 py-1 text-xs font-medium", STATUS_COLORS[user.status])}>
-                    {STATUS_LABELS[user.status]}
-                  </Badge>
+                  {(() => {
+                    const key = getUserStatusKey(user)
+                    return (
+                      <Badge className={cn("px-2 py-1 text-xs font-medium", STATUS_COLORS[key])}>
+                        {STATUS_LABELS[key]}
+                      </Badge>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
