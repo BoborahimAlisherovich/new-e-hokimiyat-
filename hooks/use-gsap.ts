@@ -9,6 +9,26 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+function shouldReduceMotionOrEffects(): boolean {
+  if (typeof window === "undefined") return true;
+
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  if (prefersReducedMotion) return true;
+
+  // Mobile: animations + backdrop effects tend to be the main source of jank.
+  if (window.matchMedia?.("(max-width: 767px)")?.matches) return true;
+
+  const connection: any = (navigator as any)?.connection;
+  if (connection?.saveData) return true;
+  const effectiveType = String(connection?.effectiveType || "").toLowerCase();
+  if (effectiveType.includes("2g") || effectiveType.includes("slow-2g")) return true;
+
+  const deviceMemory = (navigator as any)?.deviceMemory;
+  if (typeof deviceMemory === "number" && deviceMemory > 0 && deviceMemory <= 4) return true;
+
+  return false;
+}
+
 /**
  * GSAP scroll-triggered fade-in animation
  */
@@ -26,6 +46,7 @@ export function useGSAPFadeIn(options?: {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const {
       y = 40,
@@ -75,6 +96,7 @@ export function useGSAPDashboardPage() {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -134,6 +156,7 @@ export function useGSAPLoadingReveal(loading: boolean) {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     if (!loading) {
       const ctx = gsap.context(() => {
@@ -165,6 +188,7 @@ export function useGSAPTextReveal(options?: {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const { duration = 0.6, stagger = 0.03, delay = 0, type = "words" } = options || {};
 
@@ -223,6 +247,7 @@ export function useGSAPCounter(
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const { duration = 1.5, delay = 0, suffix = "", prefix = "" } = options || {};
     const counter = { value: 0 };
@@ -260,6 +285,7 @@ export function useGSAPMagnetic(strength: number = 0.3) {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
     const el = ref.current;
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -298,6 +324,7 @@ export function useGSAPParallax(speed: number = 0.5) {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const ctx = gsap.context(() => {
       gsap.to(ref.current, {
@@ -331,6 +358,7 @@ export function useGSAPStaggerGrid(options?: {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const { duration = 0.6, stagger = 0.08, y = 30, scale = 0.95 } = options || {};
 
@@ -396,12 +424,8 @@ export function useGSAPPageEntrance() {
       });
     };
 
-    const prefersReducedMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-
-    // Reduced motion: no entrance animations, but keep everything visible.
-    if (prefersReducedMotion) {
+    // Reduced motion/perf mode: no entrance animations, but keep everything visible.
+    if (shouldReduceMotionOrEffects()) {
       ensureVisible();
       return;
     }
@@ -516,6 +540,7 @@ export function useGSAPProgress(value: number, options?: { duration?: number; de
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const { duration = 1.2, delay = 0 } = options || {};
 
@@ -547,6 +572,7 @@ export function useGSAPModalEntrance() {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
@@ -589,6 +615,7 @@ export function useGSAPCardHover() {
 
   useEffect(() => {
     if (!ref.current) return;
+    if (shouldReduceMotionOrEffects()) return;
     const el = ref.current;
 
     const handleMouseEnter = () => {

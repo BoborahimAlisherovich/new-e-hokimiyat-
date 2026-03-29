@@ -24,7 +24,7 @@ export default function TasksPage() {
   const [organizations, setOrganizations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(100)
+  const [pageSize, setPageSize] = useState(50)
   const [totalCount, setTotalCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<Task["status"] | "all">("all")
@@ -119,6 +119,15 @@ export default function TasksPage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const media = window.matchMedia?.("(max-width: 767px)")
+    const apply = () => setPageSize(media?.matches ? 20 : 50)
+    apply()
+    media?.addEventListener?.("change", apply)
+    return () => media?.removeEventListener?.("change", apply)
+  }, [])
 
   useEffect(() => {
     setPage(1)

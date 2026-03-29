@@ -252,13 +252,14 @@ export default function TaskDetailPage() {
     
     setIsSaving(true)
     try {
+      const deadlineIso = editDeadline ? toIsoDateTime(editDeadline, task.deadline) : ""
       const updatedTask = await updateTask(id, {
         title: editTitle,
         description: editDescription,
         priority: editPriority as any,
-        due_date: editDeadline,
+        deadline: deadlineIso || undefined,
         category: editCategory as any,
-      })
+      } as any)
       setTask(updatedTask)
       setIsEditOpen(false)
     } catch (error) {
@@ -278,8 +279,9 @@ export default function TaskDetailPage() {
     
     setIsSaving(true)
     try {
+      const requestedIso = toIsoDateTime(extendDeadline, task.deadline)
       const updatedTask = await requestDeadlineExtension(id, {
-        requested_deadline: extendDeadline,
+        requested_deadline: requestedIso,
         reason: extendReason,
       })
       setTask(updatedTask)
@@ -529,6 +531,21 @@ export default function TaskDetailPage() {
     })
   }
 
+  const toIsoDateTime = (value: string, fallbackIso?: string) => {
+    if (!value) return ""
+    if (value.includes("T")) return value
+
+    const fallbackTime = fallbackIso?.includes("T") ? fallbackIso.split("T")[1] : ""
+    const timePart = (fallbackTime || "23:59:59").replace("Z", "").split(".")[0] || "23:59:59"
+    const localDateTime = `${value}T${timePart}`
+    const parsed = new Date(localDateTime)
+    if (!Number.isFinite(parsed.getTime())) {
+      const fallback = new Date(`${value}T23:59:59`)
+      return Number.isFinite(fallback.getTime()) ? fallback.toISOString() : value
+    }
+    return parsed.toISOString()
+  }
+
   const isOverdue = new Date(task.deadline) < new Date() && !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
 
   return (
@@ -562,16 +579,12 @@ export default function TaskDetailPage() {
         badges={
           <>
             {task.category && (
-              <Badge className="border-white/20 bg-white/12 text-white hover:bg-white/15">
+              <Badge variant="outline" className="font-normal">
                 {CATEGORY_LABELS[task.category] || task.category}
               </Badge>
             )}
-            <div className="rounded-full border border-white/20 bg-white/12 px-3 py-1">
-              <PriorityBadge priority={task.priority} />
-            </div>
-            <div className="rounded-full border border-white/20 bg-white/12 px-3 py-1">
-              <TaskStatusBadge status={task.status} />
-            </div>
+            <PriorityBadge priority={task.priority} />
+            <TaskStatusBadge status={task.status} />
           </>
         }
         actions={

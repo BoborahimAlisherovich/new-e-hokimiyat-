@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from datetime import timedelta
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -183,7 +184,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['status', 'priority', 'category']
+    # `status` filtering is handled in `get_queryset` because organization users
+    # need filtering by TaskOrganization.status and overdue must work without Celery.
+    filterset_fields = ['priority', 'category']
     search_fields = ['title', 'description']
     ordering_fields = ['deadline', 'created_at', 'priority', 'status']
     ordering = ['status', 'deadline', '-created_at']
@@ -193,27 +196,33 @@ class TaskViewSet(viewsets.ModelViewSet):
         """Topshiriqlar statistikasi (filtrlar bilan)."""
         user = request.user
         queryset = self.filter_queryset(self.get_queryset())
+        now = timezone.now()
 
         total = queryset.count()
         
         # Tashkilot xodimlari uchun TaskOrganization statusini hisoblash
         if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and user.organization:
-            from tasks.models import TaskOrganization
             task_ids = queryset.values_list('id', flat=True)
             task_orgs = TaskOrganization.objects.filter(
                 task_id__in=task_ids,
                 organization=user.organization
             )
-            pending = task_orgs.filter(status='YANGI').count()
-            in_progress = task_orgs.filter(status='IJRODA').count()
-            completed = task_orgs.filter(status='BAJARILDI').count()
-            overdue = task_orgs.filter(status='MUDDATI_KECH').count()
+            overdue = task_orgs.filter(
+                status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'MUDDATI_KECH', 'TEKSHIRUVDA'],
+                task__deadline__lt=now,
+            ).count()
+            pending = task_orgs.filter(status='YANGI', task__deadline__gte=now).count()
+            in_progress = task_orgs.filter(status='IJRODA', task__deadline__gte=now).count()
+            completed = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
         else:
             # Admin rollar uchun umumiy Task statusini hisoblash
-            pending = queryset.filter(status='YANGI').count()
-            in_progress = queryset.filter(status='IJRODA').count()
+            overdue = queryset.filter(
+                Q(status='MUDDATI_KECH') |
+                Q(status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA'], deadline__lt=now)
+            ).count()
+            pending = queryset.filter(status='YANGI', deadline__gte=now).count()
+            in_progress = queryset.filter(status='IJRODA', deadline__gte=now).count()
             completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-            overdue = queryset.filter(status='MUDDATI_KECH').count()
         
         active_sectors = queryset.exclude(category='').values('category').distinct().count()
 
@@ -225,6 +234,62 @@ class TaskViewSet(viewsets.ModelViewSet):
             'overdue': overdue,
             'active_sectors': active_sectors,
         })
+
+    def _apply_status_filter(self, queryset: QuerySet[Task], *, user, status_value: str) -> QuerySet[Task]:
+        """Filter by an 'effective' status (per-organization + overdue by deadline)."""
+        if not status_value:
+            return queryset
+
+        now = timezone.now()
+        seven_days_ago = now - timedelta(days=7)
+
+        if user.role in UserRole.ORGANIZATION_ROLES and user.organization:
+            queryset = queryset.filter(assigned_organizations__organization=user.organization)
+
+            if status_value == TaskStatus.MUDDATI_KECH:
+                return queryset.filter(
+                    Q(assigned_organizations__status=TaskStatus.MUDDATI_KECH) |
+                    Q(
+                        assigned_organizations__status__in=[
+                            TaskStatus.YANGI,
+                            TaskStatus.IJRODA,
+                            TaskStatus.QAYTA_IJROGA_YUBORILDI,
+                            TaskStatus.TEKSHIRUVDA,
+                        ],
+                        deadline__lt=now,
+                    )
+                ).distinct()
+
+            if status_value == TaskStatus.BAJARILMADI:
+                return queryset.filter(
+                    Q(assigned_organizations__status=TaskStatus.BAJARILMADI) |
+                    Q(assigned_organizations__status=TaskStatus.MUDDATI_KECH, deadline__lt=seven_days_ago)
+                ).distinct()
+
+            return queryset.filter(assigned_organizations__status=status_value).distinct()
+
+        # Admin/creator: Task.status + overdue computation
+        if status_value == TaskStatus.MUDDATI_KECH:
+            return queryset.filter(
+                Q(status=TaskStatus.MUDDATI_KECH) |
+                Q(
+                    status__in=[
+                        TaskStatus.YANGI,
+                        TaskStatus.IJRODA,
+                        TaskStatus.QAYTA_IJROGA_YUBORILDI,
+                        TaskStatus.TEKSHIRUVDA,
+                    ],
+                    deadline__lt=now,
+                )
+            )
+
+        if status_value == TaskStatus.BAJARILMADI:
+            return queryset.filter(
+                Q(status=TaskStatus.BAJARILMADI) |
+                Q(status=TaskStatus.MUDDATI_KECH, deadline__lt=seven_days_ago)
+            )
+
+        return queryset.filter(status=status_value)
     
     def get_serializer_class(self) -> Type[Serializer]:
         """So'rov turiga qarab serializer tanlash.
@@ -522,34 +587,34 @@ QOIDALAR:
             )
         ).order_by('status_order', 'deadline', '-created_at')
         
-        # Faqat hokim va admin barcha topshiriqlarni ko'radi
+        # Role-based scoping
         if user.role in UserRole.ADMIN_ROLES:
-            return queryset
-
-        # Hokim o'rinbosari faqat o'zi yaratgan topshiriqlarni ko'radi
-        if user.role == UserRole.HOKIM_YORDAMCHISI:
-            return queryset.filter(created_by=user)
-
-        # Hokimlik mutaxassisi faqat o'ziga biriktirilgan o'rinbosar topshiriqlarini ko'radi
-        if user.role == UserRole.HOKIMLIK_MASUL:
+            scoped = queryset
+        elif user.role == UserRole.HOKIM_YORDAMCHISI:
+            scoped = queryset.filter(created_by=user)
+        elif user.role == UserRole.HOKIMLIK_MASUL:
             if user.supervisor_id:
-                return queryset.filter(created_by=user.supervisor)
-            if user.sector_id:
-                return queryset.filter(
+                scoped = queryset.filter(created_by=user.supervisor)
+            elif user.sector_id:
+                scoped = queryset.filter(
                     created_by__role=UserRole.HOKIM_YORDAMCHISI,
                     created_by__sector_id=user.sector_id,
                 ).distinct()
-            return queryset.none()
-        
-        # Tashkilot xodimlari faqat o'z tashkilotiga berilgan topshiriqlarni ko'radi
-        if user.role in UserRole.ORGANIZATION_ROLES:
+            else:
+                scoped = queryset.none()
+        elif user.role in UserRole.ORGANIZATION_ROLES:
             if user.organization:
-                return queryset.filter(
-                    assigned_organizations__organization=user.organization
-                ).distinct()
-            return queryset.none()
-        
-        return queryset.none()
+                scoped = queryset.filter(assigned_organizations__organization=user.organization).distinct()
+            else:
+                scoped = queryset.none()
+        else:
+            scoped = queryset.none()
+
+        status_value = (self.request.query_params.get('status') or '').strip()
+        if status_value:
+            scoped = self._apply_status_filter(scoped, user=user, status_value=status_value)
+
+        return scoped
     
     def perform_create(self, serializer):
         """Create task and log the action."""
