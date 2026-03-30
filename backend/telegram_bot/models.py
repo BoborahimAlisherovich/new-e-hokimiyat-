@@ -364,6 +364,12 @@ class AppealCategory(models.Model):
     icon = models.CharField(max_length=10, default='📋', verbose_name="Emoji")
     is_active = models.BooleanField(default=True, verbose_name="Faol")
     order = models.PositiveIntegerField(default=0, verbose_name="Tartib")
+    responsible_organizations = models.ManyToManyField(
+        'organizations.Organization',
+        blank=True,
+        related_name='responsible_appeal_categories',
+        verbose_name="Mas'ul tashkilotlar",
+    )
     
     class Meta:
         verbose_name = "Murojaat sohasi"

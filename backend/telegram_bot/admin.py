@@ -58,6 +58,7 @@ class AppealCategoryAdmin(admin.ModelAdmin):
     list_display = ['icon', 'name_uz', 'code', 'is_active', 'order']
     list_editable = ['order', 'is_active']
     ordering = ['order']
+    filter_horizontal = ['responsible_organizations']
 
 
 @admin.register(AppealType)

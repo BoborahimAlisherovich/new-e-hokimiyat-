@@ -17,7 +17,7 @@ from .models import (
 )
 from .serializers import (
     BotSettingsSerializer, BotAdminSerializer, BotRegionSerializer,
-    TelegramUserSerializer, AppealCategorySerializer, AppealTypeSerializer,
+    TelegramUserSerializer, AppealCategorySerializer, AppealCategoryAdminSerializer, AppealTypeSerializer,
     TelegramAppealListSerializer, TelegramAppealDetailSerializer,
     AppealReviewSerializer, BotStatsSerializer
 )
@@ -888,6 +888,12 @@ class AppealCategoryViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return super().get_permissions()
 
+    def get_serializer_class(self):
+        # List endpoint bot/public uchun ishlatiladi, shu sabab mas'ul tashkilotlarni oshkor qilmaymiz.
+        if self.action == 'list':
+            return AppealCategorySerializer
+        return AppealCategoryAdminSerializer
+
 
 class AppealTypeViewSet(viewsets.ModelViewSet):
     """Murojaat turlari API"""
@@ -923,7 +929,11 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 if not user.organization:
                     queryset = queryset.none()
                 else:
-                    queryset = queryset.filter(assigned_organizations=user.organization)
+                    # Agar murojaat explicit biriktirilmagan bo'lsa ham, soha bo'yicha mas'ul tashkilotlarga ko'rinsin.
+                    queryset = queryset.filter(
+                        Q(assigned_organizations=user.organization)
+                        | Q(category__responsible_organizations=user.organization)
+                    ).distinct()
             elif user.role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL']:
                 visibility_filter = Q(reviewed_by__user=user) | Q(messages__sender_user=user)
                 if user.organization:
@@ -1098,6 +1108,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         # Biriktirilgan tashkilotlarni yangilash (agar yuborilgan bo'lsa)
         if 'organization_ids' in request.data:
             appeal.assigned_organizations.set(self._normalize_organization_ids(organization_ids))
+        elif not appeal.assigned_organizations.exists() and getattr(appeal, 'category_id', None):
+            # Soha bo'yicha mas'ul tashkilotlar oldindan sozlangan bo'lsa, default biriktiramiz.
+            try:
+                mapped_orgs = appeal.category.responsible_organizations.filter(is_active=True)  # type: ignore[attr-defined]
+            except Exception:
+                mapped_orgs = None
+            if mapped_orgs is not None and mapped_orgs.exists():
+                appeal.assigned_organizations.set(mapped_orgs)
         
         # Javob xabarini saqlash
         if response_text:
