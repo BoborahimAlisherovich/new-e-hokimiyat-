@@ -1651,6 +1651,15 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                 if appeal.assigned_organizations.exists():
                     return
 
+                # Admin panelda "murojaat sohasi -> mas'ul tashkilotlar" bog'langan bo'lsa, shu mappingni birinchi o'ringa qo'yamiz.
+                try:
+                    mapped_orgs = category.responsible_organizations.filter(is_active=True)  # type: ignore[attr-defined]
+                except Exception:
+                    mapped_orgs = Organization.objects.none()
+                if mapped_orgs.exists():
+                    appeal.assigned_organizations.set(mapped_orgs)
+                    return
+
                 candidate_terms = [
                     getattr(category, 'name_uz', '') or '',
                     getattr(category, 'name_en', '') or '',

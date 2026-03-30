@@ -12,6 +12,7 @@ import { SettingsNotificationsTab } from "@/components/dashboard/settings/settin
 import { SettingsSecurityTab } from "@/components/dashboard/settings/settings-security-tab"
 import { SettingsAppearanceTab } from "@/components/dashboard/settings/settings-appearance-tab"
 import { SettingsSectorsTab } from "@/components/dashboard/settings/settings-sectors-tab"
+import { SettingsAppealsRoutingTab } from "@/components/dashboard/settings/settings-appeals-routing-tab"
 import { useToast } from "@/hooks/use-toast"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { canAccessSettingsTab, getAllowedSettingsTabs, type SettingsTabKey } from "@/lib/settings-access"
@@ -193,6 +194,7 @@ export default function SettingsPage() {
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
             <SettingsAppearanceTab t={t} language={language} onLanguageChange={handleLanguageChange} onSave={saveSettings} saving={saving} />
             {canAccessSettingsTab(userRole, "sectors") && <SettingsSectorsTab t={t} />}
+            {canAccessSettingsTab(userRole, "appeals_routing") && <SettingsAppealsRoutingTab t={t} />}
           </Tabs>
         </div>
       </div>

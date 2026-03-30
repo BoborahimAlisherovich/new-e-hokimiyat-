@@ -285,6 +285,8 @@ export const enTranslations: Translations = {
     security: 'Security',
     appearance: 'Appearance',
     sectors: 'Sectors',
+    appealsRouting: 'Appeal routing',
+    appealsRoutingDesc: 'Set responsible organizations per appeal category',
     admin: 'Admin',
     profileInfo: 'Profile Information',
     profileDescription: 'View and update your personal information',

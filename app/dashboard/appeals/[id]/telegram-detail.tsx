@@ -47,8 +47,11 @@ import {
   sendAppealMessage, 
   closeAppeal,
   reviewAppeal,
+  assignAppeal,
   createTaskFromAppeal,
-  getOrganizations
+  getOrganizations,
+  getAppealCategories,
+  getCurrentUser
 } from "@/lib/api"
 import {
   ArrowLeft, 
@@ -152,6 +155,14 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
   const [rejecting, setRejecting] = useState(false)
+
+  // Routing (category/org assignment) state
+  const [routeDialogOpen, setRouteDialogOpen] = useState(false)
+  const [routeCategoryId, setRouteCategoryId] = useState<string>("")
+  const [routeSelectedOrganizations, setRouteSelectedOrganizations] = useState<string[]>([])
+  const [appealCategories, setAppealCategories] = useState<any[]>([])
+  const [routingAppeal, setRoutingAppeal] = useState(false)
+  const [currentUserRole, setCurrentUserRole] = useState<string>("")
   
   // Task creation state
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
@@ -216,6 +227,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user: any) => setCurrentUserRole(String(user?.role || "")))
+      .catch(() => setCurrentUserRole(""))
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -328,6 +345,56 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     setTaskDeadline(defaultDeadline.toISOString().split('T')[0])
     
     setTaskDialogOpen(true)
+  }
+
+  const toggleRouteOrganization = (orgId: string) => {
+    setRouteSelectedOrganizations(prev =>
+      prev.includes(orgId)
+        ? prev.filter(id => id !== orgId)
+        : [...prev, orgId]
+    )
+  }
+
+  const selectAllRouteOrganizations = () => {
+    setRouteSelectedOrganizations(organizations.map((org: any) => String(org.id)))
+  }
+
+  const openRouteDialog = async () => {
+    try {
+      const [orgs, cats] = await Promise.all([
+        getOrganizations(),
+        getAppealCategories(),
+      ])
+      setOrganizations(Array.isArray(orgs) ? orgs : (orgs as any)?.results || [])
+      setAppealCategories(Array.isArray(cats) ? cats : [])
+    } catch (error) {
+      console.error('Error loading routing data:', error)
+    }
+    setRouteCategoryId("")
+    setRouteSelectedOrganizations([])
+    setRouteDialogOpen(true)
+  }
+
+  const handleRouteAppeal = async () => {
+    if (routingAppeal) return
+
+    const payload: any = {}
+    if (routeCategoryId) payload.category_id = Number(routeCategoryId)
+    if (routeSelectedOrganizations.length > 0) payload.organization_ids = routeSelectedOrganizations
+
+    if (!payload.category_id && !payload.organization_ids) return
+
+    try {
+      setRoutingAppeal(true)
+      const updated = await assignAppeal(appealId, payload)
+      setAppeal(updated)
+      setRouteDialogOpen(false)
+      await loadData()
+    } catch (error) {
+      console.error("Error routing appeal:", error)
+    } finally {
+      setRoutingAppeal(false)
+    }
   }
 
   const handleCreateTask = async () => {
@@ -641,6 +708,17 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   <ClipboardList className="mr-2 h-4 w-4" />
                   Topshiriq yaratish
                 </Button>
+                {["ADMIN", "HOKIM", "HOKIMLIK_MASUL", "HOKIM_YORDAMCHISI"].includes(currentUserRole) && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={openRouteDialog}
+                    className="border-indigo-200 bg-indigo-50 text-indigo-700 shadow-none hover:bg-indigo-100"
+                  >
+                    <Navigation className="mr-2 h-4 w-4" />
+                    Yo'naltirish
+                  </Button>
+                )}
                 <Button size="sm" onClick={() => setCloseDialogOpen(true)} className="bg-white text-cyan-700 hover:bg-cyan-50">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   Yopish va javob berish
@@ -1139,6 +1217,119 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             </div>
           </div>
       </DashboardDetailFrame>
+
+      {/* Route Appeal Dialog */}
+      <Dialog open={routeDialogOpen} onOpenChange={setRouteDialogOpen}>
+        <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Murojaatni yo'naltirish</DialogTitle>
+            <DialogDescription>
+              Soha va mas'ul tashkilotlarni belgilang. Tashkilot rahbarlari murojaatni shu biriktirish asosida ko'radi.
+            </DialogDescription>
+          </DialogHeader>
+          <PremiumFormLayout>
+            <PremiumFieldGroup label="Soha (ixtiyoriy)" hint="Agar fuqaro noto'g'ri sohani tanlagan bo'lsa, to'g'rilang.">
+              <Select value={routeCategoryId} onValueChange={setRouteCategoryId}>
+                <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                  <SelectValue placeholder="Sohani tanlang" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[260px]">
+                  {appealCategories.length === 0 ? (
+                    <SelectItem value="__loading" disabled>
+                      Sohalar yuklanmoqda...
+                    </SelectItem>
+                  ) : (
+                    appealCategories
+                      .filter((c: any) => c?.is_active !== false)
+                      .sort((a: any, b: any) => (a?.order ?? 0) - (b?.order ?? 0))
+                      .map((category: any) => (
+                        <SelectItem key={category.id} value={String(category.id)}>
+                          {category.icon ? `${category.icon} ` : ""}{category.name_uz || category.code || `#${category.id}`}
+                        </SelectItem>
+                      ))
+                  )}
+                </SelectContent>
+              </Select>
+            </PremiumFieldGroup>
+
+            <PremiumFieldGroup label="Mas'ul tashkilotlar (ixtiyoriy)" hint="Aniq tashkilotni qo'lda biriktirsangiz, shu tashkilotda darhol ko'rinadi.">
+              <div className="mb-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllRouteOrganizations}
+                  className="rounded-xl"
+                >
+                  Barcha faol tashkilotlar
+                </Button>
+                {routeSelectedOrganizations.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRouteSelectedOrganizations([])}
+                    className="rounded-xl"
+                  >
+                    Tozalash
+                  </Button>
+                )}
+              </div>
+              <PremiumFieldSurface className="max-h-48 space-y-2 overflow-y-auto">
+                {organizations.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Tashkilotlar yuklanmoqda...
+                  </p>
+                ) : (
+                  organizations.map((org: any) => (
+                    <PremiumChoiceItem
+                      key={org.id}
+                      onClick={() => toggleRouteOrganization(String(org.id))}
+                      selected={routeSelectedOrganizations.includes(String(org.id))}
+                    >
+                      <span className="text-sm">
+                        {org.short_name ? `${org.name} (${org.short_name})` : org.name}
+                      </span>
+                    </PremiumChoiceItem>
+                  ))
+                )}
+              </PremiumFieldSurface>
+              {routeSelectedOrganizations.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {routeSelectedOrganizations.length} ta tashkilot tanlandi
+                </p>
+              )}
+            </PremiumFieldGroup>
+          </PremiumFormLayout>
+          <DialogFooter className="border-t border-slate-100 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setRouteDialogOpen(false)}
+              disabled={routingAppeal}
+              className="rounded-2xl border-slate-200 bg-white"
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              onClick={handleRouteAppeal}
+              disabled={routingAppeal || (!routeCategoryId && routeSelectedOrganizations.length === 0)}
+              className="rounded-2xl bg-indigo-600 hover:bg-indigo-700"
+            >
+              {routingAppeal ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saqlanmoqda...
+                </>
+              ) : (
+                <>
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Yo'naltirish
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Close Appeal Dialog */}
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>

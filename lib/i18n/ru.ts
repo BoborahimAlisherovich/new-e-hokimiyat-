@@ -287,6 +287,8 @@ export const ruTranslations: Translations = {
     security: 'Безопасность',
     appearance: 'Внешний вид',
     sectors: 'Сферы',
+    appealsRouting: 'Маршрутизация обращений',
+    appealsRoutingDesc: 'Назначьте ответственные организации по сфере обращения',
     admin: 'Админ',
     profileInfo: 'Информация профиля',
     profileDescription: 'Просмотрите и обновите свою личную информацию',

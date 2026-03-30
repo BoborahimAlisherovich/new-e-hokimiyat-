@@ -248,12 +248,16 @@ export {
 export {
   getAppeals,
   getAppealById,
+  getAppealCategories,
+  getAppealCategoriesAdmin,
   getAppealMessages,
   getAppealHistory,
   getUnreadAppealsCount,
   sendAppealMessage,
   closeAppeal,
   reviewAppeal,
+  assignAppeal,
+  updateAppealCategory,
   createTaskFromAppeal,
 } from './appeals.api'
 
@@ -263,6 +267,9 @@ export type {
   SendMessageResponse,
   AppealReviewRequest,
   CreateTaskFromAppealRequest,
+  AppealCategoryItem,
+  AppealCategoryAdminItem,
+  AppealAssignRequest,
 } from './appeals.api'
 
 // ============================================================================

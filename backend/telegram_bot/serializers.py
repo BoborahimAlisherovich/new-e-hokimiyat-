@@ -5,6 +5,7 @@ from .models import (
     AppealAttachment, AppealMessage
 )
 from organizations.serializers import OrganizationMinimalSerializer
+from organizations.models import Organization
 
 
 class BotSettingsSerializer(serializers.ModelSerializer):
@@ -103,6 +104,31 @@ class AppealCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AppealCategory
         fields = ['id', 'name_uz', 'name_ru', 'name_en', 'code', 'icon', 'is_active', 'order']
+
+
+class AppealCategoryAdminSerializer(serializers.ModelSerializer):
+    """Murojaat sohasi (admin) serializer - mas'ul tashkilotlar bilan."""
+
+    responsible_organizations = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Organization.objects.filter(is_active=True),
+        required=False,
+    )
+    responsible_organizations_detail = OrganizationMinimalSerializer(
+        many=True,
+        source='responsible_organizations',
+        read_only=True,
+    )
+
+    class Meta:
+        model = AppealCategory
+        fields = [
+            'id',
+            'name_uz', 'name_ru', 'name_en',
+            'code', 'icon', 'is_active', 'order',
+            'responsible_organizations',
+            'responsible_organizations_detail',
+        ]
 
 
 class AppealTypeSerializer(serializers.ModelSerializer):
@@ -249,6 +275,17 @@ class AppealReviewSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False,
         default=list
+    )
+
+
+class AppealAssignSerializer(serializers.Serializer):
+    """Murojaatni yo'naltirish (soha va/yo tashkilotlarni biriktirish)."""
+
+    category_id = serializers.IntegerField(required=False)
+    organization_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
     )
 
 

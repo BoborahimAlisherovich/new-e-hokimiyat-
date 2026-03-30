@@ -119,6 +119,31 @@ export interface CreateTaskFromAppealRequest {
   comment?: string
 }
 
+export interface AppealCategoryItem {
+  id: number
+  name_uz: string
+  name_ru?: string
+  name_en?: string
+  code?: string
+  icon?: string
+  is_active?: boolean
+  order?: number
+}
+
+export interface AppealCategoryAdminItem extends AppealCategoryItem {
+  responsible_organizations: string[]
+  responsible_organizations_detail?: Array<{
+    id: string
+    name: string
+    short_name?: string | null
+  }>
+}
+
+export interface AppealAssignRequest {
+  category_id?: number
+  organization_ids?: string[]
+}
+
 // ============================================================================
 // Status & Priority Mappers
 // ============================================================================
@@ -286,6 +311,106 @@ export async function getAppealById(id: string): Promise<Appeal> {
   )
   
   return normalizeAppeal(appeal)
+}
+
+/**
+ * Murojaat sohalari ro'yxati (Telegram bot kategoriyalari).
+ */
+export async function getAppealCategories(): Promise<AppealCategoryItem[]> {
+  const response = await fetchApi<any>(`/telegram-bot/categories/`)
+  const rows = Array.isArray(response) ? response : (response?.results ?? [])
+  return (rows || []).map((item: any) => ({
+    id: Number(item.id),
+    name_uz: String(item.name_uz || item.name || ''),
+    name_ru: item.name_ru || undefined,
+    name_en: item.name_en || undefined,
+    code: item.code || undefined,
+    icon: item.icon || undefined,
+    is_active: item.is_active ?? undefined,
+    order: item.order ?? undefined,
+  })).filter((item: AppealCategoryItem) => Boolean(item.id) && Boolean(item.name_uz))
+}
+
+/**
+ * Murojaat sohalari (admin) - mas'ul tashkilotlar bilan.
+ */
+export async function getAppealCategoriesAdmin(): Promise<AppealCategoryAdminItem[]> {
+  const response = await fetchApi<any>(`/telegram-bot/categories/admin_list/`)
+  const rows = Array.isArray(response) ? response : (response?.results ?? [])
+  return (rows || []).map((item: any) => ({
+    id: Number(item.id),
+    name_uz: String(item.name_uz || item.name || ''),
+    name_ru: item.name_ru || undefined,
+    name_en: item.name_en || undefined,
+    code: item.code || undefined,
+    icon: item.icon || undefined,
+    is_active: item.is_active ?? undefined,
+    order: item.order ?? undefined,
+    responsible_organizations: Array.isArray(item.responsible_organizations)
+      ? item.responsible_organizations.map((v: any) => String(v))
+      : [],
+    responsible_organizations_detail: Array.isArray(item.responsible_organizations_detail)
+      ? item.responsible_organizations_detail.map((org: any) => ({
+          id: String(org.id),
+          name: String(org.name || ''),
+          short_name: org.short_name ?? undefined,
+        }))
+      : undefined,
+  })).filter((item: AppealCategoryAdminItem) => Boolean(item.id) && Boolean(item.name_uz))
+}
+
+/**
+ * Murojaat sohasiga mas'ul tashkilotlarni saqlash.
+ */
+export async function updateAppealCategory(
+  categoryId: number,
+  data: Partial<{ responsible_organizations: string[]; is_active: boolean; order: number }>
+): Promise<AppealCategoryAdminItem> {
+  const result = await fetchApi<any>(
+    `/telegram-bot/categories/${categoryId}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }
+  )
+  return {
+    id: Number(result.id),
+    name_uz: String(result.name_uz || result.name || ''),
+    name_ru: result.name_ru || undefined,
+    name_en: result.name_en || undefined,
+    code: result.code || undefined,
+    icon: result.icon || undefined,
+    is_active: result.is_active ?? undefined,
+    order: result.order ?? undefined,
+    responsible_organizations: Array.isArray(result.responsible_organizations)
+      ? result.responsible_organizations.map((v: any) => String(v))
+      : [],
+    responsible_organizations_detail: Array.isArray(result.responsible_organizations_detail)
+      ? result.responsible_organizations_detail.map((org: any) => ({
+          id: String(org.id),
+          name: String(org.name || ''),
+          short_name: org.short_name ?? undefined,
+        }))
+      : undefined,
+  }
+}
+
+/**
+ * Murojaatni yo'naltirish: soha va/yo tashkilotlarni biriktirish.
+ */
+export async function assignAppeal(
+  appealId: string,
+  data: AppealAssignRequest
+): Promise<Appeal> {
+  const id = stripTelegramPrefix(appealId)
+  const result = await fetchApi<TelegramAppealResponse>(
+    `/telegram-bot/appeals/${id}/assign/`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  )
+  return normalizeAppeal(result)
 }
 
 // ============================================================================
