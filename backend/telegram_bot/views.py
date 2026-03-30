@@ -19,7 +19,7 @@ from .serializers import (
     BotSettingsSerializer, BotAdminSerializer, BotRegionSerializer,
     TelegramUserSerializer, AppealCategorySerializer, AppealCategoryAdminSerializer, AppealTypeSerializer,
     TelegramAppealListSerializer, TelegramAppealDetailSerializer,
-    AppealReviewSerializer, BotStatsSerializer
+    AppealReviewSerializer, AppealAssignSerializer, BotStatsSerializer
 )
 from core.permissions import CanManageBotSettings
 from notifications.services import notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
@@ -880,12 +880,13 @@ class AppealCategoryViewSet(viewsets.ModelViewSet):
     
     queryset = AppealCategory.objects.all()
     serializer_class = AppealCategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['is_active']
     
     def get_permissions(self):
         if self.action == 'list':
             return [permissions.AllowAny()]
+        if self.action in {'admin_list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}:
+            return [permissions.IsAuthenticated(), CanManageBotSettings()]
         return super().get_permissions()
 
     def get_serializer_class(self):
@@ -893,6 +894,12 @@ class AppealCategoryViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return AppealCategorySerializer
         return AppealCategoryAdminSerializer
+
+    @action(detail=False, methods=['get'])
+    def admin_list(self, request):
+        """Admin uchun: mas'ul tashkilotlar bilan sohalar ro'yxati."""
+        qs = self.filter_queryset(self.get_queryset())
+        return Response(self.get_serializer(qs, many=True).data)
 
 
 class AppealTypeViewSet(viewsets.ModelViewSet):
@@ -1070,6 +1077,62 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         appeal.assigned_organizations.set([org.id for org in organizations])
         appeal.save(update_fields=['forwarded_to_site', 'status', 'site_task_id', 'updated_at'])
         return task, organizations
+
+    @action(detail=True, methods=['post'])
+    def assign(self, request, pk=None):
+        """Murojaatni soha/tashkilot bo'yicha yo'naltirish (manual routing)."""
+        if request.user.role not in {'ADMIN', 'HOKIM', 'HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL'}:
+            return Response({'error': "Ruxsat yo'q"}, status=status.HTTP_403_FORBIDDEN)
+
+        appeal = self.get_object()
+        serializer = AppealAssignSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        category_id = serializer.validated_data.get('category_id', None)
+        organization_ids = serializer.validated_data.get('organization_ids', [])
+
+        category_changed = False
+        if 'category_id' in request.data:
+            if category_id is None:
+                appeal.category = None
+                category_changed = True
+            else:
+                try:
+                    category = AppealCategory.objects.get(id=category_id)
+                except AppealCategory.DoesNotExist:
+                    return Response({'error': 'Soha topilmadi'}, status=status.HTTP_400_BAD_REQUEST)
+                appeal.category = category
+                category_changed = True
+
+        if 'organization_ids' in request.data:
+            appeal.assigned_organizations.set(self._normalize_organization_ids(organization_ids))
+        elif category_changed:
+            # Soha o'zgartirilsa, mapping bo'yicha default biriktirishga urinib ko'ramiz.
+            try:
+                mapped_orgs = appeal.category.responsible_organizations.filter(is_active=True) if appeal.category else None  # type: ignore[attr-defined]
+            except Exception:
+                mapped_orgs = None
+            if mapped_orgs is not None and mapped_orgs.exists():
+                appeal.assigned_organizations.set(mapped_orgs)
+            else:
+                # Noto'g'ri oldingi biriktirishlar qolib ketmasligi uchun tozalaymiz.
+                appeal.assigned_organizations.clear()
+
+        appeal.save(update_fields=['category', 'updated_at'])
+
+        try:
+            org_names = list(appeal.assigned_organizations.values_list('name', flat=True))
+            extra = f" ({', '.join(org_names[:3])}{'...' if len(org_names) > 3 else ''})" if org_names else ""
+            notify_appeal_status_update(
+                appeal=appeal,
+                title="Murojaat yo'naltirildi",
+                message=f"#{appeal.appeal_number} murojaati yangi mas'ullarga biriktirildi{extra}.",
+                exclude_user_ids=[request.user.id],
+            )
+        except Exception:
+            pass
+
+        return Response(TelegramAppealDetailSerializer(appeal, context={'request': request}).data)
     
     @action(detail=True, methods=['post'])
     def review(self, request, pk=None):

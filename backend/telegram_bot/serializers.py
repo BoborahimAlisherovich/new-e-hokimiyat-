@@ -278,6 +278,17 @@ class AppealReviewSerializer(serializers.Serializer):
     )
 
 
+class AppealAssignSerializer(serializers.Serializer):
+    """Murojaatni yo'naltirish (soha va/yo tashkilotlarni biriktirish)."""
+
+    category_id = serializers.IntegerField(required=False)
+    organization_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+
 class BotStatsSerializer(serializers.Serializer):
     """Bot statistikasi serializer"""
     

@@ -1,6 +1,6 @@
 import { TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslation } from "@/lib/i18n/context"
-import { Bell, Globe, Layers, Shield, User } from "lucide-react"
+import { Bell, Globe, Layers, Shield, User, Route } from "lucide-react"
 import { UserRole } from "@/types"
 import { canAccessSettingsTab } from "@/lib/settings-access"
 
@@ -54,6 +54,16 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
           >
             <Layers className="mr-2 h-4 w-4" />
             {t.settings.sectors}
+          </TabsTrigger>
+        )}
+
+        {canAccessSettingsTab(userRole, "appeals_routing") && (
+          <TabsTrigger
+            value="appeals_routing"
+            className="min-h-11 rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-slate-200 hover:bg-slate-100/80 hover:text-gray-900 data-[state=active]:border-indigo-200 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-none"
+          >
+            <Route className="mr-2 h-4 w-4" />
+            {t.settings.appealsRouting}
           </TabsTrigger>
         )}
       </TabsList>

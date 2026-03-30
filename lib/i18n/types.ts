@@ -284,6 +284,8 @@ export interface Translations {
     security: string
     appearance: string
     sectors: string
+    appealsRouting: string
+    appealsRoutingDesc: string
     admin: string
     profileInfo: string
     profileDescription: string
