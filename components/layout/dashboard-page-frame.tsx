@@ -14,7 +14,7 @@ interface DashboardPageFrameProps {
   eyebrow: string
   title: string
   description: string
-  stats: PageStat[]
+  stats?: PageStat[]
   children: React.ReactNode
   className?: string
 }
@@ -23,7 +23,7 @@ export function DashboardPageFrame({
   eyebrow,
   title,
   description,
-  stats,
+  stats = [],
   children,
   className,
 }: DashboardPageFrameProps) {

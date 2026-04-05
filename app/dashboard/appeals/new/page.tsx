@@ -122,6 +122,7 @@ export default function NewAppealPage() {
         eyebrow="Murojaatlar"
         title="Qo‘lda murojaat qo‘shish"
         description="Telegramdan kelmagan murojaatlarni hokim, hokim o‘rinbosari yoki admin qo‘lda kiritishi mumkin."
+        stats={[]}
       >
         <div className="mb-4">
           <Link href="/dashboard/appeals" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
@@ -221,4 +222,3 @@ export default function NewAppealPage() {
     </>
   )
 }
-
