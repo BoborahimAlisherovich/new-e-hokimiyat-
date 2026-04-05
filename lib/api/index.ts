@@ -250,6 +250,7 @@ export {
   getAppealById,
   createManualAppeal,
   getAppealCategories,
+  getAppealTypes,
   getAppealCategoriesAdmin,
   getAppealMessages,
   getAppealHistory,
@@ -270,6 +271,7 @@ export type {
   CreateTaskFromAppealRequest,
   ManualAppealCreateRequest,
   AppealCategoryItem,
+  AppealTypeItem,
   AppealCategoryAdminItem,
   AppealAssignRequest,
 } from './appeals.api'

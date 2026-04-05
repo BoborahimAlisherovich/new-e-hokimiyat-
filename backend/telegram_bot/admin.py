@@ -90,7 +90,7 @@ class TelegramAppealAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Asosiy', {
-            'fields': ('uuid', 'appeal_number', 'telegram_user', 'citizen_name', 'citizen_phone', 'citizen_region', 'status', 'priority', 'source')
+            'fields': ('uuid', 'appeal_number', 'telegram_user', 'citizen_name', 'citizen_phone', 'citizen_gender', 'citizen_region', 'citizen_language', 'status', 'priority', 'source')
         }),
         ('Murojaat', {
             'fields': ('appeal_type', 'category', 'text')
@@ -113,9 +113,13 @@ class TelegramAppealAdmin(admin.ModelAdmin):
 
     @admin.display(description='Jinsi')
     def user_gender(self, obj):
-        if not obj.telegram_user:
-            return '-'
-        return obj.telegram_user.get_gender_display()
+        if obj.telegram_user:
+            return obj.telegram_user.get_gender_display()
+        if obj.citizen_gender == 'male':
+            return 'Erkak'
+        if obj.citizen_gender == 'female':
+            return 'Ayol'
+        return '-'
 
     @admin.display(description='Fuqaro')
     def appeal_owner(self, obj):

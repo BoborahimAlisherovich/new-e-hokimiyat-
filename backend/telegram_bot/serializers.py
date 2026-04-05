@@ -338,7 +338,18 @@ class ManualAppealCreateSerializer(serializers.Serializer):
 
     citizen_name = serializers.CharField(max_length=200)
     citizen_phone = serializers.CharField(max_length=13, required=False, allow_blank=True, default='')
+    citizen_gender = serializers.ChoiceField(
+        choices=[c[0] for c in TelegramUser.GENDER_CHOICES],
+        required=False,
+        allow_blank=True,
+        default='',
+    )
     citizen_region_id = serializers.IntegerField(required=False, allow_null=True)
+    citizen_language = serializers.ChoiceField(
+        choices=[c[0] for c in TelegramUser.LANGUAGE_CHOICES],
+        required=False,
+        default='uz',
+    )
 
     text = serializers.CharField()
     appeal_type_id = serializers.IntegerField(required=False, allow_null=True)

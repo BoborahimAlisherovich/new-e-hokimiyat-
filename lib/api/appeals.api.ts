@@ -133,6 +133,17 @@ export interface AppealCategoryItem {
   order?: number
 }
 
+export interface AppealTypeItem {
+  id: number
+  name_uz: string
+  name_ru?: string
+  name_en?: string
+  code?: string
+  icon?: string
+  is_active?: boolean
+  order?: number
+}
+
 export interface AppealCategoryAdminItem extends AppealCategoryItem {
   responsible_organizations: string[]
   responsible_organizations_detail?: Array<{
@@ -305,7 +316,9 @@ export async function getAppeals(): Promise<Appeal[]> {
 export interface ManualAppealCreateRequest {
   citizen_name: string
   citizen_phone?: string
+  citizen_gender?: 'male' | 'female' | ''
   citizen_region_id?: number | null
+  citizen_language?: 'uz' | 'ru' | 'en'
   text: string
   appeal_type_id?: number | null
   category_id?: number | null
@@ -360,6 +373,24 @@ export async function getAppealCategories(): Promise<AppealCategoryItem[]> {
     is_active: item.is_active ?? undefined,
     order: item.order ?? undefined,
   })).filter((item: AppealCategoryItem) => Boolean(item.id) && Boolean(item.name_uz))
+}
+
+/**
+ * Murojaat turlari ro'yxati (Telegram bot appeal types).
+ */
+export async function getAppealTypes(): Promise<AppealTypeItem[]> {
+  const response = await fetchApi<any>(`/telegram-bot/types/`)
+  const rows = Array.isArray(response) ? response : (response?.results ?? [])
+  return (rows || []).map((item: any) => ({
+    id: Number(item.id),
+    name_uz: String(item.name_uz || item.name || ''),
+    name_ru: item.name_ru || undefined,
+    name_en: item.name_en || undefined,
+    code: item.code || undefined,
+    icon: item.icon || undefined,
+    is_active: item.is_active ?? undefined,
+    order: item.order ?? undefined,
+  })).filter((item: AppealTypeItem) => Boolean(item.id) && Boolean(item.name_uz))
 }
 
 /**
