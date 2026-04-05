@@ -24,6 +24,7 @@ interface TelegramAppealResponse {
   text: string
   status: string
   priority: string
+  source?: string
   category_name?: string
   latitude?: string | number | null
   longitude?: string | number | null
@@ -50,6 +51,8 @@ interface TelegramAppealResponse {
     region_name?: string
   }
   user_name?: string
+  user_phone?: string
+  region_name?: string
   attachments?: TelegramAppealAttachmentResponse[]
   new_messages_count?: number
   last_message_at?: string | null
@@ -240,7 +243,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     id: `tg-${appeal.id}`,
     citizenName: extractUserName(telegramUser, appeal.user_name),
     citizenGender: telegramUser?.gender,
-    citizenPhone: telegramUser?.phone || '',
+    citizenPhone: (appeal.user_phone || telegramUser?.phone || '').trim(),
     citizenEmail: '',
     subject: extractSubject(appeal),
     description: appeal.text || '',
@@ -249,7 +252,7 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     status: TELEGRAM_STATUS_MAP[appeal.status] || 'PENDING',
     assignedTo: undefined,
     organization: undefined,
-    district: telegramUser?.region_name || '',
+    district: telegramUser?.region_name || appeal.region_name || '',
     address: appeal.address || '',
     latitude: hasLocation ? (latitude as number) : null,
     longitude: hasLocation ? (longitude as number) : null,
@@ -297,6 +300,34 @@ export async function getAppeals(): Promise<Appeal[]> {
     console.error('[Appeals API] getAppeals xatosi:', error)
     return []
   }
+}
+
+export interface ManualAppealCreateRequest {
+  citizen_name: string
+  citizen_phone?: string
+  citizen_region_id?: number | null
+  text: string
+  appeal_type_id?: number | null
+  category_id?: number | null
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
+  address?: string
+  latitude?: number | null
+  longitude?: number | null
+  organization_ids?: string[]
+}
+
+/**
+ * Qo'lda murojaat qo'shish (dashboard orqali).
+ */
+export async function createManualAppeal(payload: ManualAppealCreateRequest): Promise<Appeal> {
+  const result = await fetchApi<TelegramAppealResponse>(
+    `/telegram-bot/appeals/manual-create/`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }
+  )
+  return normalizeAppeal(result)
 }
 
 /**

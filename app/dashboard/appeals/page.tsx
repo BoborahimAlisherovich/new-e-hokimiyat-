@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header"
 import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { api, getAppeals } from "@/lib/api"
+import { api, getAppeals, getCurrentUser } from "@/lib/api"
 import { Appeal, FilterOptions } from "@/types"
 import { AppealFilters } from "@/components/dashboard/appeals/appeal-filters"
 import { AppealStats } from "@/components/dashboard/appeals/appeal-stats"
@@ -12,7 +12,9 @@ import { AppealDetailDialog } from "@/components/dashboard/appeals/appeal-detail
 import { useTranslation } from "@/lib/i18n/context"
 import { PRIORITY_LABELS, STATUS_LABELS } from "@/components/dashboard/appeals/appeal-constants"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
-import { CircleAlert, MessageCircleMore, ShieldCheck } from "lucide-react"
+import { CircleAlert, MessageCircleMore, ShieldCheck, Plus } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function AppealsPage() {
   const t = useTranslation()
@@ -28,6 +30,7 @@ export default function AppealsPage() {
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [districtFilter, setDistrictFilter] = useState("all")
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null)
+  const [canCreateManual, setCanCreateManual] = useState(false)
 
   // Data loading
   const loadRegions = useCallback(async () => {
@@ -63,6 +66,15 @@ export default function AppealsPage() {
   useEffect(() => {
     loadAppeals()
   }, [loadAppeals])
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user: any) => {
+        const role = String(user?.role || "")
+        setCanCreateManual(role === "HOKIM" || role === "HOKIM_YORDAMCHISI" || role === "ADMIN")
+      })
+      .catch(() => setCanCreateManual(false))
+  }, [])
 
   useEffect(() => {
     const handleAppealsRead = () => loadAppeals()
@@ -171,6 +183,16 @@ export default function AppealsPage() {
 
         {/* Filters */}
         <section data-gsap-section>
+          {canCreateManual && (
+            <div className="mb-3 flex items-center justify-end">
+              <Button asChild className="gap-2">
+                <Link href="/dashboard/appeals/new">
+                  <Plus className="h-4 w-4" />
+                  Qo'lda murojaat qo'shish
+                </Link>
+              </Button>
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 sm:mb-4">
             <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rol va biriktirish asosida</span>
             <span className="rounded-full bg-white px-3 py-1 shadow-sm">Jarayon boshqaruvi: hokimlik va tashkilot mas'ullari oqimida</span>

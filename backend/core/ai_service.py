@@ -31,14 +31,25 @@ class AIService:
     """
     
     def __init__(self):
-        # Avval BotSettings'dan olishga urinish
-        self.provider, self.api_key, self.model = self._load_settings_from_db()
-        
-        # Agar bazada bo'lmasa .env dan olish (fallback)
-        if not self.api_key:
+        self.enabled = True
+
+        # Avval BotSettings'dan olishga urinish (agar DB sozlamasi bo'lsa, u ustun)
+        db_settings = self._load_settings_from_db()
+
+        if db_settings is not None:
+            self.enabled = bool(db_settings.get('enabled', False))
+            self.provider = str(db_settings.get('provider') or 'disabled')
+            self.api_key = str(db_settings.get('api_key') or '')
+            self.model = str(db_settings.get('model') or 'gpt-4o-mini')
+        else:
+            # Agar bazada bo'lmasa .env/django settings dan olish (fallback)
             self.provider = getattr(settings, 'AI_PROVIDER', 'openai')
             self.api_key = getattr(settings, 'AI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
             self.model = getattr(settings, 'AI_MODEL', 'gpt-4o-mini')
+
+            # Umuman kalit bo'lmasa, AI mavjud emas deb hisoblaymiz
+            if not self.api_key:
+                self.enabled = False
         
         self.system_prompt = """
     Sen E-Hokimiyat tizimining AI yordamchisisan. Sening vazifang:
@@ -77,22 +88,41 @@ class AIService:
     """
     
     def _load_settings_from_db(self):
-        """BotSettings modelidan AI sozlamalarini olish"""
+        """BotSettings modelidan AI sozlamalarini olish.
+
+        Muhim: agar admin AI'ni DB'da o'chirsa (`ai_provider=disabled`) yoki kalit bo'lmasa,
+        .env fallback ishlamasligi kerak. Aks holda UI'da "o'chirilgan" bo'lsa ham AI ishlayveradi.
+        """
         try:
             from telegram_bot.models import BotSettings
             bot_settings = BotSettings.objects.first()
-            if bot_settings and bot_settings.ai_api_key and bot_settings.ai_provider != 'disabled':
-                return (
-                    bot_settings.ai_provider,
-                    bot_settings.ai_api_key,
-                    bot_settings.ai_model or 'gpt-4o-mini'
-                )
+            if not bot_settings:
+                return None
+
+            provider = bot_settings.ai_provider or 'disabled'
+            model = bot_settings.ai_model or 'gpt-4o-mini'
+            api_key = bot_settings.ai_api_key or ''
+
+            if provider == 'disabled':
+                return {'enabled': False, 'provider': 'disabled', 'api_key': '', 'model': model}
+
+            # Provayder tanlangan bo'lsa ham kalit bo'lmasa, AI'ni o'chirilgan deb ko'rsatamiz
+            if not api_key:
+                return {'enabled': False, 'provider': provider, 'api_key': '', 'model': model}
+
+            return {'enabled': True, 'provider': provider, 'api_key': api_key, 'model': model}
         except Exception as e:
             logger.debug(f"BotSettings'dan AI sozlamalarini olishda xato: {e}")
-        return ('openai', '', 'gpt-4o-mini')
+        return None
     
     def get_client(self) -> Any:
         """AI client olish"""
+        if not getattr(self, 'enabled', True):
+            return None
+        if not getattr(self, 'api_key', ''):
+            return None
+        if getattr(self, 'provider', '') == 'disabled':
+            return None
         if self.provider == 'openai':
             try:
                 from openai import OpenAI
@@ -111,6 +141,8 @@ class AIService:
     
     def chat(self, messages: List[Dict[str, Any]], user: Any = None) -> str:
         """AI bilan suhbat"""
+        if not getattr(self, 'enabled', True):
+            return "AI xizmati o‘chirilgan yoki sozlanmagan. Administrator sozlamalarda yoqishi kerak."
         client = self.get_client()
         if not client:
             return "AI xizmati hozirda mavjud emas. Iltimos, keyinroq urinib ko'ring."

@@ -144,6 +144,21 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                     )
                 else:
                     ai_service = AIService()
+                    if not getattr(ai_service, 'enabled', True):
+                        pending_action.status = 'CANCELLED'
+                        pending_action.save()
+                        ai_message = AIMessage.objects.create(
+                            conversation=conversation,
+                            role='assistant',
+                            content="AI xizmati o‘chirilgan yoki sozlanmagan. Buyruq bajarilmadi."
+                        )
+                        conversation.updated_at = timezone.now()
+                        conversation.save()
+                        return Response({
+                            'user_message': AIMessageSerializer(user_message).data,
+                            'ai_message': AIMessageSerializer(ai_message).data,
+                            'detected_intent': {'intent': 'AI_DISABLED'}
+                        })
                     result = ai_service.execute_action(pending_action)
 
                     pending_action.status = 'COMPLETED' if result.get('success') else 'FAILED'
@@ -190,6 +205,20 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             
             # AI javobini olish
             ai_service = AIService()
+
+            if not getattr(ai_service, 'enabled', True):
+                ai_message = AIMessage.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content="AI xizmati o‘chirilgan yoki sozlanmagan. Administrator sozlamalarda yoqishi kerak."
+                )
+                conversation.updated_at = timezone.now()
+                conversation.save()
+                return Response({
+                    'user_message': AIMessageSerializer(user_message).data,
+                    'ai_message': AIMessageSerializer(ai_message).data,
+                    'detected_intent': {'intent': 'AI_DISABLED'}
+                })
             
             # Suhbat tarixini olish
             messages = [

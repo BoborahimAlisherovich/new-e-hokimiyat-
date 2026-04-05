@@ -248,6 +248,7 @@ export {
 export {
   getAppeals,
   getAppealById,
+  createManualAppeal,
   getAppealCategories,
   getAppealCategoriesAdmin,
   getAppealMessages,
@@ -267,6 +268,7 @@ export type {
   SendMessageResponse,
   AppealReviewRequest,
   CreateTaskFromAppealRequest,
+  ManualAppealCreateRequest,
   AppealCategoryItem,
   AppealCategoryAdminItem,
   AppealAssignRequest,

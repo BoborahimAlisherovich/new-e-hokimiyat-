@@ -451,9 +451,46 @@ class TelegramAppeal(models.Model):
     # Murojaat egasi
     telegram_user = models.ForeignKey(
         TelegramUser,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='appeals',
         verbose_name="Telegram foydalanuvchi"
+    )
+
+    # Qo'lda kiritilgan murojaat uchun fuqaro ma'lumotlari (telegram bo'lmasa)
+    citizen_name = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name="Fuqaro F.I.Sh (qo'lda)"
+    )
+    citizen_phone_validator = RegexValidator(
+        regex=r'^\+998[0-9]{9}$',
+        message="Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak"
+    )
+    citizen_phone = models.CharField(
+        max_length=13,
+        blank=True,
+        default='',
+        validators=[citizen_phone_validator],
+        verbose_name="Telefon raqam (qo'lda)"
+    )
+    citizen_region = models.ForeignKey(
+        BotRegion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='manual_appeals',
+        verbose_name="Hudud (qo'lda)"
+    )
+    created_by_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_telegram_appeals',
+        verbose_name="Qo'lda kiritgan foydalanuvchi"
     )
     
     # Murojaat ma'lumotlari
@@ -642,7 +679,11 @@ class TelegramAppeal(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"#{self.appeal_number} - {self.telegram_user.full_name}"
+        citizen = None
+        if self.telegram_user:
+            citizen = self.telegram_user.full_name
+        citizen = citizen or (self.citizen_name or '').strip() or "Noma'lum"
+        return f"#{self.appeal_number} - {citizen}"
     
     def save(self, *args, **kwargs):
         if not self.appeal_number:

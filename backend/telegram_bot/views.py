@@ -19,7 +19,7 @@ from .serializers import (
     BotSettingsSerializer, BotAdminSerializer, BotRegionSerializer,
     TelegramUserSerializer, AppealCategorySerializer, AppealCategoryAdminSerializer, AppealTypeSerializer,
     TelegramAppealListSerializer, TelegramAppealDetailSerializer,
-    AppealReviewSerializer, AppealAssignSerializer, BotStatsSerializer
+    AppealReviewSerializer, AppealAssignSerializer, ManualAppealCreateSerializer, BotStatsSerializer
 )
 from core.permissions import CanManageBotSettings
 from notifications.services import notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
@@ -922,7 +922,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     queryset = TelegramAppeal.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['status', 'priority', 'appeal_type', 'category', 'source', 'forwarded_to_site']
-    search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name']
+    search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name', 'citizen_name', 'citizen_phone']
     ordering_fields = ['created_at', 'priority', 'status']
     ordering = ['-created_at']
 
@@ -942,7 +942,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                         | Q(category__responsible_organizations=user.organization)
                     ).distinct()
             elif user.role in ['HOKIM_YORDAMCHISI', 'HOKIMLIK_MASUL']:
-                visibility_filter = Q(reviewed_by__user=user) | Q(messages__sender_user=user)
+                visibility_filter = Q(reviewed_by__user=user) | Q(messages__sender_user=user) | Q(created_by_user=user)
                 if user.organization:
                     visibility_filter |= Q(assigned_organizations=user.organization)
                 if getattr(user, 'sector_id', None):
@@ -981,6 +981,75 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return TelegramAppealDetailSerializer
         return TelegramAppealListSerializer
+
+    @action(detail=False, methods=['post'], url_path='manual-create')
+    def manual_create(self, request):
+        """Dashboard orqali qo'lda murojaat kiritish."""
+        if request.user.role not in {'HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'}:
+            return Response({'error': "Ruxsat yo'q"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ManualAppealCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        citizen_name = (data.get('citizen_name') or '').strip()
+        citizen_phone = (data.get('citizen_phone') or '').strip()
+
+        if citizen_phone:
+            import re
+            if not re.match(r'^\+998[0-9]{9}$', citizen_phone):
+                return Response(
+                    {'error': "Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        citizen_region = None
+        region_id = data.get('citizen_region_id')
+        if region_id:
+            citizen_region = BotRegion.objects.filter(id=region_id).first()
+
+        appeal = TelegramAppeal.objects.create(
+            telegram_user=None,
+            citizen_name=citizen_name,
+            citizen_phone=citizen_phone,
+            citizen_region=citizen_region,
+            created_by_user=request.user,
+            text=(data.get('text') or '').strip(),
+            appeal_type_id=data.get('appeal_type_id') or None,
+            category_id=data.get('category_id') or None,
+            priority=data.get('priority') or 'medium',
+            address=(data.get('address') or '').strip(),
+            latitude=data.get('latitude', None),
+            longitude=data.get('longitude', None),
+            source='manual',
+            status='pending_review',
+        )
+
+        org_ids = self._normalize_organization_ids(data.get('organization_ids', []))
+        if org_ids:
+            appeal.assigned_organizations.set(org_ids)
+        else:
+            # Agar soha tanlangan bo'lsa va tashkilotlar berilmagan bo'lsa, mapping bo'yicha auto-biriktirish.
+            try:
+                if appeal.category and appeal.category.responsible_organizations.exists():  # type: ignore[attr-defined]
+                    appeal.assigned_organizations.set(appeal.category.responsible_organizations.filter(is_active=True))
+            except Exception:
+                pass
+
+        try:
+            notify_appeal_status_update(
+                appeal=appeal,
+                title="Yangi murojaat kiritildi",
+                message=f"#{appeal.appeal_number} murojaati qo'lda kiritildi.",
+                exclude_user_ids=[request.user.id],
+            )
+        except Exception:
+            pass
+
+        return Response(
+            TelegramAppealDetailSerializer(appeal, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
     def _normalize_task_priority(self, priority):
         value = str(priority or 'ODDIY').upper()
@@ -1024,14 +1093,25 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         organizations = list(Organization.objects.filter(id__in=normalized_org_ids, is_active=True))
         if not organizations:
             raise ValueError("Tashkilot tanlanmagan yoki topilmadi")
-        region_name = appeal.telegram_user.region.name_uz if appeal.telegram_user.region else "Noma'lum"
+
+        if appeal.telegram_user:
+            citizen_name = appeal.telegram_user.full_name
+            citizen_phone = appeal.telegram_user.phone
+            region_name = appeal.telegram_user.region.name_uz if appeal.telegram_user.region else "Noma'lum"
+        else:
+            citizen_name = (getattr(appeal, 'citizen_name', '') or '').strip() or "Noma'lum"
+            citizen_phone = (getattr(appeal, 'citizen_phone', '') or '').strip()
+            try:
+                region_name = appeal.citizen_region.name_uz if appeal.citizen_region else "Noma'lum"
+            except Exception:
+                region_name = "Noma'lum"
 
         normalized_comment = (comment or '').strip()
         description_parts = [
             f"Telegram murojaat #{appeal.appeal_number}",
             "",
-            f"Fuqaro: {appeal.telegram_user.full_name}",
-            f"Telefon: {appeal.telegram_user.phone}",
+            f"Fuqaro: {citizen_name}",
+            f"Telefon: {citizen_phone}",
             f"Hudud: {region_name}",
         ]
         if normalized_comment:
@@ -1263,6 +1343,10 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             sender_user=request.user,
             text=text or ''
         )
+
+        # Qo'lda kiritilgan murojaat (yoki telegram foydalanuvchi yo'q) bo'lsa - Telegramga yuborilmaydi.
+        if not appeal.telegram_user or appeal.source != 'telegram':
+            return Response({'success': True, 'message_id': message.id, 'delivered_to_telegram': False})
         
         # Telegram orqali yuborish
         try:
@@ -1393,7 +1477,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         # Telegram orqali qoniqish so'rash
         try:
             settings = BotSettings.objects.first()
-            if settings and settings.bot_token:
+            if settings and settings.bot_token and appeal.telegram_user and appeal.source == 'telegram':
                 import requests
                 keyboard = {
                     'inline_keyboard': [
@@ -1610,7 +1694,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             # Foydalanuvchiga xabar yuborish
             try:
                 settings_obj = BotSettings.objects.first()
-                if settings_obj and settings_obj.bot_token:
+                if settings_obj and settings_obj.bot_token and appeal.telegram_user and appeal.source == 'telegram':
                     import requests
                     message = (
                         f"✅ Sizning <b>#{appeal.appeal_number}</b> raqamli murojaatingiz "
@@ -1761,7 +1845,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         # Telegram orqali yuborish
         try:
             settings_obj = BotSettings.objects.first()
-            if settings_obj and settings_obj.bot_token:
+            if settings_obj and settings_obj.bot_token and appeal.telegram_user and appeal.source == 'telegram':
                 import requests
                 
                 keyboard = {
