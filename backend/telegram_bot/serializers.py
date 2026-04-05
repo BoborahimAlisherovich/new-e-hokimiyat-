@@ -177,8 +177,9 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
     """Telegram murojaat ro'yxati serializer"""
     
     telegram_user = TelegramUserSerializer(read_only=True)
-    user_name = serializers.CharField(source='telegram_user.full_name', read_only=True)
-    user_phone = serializers.CharField(source='telegram_user.phone', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    user_phone = serializers.SerializerMethodField()
+    region_name = serializers.SerializerMethodField()
     appeal_type_name = serializers.CharField(source='appeal_type.name_uz', read_only=True)
     category_name = serializers.CharField(source='category.name_uz', read_only=True)
     assigned_organizations = OrganizationMinimalSerializer(many=True, read_only=True)
@@ -189,7 +190,7 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelegramAppeal
         fields = [
-            'id', 'uuid', 'appeal_number', 'telegram_user', 'user_name', 'user_phone',
+            'id', 'uuid', 'appeal_number', 'telegram_user', 'user_name', 'user_phone', 'region_name',
             'appeal_type', 'appeal_type_name', 'category', 'category_name',
             'assigned_organizations',
             'latitude', 'longitude', 'address',
@@ -201,6 +202,26 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
             'rating', 'rated_at', 'closed_at',
             'created_at', 'updated_at'
         ]
+
+    def get_user_name(self, obj):
+        if getattr(obj, 'telegram_user', None):
+            return obj.telegram_user.full_name
+        return (getattr(obj, 'citizen_name', '') or '').strip() or "Noma'lum"
+
+    def get_user_phone(self, obj):
+        if getattr(obj, 'telegram_user', None):
+            return obj.telegram_user.phone or ''
+        return (getattr(obj, 'citizen_phone', '') or '').strip()
+
+    def get_region_name(self, obj):
+        if getattr(obj, 'telegram_user', None) and getattr(obj.telegram_user, 'region', None):
+            return obj.telegram_user.region.name_uz
+        if getattr(obj, 'citizen_region', None):
+            try:
+                return obj.citizen_region.name_uz
+            except Exception:
+                return ''
+        return ''
     
     def get_attachments_count(self, obj):
         return obj.attachments.count()
@@ -234,6 +255,9 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
     """Telegram murojaat tafsilotlari serializer"""
     
     telegram_user = TelegramUserSerializer(read_only=True)
+    user_name = serializers.SerializerMethodField()
+    user_phone = serializers.SerializerMethodField()
+    region_name = serializers.SerializerMethodField()
     appeal_type_detail = AppealTypeSerializer(source='appeal_type', read_only=True)
     category_detail = AppealCategorySerializer(source='category', read_only=True)
     assigned_organizations = OrganizationMinimalSerializer(many=True, read_only=True)
@@ -244,7 +268,7 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelegramAppeal
         fields = [
-            'id', 'uuid', 'appeal_number', 'telegram_user',
+            'id', 'uuid', 'appeal_number', 'telegram_user', 'user_name', 'user_phone', 'region_name',
             'appeal_type', 'appeal_type_detail', 'category', 'category_detail',
             'assigned_organizations',
             'latitude', 'longitude', 'address',
@@ -258,6 +282,26 @@ class TelegramAppealDetailSerializer(serializers.ModelSerializer):
             'attachments', 'messages',
             'created_at', 'updated_at'
         ]
+
+    def get_user_name(self, obj):
+        if getattr(obj, 'telegram_user', None):
+            return obj.telegram_user.full_name
+        return (getattr(obj, 'citizen_name', '') or '').strip() or "Noma'lum"
+
+    def get_user_phone(self, obj):
+        if getattr(obj, 'telegram_user', None):
+            return obj.telegram_user.phone or ''
+        return (getattr(obj, 'citizen_phone', '') or '').strip()
+
+    def get_region_name(self, obj):
+        if getattr(obj, 'telegram_user', None) and getattr(obj.telegram_user, 'region', None):
+            return obj.telegram_user.region.name_uz
+        if getattr(obj, 'citizen_region', None):
+            try:
+                return obj.citizen_region.name_uz
+            except Exception:
+                return ''
+        return ''
 
 
 class AppealReviewSerializer(serializers.Serializer):
@@ -282,6 +326,33 @@ class AppealAssignSerializer(serializers.Serializer):
     """Murojaatni yo'naltirish (soha va/yo tashkilotlarni biriktirish)."""
 
     category_id = serializers.IntegerField(required=False)
+    organization_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+
+class ManualAppealCreateSerializer(serializers.Serializer):
+    """Dashboard orqali qo'lda murojaat qo'shish."""
+
+    citizen_name = serializers.CharField(max_length=200)
+    citizen_phone = serializers.CharField(max_length=13, required=False, allow_blank=True, default='')
+    citizen_region_id = serializers.IntegerField(required=False, allow_null=True)
+
+    text = serializers.CharField()
+    appeal_type_id = serializers.IntegerField(required=False, allow_null=True)
+    category_id = serializers.IntegerField(required=False, allow_null=True)
+
+    priority = serializers.ChoiceField(
+        choices=[c[0] for c in TelegramAppeal.PRIORITY_CHOICES],
+        required=False,
+        default='medium',
+    )
+    address = serializers.CharField(required=False, allow_blank=True, default='')
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+
     organization_ids = serializers.ListField(
         child=serializers.CharField(),
         required=False,

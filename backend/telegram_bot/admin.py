@@ -82,15 +82,15 @@ class AppealMessageInline(admin.TabularInline):
 
 @admin.register(TelegramAppeal)
 class TelegramAppealAdmin(admin.ModelAdmin):
-    list_display = ['appeal_number', 'telegram_user', 'user_gender', 'appeal_type', 'category', 'status', 'priority', 'created_at']
+    list_display = ['appeal_number', 'appeal_owner', 'user_gender', 'appeal_type', 'category', 'status', 'priority', 'created_at']
     list_filter = ['status', 'priority', 'appeal_type', 'category', 'source', 'forwarded_to_site']
-    search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name']
+    search_fields = ['appeal_number', 'text', 'telegram_user__first_name', 'telegram_user__last_name', 'citizen_name', 'citizen_phone']
     readonly_fields = ['uuid', 'appeal_number', 'created_at', 'updated_at', 'ai_analysis']
     inlines = [AppealAttachmentInline, AppealMessageInline]
     
     fieldsets = (
         ('Asosiy', {
-            'fields': ('uuid', 'appeal_number', 'telegram_user', 'status', 'priority', 'source')
+            'fields': ('uuid', 'appeal_number', 'telegram_user', 'citizen_name', 'citizen_phone', 'citizen_region', 'status', 'priority', 'source')
         }),
         ('Murojaat', {
             'fields': ('appeal_type', 'category', 'text')
@@ -116,6 +116,12 @@ class TelegramAppealAdmin(admin.ModelAdmin):
         if not obj.telegram_user:
             return '-'
         return obj.telegram_user.get_gender_display()
+
+    @admin.display(description='Fuqaro')
+    def appeal_owner(self, obj):
+        if obj.telegram_user:
+            return obj.telegram_user.full_name
+        return (obj.citizen_name or '').strip() or '-'
 
 
 @admin.register(UserState)
