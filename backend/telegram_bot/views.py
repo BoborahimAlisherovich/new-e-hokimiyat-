@@ -532,10 +532,11 @@ class BotAdminViewSet(viewsets.ModelViewSet):
 class BotRegionViewSet(viewsets.ModelViewSet):
     """Hududlar API"""
     
-    queryset = BotRegion.objects.all()
+    queryset = BotRegion.objects.all().order_by('order', 'name_uz')
     serializer_class = BotRegionSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['is_active']
+    pagination_class = None
     
     def get_permissions(self):
         if self.action == 'list':
@@ -1012,7 +1013,9 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             telegram_user=None,
             citizen_name=citizen_name,
             citizen_phone=citizen_phone,
+            citizen_gender=(data.get('citizen_gender') or '').strip(),
             citizen_region=citizen_region,
+            citizen_language=data.get('citizen_language') or 'uz',
             created_by_user=request.user,
             text=(data.get('text') or '').strip(),
             appeal_type_id=data.get('appeal_type_id') or None,

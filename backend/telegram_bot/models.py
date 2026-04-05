@@ -476,6 +476,13 @@ class TelegramAppeal(models.Model):
         validators=[citizen_phone_validator],
         verbose_name="Telefon raqam (qo'lda)"
     )
+    citizen_gender = models.CharField(
+        max_length=10,
+        choices=TelegramUser.GENDER_CHOICES,
+        blank=True,
+        default='',
+        verbose_name="Jinsi (qo'lda)"
+    )
     citizen_region = models.ForeignKey(
         BotRegion,
         on_delete=models.SET_NULL,
@@ -483,6 +490,12 @@ class TelegramAppeal(models.Model):
         blank=True,
         related_name='manual_appeals',
         verbose_name="Hudud (qo'lda)"
+    )
+    citizen_language = models.CharField(
+        max_length=5,
+        choices=TelegramUser.LANGUAGE_CHOICES,
+        default='uz',
+        verbose_name="Til (qo'lda)"
     )
     created_by_user = models.ForeignKey(
         User,

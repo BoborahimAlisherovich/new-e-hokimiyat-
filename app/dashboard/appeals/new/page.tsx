@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { createManualAppeal, getAppealCategories, getCurrentUser, api } from "@/lib/api"
+import { createManualAppeal, getAppealCategories, getAppealTypes, getCurrentUser, api } from "@/lib/api"
 import { ArrowLeft, Loader2, Save } from "lucide-react"
 import Link from "next/link"
 
 type RegionItem = { id: number; name_uz: string }
 type CategoryItem = { id: number; name_uz: string }
+type AppealTypeItem = { id: number; name_uz: string }
 
 const ALLOWED_ROLES = new Set(["HOKIM", "HOKIM_YORDAMCHISI", "ADMIN"])
 
@@ -29,10 +30,14 @@ export default function NewAppealPage() {
 
   const [regions, setRegions] = useState<RegionItem[]>([])
   const [categories, setCategories] = useState<CategoryItem[]>([])
+  const [appealTypes, setAppealTypes] = useState<AppealTypeItem[]>([])
 
   const [citizenName, setCitizenName] = useState("")
   const [citizenPhone, setCitizenPhone] = useState("")
+  const [citizenGender, setCitizenGender] = useState<"male" | "female" | "">("")
+  const [citizenLanguage, setCitizenLanguage] = useState<"uz" | "ru" | "en">("uz")
   const [regionId, setRegionId] = useState<string>("")
+  const [appealTypeId, setAppealTypeId] = useState<string>("")
   const [categoryId, setCategoryId] = useState<string>("")
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium")
   const [address, setAddress] = useState("")
@@ -68,6 +73,10 @@ export default function NewAppealPage() {
     getAppealCategories()
       .then((rows) => setCategories(rows.map((c) => ({ id: c.id, name_uz: c.name_uz }))))
       .catch(() => setCategories([]))
+
+    getAppealTypes()
+      .then((rows) => setAppealTypes(rows.map((item) => ({ id: item.id, name_uz: item.name_uz }))))
+      .catch(() => setAppealTypes([]))
   }, [])
 
   const canSubmit = useMemo(() => {
@@ -81,7 +90,10 @@ export default function NewAppealPage() {
       const created = await createManualAppeal({
         citizen_name: citizenName.trim(),
         citizen_phone: citizenPhone.trim(),
+        citizen_gender: citizenGender,
         citizen_region_id: regionId ? Number(regionId) : null,
+        citizen_language: citizenLanguage,
+        appeal_type_id: appealTypeId ? Number(appealTypeId) : null,
         category_id: categoryId ? Number(categoryId) : null,
         priority,
         address: address.trim(),
@@ -150,6 +162,34 @@ export default function NewAppealPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
+                <Label>Jinsi</Label>
+                <Select value={citizenGender} onValueChange={(value) => setCitizenGender(value as "male" | "female" | "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Erkak</SelectItem>
+                    <SelectItem value="female">Ayol</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Til</Label>
+                <Select value={citizenLanguage} onValueChange={(value) => setCitizenLanguage(value as "uz" | "ru" | "en")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="uz">O'zbekcha</SelectItem>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
                 <Label>Hudud</Label>
                 <Select value={regionId} onValueChange={setRegionId}>
                   <SelectTrigger>
@@ -165,6 +205,24 @@ export default function NewAppealPage() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Murojaat turi</Label>
+                <Select value={appealTypeId} onValueChange={setAppealTypeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tanlang (ixtiyoriy)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {appealTypes.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.name_uz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
                 <Label>Soha</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger>
@@ -179,9 +237,6 @@ export default function NewAppealPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Ustuvorlik</Label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as any)}>

@@ -231,7 +231,7 @@ class OrgDashboardView(views.APIView):
                 'status': a.status,
                 'priority': a.priority,
                 'created_at': a.created_at.isoformat(),
-                'user_name': a.telegram_user.full_name if a.telegram_user else 'Noma\'lum',
+                'user_name': a.telegram_user.full_name if a.telegram_user else (a.citizen_name or 'Noma\'lum'),
                 'category_name': a.category.name_uz if a.category else None,
             })
         
