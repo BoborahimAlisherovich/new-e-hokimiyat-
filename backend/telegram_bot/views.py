@@ -1108,8 +1108,9 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
 
                     organization_ids_for_task = list(appeal.assigned_organizations.values_list('id', flat=True))
                     if not organization_ids_for_task:
+                        category_name = getattr(getattr(appeal, 'category', None), 'name_uz', '') or 'Tanlanmagan soha'
                         raise ValueError(
-                            f"{index + 1}-blok uchun soha bo'yicha tashkilot topilmadi. Soha mappingini tekshiring."
+                            f"{index + 1}-murojaat uchun \"{category_name}\" sohasiga biriktirilgan tashkilot topilmadi."
                         )
 
                     appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or 'Murojaat'
@@ -1195,6 +1196,70 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             return [item.strip() for item in organization_ids.split(',') if item.strip()]
         return [str(item).strip() for item in organization_ids if str(item).strip()]
 
+    def _get_default_task_assignee(self, organization):
+        preferred_roles = ['TASHKILOT_MASUL', 'TASHKILOT_RAHBARI']
+        employees = list(
+            organization.employees.filter(
+                status='FAOL',
+                role__in=preferred_roles,
+            )
+        )
+        if not employees:
+            return None
+
+        employees.sort(
+            key=lambda employee: (
+                preferred_roles.index(employee.role) if employee.role in preferred_roles else len(preferred_roles),
+                employee.created_at,
+            )
+        )
+        return employees[0]
+
+    def _create_task_context_message(self, *, task, user, appeal, organizations, attachment_files=None):
+        from tasks.models import TaskMessage
+
+        citizen_name = (getattr(appeal, 'citizen_name', '') or '').strip()
+        citizen_phone = (getattr(appeal, 'citizen_phone', '') or '').strip() or "-"
+        region_name = "-"
+        try:
+            if appeal.citizen_region:
+                region_name = appeal.citizen_region.name_uz
+        except Exception:
+            region_name = "-"
+
+        organization_names = ", ".join(org.name for org in organizations) or "-"
+        appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or "-"
+        category_name = getattr(getattr(appeal, 'category', None), 'name_uz', '') or "-"
+        attachment_count = len(list(attachment_files or []))
+        citizen_display_name = citizen_name or "Noma'lum"
+
+        lines = [
+            "Tizim xabari",
+            f"Murojaat raqami: {appeal.appeal_number}",
+            f"Murojaatchi: {citizen_display_name}",
+            f"Telefon: {citizen_phone}",
+            f"Hudud: {region_name}",
+            f"Murojaat turi: {appeal_type_name}",
+            f"Soha: {category_name}",
+            f"Yo'naltirilgan tashkilotlar: {organization_names}",
+        ]
+
+        if attachment_count:
+            lines.append(f"Biriktirilgan fayllar soni: {attachment_count}")
+
+        lines.extend([
+            "",
+            "Murojaat matni:",
+            appeal.text,
+        ])
+
+        TaskMessage.objects.create(
+            task=task,
+            sender=None,
+            message_type='SYSTEM',
+            content="\n".join(lines),
+        )
+
     def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment='', attachment_files=None):
         from tasks.models import Task, TaskAttachment, TaskOrganization
         from organizations.models import Organization
@@ -1260,7 +1325,13 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             )
 
         for organization in organizations:
-            TaskOrganization.objects.create(task=task, organization=organization, status='YANGI')
+            default_assignee = self._get_default_task_assignee(organization)
+            TaskOrganization.objects.create(
+                task=task,
+                organization=organization,
+                status='YANGI',
+                assigned_to=default_assignee,
+            )
             for org_user in organization.employees.filter(
                 status='FAOL',
                 role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
@@ -1273,6 +1344,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                     related_task=task,
                     link=f'/dashboard/tasks/{task.id}',
                 )
+
+        self._create_task_context_message(
+            task=task,
+            user=user,
+            appeal=appeal,
+            organizations=organizations,
+            attachment_files=attachment_files,
+        )
 
         appeal.forwarded_to_site = True
         appeal.status = 'forwarded'

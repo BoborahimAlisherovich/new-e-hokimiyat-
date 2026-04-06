@@ -134,8 +134,8 @@ export default function NewAppealPage() {
         title: "Muvaffaqiyat",
         description:
           created.length > 1
-            ? `${created.length} ta murojaat va ularga mos topshiriqlar yaratildi`
-            : "Murojaat va unga mos topshiriq yaratildi",
+            ? `${created.length} ta murojaat muvaffaqiyatli rasmiylashtirildi`
+            : "Murojaat muvaffaqiyatli rasmiylashtirildi",
       })
 
       if (created.length === 1) {
@@ -175,7 +175,7 @@ export default function NewAppealPage() {
       <DashboardPageFrame
         eyebrow="Murojaatlar"
         title="Qo‘lda murojaat qo‘shish"
-        description="Bitta murojaatchi uchun bir nechta alohida murojaat/topshiriq bloklarini bir joydan yaratishingiz mumkin."
+        description="Murojaatchi ma’lumotlarini kiriting va unga tegishli murojaatlarni yagona sahifa orqali rasmiylashtiring."
         stats={[]}
       >
         <div className="mb-4">
@@ -190,7 +190,7 @@ export default function NewAppealPage() {
             <CardHeader>
               <CardTitle>Murojaatchi ma&apos;lumotlari</CardTitle>
               <CardDescription>
-                Bu ma&apos;lumotlar bir marta kiritiladi va barcha yaratiladigan murojaatlarga qo&apos;llanadi.
+                Ushbu ma&apos;lumotlar barcha kiritilayotgan murojaatlar uchun umumiy tarzda qo&apos;llanadi.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -236,7 +236,7 @@ export default function NewAppealPage() {
               </div>
 
               <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                Til va manzil maydonlari olib tashlandi. Har bir qo&apos;shimcha blok alohida murojaat sifatida saqlanadi.
+                Murojaatchi ma&apos;lumotlari bir marta kiritiladi va quyidagi murojaatlar uchun umumiy tartibda saqlanadi.
               </div>
             </CardContent>
           </Card>
@@ -244,14 +244,14 @@ export default function NewAppealPage() {
           <Card className="border-slate-200 bg-white/95">
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Murojaatlar / topshiriqlar</CardTitle>
+                <CardTitle>Murojaatlar</CardTitle>
                 <CardDescription>
-                  Har bir blok alohida murojaat yaratadi va sohasiga qarab real topshiriq sifatida tashkilotga yo&apos;naltiriladi.
+                  Har bir murojaat bo&apos;yicha tegishli yo&apos;nalish, ustuvorlik va mazmun alohida kiritiladi.
                 </CardDescription>
               </div>
               <Button type="button" variant="outline" className="gap-2" onClick={addTask}>
                 <Plus className="h-4 w-4" />
-                Topshiriq qo&apos;shish
+                Yana murojaat qo&apos;shish
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -263,8 +263,8 @@ export default function NewAppealPage() {
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">Topshiriq / murojaat #{index + 1}</p>
-                        <p className="text-sm text-slate-500">Alohida saqlanadi va alohida tashkilotga birikadi.</p>
+                        <p className="font-semibold text-slate-900">Murojaat #{index + 1}</p>
+                        <p className="text-sm text-slate-500">Murojaat bo&apos;yicha zarur ma&apos;lumotlarni to&apos;ldiring.</p>
                       </div>
                     </div>
                     <Button
@@ -370,7 +370,7 @@ export default function NewAppealPage() {
                 </Button>
                 <Button type="button" variant="outline" className="gap-2" onClick={addTask}>
                   <Plus className="h-4 w-4" />
-                  Topshiriq qo&apos;shish
+                  Yana murojaat qo&apos;shish
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/dashboard/appeals">Bekor qilish</Link>
