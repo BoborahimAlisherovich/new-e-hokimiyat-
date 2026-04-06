@@ -12,14 +12,34 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { createManualAppeal, getAppealCategories, getAppealTypes, getCurrentUser, api } from "@/lib/api"
-import { ArrowLeft, Loader2, Save } from "lucide-react"
+import { ArrowLeft, FileText, Loader2, Plus, Save, Trash2, Upload } from "lucide-react"
 import Link from "next/link"
 
 type RegionItem = { id: number; name_uz: string }
 type CategoryItem = { id: number; name_uz: string }
 type AppealTypeItem = { id: number; name_uz: string }
+type Priority = "low" | "medium" | "high" | "urgent"
+type TaskBlock = {
+  id: string
+  appealTypeId: string
+  categoryId: string
+  priority: Priority
+  text: string
+  files: File[]
+}
 
 const ALLOWED_ROLES = new Set(["HOKIM", "HOKIM_YORDAMCHISI", "ADMIN"])
+
+function createTaskBlock(): TaskBlock {
+  return {
+    id: crypto.randomUUID(),
+    appealTypeId: "",
+    categoryId: "",
+    priority: "medium",
+    text: "",
+    files: [],
+  }
+}
 
 export default function NewAppealPage() {
   const router = useRouter()
@@ -35,13 +55,8 @@ export default function NewAppealPage() {
   const [citizenName, setCitizenName] = useState("")
   const [citizenPhone, setCitizenPhone] = useState("")
   const [citizenGender, setCitizenGender] = useState<"male" | "female" | "">("")
-  const [citizenLanguage, setCitizenLanguage] = useState<"uz" | "ru" | "en">("uz")
   const [regionId, setRegionId] = useState<string>("")
-  const [appealTypeId, setAppealTypeId] = useState<string>("")
-  const [categoryId, setCategoryId] = useState<string>("")
-  const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium")
-  const [address, setAddress] = useState("")
-  const [text, setText] = useState("")
+  const [tasks, setTasks] = useState<TaskBlock[]>([createTaskBlock()])
 
   useEffect(() => {
     getCurrentUser()
@@ -56,7 +71,6 @@ export default function NewAppealPage() {
   }, [router])
 
   useEffect(() => {
-    // Regions
     api
       .get<any>("/telegram-bot/regions/")
       .then((res) => {
@@ -69,7 +83,6 @@ export default function NewAppealPage() {
       })
       .catch(() => setRegions([]))
 
-    // Categories
     getAppealCategories()
       .then((rows) => setCategories(rows.map((c) => ({ id: c.id, name_uz: c.name_uz }))))
       .catch(() => setCategories([]))
@@ -80,11 +93,27 @@ export default function NewAppealPage() {
   }, [])
 
   const canSubmit = useMemo(() => {
-    return Boolean(citizenName.trim()) && Boolean(text.trim())
-  }, [citizenName, text])
+    if (!citizenName.trim() || tasks.length === 0) return false
+    return tasks.every(
+      (task) => Boolean(task.appealTypeId) && Boolean(task.categoryId) && Boolean(task.text.trim())
+    )
+  }, [citizenName, tasks])
+
+  const updateTask = (id: string, patch: Partial<TaskBlock>) => {
+    setTasks((prev) => prev.map((task) => (task.id === id ? { ...task, ...patch } : task)))
+  }
+
+  const addTask = () => {
+    setTasks((prev) => [...prev, createTaskBlock()])
+  }
+
+  const removeTask = (id: string) => {
+    setTasks((prev) => (prev.length === 1 ? prev : prev.filter((task) => task.id !== id)))
+  }
 
   const handleSubmit = async () => {
     if (!canSubmit || saving) return
+
     setSaving(true)
     try {
       const created = await createManualAppeal({
@@ -92,16 +121,29 @@ export default function NewAppealPage() {
         citizen_phone: citizenPhone.trim(),
         citizen_gender: citizenGender,
         citizen_region_id: regionId ? Number(regionId) : null,
-        citizen_language: citizenLanguage,
-        appeal_type_id: appealTypeId ? Number(appealTypeId) : null,
-        category_id: categoryId ? Number(categoryId) : null,
-        priority,
-        address: address.trim(),
-        text: text.trim(),
+        items: tasks.map((task) => ({
+          appeal_type_id: Number(task.appealTypeId),
+          category_id: Number(task.categoryId),
+          priority: task.priority,
+          text: task.text.trim(),
+          attachments: task.files,
+        })),
       })
 
-      toast({ title: "Muvaffaqiyat", description: "Murojaat qo'shildi" })
-      router.push(`/dashboard/appeals/${created.id}`)
+      toast({
+        title: "Muvaffaqiyat",
+        description:
+          created.length > 1
+            ? `${created.length} ta murojaat va ularga mos topshiriqlar yaratildi`
+            : "Murojaat va unga mos topshiriq yaratildi",
+      })
+
+      if (created.length === 1) {
+        router.push(`/dashboard/appeals/${created[0].id}`)
+        return
+      }
+
+      router.push("/dashboard/appeals")
     } catch (err: any) {
       toast({
         title: "Xato",
@@ -133,7 +175,7 @@ export default function NewAppealPage() {
       <DashboardPageFrame
         eyebrow="Murojaatlar"
         title="Qo‘lda murojaat qo‘shish"
-        description="Telegramdan kelmagan murojaatlarni hokim, hokim o‘rinbosari yoki admin qo‘lda kiritishi mumkin."
+        description="Bitta murojaatchi uchun bir nechta alohida murojaat/topshiriq bloklarini bir joydan yaratishingiz mumkin."
         stats={[]}
       >
         <div className="mb-4">
@@ -143,136 +185,200 @@ export default function NewAppealPage() {
           </Link>
         </div>
 
-        <Card className="max-w-3xl">
-          <CardHeader>
-            <CardTitle>Ma'lumotlar</CardTitle>
-            <CardDescription>Majburiy maydonlar: fuqaro ismi va murojaat matni.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)]">
+          <Card className="border-slate-200 bg-white/95">
+            <CardHeader>
+              <CardTitle>Murojaatchi ma&apos;lumotlari</CardTitle>
+              <CardDescription>
+                Bu ma&apos;lumotlar bir marta kiritiladi va barcha yaratiladigan murojaatlarga qo&apos;llanadi.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label>Fuqaro F.I.Sh</Label>
                 <Input value={citizenName} onChange={(e) => setCitizenName(e.target.value)} placeholder="Masalan: Aliyev Ali" />
               </div>
+
               <div className="space-y-2">
                 <Label>Telefon (+998...)</Label>
                 <Input value={citizenPhone} onChange={(e) => setCitizenPhone(e.target.value)} placeholder="+998901234567" />
               </div>
-            </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Jinsi</Label>
-                <Select value={citizenGender} onValueChange={(value) => setCitizenGender(value as "male" | "female" | "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tanlang" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Erkak</SelectItem>
-                    <SelectItem value="female">Ayol</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Til</Label>
-                <Select value={citizenLanguage} onValueChange={(value) => setCitizenLanguage(value as "uz" | "ru" | "en")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="uz">O'zbekcha</SelectItem>
-                    <SelectItem value="ru">Русский</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Jinsi</Label>
+                  <Select value={citizenGender} onValueChange={(value) => setCitizenGender(value as "male" | "female" | "")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Erkak</SelectItem>
+                      <SelectItem value="female">Ayol</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Hudud</Label>
-                <Select value={regionId} onValueChange={setRegionId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tanlang (ixtiyoriy)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {regions.map((r) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.name_uz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label>Hudud</Label>
+                  <Select value={regionId} onValueChange={setRegionId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tanlang (ixtiyoriy)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {regions.map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.name_uz}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Murojaat turi</Label>
-                <Select value={appealTypeId} onValueChange={setAppealTypeId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tanlang (ixtiyoriy)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appealTypes.map((item) => (
-                      <SelectItem key={item.id} value={String(item.id)}>
-                        {item.name_uz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Soha</Label>
-                <Select value={categoryId} onValueChange={setCategoryId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tanlang (ixtiyoriy)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name_uz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                Til va manzil maydonlari olib tashlandi. Har bir qo&apos;shimcha blok alohida murojaat sifatida saqlanadi.
               </div>
-              <div className="space-y-2">
-                <Label>Ustuvorlik</Label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Past</SelectItem>
-                    <SelectItem value="medium">O'rtacha</SelectItem>
-                    <SelectItem value="high">Yuqori</SelectItem>
-                    <SelectItem value="urgent">Shoshilinch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Manzil</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Ixtiyoriy" />
-              </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <Label>Murojaat matni</Label>
-              <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder="Murojaat mazmunini yozing..." />
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleSubmit} disabled={!canSubmit || saving} className="gap-2">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Saqlash
+          <Card className="border-slate-200 bg-white/95">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Murojaatlar / topshiriqlar</CardTitle>
+                <CardDescription>
+                  Har bir blok alohida murojaat yaratadi va sohasiga qarab real topshiriq sifatida tashkilotga yo&apos;naltiriladi.
+                </CardDescription>
+              </div>
+              <Button type="button" variant="outline" className="gap-2" onClick={addTask}>
+                <Plus className="h-4 w-4" />
+                Topshiriq qo&apos;shish
               </Button>
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/appeals">Bekor qilish</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {tasks.map((task, index) => (
+                <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-xl bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Topshiriq / murojaat #{index + 1}</p>
+                        <p className="text-sm text-slate-500">Alohida saqlanadi va alohida tashkilotga birikadi.</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeTask(task.id)}
+                      disabled={tasks.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-slate-500" />
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Murojaat turi</Label>
+                      <Select value={task.appealTypeId} onValueChange={(value) => updateTask(task.id, { appealTypeId: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tanlang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {appealTypes.map((item) => (
+                            <SelectItem key={item.id} value={String(item.id)}>
+                              {item.name_uz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Soha</Label>
+                      <Select value={task.categoryId} onValueChange={(value) => updateTask(task.id, { categoryId: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tanlang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((item) => (
+                            <SelectItem key={item.id} value={String(item.id)}>
+                              {item.name_uz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Ustuvorlik</Label>
+                      <Select value={task.priority} onValueChange={(value) => updateTask(task.id, { priority: value as Priority })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Past</SelectItem>
+                          <SelectItem value="medium">O&apos;rtacha</SelectItem>
+                          <SelectItem value="high">Yuqori</SelectItem>
+                          <SelectItem value="urgent">Shoshilinch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <Label>Murojaat matni</Label>
+                    <Textarea
+                      value={task.text}
+                      onChange={(e) => updateTask(task.id, { text: e.target.value })}
+                      rows={5}
+                      placeholder="Mazmunini yozing..."
+                    />
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Upload className="h-4 w-4" />
+                      Fayllar
+                    </Label>
+                    <Input
+                      type="file"
+                      multiple
+                      onChange={(e) => updateTask(task.id, { files: Array.from(e.target.files || []) })}
+                    />
+                    {task.files.length > 0 && (
+                      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <div className="space-y-1 text-sm text-slate-600">
+                          {task.files.map((file, fileIndex) => (
+                            <div key={`${file.name}-${fileIndex}`} className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-slate-400" />
+                              <span className="truncate">{file.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button onClick={handleSubmit} disabled={!canSubmit || saving} className="gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Yuborish
+                </Button>
+                <Button type="button" variant="outline" className="gap-2" onClick={addTask}>
+                  <Plus className="h-4 w-4" />
+                  Topshiriq qo&apos;shish
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard/appeals">Bekor qilish</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </DashboardPageFrame>
     </>
   )

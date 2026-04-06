@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header"
 import { Tabs } from "@/components/ui/tabs"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useI18n, useTranslation, type Language } from "@/lib/i18n/context"
-import { getCurrentUser } from "@/lib/api"
+import { getCurrentUser, getNotificationPreferences, getPushPublicKey, getPushStatus, updateNotificationPreferences } from "@/lib/api"
 import { User } from "@/types"
 import { SettingsTabs } from "@/components/dashboard/settings/settings-tabs"
 import { SettingsProfileTab } from "@/components/dashboard/settings/settings-profile-tab"
@@ -17,6 +17,12 @@ import { useToast } from "@/hooks/use-toast"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { canAccessSettingsTab, getAllowedSettingsTabs, type SettingsTabKey } from "@/lib/settings-access"
 import { useRouter, useSearchParams } from "next/navigation"
+import {
+  emitPushSettingsChanged,
+  getPushPermissionState,
+  isPushSupported,
+  syncPushSubscription,
+} from "@/lib/push-notifications"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -35,24 +41,40 @@ export default function SettingsPage() {
   const [pushNotifications, setPushNotifications] = useState(false)
   const [taskDeadlineReminder, setTaskDeadlineReminder] = useState(true)
   const [newTaskNotification, setNewTaskNotification] = useState(true)
+  const [pushSupported, setPushSupported] = useState(false)
+  const [pushPermission, setPushPermission] = useState<"default" | "granted" | "denied" | "unsupported">("unsupported")
+  const [pushConfigured, setPushConfigured] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const user = await getCurrentUser()
       setCurrentUser(user)
+      setPushSupported(isPushSupported())
+      setPushPermission(getPushPermissionState())
       
-      // Load settings from localStorage
-      const savedNotifications = localStorage.getItem("notifications")
-      if (savedNotifications) {
+      try {
+        const preferences = await getNotificationPreferences()
+        setEmailNotifications(preferences.email_notifications_enabled)
+        setTelegramNotifications(preferences.telegram_notifications_enabled)
+        setPushNotifications(preferences.push_notifications_enabled)
+        setTaskDeadlineReminder(preferences.deadline_reminders_enabled)
+        setNewTaskNotification(preferences.new_task_notifications_enabled)
+      } catch (error) {
+        console.error("Notification preferences error:", error)
+      }
+
+      if (isPushSupported()) {
         try {
-          const notif = JSON.parse(savedNotifications)
-          setEmailNotifications(notif.email ?? true)
-          setTelegramNotifications(notif.telegram ?? true)
-          setPushNotifications(notif.push ?? false)
-          setTaskDeadlineReminder(notif.deadline ?? true)
-          setNewTaskNotification(notif.newTask ?? true)
-        } catch (e) {}
+          const { configured } = await getPushPublicKey()
+          setPushConfigured(configured)
+          const pushStatus = await getPushStatus()
+          setPushNotifications(pushStatus.enabled)
+        } catch (error) {
+          console.error("Push status error:", error)
+        }
+      } else {
+        setPushConfigured(false)
       }
     } catch (error) {
       console.error("Failed to load user:", error)
@@ -94,16 +116,35 @@ export default function SettingsPage() {
   const saveSettings = async () => {
     setSaving(true)
     try {
+      let nextPushNotifications = false
+
+      if (pushNotifications) {
+        nextPushNotifications = await syncPushSubscription(true, { interactive: true })
+        setPushPermission(getPushPermissionState())
+      } else {
+        await syncPushSubscription(false, { interactive: false })
+        nextPushNotifications = false
+      }
+
       // Save notification settings to localStorage
       const notificationSettings = {
         email: emailNotifications,
         telegram: telegramNotifications,
-        push: pushNotifications,
+        push: nextPushNotifications,
         deadline: taskDeadlineReminder,
         newTask: newTaskNotification,
       }
       localStorage.setItem("notifications", JSON.stringify(notificationSettings))
       localStorage.setItem("language", language)
+      await updateNotificationPreferences({
+        email_notifications_enabled: emailNotifications,
+        telegram_notifications_enabled: telegramNotifications,
+        push_notifications_enabled: nextPushNotifications,
+        deadline_reminders_enabled: taskDeadlineReminder,
+        new_task_notifications_enabled: newTaskNotification,
+      })
+      setPushNotifications(nextPushNotifications)
+      emitPushSettingsChanged(nextPushNotifications)
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -115,7 +156,7 @@ export default function SettingsPage() {
     } catch (error) {
       toast({
         title: t.common.error,
-        description: t.settings.saveError,
+        description: error instanceof Error ? error.message : t.settings.saveError,
         variant: "destructive",
       })
     } finally {
@@ -190,6 +231,9 @@ export default function SettingsPage() {
               onDeadlineChange={setTaskDeadlineReminder}
               onSave={saveSettings}
               saving={saving}
+              pushSupported={pushSupported}
+              pushPermission={pushPermission}
+              pushConfigured={pushConfigured}
             />
             <SettingsSecurityTab t={t} currentUser={userForProfile} />
             <SettingsAppearanceTab t={t} language={language} onLanguageChange={handleLanguageChange} onSave={saveSettings} saving={saving} />

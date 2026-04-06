@@ -65,6 +65,7 @@ backend/logs/
 # Media & Static
 backend/media/
 backend/staticfiles/
+backend/*.pem
 
 # IDEs
 .idea/

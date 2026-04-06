@@ -139,29 +139,35 @@ WSGI_APPLICATION = 'ehokimiyat.wsgi.application'
 database_url = os.environ.get('DATABASE_URL', '').strip()
 use_postgres = env_bool('USE_POSTGRES', False)
 
-if database_url or use_postgres:
+if database_url:
+    try:
+        DATABASES = {
+            'default': parse_database_url(database_url)
+        }
+    except ValueError:
+        db_name = os.environ.get('DB_NAME', 'ehokimiyat')
+        db_user = os.environ.get('DB_USER', 'postgres')
+        db_password = os.environ.get('DB_PASSWORD', 'postgres')
+        db_host = os.environ.get('DB_HOST', 'localhost')
+        db_port = os.environ.get('DB_PORT', '5432')
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': db_name,
+                'USER': db_user,
+                'PASSWORD': db_password,
+                'HOST': db_host,
+                'PORT': db_port,
+            }
+        }
+elif use_postgres:
     # Prefer DATABASE_URL, otherwise use DB_* variables
     db_name = os.environ.get('DB_NAME', 'ehokimiyat')
     db_user = os.environ.get('DB_USER', 'postgres')
     db_password = os.environ.get('DB_PASSWORD', 'postgres')
     db_host = os.environ.get('DB_HOST', 'localhost')
     db_port = os.environ.get('DB_PORT', '5432')
-
-    if database_url:
-        # Minimal DATABASE_URL parsing without external deps
-        # Expected: postgres://USER:PASSWORD@HOST:PORT/NAME
-        try:
-            from urllib.parse import urlparse
-
-            parsed = urlparse(database_url)
-            if parsed.scheme in ('postgres', 'postgresql'):
-                db_name = (parsed.path or '').lstrip('/') or db_name
-                db_user = parsed.username or db_user
-                db_password = parsed.password or db_password
-                db_host = parsed.hostname or db_host
-                db_port = str(parsed.port or db_port)
-        except Exception:
-            pass
 
     DATABASES = {
         'default': {
@@ -214,6 +220,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Web Push
+WEB_PUSH_PUBLIC_KEY = os.environ.get('WEB_PUSH_PUBLIC_KEY', '').strip()
+WEB_PUSH_PRIVATE_KEY = os.environ.get('WEB_PUSH_PRIVATE_KEY', '').strip()
+WEB_PUSH_PRIVATE_KEY_PATH = os.environ.get('WEB_PUSH_PRIVATE_KEY_PATH', '').strip()
+WEB_PUSH_SUBJECT = os.environ.get('WEB_PUSH_SUBJECT', 'mailto:admin@ehokimiyat.uz').strip()
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

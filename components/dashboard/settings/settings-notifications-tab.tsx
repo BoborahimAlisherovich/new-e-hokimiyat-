@@ -23,6 +23,9 @@ interface SettingsNotificationsTabProps {
   onDeadlineChange: (value: boolean) => void
   onSave: () => Promise<void>
   saving?: boolean
+  pushSupported?: boolean
+  pushPermission?: "default" | "granted" | "denied" | "unsupported"
+  pushConfigured?: boolean
 }
 
 export function SettingsNotificationsTab({
@@ -39,7 +42,18 @@ export function SettingsNotificationsTab({
   onDeadlineChange,
   onSave,
   saving,
+  pushSupported = true,
+  pushPermission = "default",
+  pushConfigured = true,
 }: SettingsNotificationsTabProps) {
+  const pushWarning = !pushSupported
+    ? "Bu brauzer push bildirishnomalarni qo'llab-quvvatlamaydi."
+    : !pushConfigured
+      ? "Push server hali production uchun sozlanmagan."
+      : pushPermission === "denied"
+        ? "Brauzer ruxsatni bloklagan. Push ishlashi uchun brauzer sozlamalaridan ruxsat bering."
+        : null
+
   return (
     <TabsContent value="notifications" className="animate-fade-in">
       <Card className="overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_26px_60px_-34px_rgba(14,165,233,0.24)] backdrop-blur-xl">
@@ -90,7 +104,13 @@ export function SettingsNotificationsTab({
               checked={pushNotifications}
               onCheckedChange={onPushChange}
               tone="amber"
+              disabled={!pushSupported || !pushConfigured}
             />
+            {pushWarning ? (
+              <div className="rounded-[20px] border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm leading-6 text-amber-900">
+                {pushWarning}
+              </div>
+            ) : null}
           </div>
 
           <Separator className="my-2 bg-cyan-100/70" />
@@ -140,6 +160,7 @@ function NotificationSettingRow({
   checked,
   onCheckedChange,
   tone = "cyan",
+  disabled = false,
 }: {
   icon: typeof Bell
   title: string
@@ -147,6 +168,7 @@ function NotificationSettingRow({
   checked: boolean
   onCheckedChange: (value: boolean) => void
   tone?: "cyan" | "amber"
+  disabled?: boolean
 }) {
   const toneClasses = tone === "amber"
     ? {
@@ -170,7 +192,7 @@ function NotificationSettingRow({
         </div>
       </div>
       <div className="flex justify-end sm:block">
-        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+        <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
       </div>
     </div>
   )

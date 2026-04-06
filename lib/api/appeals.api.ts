@@ -318,29 +318,58 @@ export interface ManualAppealCreateRequest {
   citizen_phone?: string
   citizen_gender?: 'male' | 'female' | ''
   citizen_region_id?: number | null
-  citizen_language?: 'uz' | 'ru' | 'en'
-  text: string
-  appeal_type_id?: number | null
-  category_id?: number | null
-  priority?: 'low' | 'medium' | 'high' | 'urgent'
-  address?: string
-  latitude?: number | null
-  longitude?: number | null
-  organization_ids?: string[]
+  items: Array<{
+    text: string
+    appeal_type_id: number
+    category_id: number
+    priority?: 'low' | 'medium' | 'high' | 'urgent'
+    address?: string
+    latitude?: number | null
+    longitude?: number | null
+    organization_ids?: string[]
+    attachments?: File[]
+  }>
 }
 
 /**
  * Qo'lda murojaat qo'shish (dashboard orqali).
  */
-export async function createManualAppeal(payload: ManualAppealCreateRequest): Promise<Appeal> {
-  const result = await fetchApi<TelegramAppealResponse>(
+export async function createManualAppeal(payload: ManualAppealCreateRequest): Promise<Appeal[]> {
+  const form = new FormData()
+  form.append(
+    'payload',
+    JSON.stringify({
+      citizen_name: payload.citizen_name,
+      citizen_phone: payload.citizen_phone || '',
+      citizen_gender: payload.citizen_gender || '',
+      citizen_region_id: payload.citizen_region_id ?? null,
+      items: payload.items.map((item) => ({
+        text: item.text,
+        appeal_type_id: item.appeal_type_id,
+        category_id: item.category_id,
+        priority: item.priority || 'medium',
+        address: item.address || '',
+        latitude: item.latitude ?? null,
+        longitude: item.longitude ?? null,
+        organization_ids: item.organization_ids || [],
+      })),
+    })
+  )
+
+  payload.items.forEach((item, index) => {
+    item.attachments?.forEach((file) => {
+      form.append(`attachments_${index}`, file)
+    })
+  })
+
+  const result = await fetchApi<{ results?: TelegramAppealResponse[] }>(
     `/telegram-bot/appeals/manual-create/`,
     {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: form,
     }
   )
-  return normalizeAppeal(result)
+  return (result.results || []).map(normalizeAppeal)
 }
 
 /**

@@ -5,6 +5,7 @@ import "./globals.css"
 import { I18nProvider } from "@/lib/i18n/context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceGuard } from "@/components/performance-guard"
+import { PushNotificationManager } from "@/components/push/push-notification-manager"
 
 export const metadata: Metadata = {
   title: "E-Hokimiyat",
@@ -33,6 +34,7 @@ export default function RootLayout({
           </a>
           <I18nProvider>
             <PerformanceGuard />
+            <PushNotificationManager />
             {children}
           </I18nProvider>
           <a

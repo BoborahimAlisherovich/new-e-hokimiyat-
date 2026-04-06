@@ -39,8 +39,7 @@ from audit.models import AuditLog
 from core.constants import FileType, Messages, TaskStatus, UserRole
 from core.permissions import CanCloseTask, CanCreateTasks, CanExecuteTasks
 from core.ai_service import AIService
-from notifications.models import Notification
-from notifications.services import notify_task_chat_message
+from notifications.services import create_notification, notify_task_chat_message
 
 from .models import (
     DeadlineExtensionRequest,
@@ -641,7 +640,7 @@ QOIDALAR:
                 status='FAOL',
                 role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
             ):
-                Notification.objects.create(
+                create_notification(
                     user=user,
                     title='Yangi topshiriq',
                     message=f"Sizning tashkilotingizga yangi topshiriq berildi: {task.title}",
@@ -773,7 +772,7 @@ QOIDALAR:
         
         # Notify Hokim
         for hokim in task.created_by.organization.employees.filter(role='HOKIM', status='FAOL') if task.created_by.organization else []:
-            Notification.objects.create(
+            create_notification(
                 user=hokim,
                 title='Hisobot topshirildi',
                 message=f"{user.organization.name} topshiriq hisobotini topshirdi: {task.title}",
@@ -892,7 +891,7 @@ QOIDALAR:
             status='FAOL',
             role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
         ):
-            Notification.objects.create(
+            create_notification(
                 user=user,
                 title='Topshiriq qayta yuborildi',
                 message=f"Topshiriq qayta ijroga yuborildi: {task.title}",
@@ -994,7 +993,7 @@ QOIDALAR:
             status='FAOL'
         )
         for huser in hokimlik_users:
-            Notification.objects.create(
+            create_notification(
                 user=huser,
                 title='Topshiriq bajarildi',
                 message=f"{user_org.name} topshiriqni bajardi: {task.title}",
