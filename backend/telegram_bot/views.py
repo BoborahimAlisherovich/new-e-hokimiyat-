@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Count, Q, F, Value, OuterRef, Subquery, DateTimeField, Sum
 from django.db.models.functions import Coalesce
 import datetime
 from datetime import timedelta
 import json
 import subprocess
+import uuid
 
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
@@ -22,7 +24,7 @@ from .serializers import (
     AppealReviewSerializer, AppealAssignSerializer, ManualAppealCreateSerializer, BotStatsSerializer
 )
 from core.permissions import CanManageBotSettings
-from notifications.services import notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
+from notifications.services import create_notification, notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
 
 
 def _find_bot_pids() -> list:
@@ -73,6 +75,28 @@ def _kill_pids(pids: list) -> bool:
         except Exception:
             continue
     return stopped_any
+
+
+def _guess_appeal_attachment_type(file_obj) -> str:
+    content_type = (getattr(file_obj, 'content_type', '') or '').lower()
+    if content_type.startswith('image/'):
+        return 'photo'
+    if content_type.startswith('video/'):
+        return 'video'
+    if content_type.startswith('audio/'):
+        return 'audio'
+    return 'document'
+
+
+def _guess_task_attachment_type(file_obj) -> str:
+    content_type = (getattr(file_obj, 'content_type', '') or '').lower()
+    if content_type.startswith('image/'):
+        return 'IMAGE'
+    if content_type.startswith('video/'):
+        return 'VIDEO'
+    if content_type.startswith('audio/'):
+        return 'AUDIO'
+    return 'DOCUMENT'
 
 
 class BotSettingsViewSet(viewsets.ModelViewSet):
@@ -989,7 +1013,35 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         if request.user.role not in {'HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'}:
             return Response({'error': "Ruxsat yo'q"}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = ManualAppealCreateSerializer(data=request.data)
+        raw_payload = request.data
+        if 'payload' in request.data:
+            try:
+                raw_payload = json.loads(request.data.get('payload') or '{}')
+            except json.JSONDecodeError:
+                return Response(
+                    {'error': "So'rov formati noto'g'ri"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if 'items' not in raw_payload:
+            raw_payload = {
+                'citizen_name': raw_payload.get('citizen_name', ''),
+                'citizen_phone': raw_payload.get('citizen_phone', ''),
+                'citizen_gender': raw_payload.get('citizen_gender', ''),
+                'citizen_region_id': raw_payload.get('citizen_region_id'),
+                'items': [{
+                    'text': raw_payload.get('text', ''),
+                    'appeal_type_id': raw_payload.get('appeal_type_id'),
+                    'category_id': raw_payload.get('category_id'),
+                    'priority': raw_payload.get('priority', 'medium'),
+                    'address': raw_payload.get('address', ''),
+                    'latitude': raw_payload.get('latitude'),
+                    'longitude': raw_payload.get('longitude'),
+                    'organization_ids': raw_payload.get('organization_ids', []),
+                }]
+            }
+
+        serializer = ManualAppealCreateSerializer(data=raw_payload)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -1008,49 +1060,95 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         region_id = data.get('citizen_region_id')
         if region_id:
             citizen_region = BotRegion.objects.filter(id=region_id).first()
-
-        appeal = TelegramAppeal.objects.create(
-            telegram_user=None,
-            citizen_name=citizen_name,
-            citizen_phone=citizen_phone,
-            citizen_gender=(data.get('citizen_gender') or '').strip(),
-            citizen_region=citizen_region,
-            citizen_language=data.get('citizen_language') or 'uz',
-            created_by_user=request.user,
-            text=(data.get('text') or '').strip(),
-            appeal_type_id=data.get('appeal_type_id') or None,
-            category_id=data.get('category_id') or None,
-            priority=data.get('priority') or 'medium',
-            address=(data.get('address') or '').strip(),
-            latitude=data.get('latitude', None),
-            longitude=data.get('longitude', None),
-            source='manual',
-            status='pending_review',
-        )
-
-        org_ids = self._normalize_organization_ids(data.get('organization_ids', []))
-        if org_ids:
-            appeal.assigned_organizations.set(org_ids)
-        else:
-            # Agar soha tanlangan bo'lsa va tashkilotlar berilmagan bo'lsa, mapping bo'yicha auto-biriktirish.
-            try:
-                if appeal.category and appeal.category.responsible_organizations.exists():  # type: ignore[attr-defined]
-                    appeal.assigned_organizations.set(appeal.category.responsible_organizations.filter(is_active=True))
-            except Exception:
-                pass
+        created_appeals = []
 
         try:
-            notify_appeal_status_update(
-                appeal=appeal,
-                title="Yangi murojaat kiritildi",
-                message=f"#{appeal.appeal_number} murojaati qo'lda kiritildi.",
-                exclude_user_ids=[request.user.id],
-            )
-        except Exception:
-            pass
+            with transaction.atomic():
+                for index, item in enumerate(data.get('items', [])):
+                    appeal = TelegramAppeal.objects.create(
+                        telegram_user=None,
+                        citizen_name=citizen_name,
+                        citizen_phone=citizen_phone,
+                        citizen_gender=(data.get('citizen_gender') or '').strip(),
+                        citizen_region=citizen_region,
+                        citizen_language='uz',
+                        created_by_user=request.user,
+                        text=(item.get('text') or '').strip(),
+                        appeal_type_id=item.get('appeal_type_id') or None,
+                        category_id=item.get('category_id') or None,
+                        priority=item.get('priority') or 'medium',
+                        address=(item.get('address') or '').strip(),
+                        latitude=item.get('latitude', None),
+                        longitude=item.get('longitude', None),
+                        source='manual',
+                        status='pending_review',
+                    )
+
+                    org_ids = self._normalize_organization_ids(item.get('organization_ids', []))
+                    if org_ids:
+                        appeal.assigned_organizations.set(org_ids)
+                    else:
+                        try:
+                            if appeal.category and appeal.category.responsible_organizations.exists():  # type: ignore[attr-defined]
+                                appeal.assigned_organizations.set(appeal.category.responsible_organizations.filter(is_active=True))
+                        except Exception:
+                            pass
+
+                    uploaded_files = request.FILES.getlist(f'attachments_{index}')
+                    for uploaded_file in uploaded_files:
+                        AppealAttachment.objects.create(
+                            appeal=appeal,
+                            file_type=_guess_appeal_attachment_type(uploaded_file),
+                            telegram_file_id=f'manual-{uuid.uuid4().hex}',
+                            file=uploaded_file,
+                            file_name=uploaded_file.name,
+                            file_size=getattr(uploaded_file, 'size', 0) or 0,
+                            mime_type=getattr(uploaded_file, 'content_type', '') or '',
+                        )
+
+                    organization_ids_for_task = list(appeal.assigned_organizations.values_list('id', flat=True))
+                    if not organization_ids_for_task:
+                        raise ValueError(
+                            f"{index + 1}-blok uchun soha bo'yicha tashkilot topilmadi. Soha mappingini tekshiring."
+                        )
+
+                    appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or 'Murojaat'
+                    task_title = f"{appeal_type_name}: {appeal.text[:80]}".strip()
+                    self._create_task_for_appeal(
+                        appeal=appeal,
+                        user=request.user,
+                        title=task_title,
+                        deadline=self._get_default_deadline_for_priority(item.get('priority')),
+                        priority=item.get('priority') or 'medium',
+                        organization_ids=organization_ids_for_task,
+                        attachment_files=uploaded_files,
+                    )
+
+                    try:
+                        notify_appeal_status_update(
+                            appeal=appeal,
+                            title="Yangi murojaat kiritildi",
+                            message=f"#{appeal.appeal_number} murojaati qo'lda kiritildi va topshiriq yaratildi.",
+                            exclude_user_ids=[request.user.id],
+                        )
+                    except Exception:
+                        pass
+
+                    created_appeals.append(appeal)
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serialized = TelegramAppealDetailSerializer(
+            created_appeals,
+            many=True,
+            context={'request': request}
+        ).data
 
         return Response(
-            TelegramAppealDetailSerializer(appeal, context={'request': request}).data,
+            {
+                'count': len(serialized),
+                'results': serialized,
+            },
             status=status.HTTP_201_CREATED
         )
 
@@ -1059,6 +1157,16 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         if value == 'SHOSHILINCH':
             value = 'FAVQULODDA'
         return value if value in {'PAST', 'ODDIY', 'YUQORI', 'FAVQULODDA'} else 'ODDIY'
+
+    def _get_default_deadline_for_priority(self, priority):
+        normalized = str(priority or 'medium').lower()
+        days_map = {
+            'low': 7,
+            'medium': 5,
+            'high': 3,
+            'urgent': 1,
+        }
+        return timezone.now() + timedelta(days=days_map.get(normalized, 5))
 
     def _normalize_task_category(self, appeal):
         raw = (
@@ -1087,11 +1195,9 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             return [item.strip() for item in organization_ids.split(',') if item.strip()]
         return [str(item).strip() for item in organization_ids if str(item).strip()]
 
-    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment=''):
-        from tasks.models import Task, TaskOrganization
+    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment='', attachment_files=None):
+        from tasks.models import Task, TaskAttachment, TaskOrganization
         from organizations.models import Organization
-        from notifications.models import Notification
-
         normalized_org_ids = self._normalize_organization_ids(organization_ids)
         organizations = list(Organization.objects.filter(id__in=normalized_org_ids, is_active=True))
         if not organizations:
@@ -1139,13 +1245,27 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             source='TELEGRAM',
         )
 
+        for uploaded_file in attachment_files or []:
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
+            TaskAttachment.objects.create(
+                task=task,
+                uploaded_by=user,
+                file=uploaded_file,
+                file_name=uploaded_file.name,
+                file_size=getattr(uploaded_file, 'size', 0) or 0,
+                file_type=_guess_task_attachment_type(uploaded_file),
+            )
+
         for organization in organizations:
             TaskOrganization.objects.create(task=task, organization=organization, status='YANGI')
             for org_user in organization.employees.filter(
                 status='FAOL',
                 role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
             ):
-                Notification.objects.create(
+                create_notification(
                     user=org_user,
                     title='Yangi topshiriq',
                     message=f"Murojaat asosida yangi topshiriq berildi: {task.title}",

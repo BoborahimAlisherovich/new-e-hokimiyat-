@@ -333,8 +333,29 @@ class AppealAssignSerializer(serializers.Serializer):
     )
 
 
+class ManualAppealItemSerializer(serializers.Serializer):
+    """Bitta fuqaro ostidagi alohida murojaat/topshiriq bloki."""
+
+    text = serializers.CharField()
+    appeal_type_id = serializers.IntegerField()
+    category_id = serializers.IntegerField()
+    priority = serializers.ChoiceField(
+        choices=[c[0] for c in TelegramAppeal.PRIORITY_CHOICES],
+        required=False,
+        default='medium',
+    )
+    address = serializers.CharField(required=False, allow_blank=True, default='')
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    organization_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+
 class ManualAppealCreateSerializer(serializers.Serializer):
-    """Dashboard orqali qo'lda murojaat qo'shish."""
+    """Dashboard orqali qo'lda bir yoki bir nechta murojaat qo'shish."""
 
     citizen_name = serializers.CharField(max_length=200)
     citizen_phone = serializers.CharField(max_length=13, required=False, allow_blank=True, default='')
@@ -345,30 +366,7 @@ class ManualAppealCreateSerializer(serializers.Serializer):
         default='',
     )
     citizen_region_id = serializers.IntegerField(required=False, allow_null=True)
-    citizen_language = serializers.ChoiceField(
-        choices=[c[0] for c in TelegramUser.LANGUAGE_CHOICES],
-        required=False,
-        default='uz',
-    )
-
-    text = serializers.CharField()
-    appeal_type_id = serializers.IntegerField(required=False, allow_null=True)
-    category_id = serializers.IntegerField(required=False, allow_null=True)
-
-    priority = serializers.ChoiceField(
-        choices=[c[0] for c in TelegramAppeal.PRIORITY_CHOICES],
-        required=False,
-        default='medium',
-    )
-    address = serializers.CharField(required=False, allow_blank=True, default='')
-    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
-    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
-
-    organization_ids = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        default=list,
-    )
+    items = ManualAppealItemSerializer(many=True, min_length=1)
 
 
 class BotStatsSerializer(serializers.Serializer):

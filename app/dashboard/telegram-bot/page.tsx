@@ -51,6 +51,8 @@ interface BotSettings {
   ai_provider: string;
   ai_api_key: string;
   ai_model: string;
+  auto_response_enabled: boolean;
+  auto_response_timeout_minutes: number;
   has_token: boolean;
   has_ai_key: boolean;
   welcome_message_uz: string;
@@ -85,6 +87,18 @@ type WebhookInfo = {
   max_connections?: number;
 }
 
+type AIProvider = "disabled" | "openai" | "anthropic";
+
+const AI_DEFAULT_MODELS: Record<Exclude<AIProvider, "disabled">, string> = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-haiku-20240307",
+};
+
+function getDefaultAIModel(provider: AIProvider) {
+  if (provider === "disabled") return "";
+  return AI_DEFAULT_MODELS[provider];
+}
+
 export default function TelegramBotPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -99,6 +113,7 @@ export default function TelegramBotPage() {
   const [settings, setSettings] = useState<BotSettings | null>(null);
   const [stats, setStats] = useState<BotStats | null>(null);
   const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
+  const [preferredAIProvider, setPreferredAIProvider] = useState<Exclude<AIProvider, "disabled">>("openai");
   const [botStatus, setBotStatus] = useState<{
     is_active: boolean;
     is_running: boolean;
@@ -176,6 +191,12 @@ export default function TelegramBotPage() {
     }
     void loadWebhookInfo();
   }, [loadWebhookInfo, settings?.use_webhook]);
+
+  useEffect(() => {
+    if (settings?.ai_provider && settings.ai_provider !== "disabled") {
+      setPreferredAIProvider(settings.ai_provider as Exclude<AIProvider, "disabled">);
+    }
+  }, [settings?.ai_provider]);
 
   const startBot = useCallback(async (force = false) => {
     try {
@@ -408,6 +429,56 @@ export default function TelegramBotPage() {
       });
     }
   }, [loadStatus, toast]);
+
+  const aiEnabled = settings?.ai_provider !== "disabled";
+  const aiReady = Boolean(aiEnabled && settings?.has_ai_key);
+
+  const handleAIToggle = (checked: boolean) => {
+    setSettings((prev) => {
+      if (!prev) return null;
+
+      if (!checked) {
+        if (prev.ai_provider !== "disabled") {
+          setPreferredAIProvider(prev.ai_provider as Exclude<AIProvider, "disabled">);
+        }
+        return { ...prev, ai_provider: "disabled" };
+      }
+
+      const nextProvider =
+        prev.ai_provider !== "disabled"
+          ? (prev.ai_provider as Exclude<AIProvider, "disabled">)
+          : preferredAIProvider;
+
+      return {
+        ...prev,
+        ai_provider: nextProvider,
+        ai_model:
+          prev.ai_provider === nextProvider && prev.ai_model
+            ? prev.ai_model
+            : getDefaultAIModel(nextProvider),
+      };
+    });
+  };
+
+  const handleAIProviderChange = (value: AIProvider) => {
+    if (value !== "disabled") {
+      setPreferredAIProvider(value);
+    }
+
+    setSettings((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        ai_provider: value,
+        ai_model:
+          value === "disabled"
+            ? ""
+            : prev.ai_provider === value && prev.ai_model
+              ? prev.ai_model
+              : getDefaultAIModel(value),
+      };
+    });
+  };
 
   if (loading) {
     return (
@@ -854,228 +925,224 @@ export default function TelegramBotPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* AI Status Alert */}
-              {settings?.ai_provider === 'disabled' || !settings?.has_ai_key ? (
-                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="text-amber-700 flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>
-                      <strong>AI sozlanmagan.</strong> AI Yordamchi va Telegram bot AI tahlili uchun 
-                      quyida provayder tanlab API kalitni kiriting.
-                    </span>
-                  </p>
+              <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-5 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-slate-900">
+                      <Brain className="h-5 w-5 text-violet-600" />
+                      <h3 className="text-lg font-semibold">AI yordamchini boshqarish</h3>
+                    </div>
+                    <p className="max-w-2xl text-sm text-slate-600">
+                      Telegram bot murojaatlarni tahlil qilishi, tasniflashi va kerak bo&apos;lsa AI yordamchi orqali javob tayyorlashi uchun bu bo&apos;limdan foydalaniladi.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-violet-200 bg-white/90 px-4 py-3 lg:min-w-[280px]">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">AI holati</p>
+                      <p className="text-xs text-slate-500">
+                        {aiEnabled ? "AI yordamchi faol ishlaydi" : "Hozircha qo'lda ko'rib chiqish rejimi"}
+                      </p>
+                    </div>
+                    <Switch checked={aiEnabled} onCheckedChange={handleAIToggle} />
+                  </div>
                 </div>
-              ) : (
-                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <p className="text-emerald-700 flex items-center gap-2">
-                    <span>✅</span>
-                    <span>
-                      <strong>AI faol.</strong> AI Yordamchi ({settings.ai_provider === 'openai' ? 'OpenAI' : 'Anthropic'} - {settings.ai_model}) 
-                      va Telegram bot AI tahlili ishlaydi.
-                    </span>
-                  </p>
-                </div>
-              )}
 
-              {/* AI Provider Selection */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium">AI Provayder</Label>
-                <p className="text-sm text-slate-500">
-                  AI xizmatini taqdim etuvchi kompaniyani tanlang
-                </p>
-                <Select 
-                  value={settings?.ai_provider || 'disabled'}
-                  onValueChange={(value) => 
-                    setSettings(prev => prev ? { 
-                      ...prev, 
-                      ai_provider: value,
-                      // Provider o'zgarganda default modelni o'rnatish
-                      ai_model: value === 'openai' ? 'gpt-4o-mini' : 
-                               value === 'anthropic' ? 'claude-3-haiku-20240307' : ''
-                    } : null)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Provayderni tanlang" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="disabled">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400">⏸️</span>
-                        <span>O'chirilgan</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="openai">
-                      <div className="flex items-center gap-2">
-                        <span>🤖</span>
-                        <span>OpenAI (GPT modellari)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="anthropic">
-                      <div className="flex items-center gap-2">
-                        <span>🧠</span>
-                        <span>Anthropic (Claude modellari)</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                {/* Provider status */}
-                <div className={`p-3 rounded-lg ${
-                  settings?.ai_provider === 'disabled' 
-                    ? 'bg-indigo-50/50 text-slate-500' 
-                    : 'bg-emerald-50 text-emerald-700'
-                }`}>
-                  {settings?.ai_provider === 'disabled' ? (
-                    <p className="text-sm flex items-center gap-2">
-                      <span>ℹ️</span>
-                      AI tahlil o'chirilgan. Murojaatlar qo'lda ko'rib chiqiladi.
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <div className={`rounded-xl border p-4 ${aiEnabled ? "border-emerald-200 bg-emerald-50/80" : "border-slate-200 bg-slate-50"}`}>
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Holat</p>
+                    <p className={`mt-2 text-base font-semibold ${aiEnabled ? "text-emerald-700" : "text-slate-700"}`}>
+                      {aiEnabled ? "Yoqilgan" : "O'chirilgan"}
                     </p>
-                  ) : (
-                    <p className="text-sm flex items-center gap-2">
-                      <span>✅</span>
-                      Murojaatlar avtomatik tahlil qilinadi va kategoriyalanadi.
+                  </div>
+                  <div className={`rounded-xl border p-4 ${aiReady ? "border-emerald-200 bg-emerald-50/80" : "border-amber-200 bg-amber-50/80"}`}>
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Ulanish</p>
+                    <p className={`mt-2 text-base font-semibold ${aiReady ? "text-emerald-700" : "text-amber-700"}`}>
+                      {aiReady ? "API kalit saqlangan" : "Kalit kiritilmagan"}
                     </p>
-                  )}
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Model</p>
+                    <p className="mt-2 text-base font-semibold text-slate-900">
+                      {aiEnabled ? settings?.ai_model || "-" : "Tanlanmagan"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {settings?.ai_provider && settings.ai_provider !== 'disabled' && (
+              {aiEnabled ? (
                 <>
-                  {/* Divider */}
-                  <div className="border-t border-indigo-100/40 pt-4">
-                    <h4 className="font-medium text-slate-900 mb-4">API sozlamalari</h4>
-                  </div>
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
+                    <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">AI Provayder</Label>
+                        <p className="text-sm text-slate-500">
+                          AI xizmatini taqdim etuvchi kompaniyani tanlang.
+                        </p>
+                        <Select
+                          value={settings?.ai_provider || "disabled"}
+                          onValueChange={(value) => handleAIProviderChange(value as AIProvider)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Provayderni tanlang" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="openai">OpenAI (GPT modellari)</SelectItem>
+                            <SelectItem value="anthropic">Anthropic (Claude modellari)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  {/* API Key */}
-                  <div className="space-y-2">
-                    <Label htmlFor="ai_api_key" className="text-base font-medium">
-                      API Kalit
-                    </Label>
-                    <p className="text-sm text-slate-500">
-                      {settings.ai_provider === 'openai' 
-                        ? "OpenAI platformasidan olingan API kalit (platform.openai.com)"
-                        : "Anthropic Console'dan olingan API kalit (console.anthropic.com)"
-                      }
-                    </p>
-                    <div className="flex gap-2">
-                      <Input 
-                        id="ai_api_key"
-                        type="password"
-                        placeholder={settings.ai_provider === 'openai' ? "sk-..." : "sk-ant-api03-..."}
-                        value={settings?.ai_api_key || ""}
-                        onChange={(e) => 
-                          setSettings(prev => prev ? { ...prev, ai_api_key: e.target.value } : null)
-                        }
-                        className="font-mono flex-1"
-                      />
-                      <Button 
-                        variant="outline" 
-                        onClick={testAIConnection}
-                        disabled={testingAI || !settings?.ai_api_key}
-                        className="min-w-[120px]"
-                      >
-                        {testingAI ? (
-                          <>
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                            Tekshirilmoqda...
-                          </>
-                        ) : (
-                          "Tekshirish"
-                        )}
-                      </Button>
+                      <div className="grid gap-5 lg:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="ai_api_key" className="text-base font-medium">
+                            API kalit
+                          </Label>
+                          <p className="text-sm text-slate-500">
+                            {settings?.ai_provider === "openai"
+                              ? "OpenAI platformasidan olingan API kalitni kiriting."
+                              : "Anthropic Console'dan olingan API kalitni kiriting."}
+                          </p>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Input
+                              id="ai_api_key"
+                              type="password"
+                              placeholder={settings?.ai_provider === "openai" ? "sk-..." : "sk-ant-api03-..."}
+                              value={settings?.ai_api_key || ""}
+                              onChange={(e) =>
+                                setSettings((prev) => (prev ? { ...prev, ai_api_key: e.target.value } : null))
+                              }
+                              className="flex-1 font-mono"
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={testAIConnection}
+                              disabled={testingAI || (!settings?.ai_api_key && !settings?.has_ai_key)}
+                              className="w-full sm:min-w-[140px] sm:w-auto"
+                            >
+                              {testingAI ? (
+                                <>
+                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                  Tekshirilmoqda...
+                                </>
+                              ) : (
+                                "Tekshirish"
+                              )}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {settings?.has_ai_key && !settings?.ai_api_key
+                              ? "API kalit serverda saqlangan. Yangisini kiritmasangiz eski kalit saqlanib qoladi."
+                              : "API kalitni tekshirib, keyin umumiy Saqlash tugmasini bosing."}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-base font-medium">AI model</Label>
+                          <p className="text-sm text-slate-500">
+                            Telegram bot uchun ishlatiladigan modelni tanlang.
+                          </p>
+                          <Select
+                            value={settings?.ai_model || getDefaultAIModel((settings?.ai_provider || "openai") as AIProvider)}
+                            onValueChange={(value) =>
+                              setSettings((prev) => (prev ? { ...prev, ai_model: value } : null))
+                            }
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Modelni tanlang" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {settings?.ai_provider === "openai" ? (
+                                <>
+                                  <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                                </>
+                              ) : (
+                                <>
+                                  <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                                  <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
+                                  <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                                  <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+                                </>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      💡 API kalitni kiritib "Tekshirish" tugmasini bosing. Muvaffaqiyatli bo'lsa, "Saqlash" tugmasini bosing.
-                    </p>
-                  </div>
 
-                  {/* AI Model Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-base font-medium">AI Model</Label>
-                    <p className="text-sm text-slate-500">
-                      Ishlatilayotgan aniq AI modelini tanlang
-                    </p>
-                    <Select 
-                      value={settings?.ai_model || 'gpt-4o-mini'}
-                      onValueChange={(value) => 
-                        setSettings(prev => prev ? { ...prev, ai_model: value } : null)
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Modelni tanlang" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {settings.ai_provider === 'openai' ? (
-                          <>
-                            <SelectItem value="gpt-4o-mini">
-                              <div className="flex flex-col">
-                                <span className="font-medium">GPT-4o Mini</span>
-                                <span className="text-xs text-slate-500">Tez va arzon - kundalik ishlar uchun ideal</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="gpt-4o">
-                              <div className="flex flex-col">
-                                <span className="font-medium">GPT-4o</span>
-                                <span className="text-xs text-slate-500">Eng kuchli - murakkab tahlillar uchun</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="gpt-4-turbo">
-                              <div className="flex flex-col">
-                                <span className="font-medium">GPT-4 Turbo</span>
-                                <span className="text-xs text-slate-500">Tez va kuchli</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="gpt-3.5-turbo">
-                              <div className="flex flex-col">
-                                <span className="font-medium">GPT-3.5 Turbo</span>
-                                <span className="text-xs text-slate-500">Eng arzon - oddiy vazifalar uchun</span>
-                              </div>
-                            </SelectItem>
-                          </>
-                        ) : (
-                          <>
-                            <SelectItem value="claude-3-haiku-20240307">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Claude 3 Haiku</span>
-                                <span className="text-xs text-slate-500">Tez va arzon - kundalik ishlar uchun</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="claude-3-sonnet-20240229">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Claude 3 Sonnet</span>
-                                <span className="text-xs text-slate-500">Muvozanat - tezlik va sifat</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="claude-3-opus-20240229">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Claude 3 Opus</span>
-                                <span className="text-xs text-slate-500">Eng kuchli - murakkab tahlillar uchun</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="claude-3-5-sonnet-20241022">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Claude 3.5 Sonnet</span>
-                                <span className="text-xs text-slate-500">Yangi avlod - yuqori sifat</span>
-                              </div>
-                            </SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="space-y-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                          <div>
+                            <Label className="text-base font-medium">AI avtomatik javobi</Label>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Admin javob bermasa bot AI orqali dastlabki javob yuboradi.
+                            </p>
+                          </div>
+                          <Switch
+                            checked={settings?.auto_response_enabled}
+                            onCheckedChange={(checked) =>
+                              setSettings((prev) =>
+                                prev ? { ...prev, auto_response_enabled: checked } : null
+                              )
+                            }
+                          />
+                        </div>
 
-                  {/* Info box */}
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h5 className="font-medium text-blue-900 mb-2">💡 AI tahlil qanday ishlaydi?</h5>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                      <li>• Foydalanuvchi murojaatini avtomatik kategoriyalaydi</li>
-                      <li>• Muhimlik darajasini aniqlaydi</li>
-                      <li>• Tegishli tashkilotni taklif qiladi</li>
-                      <li>• Spam va noto'g'ri murojaatlarni filtrlaydi</li>
-                    </ul>
+                        <div className="space-y-2">
+                          <Label htmlFor="ai_timeout" className="text-sm font-medium">
+                            Kutish vaqti
+                          </Label>
+                          <Input
+                            id="ai_timeout"
+                            type="number"
+                            min={1}
+                            max={1440}
+                            value={settings?.auto_response_timeout_minutes ?? 5}
+                            onChange={(e) =>
+                              setSettings((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      auto_response_timeout_minutes: Math.max(
+                                        1,
+                                        Number.parseInt(e.target.value || "1", 10)
+                                      ),
+                                    }
+                                  : null
+                              )
+                            }
+                            disabled={!settings?.auto_response_enabled}
+                          />
+                          <p className="text-xs text-slate-500">
+                            Shu vaqt ichida admin javob bermasa AI avtomatik javob beradi.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                        <h5 className="font-medium text-blue-900">AI tahlil nimalarni qiladi?</h5>
+                        <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                          <li>• Murojaat matnini avtomatik tahlil qiladi</li>
+                          <li>• Kategoriya va ustuvorlikni aniqlashga yordam beradi</li>
+                          <li>• Tegishli tashkilotni topishni tezlashtiradi</li>
+                          <li>• Admin javobini kutish jarayonini qisqartiradi</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center">
+                  <p className="text-base font-medium text-slate-700">
+                    AI yordamchi hozir o&apos;chirilgan
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Yuqoridagi switch orqali AI ni yoqing. Avvalgi provayder tanlovi saqlanadi, keyin API kalit va modelni sozlashingiz mumkin.
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

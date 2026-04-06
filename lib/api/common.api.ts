@@ -47,6 +47,20 @@ type NotificationApi = {
   user_id?: number
 }
 
+export interface PushStatusResponse {
+  enabled: boolean
+  count: number
+  permission_required: boolean
+}
+
+export interface NotificationPreferences {
+  email_notifications_enabled: boolean
+  telegram_notifications_enabled: boolean
+  push_notifications_enabled: boolean
+  new_task_notifications_enabled: boolean
+  deadline_reminders_enabled: boolean
+}
+
 const mapNotificationType = (type?: string): NotificationType => {
   switch (type) {
     case 'TASK_ASSIGNED':
@@ -159,6 +173,45 @@ export async function deleteNotification(id: number | string): Promise<void> {
 export async function getUnreadNotificationsCount(): Promise<number> {
   const data = await fetchApi<{ unread: number }>('/notifications/unread_count/')
   return data.unread ?? 0
+}
+
+export async function getPushPublicKey(): Promise<{ public_key: string; configured: boolean }> {
+  return fetchApi<{ public_key: string; configured: boolean }>('/notifications/push_public_key/')
+}
+
+export async function getPushStatus(): Promise<PushStatusResponse> {
+  return fetchApi<PushStatusResponse>('/notifications/push_status/')
+}
+
+export async function subscribePushNotifications(payload: {
+  endpoint: string
+  keys: { p256dh: string; auth: string }
+  user_agent?: string
+}): Promise<void> {
+  return fetchApi<void>('/notifications/push_subscribe/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function unsubscribePushNotifications(endpoint?: string): Promise<void> {
+  return fetchApi<void>('/notifications/push_unsubscribe/', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint: endpoint || '' }),
+  })
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return fetchApi<NotificationPreferences>('/notifications/preferences/')
+}
+
+export async function updateNotificationPreferences(
+  payload: Partial<NotificationPreferences>
+): Promise<NotificationPreferences> {
+  return fetchApi<NotificationPreferences>('/notifications/preferences/', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
 }
 
 // ============================================================================

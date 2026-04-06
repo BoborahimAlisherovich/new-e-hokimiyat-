@@ -20,7 +20,7 @@ def check_overdue_tasks():
     """
     from tasks.models import Task, TaskOrganization
     from audit.models import AuditLog
-    from notifications.models import Notification
+    from notifications.services import create_notification
     
     now = timezone.now()
     seven_days_ago = now - timedelta(days=7)
@@ -58,7 +58,7 @@ def check_overdue_tasks():
             status='FAOL',
             role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
         ):
-            Notification.objects.create(
+            create_notification(
                 user=user,
                 title="Topshiriq muddati o'tdi!",
                 message=f"Topshiriq muddati o'tdi: {task_org.task.title}",
@@ -109,7 +109,7 @@ def send_deadline_reminders():
     Sends reminders for tasks due in 1, 3, and 7 days.
     """
     from tasks.models import TaskOrganization
-    from notifications.models import Notification
+    from notifications.services import create_notification
     
     now = timezone.now()
     
@@ -131,7 +131,7 @@ def send_deadline_reminders():
                 status='FAOL',
                 role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
             ):
-                Notification.objects.create(
+                create_notification(
                     user=user,
                     title=f"Topshiriq muddati {days} kun qoldi",
                     message=f"Topshiriq: {task_org.task.title}",
@@ -149,15 +149,15 @@ def send_notification_async(user_id, title, message, notification_type='INFO', t
     """
     Send notification asynchronously.
     """
-    from notifications.models import Notification
     from users.models import User
     from tasks.models import Task
+    from notifications.services import create_notification
     
     try:
         user = User.objects.get(id=user_id)
         task = Task.objects.get(id=task_id) if task_id else None
         
-        Notification.objects.create(
+        create_notification(
             user=user,
             title=title,
             message=message,

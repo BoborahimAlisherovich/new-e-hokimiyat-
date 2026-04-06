@@ -69,3 +69,56 @@ class Notification(BaseModel):
             self.is_read = True
             self.read_at = timezone.now()
             self.save()
+
+
+class PushSubscription(BaseModel):
+    """
+    Browser push subscription for offline/background notifications.
+    """
+
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='push_subscriptions',
+        verbose_name='Foydalanuvchi'
+    )
+    endpoint = models.TextField(unique=True, verbose_name='Push endpoint')
+    p256dh = models.CharField(max_length=255, verbose_name='P256DH kalit')
+    auth = models.CharField(max_length=255, verbose_name='Auth kalit')
+    user_agent = models.CharField(max_length=500, blank=True, default='', verbose_name='Brauzer')
+    is_active = models.BooleanField(default=True, verbose_name='Faol')
+    last_success_at = models.DateTimeField(null=True, blank=True, verbose_name='Oxirgi muvaffaqiyatli yuborish')
+    last_error = models.TextField(blank=True, default='', verbose_name='Oxirgi xato')
+
+    class Meta:
+        verbose_name = 'Push obuna'
+        verbose_name_plural = 'Push obunalar'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.user.full_name}: {self.endpoint[:48]}"
+
+
+class NotificationPreference(BaseModel):
+    """
+    Per-user notification channel/type preferences.
+    """
+
+    user = models.OneToOneField(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='notification_preference',
+        verbose_name='Foydalanuvchi'
+    )
+    email_notifications_enabled = models.BooleanField(default=True, verbose_name='Email bildirishnomalari')
+    telegram_notifications_enabled = models.BooleanField(default=True, verbose_name='Telegram bildirishnomalari')
+    push_notifications_enabled = models.BooleanField(default=False, verbose_name='Push bildirishnomalari')
+    new_task_notifications_enabled = models.BooleanField(default=True, verbose_name='Yangi topshiriq bildirishnomalari')
+    deadline_reminders_enabled = models.BooleanField(default=True, verbose_name='Muddat eslatmalari')
+
+    class Meta:
+        verbose_name = 'Bildirishnoma sozlamasi'
+        verbose_name_plural = 'Bildirishnoma sozlamalari'
+
+    def __str__(self):
+        return f"{self.user.full_name} notification settings"

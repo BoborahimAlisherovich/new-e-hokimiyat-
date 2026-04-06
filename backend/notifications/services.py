@@ -7,15 +7,17 @@ to connected clients (NotificationConsumer).
 
 from __future__ import annotations
 
+import json
 from typing import Iterable, Optional
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from core.constants import UserRole, UserStatus
-from notifications.models import Notification
+from notifications.models import Notification, NotificationPreference, PushSubscription
 
 
 def _notification_payload(notification: Notification) -> dict:
@@ -31,6 +33,15 @@ def _notification_payload(notification: Notification) -> dict:
         "link": notification.link,
         "created_at": notification.created_at.isoformat() if getattr(notification, "created_at", None) else None,
     }
+
+
+def _should_create_notification(*, user, notification_type: str) -> bool:
+    preference, _ = NotificationPreference.objects.get_or_create(user=user)
+    if notification_type == "TASK" and not preference.new_task_notifications_enabled:
+        return False
+    if notification_type == "DEADLINE" and not preference.deadline_reminders_enabled:
+        return False
+    return True
 
 
 def _broadcast_notification(notification_id) -> None:
@@ -49,6 +60,79 @@ def _broadcast_notification(notification_id) -> None:
     )
 
 
+def _send_push_notification(notification_id) -> None:
+    try:
+        from pywebpush import webpush, WebPushException
+    except Exception:
+        return
+
+    from django.conf import settings
+
+    public_key = getattr(settings, 'WEB_PUSH_PUBLIC_KEY', '')
+    private_key = getattr(settings, 'WEB_PUSH_PRIVATE_KEY', '') or getattr(settings, 'WEB_PUSH_PRIVATE_KEY_PATH', '')
+    subject = getattr(settings, 'WEB_PUSH_SUBJECT', '')
+
+    if not public_key or not private_key or not subject:
+        return
+
+    try:
+        notification = Notification.objects.select_related("related_task", "user").get(id=notification_id)
+    except Notification.DoesNotExist:
+        return
+
+    preference, _ = NotificationPreference.objects.get_or_create(user=notification.user)
+    if not preference.push_notifications_enabled:
+        return
+    if notification.notification_type == "TASK" and not preference.new_task_notifications_enabled:
+        return
+    if notification.notification_type == "DEADLINE" and not preference.deadline_reminders_enabled:
+        return
+
+    subscriptions = list(
+        PushSubscription.objects.filter(user=notification.user, is_active=True)
+    )
+    if not subscriptions:
+        return
+
+    payload = _notification_payload(notification)
+    body = {
+        "title": payload["title"],
+        "body": payload["message"],
+        "url": payload["link"] or (f"/dashboard/tasks/{payload['related_task']}" if payload["related_task"] else "/dashboard/notifications"),
+        "tag": f"notification-{payload['id']}",
+        "data": payload,
+    }
+
+    for subscription in subscriptions:
+        subscription_info = {
+            "endpoint": subscription.endpoint,
+            "keys": {
+                "p256dh": subscription.p256dh,
+                "auth": subscription.auth,
+            },
+        }
+        try:
+            webpush(
+                subscription_info=subscription_info,
+                data=json.dumps(body),
+                vapid_private_key=private_key,
+                vapid_claims={"sub": subject},
+            )
+            subscription.last_success_at = timezone.now()
+            subscription.last_error = ''
+            subscription.is_active = True
+            subscription.save(update_fields=['last_success_at', 'last_error', 'is_active', 'updated_at'])
+        except WebPushException as exc:
+            status_code = getattr(getattr(exc, 'response', None), 'status_code', None)
+            subscription.last_error = str(exc)
+            if status_code in {404, 410}:
+                subscription.is_active = False
+            subscription.save(update_fields=['last_error', 'is_active', 'updated_at'])
+        except Exception as exc:
+            subscription.last_error = str(exc)
+            subscription.save(update_fields=['last_error', 'updated_at'])
+
+
 def create_notification(
     *,
     user,
@@ -57,7 +141,10 @@ def create_notification(
     notification_type: str = "INFO",
     related_task=None,
     link: str = "",
-) -> Notification:
+) -> Optional[Notification]:
+    if not _should_create_notification(user=user, notification_type=notification_type):
+        return None
+
     notification = Notification.objects.create(
         user=user,
         title=title,
@@ -69,6 +156,7 @@ def create_notification(
 
     # Broadcast after commit to avoid race with clients fetching the list.
     transaction.on_commit(lambda: _broadcast_notification(notification.id))
+    transaction.on_commit(lambda: _send_push_notification(notification.id))
     return notification
 
 
@@ -114,7 +202,7 @@ def notify_task_chat_message(
     target_link = link or f"/dashboard/tasks/{task.id}"
     created = 0
     for user in recipients:
-        create_notification(
+        notification = create_notification(
             user=user,
             title=title,
             message=msg,
@@ -122,7 +210,8 @@ def notify_task_chat_message(
             related_task=task,
             link=target_link,
         )
-        created += 1
+        if notification:
+            created += 1
     return created
 
 
@@ -143,8 +232,9 @@ def notify_new_appeal(
 
     created = 0
     for user in qs:
-        create_notification(user=user, title=title, message=message, notification_type="INFO", link=link)
-        created += 1
+        notification = create_notification(user=user, title=title, message=message, notification_type="INFO", link=link)
+        if notification:
+            created += 1
     return created
 
 
@@ -197,14 +287,15 @@ def notify_appeal_status_update(
 
     created = 0
     for user in recipients:
-        create_notification(
+        notification = create_notification(
             user=user,
             title=title,
             message=message,
             notification_type="INFO",
             link=link,
         )
-        created += 1
+        if notification:
+            created += 1
     return created
 
 

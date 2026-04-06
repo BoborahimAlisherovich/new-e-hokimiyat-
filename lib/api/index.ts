@@ -288,6 +288,12 @@ export {
   markAllNotificationsRead,
   deleteNotification,
   getUnreadNotificationsCount,
+  getPushPublicKey,
+  getPushStatus,
+  getNotificationPreferences,
+  subscribePushNotifications,
+  unsubscribePushNotifications,
+  updateNotificationPreferences,
   
   // Audit
   getAuditLogs,
@@ -321,4 +327,6 @@ export type {
   ExportFormat,
   SystemSettings,
   UploadedFile,
+  NotificationPreferences,
+  PushStatusResponse,
 } from './common.api'
