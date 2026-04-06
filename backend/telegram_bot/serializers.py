@@ -353,6 +353,33 @@ class ManualAppealItemSerializer(serializers.Serializer):
         default=list,
     )
 
+    def validate_appeal_type_id(self, value):
+        if not AppealType.objects.filter(id=value, is_active=True).exists():
+            raise serializers.ValidationError("Murojaat turi topilmadi yoki faol emas")
+        return value
+
+    def validate_category_id(self, value):
+        if not AppealCategory.objects.filter(id=value, is_active=True).exists():
+            raise serializers.ValidationError("Soha topilmadi yoki faol emas")
+        return value
+
+    def validate_organization_ids(self, value):
+        if not value:
+            return value
+
+        from organizations.models import Organization
+
+        normalized = [str(item).strip() for item in value if str(item).strip()]
+        existing_ids = set(
+            str(org_id)
+            for org_id in Organization.objects.filter(id__in=normalized, is_active=True).values_list('id', flat=True)
+        )
+        invalid_ids = [org_id for org_id in normalized if org_id not in existing_ids]
+        if invalid_ids:
+            raise serializers.ValidationError("Tanlangan tashkilotlardan biri topilmadi yoki faol emas")
+
+        return normalized
+
 
 class ManualAppealCreateSerializer(serializers.Serializer):
     """Dashboard orqali qo'lda bir yoki bir nechta murojaat qo'shish."""
@@ -367,6 +394,16 @@ class ManualAppealCreateSerializer(serializers.Serializer):
     )
     citizen_region_id = serializers.IntegerField(required=False, allow_null=True)
     items = ManualAppealItemSerializer(many=True, min_length=1)
+
+    def validate_citizen_region_id(self, value):
+        if value in (None, ''):
+            return None
+
+        from .models import BotRegion
+
+        if not BotRegion.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Hudud topilmadi")
+        return value
 
 
 class BotStatsSerializer(serializers.Serializer):
