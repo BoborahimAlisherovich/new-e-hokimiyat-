@@ -99,10 +99,14 @@ export {
 
 export {
   getUsers,
+  getPositions,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  createPosition,
+  updatePosition,
+  deletePosition,
   blockUser,
   unblockUser,
   archiveUser,

@@ -3,8 +3,8 @@
 import { Header } from "@/components/layout/header"
 import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { User, Organization } from "@/types"
-import { getUsers, getOrganizations, getCurrentUser, getSectors } from "@/lib/api"
+import { User, Organization, PositionOption } from "@/types"
+import { getUsers, getOrganizations, getCurrentUser, getSectors, getPositions } from "@/lib/api"
 import { UserStats } from "@/components/dashboard/users/user-stats"
 import { UserFilters } from "@/components/dashboard/users/user-filters"
 import { UserTable } from "@/components/dashboard/users/user-table"
@@ -26,6 +26,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [sectors, setSectors] = useState<Array<{ id: string; name: string; is_active?: boolean }>>([])
+  const [positions, setPositions] = useState<PositionOption[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
@@ -55,15 +56,17 @@ export default function UsersPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
- const [usersData, orgsData, sectorsData, me] = await Promise.all([
+ const [usersData, orgsData, sectorsData, positionsData, me] = await Promise.all([
  getUsers(),
  getOrganizations(),
  getSectors().catch(() => []),
+ getPositions().catch(() => []),
  getCurrentUser().catch(() => null)
  ])
  setUsers(Array.isArray(usersData) ? usersData : [])
  setOrganizations(Array.isArray(orgsData) ? orgsData : [])
       setSectors(Array.isArray(sectorsData) ? sectorsData.filter((sector) => sector?.is_active !== false) : [])
+      setPositions(Array.isArray(positionsData) ? positionsData.filter((position) => position?.is_active !== false) : [])
       setCurrentUser(me)
       const role = normalizeUserRole(me?.role)
       setCanManageUsers(Boolean(role && ["HOKIM", "HOKIM_YORDAMCHISI", "TASHKILOT_RAHBARI", "ADMIN"].includes(role)))
@@ -71,6 +74,7 @@ export default function UsersPage() {
       console.error("Error loading data:", error)
       setUsers([])
       setOrganizations([])
+      setPositions([])
     } finally {
       setLoading(false)
     }
@@ -242,6 +246,7 @@ export default function UsersPage() {
         formData={createFormData}
         organizations={organizations}
         sectors={sectors}
+        positions={positions}
         users={users}
         currentUser={currentUser}
         onChange={handleInputChange}
