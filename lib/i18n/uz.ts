@@ -289,6 +289,7 @@ export const uzTranslations: Translations = {
     security: 'Xavfsizlik',
     appearance: "Ko'rinish",
     sectors: 'Sohalar',
+    positions: 'Lavozimlar',
     appealsRouting: "Murojaat yo'naltirish",
     appealsRoutingDesc: "Murojaat sohasi bo'yicha mas'ul tashkilotlarni belgilang",
     admin: 'Admin',

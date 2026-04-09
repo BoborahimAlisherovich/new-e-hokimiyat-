@@ -4,7 +4,7 @@ User serializers for E-Hokimiyat API.
 
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, UserAssignment
+from .models import Position, User, UserAssignment
 from core.constants import UserRole
 
 
@@ -36,6 +36,25 @@ class UserMinimalSerializer(serializers.ModelSerializer):
     
     def get_avatar_url(self, obj):
         return _build_avatar_url(obj, self.context.get('request'))
+
+
+class PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = ['id', 'name', 'description', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Lavozim nomi bo'sh bo'lishi mumkin emas")
+
+        qs = Position.objects.filter(name__iexact=name)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("Bu lavozim allaqachon mavjud")
+        return name
 
 
 class UserSerializer(serializers.ModelSerializer):

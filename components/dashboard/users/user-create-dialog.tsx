@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Organization, User } from "@/types"
+import { Organization, PositionOption, User } from "@/types"
 import { createUser } from "@/lib/api"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 
@@ -32,6 +32,7 @@ interface UserCreateDialogProps {
   formData: CreateUserFormData
   organizations: Organization[]
   sectors: Array<{ id: string; name: string }>
+  positions: PositionOption[]
   users: User[]
   currentUser: User | null
   onChange: (field: keyof CreateUserFormData, value: string) => void
@@ -44,6 +45,7 @@ export function UserCreateDialog({
   formData,
   organizations,
   sectors,
+  positions,
   users,
   currentUser,
   onChange,
@@ -273,12 +275,19 @@ export function UserCreateDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Lavozim</Label>
-              <Input
-                id="position"
-                value={formData.position}
-                onChange={(e) => onChange("position", e.target.value)}
-                placeholder="Lavozimni kiriting"
-              />
+              <Select value={formData.position || "none"} onValueChange={(value) => onChange("position", value === "none" ? "" : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Lavozimni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Belgilanmagan</SelectItem>
+                  {positions.map((position) => (
+                    <SelectItem key={position.id} value={position.name}>
+                      {position.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Rol <span className="text-red-500">*</span></Label>

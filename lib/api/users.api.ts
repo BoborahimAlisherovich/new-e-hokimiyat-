@@ -11,7 +11,7 @@
  * @author E-Hokimiyat Development Team
  */
 
-import type { User, UserFilters, UserCreateInput, UserUpdateInput, PaginatedResponse } from '@/types'
+import type { User, UserFilters, UserCreateInput, UserUpdateInput, PaginatedResponse, PositionOption } from '@/types'
 import { fetchApi, buildQueryString, ApiError } from './client'
 import { TOKEN_KEYS } from './types'
 
@@ -44,6 +44,32 @@ export async function getUsers(
   const response = await fetchApi<PaginatedResponse<User>>(`/users/${queryString}`)
   
   return response.results || []
+}
+
+export async function getPositions(): Promise<PositionOption[]> {
+  const response = await fetchApi<PaginatedResponse<PositionOption>>('/users/positions/')
+  return response.results || []
+}
+
+export async function createPosition(data: Pick<PositionOption, 'name' | 'description'>): Promise<PositionOption> {
+  return fetchApi<PositionOption>('/users/positions/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updatePosition(
+  id: number | string,
+  data: Partial<Pick<PositionOption, 'name' | 'description' | 'is_active'>>
+): Promise<PositionOption> {
+  return fetchApi<PositionOption>(`/users/positions/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deletePosition(id: number | string): Promise<void> {
+  return fetchApi<void>(`/users/positions/${id}/`, { method: 'DELETE' })
 }
 
 /**

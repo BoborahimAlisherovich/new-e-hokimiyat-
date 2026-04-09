@@ -64,6 +64,24 @@ class Role(models.Model):
         return self.display_name
 
 
+class Position(models.Model):
+    """Managed list of positions used when creating/editing users."""
+
+    name = models.CharField(max_length=200, unique=True, verbose_name='Lavozim nomi')
+    description = models.TextField(blank=True, verbose_name='Tavsif')
+    is_active = models.BooleanField(default=True, verbose_name='Faol')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan vaqt')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan vaqt')
+
+    class Meta:
+        verbose_name = 'Lavozim'
+        verbose_name_plural = 'Lavozimlar'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Custom User model with dedicated login and password authentication.

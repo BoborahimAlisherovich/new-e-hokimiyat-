@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getUserById, updateUser, getOrganizations, getSectors, getUsers } from "@/lib/api"
-import { User, Organization } from "@/types"
+import { getUserById, updateUser, getOrganizations, getSectors, getUsers, getPositions } from "@/lib/api"
+import { User, Organization, PositionOption } from "@/types"
 import { ArrowLeft, Save, AlertTriangle, Eye, EyeOff } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -38,6 +38,7 @@ export default function UserEditPage() {
   const [user, setUser] = useState<User | null>(null)
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [sectors, setSectors] = useState<Array<{ id: string; name: string; is_active?: boolean }>>([])
+  const [positions, setPositions] = useState<PositionOption[]>([])
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -65,16 +66,18 @@ export default function UserEditPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [userData, orgsData, sectorsData, usersData] = await Promise.all([
+        const [userData, orgsData, sectorsData, usersData, positionsData] = await Promise.all([
           getUserById(userId),
           getOrganizations(),
           getSectors().catch(() => []),
           getUsers().catch(() => []),
+          getPositions().catch(() => []),
         ])
         setUser(userData)
         setOrganizations(orgsData || [])
         setSectors(Array.isArray(sectorsData) ? sectorsData.filter((sector) => sector?.is_active !== false) : [])
         setAllUsers(Array.isArray(usersData) ? usersData : [])
+        setPositions(Array.isArray(positionsData) ? positionsData.filter((position) => position?.is_active !== false) : [])
         
         // Populate form with user data
         // organization can be either an object with id or a string (UUID)
@@ -287,12 +290,19 @@ export default function UserEditPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="position">Lavozim</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) => handleChange("position", e.target.value)}
-                    placeholder="Lavozimni kiriting"
-                  />
+                  <Select value={formData.position || "none"} onValueChange={(v) => handleChange("position", v === "none" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Lavozimni tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Belgilanmagan</SelectItem>
+                      {positions.map((position) => (
+                        <SelectItem key={position.id} value={position.name}>
+                          {position.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>

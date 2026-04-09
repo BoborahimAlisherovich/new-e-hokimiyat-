@@ -287,6 +287,7 @@ export const uzCyrlTranslations: Translations = {
     security: 'Хавфсизлик',
     appearance: 'Кўриниш',
     sectors: 'Соҳалар',
+    positions: 'Лавозимлар',
     appealsRouting: 'Мурожаат йўналтириш',
     appealsRoutingDesc: 'Мурожаат соҳаси бўйича масъул ташкилотларни белгиланг',
     admin: 'Администратор',

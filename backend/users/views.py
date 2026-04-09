@@ -39,9 +39,10 @@ from audit.models import AuditLog
 from core.constants import AuditAction, Messages, UserRole
 from core.permissions import CanManageUsers
 
-from .models import User, UserAssignment
+from .models import Position, User, UserAssignment
 from .serializers import (
     LoginSerializer,
+    PositionSerializer,
     UserAssignmentSerializer,
     UserCreateSerializer,
     UserMeSerializer,
@@ -257,6 +258,23 @@ class UserViewSet(viewsets.ModelViewSet):
             ).distinct()
 
         return queryset
+
+
+class PositionViewSet(viewsets.ModelViewSet):
+    """Managed positions list used by user forms."""
+
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), CanManageUsers()]
     
     def perform_create(self, serializer):
         """Create user and log the action."""
