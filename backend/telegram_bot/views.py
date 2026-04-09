@@ -1061,6 +1061,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         if region_id:
             citizen_region = BotRegion.objects.filter(id=region_id).first()
         created_appeals = []
+        warnings = []
 
         try:
             with transaction.atomic():
@@ -1107,33 +1108,34 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                         )
 
                     organization_ids_for_task = list(appeal.assigned_organizations.values_list('id', flat=True))
-                    if not organization_ids_for_task:
-                        category_name = getattr(getattr(appeal, 'category', None), 'name_uz', '') or 'Tanlanmagan soha'
-                        raise ValueError(
-                            f"{index + 1}-murojaat uchun \"{category_name}\" sohasiga biriktirilgan tashkilot topilmadi."
-                        )
-
-                    appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or 'Murojaat'
-                    task_title = f"{appeal_type_name}: {appeal.text[:80]}".strip()
-                    self._create_task_for_appeal(
-                        appeal=appeal,
-                        user=request.user,
-                        title=task_title,
-                        deadline=self._get_default_deadline_for_priority(item.get('priority')),
-                        priority=item.get('priority') or 'medium',
-                        organization_ids=organization_ids_for_task,
-                        attachment_files=uploaded_files,
-                    )
-
-                    try:
-                        notify_appeal_status_update(
+                    if organization_ids_for_task:
+                        appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or 'Murojaat'
+                        task_title = f"{appeal_type_name}: {appeal.text[:80]}".strip()
+                        self._create_task_for_appeal(
                             appeal=appeal,
-                            title="Yangi murojaat kiritildi",
-                            message=f"#{appeal.appeal_number} murojaati qo'lda kiritildi va topshiriq yaratildi.",
-                            exclude_user_ids=[request.user.id],
+                            user=request.user,
+                            title=task_title,
+                            deadline=self._get_default_deadline_for_priority(item.get('priority')),
+                            priority=item.get('priority') or 'medium',
+                            organization_ids=organization_ids_for_task,
+                            attachment_files=uploaded_files,
                         )
-                    except Exception:
-                        pass
+
+                        try:
+                            notify_appeal_status_update(
+                                appeal=appeal,
+                                title="Yangi murojaat kiritildi",
+                                message=f"#{appeal.appeal_number} murojaati qo'lda kiritildi va topshiriq yaratildi.",
+                                exclude_user_ids=[request.user.id],
+                            )
+                        except Exception:
+                            pass
+                    else:
+                        category_name = getattr(getattr(appeal, 'category', None), 'name_uz', '') or 'Tanlanmagan soha'
+                        warnings.append(
+                            f"{index + 1}-murojaat uchun \"{category_name}\" sohasiga mas'ul tashkilot topilmadi. "
+                            "Murojaat saqlandi, lekin topshiriq yaratilmadi."
+                        )
 
                     created_appeals.append(appeal)
         except ValueError as exc:
@@ -1149,6 +1151,7 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             {
                 'count': len(serialized),
                 'results': serialized,
+                'warnings': warnings,
             },
             status=status.HTTP_201_CREATED
         )

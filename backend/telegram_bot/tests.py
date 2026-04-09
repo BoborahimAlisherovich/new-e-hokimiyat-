@@ -3,7 +3,8 @@ from django.test import TestCase
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from organizations.models import Organization
-from telegram_bot.models import AppealCategory, TelegramAppeal, TelegramUser
+from tasks.models import Task
+from telegram_bot.models import AppealCategory, AppealType, TelegramAppeal, TelegramUser
 from telegram_bot.views import TelegramAppealViewSet
 
 
@@ -81,3 +82,58 @@ class TelegramAppealVisibilityTests(TestCase):
 
         qs = self._get_queryset_for(self.org_leader)
         self.assertFalse(qs.filter(id=appeal.id).exists())
+
+
+class ManualAppealCreateTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.user_model = get_user_model()
+        self.admin = self.user_model.objects.create_user(
+            login="admin1",
+            pnfl="12345678901235",
+            password="pass",
+            first_name="Admin",
+            last_name="Test",
+            role="ADMIN",
+        )
+        self.category = AppealCategory.objects.create(
+            name_uz="Kommunal",
+            name_ru="",
+            name_en="",
+            code="KOMMUNAL",
+            icon="🏠",
+            is_active=True,
+            order=1,
+        )
+        self.appeal_type = AppealType.objects.create(
+            name_uz="Shikoyat",
+            name_ru="",
+            name_en="",
+            code="COMPLAINT",
+            icon="📝",
+            is_active=True,
+            order=1,
+        )
+
+    def test_manual_create_saves_appeal_even_without_responsible_organizations(self):
+        view = TelegramAppealViewSet.as_view({'post': 'manual_create'})
+        payload = {
+            'citizen_name': 'Ali Valiyev',
+            'citizen_phone': '+998901234567',
+            'items': [{
+                'text': 'Mahalladagi yo\'l ta\'mirtalab.',
+                'appeal_type_id': self.appeal_type.id,
+                'category_id': self.category.id,
+                'priority': 'medium',
+            }]
+        }
+
+        request = self.factory.post('/api/telegram-bot/appeals/manual-create/', payload, format='json')
+        force_authenticate(request, user=self.admin)
+        response = view(request)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(TelegramAppeal.objects.count(), 1)
+        self.assertEqual(Task.objects.count(), 0)
+        self.assertEqual(len(response.data.get('warnings', [])), 1)
+        self.assertIn("topshiriq yaratilmadi", response.data['warnings'][0])
