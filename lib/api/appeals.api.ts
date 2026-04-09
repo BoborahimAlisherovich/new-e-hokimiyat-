@@ -331,10 +331,15 @@ export interface ManualAppealCreateRequest {
   }>
 }
 
+export interface ManualAppealCreateResult {
+  appeals: Appeal[]
+  warnings: string[]
+}
+
 /**
  * Qo'lda murojaat qo'shish (dashboard orqali).
  */
-export async function createManualAppeal(payload: ManualAppealCreateRequest): Promise<Appeal[]> {
+export async function createManualAppeal(payload: ManualAppealCreateRequest): Promise<ManualAppealCreateResult> {
   const form = new FormData()
   form.append(
     'payload',
@@ -362,14 +367,17 @@ export async function createManualAppeal(payload: ManualAppealCreateRequest): Pr
     })
   })
 
-  const result = await fetchApi<{ results?: TelegramAppealResponse[] }>(
+  const result = await fetchApi<{ results?: TelegramAppealResponse[]; warnings?: string[] }>(
     `/telegram-bot/appeals/manual-create/`,
     {
       method: 'POST',
       body: form,
     }
   )
-  return (result.results || []).map(normalizeAppeal)
+  return {
+    appeals: (result.results || []).map(normalizeAppeal),
+    warnings: Array.isArray(result.warnings) ? result.warnings.map((item) => String(item)) : [],
+  }
 }
 
 /**
