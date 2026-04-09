@@ -277,11 +277,15 @@ function extractErrorMessage(data: ApiErrorDetails, status: number): string {
   // Standard Django error messages
   if (data.detail) return data.detail
   if (data.message) return data.message
+  if ((data as Record<string, unknown>).error) return String((data as Record<string, unknown>).error)
+  if (Array.isArray((data as Record<string, unknown>).non_field_errors)) {
+    return ((data as Record<string, unknown>).non_field_errors as unknown[]).map(String).join(', ')
+  }
   
   // Handle Django serializer field-level validation errors
   // Format: { "field_name": ["error message"] } or { "field_name": "error message" }
   const fieldErrors = Object.entries(data)
-    .filter(([key]) => !['detail', 'message', 'status_code'].includes(key))
+    .filter(([key]) => !['detail', 'message', 'error', 'status_code', 'non_field_errors'].includes(key))
     .map(([field, errors]) => {
       const errorMsg = Array.isArray(errors) ? errors.join(', ') : String(errors)
       return `${field}: ${errorMsg}`

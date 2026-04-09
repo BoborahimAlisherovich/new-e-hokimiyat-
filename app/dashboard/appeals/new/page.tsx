@@ -28,6 +28,8 @@ type TaskBlock = {
   files: File[]
 }
 
+const PHONE_REQUIRED_PREFIX = "+998"
+
 const ALLOWED_ROLES = new Set(["HOKIM", "HOKIM_YORDAMCHISI", "ADMIN"])
 
 function createTaskBlock(): TaskBlock {
@@ -39,6 +41,24 @@ function createTaskBlock(): TaskBlock {
     text: "",
     files: [],
   }
+}
+
+function normalizePhoneInput(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ""
+
+  const digits = trimmed.replace(/\D/g, "")
+  if (!digits) return ""
+
+  if (digits.startsWith("998")) {
+    return `+${digits}`
+  }
+
+  return trimmed.startsWith("+") ? `+${digits}` : `${PHONE_REQUIRED_PREFIX}${digits}`
+}
+
+function isValidUzbekPhone(value: string): boolean {
+  return /^\+998\d{9}$/.test(value)
 }
 
 export default function NewAppealPage() {
@@ -114,11 +134,21 @@ export default function NewAppealPage() {
   const handleSubmit = async () => {
     if (!canSubmit || saving) return
 
+    const normalizedPhone = normalizePhoneInput(citizenPhone)
+    if (normalizedPhone && !isValidUzbekPhone(normalizedPhone)) {
+      toast({
+        title: "Telefon noto'g'ri",
+        description: "Telefon raqamni +998XXXXXXXXX formatida kiriting.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setSaving(true)
     try {
-      const created = await createManualAppeal({
+      const result = await createManualAppeal({
         citizen_name: citizenName.trim(),
-        citizen_phone: citizenPhone.trim(),
+        citizen_phone: normalizedPhone,
         citizen_gender: citizenGender,
         citizen_region_id: regionId ? Number(regionId) : null,
         items: tasks.map((task) => ({
@@ -129,13 +159,17 @@ export default function NewAppealPage() {
           attachments: task.files,
         })),
       })
+      const created = result.appeals
 
       toast({
-        title: "Muvaffaqiyat",
-        description:
+        title: result.warnings.length > 0 ? "Murojaat saqlandi" : "Muvaffaqiyat",
+        description: [
           created.length > 1
-            ? `${created.length} ta murojaat muvaffaqiyatli rasmiylashtirildi`
-            : "Murojaat muvaffaqiyatli rasmiylashtirildi",
+            ? `${created.length} ta murojaat muvaffaqiyatli rasmiylashtirildi.`
+            : "Murojaat muvaffaqiyatli rasmiylashtirildi.",
+          result.warnings.join(" "),
+        ].filter(Boolean).join(" "),
+        variant: result.warnings.length > 0 ? "destructive" : "default",
       })
 
       if (created.length === 1) {
@@ -201,7 +235,13 @@ export default function NewAppealPage() {
 
               <div className="space-y-2">
                 <Label>Telefon (+998...)</Label>
-                <Input value={citizenPhone} onChange={(e) => setCitizenPhone(e.target.value)} placeholder="+998901234567" />
+                <Input
+                  value={citizenPhone}
+                  onChange={(e) => setCitizenPhone(e.target.value)}
+                  onBlur={() => setCitizenPhone((prev) => normalizePhoneInput(prev))}
+                  placeholder="+998901234567"
+                  inputMode="tel"
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
