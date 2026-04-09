@@ -287,23 +287,6 @@ export default function UserEditPage() {
                     placeholder="Otasining ismini kiriting"
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="position">Lavozim</Label>
-                  <Select value={formData.position || "none"} onValueChange={(v) => handleChange("position", v === "none" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Lavozimni tanlang" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Belgilanmagan</SelectItem>
-                      {positions.map((position) => (
-                        <SelectItem key={position.id} value={position.name}>
-                          {position.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
 
@@ -355,6 +338,23 @@ export default function UserEditPage() {
                         {ROLES.map((role) => (
                           <SelectItem key={role.value} value={role.value}>
                             {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Lavozim</Label>
+                    <Select value={formData.position || "none"} onValueChange={(v) => handleChange("position", v === "none" ? "" : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Lavozimni tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Belgilanmagan</SelectItem>
+                        {positions.map((position) => (
+                          <SelectItem key={position.id} value={position.name}>
+                            {position.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
