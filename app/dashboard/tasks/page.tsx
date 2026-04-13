@@ -45,23 +45,30 @@ export default function TasksPage() {
   // Rolga qarab topshiriq yaratish imkoniyati
   const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
   const isDistrictGovernor = currentUser?.role === "HOKIM"
+  const getEntityId = (value: unknown): string => {
+    if (!value) return ""
+    if (typeof value === "string" || typeof value === "number") return String(value)
+    if (typeof value === "object" && value !== null && "id" in value) {
+      const id = (value as { id?: unknown }).id
+      return typeof id === "string" || typeof id === "number" ? String(id) : ""
+    }
+    return ""
+  }
+
   const visibleOrganizations = useMemo(() => {
     if (!currentUser) return organizations
 
     if (currentUser.role === "TASHKILOT_RAHBARI") {
-      const currentOrgId =
-        typeof currentUser.organization === "object" && currentUser.organization?.id
-          ? String(currentUser.organization.id)
-          : String(currentUser.organization_id || "")
+      const currentOrgId = getEntityId(currentUser.organization) || getEntityId(currentUser.organization_id)
       return organizations.filter((org) => String(org.id) === currentOrgId)
     }
 
     if (currentUser.role === "HOKIM_YORDAMCHISI") {
-      const currentSectorId =
-        typeof currentUser.sector === "object" && currentUser.sector?.id
-          ? String(currentUser.sector.id)
-          : String(currentUser.sector_id || "")
-      return organizations.filter((org: any) => String(org.sector ?? org.sector_id ?? "") === currentSectorId)
+      const currentSectorId = getEntityId(currentUser.sector) || getEntityId(currentUser.sector_id)
+      return organizations.filter((org: any) => {
+        const organizationSectorId = getEntityId(org.sector) || getEntityId(org.sector_id)
+        return organizationSectorId === currentSectorId
+      })
     }
 
     return organizations
@@ -306,7 +313,7 @@ export default function TasksPage() {
       <CreateTaskDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        organizations={organizations}
+        organizations={visibleOrganizations}
         onCreated={loadData}
         preferredInputMode={createTaskMode}
       />
