@@ -574,7 +574,8 @@ QOIDALAR:
         """
         user = self.request.user
         queryset = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
-            'assigned_organizations__organization'
+            'assigned_organizations__organization',
+            'assigned_deputies',
         )
         
         # Faol topshiriqlar birinchi (0), bajarilganlar oxirda (1)
@@ -590,14 +591,16 @@ QOIDALAR:
         if user.role in UserRole.ADMIN_ROLES:
             scoped = queryset
         elif user.role == UserRole.HOKIM_YORDAMCHISI:
-            scoped = queryset.filter(created_by=user)
+            scoped = queryset.filter(Q(created_by=user) | Q(assigned_deputies=user)).distinct()
         elif user.role == UserRole.HOKIMLIK_MASUL:
             if user.supervisor_id:
-                scoped = queryset.filter(created_by=user.supervisor)
+                scoped = queryset.filter(
+                    Q(created_by=user.supervisor) | Q(assigned_deputies=user.supervisor)
+                ).distinct()
             elif user.sector_id:
                 scoped = queryset.filter(
-                    created_by__role=UserRole.HOKIM_YORDAMCHISI,
-                    created_by__sector_id=user.sector_id,
+                    Q(created_by__role=UserRole.HOKIM_YORDAMCHISI, created_by__sector_id=user.sector_id)
+                    | Q(assigned_deputies__role=UserRole.HOKIM_YORDAMCHISI, assigned_deputies__sector_id=user.sector_id)
                 ).distinct()
             else:
                 scoped = queryset.none()
@@ -629,10 +632,21 @@ QOIDALAR:
                 'title': task.title,
                 'priority': task.priority,
                 'deadline': str(task.deadline),
-                'organizations': list(task.assigned_organizations.values_list('organization__name', flat=True))
+                'organizations': list(task.assigned_organizations.values_list('organization__name', flat=True)),
+                'deputies': list(task.assigned_deputies.values_list('full_name', flat=True)),
             },
             ip_address=getattr(self.request, 'client_ip', None)
         )
+
+        for deputy in task.assigned_deputies.filter(status='FAOL'):
+            create_notification(
+                user=deputy,
+                title='Yangi topshiriq',
+                message=f"Sizga nazorat uchun yangi topshiriq biriktirildi: {task.title}",
+                notification_type='TASK',
+                related_task=task,
+                link=f'/dashboard/tasks/{task.id}'
+            )
         
         # Create notifications for assigned organizations
         for task_org in task.assigned_organizations.all():

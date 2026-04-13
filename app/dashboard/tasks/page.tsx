@@ -314,6 +314,8 @@ export default function TasksPage() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         organizations={visibleOrganizations}
+        users={users}
+        currentUser={currentUser}
         onCreated={loadData}
         preferredInputMode={createTaskMode}
       />

@@ -107,6 +107,7 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     """
     created_by = UserMinimalSerializer(read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
+    assigned_deputies = UserMinimalSerializer(many=True, read_only=True)
     assigned_organizations = TaskOrganizationSerializer(many=True, read_only=True)
     status = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
@@ -160,7 +161,7 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
         model = Task
         fields = [
             'id', 'title', 'priority', 'category', 'status', 'deadline',
-            'created_by', 'created_by_name', 'assigned_organizations', 
+            'created_by', 'created_by_name', 'assigned_deputies', 'assigned_organizations',
             'is_overdue', 'days_remaining', 'created_at'
         ]
 
@@ -171,6 +172,7 @@ class TaskSerializer(serializers.ModelSerializer):
     """
     created_by = UserMinimalSerializer(read_only=True)
     closed_by = UserMinimalSerializer(read_only=True)
+    assigned_deputies = UserMinimalSerializer(many=True, read_only=True)
     assigned_organizations = TaskOrganizationSerializer(many=True, read_only=True)
     status = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
@@ -216,7 +218,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'priority', 'category', 'status',
             'deadline', 'completed_at', 'closed_at',
             'latitude', 'longitude', 'address',
-            'created_by', 'closed_by', 'assigned_organizations',
+            'created_by', 'closed_by', 'assigned_deputies', 'assigned_organizations',
             'is_overdue', 'days_remaining', 'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -231,6 +233,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
     """
     # Accept organizations as comma-separated string or single UUID
     organizations = serializers.CharField(write_only=True)
+    deputy_ids = serializers.CharField(write_only=True, required=False, allow_blank=True)
     attachments = serializers.ListField(
         child=serializers.FileField(),
         write_only=True,
@@ -242,7 +245,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         fields = [
             'title', 'description', 'priority', 'category',
             'deadline', 'latitude', 'longitude', 'address',
-            'organizations', 'attachments'
+            'organizations', 'deputy_ids', 'attachments'
         ]
     
     def validate_deadline(self, value):
@@ -283,18 +286,55 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
         return uuid_list
 
+    def validate_deputy_ids(self, value):
+        """Validate selected deputy users and convert to UUIDs."""
+        from users.models import User
+        import uuid
+
+        if not value:
+            return []
+
+        deputy_ids = [v.strip() for v in value.split(',') if v.strip()]
+        uuid_list = []
+        for deputy_id in deputy_ids:
+            try:
+                uuid_list.append(uuid.UUID(str(deputy_id)))
+            except (ValueError, TypeError):
+                raise serializers.ValidationError(f"Noto'g'ri deputy UUID formati: {deputy_id}")
+
+        deputies = User.objects.filter(
+            id__in=uuid_list,
+            role=UserRole.HOKIM_YORDAMCHISI,
+            status='FAOL',
+        )
+        existing_ids = set(str(item) for item in deputies.values_list('id', flat=True))
+        missing = [str(item) for item in uuid_list if str(item) not in existing_ids]
+        if missing:
+            raise serializers.ValidationError(
+                f"Hokim o'rinbosarlari topilmadi yoki nofaol: {', '.join(missing)}"
+            )
+
+        return uuid_list
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         organizations = attrs.get('organizations') or []
+        deputy_ids = attrs.get('deputy_ids') or []
 
         if not user:
             return attrs
 
         from organizations.models import Organization
+        from users.models import User
 
         orgs = list(Organization.objects.filter(id__in=organizations, is_active=True).select_related('sector'))
+        deputy_map = {
+            str(item.id): item
+            for item in User.objects.filter(id__in=deputy_ids, role=UserRole.HOKIM_YORDAMCHISI).select_related('sector')
+        }
+        deputies = [deputy_map[str(item)] for item in deputy_ids if str(item) in deputy_map]
 
         if user.role == UserRole.HOKIM_YORDAMCHISI:
             if not user.sector_id:
@@ -306,6 +346,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'organizations': f"Siz faqat o'z komplekisingizdagi tashkilotlarga topshiriq bera olasiz: {', '.join(invalid_orgs)}"
                 })
+            attrs['deputy_ids'] = [user.id]
 
         if user.role == UserRole.TASHKILOT_RAHBARI:
             if not user.organization_id:
@@ -318,11 +359,32 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                     'organizations': "Tashkilot rahbari faqat o'z tashkiloti doirasida topshiriq yaratishi mumkin"
                 })
 
+        if user.role in [UserRole.HOKIM, UserRole.ADMIN]:
+            if not deputies:
+                raise serializers.ValidationError({
+                    'deputy_ids': "Kamida bitta hokim o'rinbosarini ism bilan tanlang"
+                })
+
+        if deputies:
+            deputy_sector_ids = {str(item.sector_id) for item in deputies if item.sector_id}
+            uncovered_orgs = [
+                org.name for org in orgs
+                if org.sector_id and str(org.sector_id) not in deputy_sector_ids
+            ]
+            if uncovered_orgs:
+                raise serializers.ValidationError({
+                    'deputy_ids': (
+                        "Tanlangan hokim o'rinbosarlari quyidagi tashkilotlar sohasi bilan mos emas: "
+                        + ", ".join(uncovered_orgs)
+                    )
+                })
+
         return attrs
     
     def create(self, validated_data):
         """Create task with organization assignments."""
         organizations = validated_data.pop('organizations')
+        deputy_ids = validated_data.pop('deputy_ids', [])
         validated_data.pop('attachments', None)
         request = self.context.get('request')
         
@@ -341,6 +403,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                 organization=org,
                 status='YANGI'
             )
+
+        if deputy_ids:
+            task.assigned_deputies.set(deputy_ids)
 
         # Handle attachments (optional)
         if request:

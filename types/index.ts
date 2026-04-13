@@ -158,6 +158,7 @@ export interface Task extends BaseModel {
   
   created_by: User
   created_by_id: number
+  assigned_deputies?: User[]
   assigned_to?: User
   assigned_to_id?: number
   organization?: Organization

@@ -103,3 +103,32 @@ class TaskStatusSyncTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task_org.status, "MUDDATI_KECH")
         self.assertEqual(task.status, "MUDDATI_KECH")
+
+    def test_task_can_store_assigned_deputies(self) -> None:
+        sector, _ = Sector.objects.get_or_create(name="Sector 2")
+        org = Organization.objects.create(name="Org 3", sector=sector, is_active=True)
+        hokim = self._create_user(idx=4, role="HOKIM", organization=org)
+        deputy = User.objects.create_user(
+            login="deputy1",
+            password="pass12345",
+            pnfl="00000000000044",
+            first_name="Deputy",
+            last_name="User",
+            role="HOKIM_YORDAMCHISI",
+            status="FAOL",
+            sector=sector,
+        )
+
+        task = Task.objects.create(
+            title="Deputy task",
+            description="D",
+            priority="ODDIY",
+            category="",
+            status="YANGI",
+            deadline=timezone.now() + timedelta(days=2),
+            created_by=hokim,
+        )
+        task.assigned_deputies.add(deputy)
+
+        self.assertEqual(task.assigned_deputies.count(), 1)
+        self.assertEqual(task.assigned_deputies.first(), deputy)
