@@ -497,6 +497,7 @@ export interface RecurringTaskInput {
   category: string
   deadline_days: number
   organizations: string[]
+  deputy_ids?: string[]
   start_date: string
   end_date?: string
 }
@@ -511,6 +512,7 @@ export interface RecurringTaskResponse {
   category: string
   deadline_days: number
   organizations: string[]
+  assigned_deputies?: { id: string; full_name?: string }[]
   organizations_count: number
   start_date: string
   end_date: string | null

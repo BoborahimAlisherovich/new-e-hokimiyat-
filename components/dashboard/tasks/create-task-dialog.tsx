@@ -60,6 +60,8 @@ type CreateTaskDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   organizations: any[]
+  users: any[]
+  currentUser?: any
   onCreated: () => void | Promise<void>
   preferredInputMode?: "manual" | "audio"
 }
@@ -70,6 +72,7 @@ type CreateFormState = {
   priority: string
   category: string
   due_date: string
+  deputy_ids: string[]
   organization_ids: string[]
   // Recurring task fields
   is_recurring: boolean
@@ -122,6 +125,7 @@ const INITIAL_FORM: CreateFormState = {
   priority: "PAST",
   category: "",
   due_date: "",
+  deputy_ids: [],
   organization_ids: [],
   is_recurring: false,
   frequency: "MONTHLY",
@@ -138,18 +142,26 @@ export function CreateTaskDialog({
   open,
   onOpenChange,
   organizations,
+  users,
+  currentUser,
   onCreated,
   preferredInputMode = "manual",
 }: CreateTaskDialogProps) {
-  const organizationItems = Array.isArray(organizations)
-    ? organizations
-    : (organizations as { results?: any[] } | null | undefined)?.results || []
+  const organizationItems = useMemo(
+    () => (
+      Array.isArray(organizations)
+        ? organizations
+        : (organizations as { results?: any[] } | null | undefined)?.results || []
+    ),
+    [organizations]
+  )
 
   // Form state
   const [form, setForm] = useState<CreateFormState>({ ...INITIAL_FORM })
   const [files, setFiles] = useState<File[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [orgOpen, setOrgOpen] = useState(false)
+  const [deputyOpen, setDeputyOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // AI & Audio states
@@ -174,6 +186,7 @@ export function CreateTaskDialog({
       setFiles([])
       setErrors({})
       setOrgOpen(false)
+      setDeputyOpen(false)
       setAiApplied(false)
       setAiAnalyzing(false)
       setAiTranscription("")
@@ -191,6 +204,16 @@ export function CreateTaskDialog({
 
     return () => window.clearTimeout(timeoutId)
   }, [open, preferredInputMode])
+
+  useEffect(() => {
+    if (!open || !currentUser) return
+    if (currentUser.role === "HOKIM_YORDAMCHISI") {
+      setForm((prev) => ({
+        ...prev,
+        deputy_ids: prev.deputy_ids.length ? prev.deputy_ids : [String(currentUser.id)],
+      }))
+    }
+  }, [open, currentUser])
 
   // ==================== HELPERS ====================
   const setField = <K extends keyof CreateFormState>(field: K, value: CreateFormState[K]) => {
@@ -214,11 +237,36 @@ export function CreateTaskDialog({
       !form.category ||
       form.organization_ids.length === 0
 
+    const requiresDeputySelection = ["HOKIM", "ADMIN"].includes(currentUser?.role || "")
+
     if (form.is_recurring) {
-      return base || !form.frequency || !form.start_date || form.deadline_days < 1
+      return base || (requiresDeputySelection && form.deputy_ids.length === 0) || !form.frequency || !form.start_date || form.deadline_days < 1
     }
-    return base || !form.due_date
-  }, [form, submitting, aiAnalyzing])
+    return base || (requiresDeputySelection && form.deputy_ids.length === 0) || !form.due_date
+  }, [form, submitting, aiAnalyzing, currentUser])
+
+  const deputyItems = useMemo(() => {
+    const selectedSectorIds = new Set(
+      form.organization_ids
+        .map((id) => organizationItems.find((org: any) => String(org.id) === String(id)))
+        .map((org: any) => String(org?.sector?.id || org?.sector_id || org?.sector || ""))
+        .filter(Boolean)
+    )
+
+    const allDeputies = (Array.isArray(users) ? users : []).filter((item: any) => item?.role === "HOKIM_YORDAMCHISI")
+    const matchingDeputies = allDeputies.filter((item: any) => {
+      const deputySectorId = String(item?.sector?.id || item?.sector_id || item?.sector || "")
+      return !selectedSectorIds.size || (deputySectorId && selectedSectorIds.has(deputySectorId))
+    })
+
+    const source = matchingDeputies.length > 0 ? matchingDeputies : allDeputies
+    return source.sort((a: any, b: any) =>
+      String(a?.full_name || `${a?.last_name || ""} ${a?.first_name || ""}`).localeCompare(
+        String(b?.full_name || `${b?.last_name || ""} ${b?.first_name || ""}`),
+        "uz"
+      )
+    )
+  }, [form.organization_ids, organizationItems, users])
 
   const handlePriorityChange = (priority: string) => {
     setField("priority", priority)
@@ -277,6 +325,29 @@ export function CreateTaskDialog({
     setForm((prev) => ({
       ...prev,
       organization_ids: prev.organization_ids.filter((id) => id !== orgId),
+    }))
+  }
+
+  const toggleDeputy = (deputyId: string) => {
+    setForm((prev) => {
+      const ids = prev.deputy_ids.includes(deputyId)
+        ? prev.deputy_ids.filter((id) => id !== deputyId)
+        : [...prev.deputy_ids, deputyId]
+      return { ...prev, deputy_ids: ids }
+    })
+    if (errors.deputy_ids) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next.deputy_ids
+        return next
+      })
+    }
+  }
+
+  const removeDeputy = (deputyId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      deputy_ids: prev.deputy_ids.filter((id) => id !== deputyId),
     }))
   }
 
@@ -484,6 +555,9 @@ export function CreateTaskDialog({
     if (!form.description.trim()) next.description = "Tafsilotlar majburiy"
     if (!form.priority) next.priority = "Muhimlik darajasini tanlang"
     if (!form.category) next.category = "Sohani tanlang"
+    if (["HOKIM", "ADMIN"].includes(currentUser?.role || "") && form.deputy_ids.length === 0) {
+      next.deputy_ids = "Kamida bitta hokim o'rinbosarini tanlang"
+    }
     if (form.organization_ids.length === 0)
       next.organization_ids = "Kamida bitta tashkilot tanlang"
 
@@ -516,6 +590,7 @@ export function CreateTaskDialog({
           category: form.category,
           deadline_days: form.deadline_days,
           organizations: form.organization_ids,
+          deputy_ids: form.deputy_ids,
           start_date: form.start_date,
           end_date: form.end_date || undefined,
         })
@@ -528,6 +603,9 @@ export function CreateTaskDialog({
         payload.append("category", form.category)
         if (form.due_date)
           payload.append("deadline", new Date(form.due_date).toISOString())
+        if (form.deputy_ids.length > 0) {
+          payload.append("deputy_ids", form.deputy_ids.join(","))
+        }
         payload.append("organizations", form.organization_ids.join(","))
         files.forEach((file) => payload.append("attachments", file))
 
@@ -783,6 +861,90 @@ export function CreateTaskDialog({
               )}
             </div>
           </div>
+
+          {["HOKIM", "ADMIN", "HOKIM_YORDAMCHISI"].includes(currentUser?.role || "") && (
+            <div className="space-y-2">
+              <Label>
+                Hokim o'rinbosari
+                {["HOKIM", "ADMIN"].includes(currentUser?.role || "") && <span className="text-destructive"> *</span>}
+              </Label>
+
+              {form.deputy_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {form.deputy_ids.map((id) => {
+                    const deputy = deputyItems.find((item: any) => String(item.id) === String(id))
+                    return (
+                      <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
+                        {deputy?.full_name || `${deputy?.last_name || ""} ${deputy?.first_name || ""}`.trim() || id}
+                        {currentUser?.role === "HOKIM_YORDAMCHISI" && String(currentUser?.id) === String(id) ? null : (
+                          <button
+                            type="button"
+                            onClick={() => removeDeputy(id)}
+                            className="ml-0.5 rounded-full p-0.5 hover:bg-slate-300/50"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </Badge>
+                    )
+                  })}
+                </div>
+              )}
+
+              <Popover open={deputyOpen} onOpenChange={setDeputyOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn("w-full justify-between", errors.deputy_ids && "border-destructive")}
+                    disabled={currentUser?.role === "HOKIM_YORDAMCHISI"}
+                  >
+                    {form.deputy_ids.length > 0
+                      ? `${form.deputy_ids.length} ta hokim o'rinbosari tanlangan`
+                      : "Hokim o'rinbosarini tanlang"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-full min-w-[320px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
+                  align="start"
+                >
+                  <Command className="bg-white">
+                    <CommandInput placeholder="Ism bo'yicha qidirish..." className="bg-white" />
+                    <CommandList>
+                      <CommandEmpty>Hokim o'rinbosari topilmadi.</CommandEmpty>
+                      <CommandGroup>
+                        {deputyItems.map((deputy: any) => {
+                          const deputyId = String(deputy.id)
+                          const isSelected = form.deputy_ids.includes(deputyId)
+                          return (
+                            <CommandItem
+                              key={deputyId}
+                              value={`${deputy.full_name || ""} ${deputy.first_name || ""} ${deputy.last_name || ""}`}
+                              onSelect={() => toggleDeputy(deputyId)}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-slate-800">
+                                  {deputy.full_name || `${deputy.last_name || ""} ${deputy.first_name || ""}`.trim() || deputyId}
+                                </p>
+                                <p className="truncate text-xs text-slate-500">
+                                  {deputy.sector_name || "Soha biriktirilmagan"}
+                                </p>
+                              </div>
+                              <Check className={cn("h-4 w-4", isSelected ? "opacity-100" : "opacity-0")} />
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {errors.deputy_ids && <p className="text-xs text-destructive">{errors.deputy_ids}</p>}
+            </div>
+          )}
 
           {/* ========== MULTI-ORG SELECTION ========== */}
           <div className="space-y-2">

@@ -83,6 +83,13 @@ class Task(BaseModel):
         related_name='created_tasks',
         verbose_name='Yaratuvchi'
     )
+
+    assigned_deputies = models.ManyToManyField(
+        'users.User',
+        blank=True,
+        related_name='deputy_tasks',
+        verbose_name="Biriktirilgan hokim o'rinbosarlari",
+    )
     
     # Closed by (only Hokim)
     closed_by = models.ForeignKey(
@@ -626,6 +633,13 @@ class RecurringTask(BaseModel):
         verbose_name='Tayinlangan tashkilotlar',
         blank=True
     )
+
+    assigned_deputies = models.ManyToManyField(
+        'users.User',
+        blank=True,
+        related_name='deputy_recurring_tasks',
+        verbose_name="Biriktirilgan hokim o'rinbosarlari",
+    )
     
     # Yaratuvchi va holat
     created_by = models.ForeignKey(
@@ -705,6 +719,8 @@ class RecurringTask(BaseModel):
             source='RECURRING',
             recurring_task=self,
         )
+        if self.assigned_deputies.exists():
+            task.assigned_deputies.set(self.assigned_deputies.all())
         
         # Tashkilotlarni qo'shish
         for org in self.organizations.all():

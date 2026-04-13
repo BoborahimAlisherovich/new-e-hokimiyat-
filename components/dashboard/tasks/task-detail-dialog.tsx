@@ -60,6 +60,15 @@ export function TaskDetailDialog({ task, onClose }: TaskDetailDialogProps) {
                 <Label className="text-sm font-medium text-muted-foreground">Yaratuvchi</Label>
                 <p className="font-medium">{task.created_by?.first_name} {task.created_by?.last_name}</p>
               </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Hokim o'rinbosari</Label>
+                <p className="font-medium">
+                  {(task.assigned_deputies || [])
+                    .map((deputy: any) => deputy?.full_name || [deputy?.last_name, deputy?.first_name].filter(Boolean).join(" "))
+                    .filter(Boolean)
+                    .join(", ") || "—"}
+                </p>
+              </div>
               <div className="md:col-span-2">
                 <Label className="text-sm font-medium text-muted-foreground">Tashkilotlar</Label>
                 <p className="font-medium">
