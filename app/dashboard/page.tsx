@@ -12,7 +12,7 @@ import DashboardAnalyticsCharts from "@/components/dashboard/dashboard-analytics
 import OrgDashboard from "@/components/dashboard/org-dashboard"
 import { DashboardQuickRibbon } from "@/components/dashboard/dashboard-quick-ribbon"
 import { ProjectsShowcase } from "@/components/dashboard/projects-showcase"
-import { useTranslation } from "@/lib/i18n/context"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { getCurrentUser } from "@/lib/api"
 import { isOrganizationRole } from "@/lib/role-utils"
@@ -20,9 +20,28 @@ import { canAccessDashboardPath } from "@/lib/dashboard-access"
 
 export default function DashboardPage() {
   const t = useTranslation()
+  const { language } = useI18n()
   const pageRef = useGSAPPageEntrance()
   const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const orgDashboardText = {
+    uz: {
+      title: "Mening tashkilotim",
+      description: "Tashkilotingizga tegishli topshiriqlar va murojaatlar",
+    },
+    "uz-cyrl": {
+      title: "Менинг ташкилотим",
+      description: "Ташкилотингизга тегишли топшириқлар ва мурожаатлар",
+    },
+    ru: {
+      title: "Моя организация",
+      description: "Поручения и обращения, относящиеся к вашей организации",
+    },
+    en: {
+      title: "My organization",
+      description: "Tasks and appeals assigned to your organization",
+    },
+  }[language]
 
   useEffect(() => {
     getCurrentUser()
@@ -57,8 +76,8 @@ export default function DashboardPage() {
     return (
       <>
         <Header
-          title="Mening tashkilotim"
-          description="Tashkilotingizga tegishli topshiriqlar va murojaatlar"
+          title={orgDashboardText.title}
+          description={orgDashboardText.description}
         />
         <div ref={pageRef} className="p-6">
           <OrgDashboard />

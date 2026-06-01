@@ -63,6 +63,7 @@ export const enTranslations: Translations = {
   navigation: {
     dashboard: 'Dashboard',
     tasks: 'Tasks',
+    projects: 'Projects',
     users: 'Users',
     organizations: 'Organizations',
     notifications: 'Notifications',
