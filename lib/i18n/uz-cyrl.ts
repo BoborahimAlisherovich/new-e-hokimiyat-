@@ -63,6 +63,7 @@ export const uzCyrlTranslations: Translations = {
   navigation: {
     dashboard: 'Бош саҳифа',
     tasks: 'Топшириқлар',
+    projects: 'Лойиҳалар',
     users: 'Фойдаланувчилар',
     organizations: 'Ташкилотлар',
     notifications: 'Билдиришномалар',

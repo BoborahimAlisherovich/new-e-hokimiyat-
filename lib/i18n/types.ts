@@ -63,6 +63,7 @@ export interface Translations {
   navigation: {
     dashboard: string
     tasks: string
+    projects: string
     users: string
     organizations: string
     notifications: string

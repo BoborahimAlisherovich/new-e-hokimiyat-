@@ -148,7 +148,7 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
       section: "main"
     },
     {
-      title: "Loyihalar",
+      title: t.navigation.projects,
       href: "/dashboard/projects",
       icon: BriefcaseBusiness,
       section: "main"
