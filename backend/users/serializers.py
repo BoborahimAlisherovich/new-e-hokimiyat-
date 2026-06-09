@@ -144,6 +144,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if email and not re.fullmatch(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
             raise serializers.ValidationError("Email formati noto'g'ri")
         return email
+    
+    def validate(self, attrs):
+        """Validate role hierarchy."""
+        request = self.context.get('request')
+        current_user = request.user if request else None
+        if request and request.user:
             target_role = attrs.get('role')
             if not request.user.can_add_user_with_role(target_role):
                 raise serializers.ValidationError({
