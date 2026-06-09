@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from datetime import timedelta
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -574,7 +574,10 @@ QOIDALAR:
         """
         user = self.request.user
         queryset = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
-            'assigned_organizations__organization',
+            Prefetch(
+                'assigned_organizations',
+                queryset=TaskOrganization.objects.select_related('organization', 'assigned_to'),
+            ),
             'assigned_deputies',
         )
         
@@ -615,6 +618,10 @@ QOIDALAR:
         status_value = (self.request.query_params.get('status') or '').strip()
         if status_value:
             scoped = self._apply_status_filter(scoped, user=user, status_value=status_value)
+
+        organization_id = (self.request.query_params.get('organization') or '').strip()
+        if organization_id:
+            scoped = scoped.filter(assigned_organizations__organization_id=organization_id).distinct()
 
         return scoped
     

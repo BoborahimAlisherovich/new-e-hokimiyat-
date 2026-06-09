@@ -2,6 +2,8 @@
 User serializers for E-Hokimiyat API.
 """
 
+import re
+
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Position, User, UserAssignment
@@ -130,12 +132,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if User.objects.filter(pnfl=value).exists():
             raise serializers.ValidationError("Bu PNFL allaqachon ro'yxatdan o'tgan")
         return value
-    
-    def validate(self, attrs):
-        """Validate role hierarchy."""
-        request = self.context.get('request')
-        current_user = request.user if request else None
-        if request and request.user:
+
+    def validate_phone(self, value):
+        phone = (value or '').strip()
+        if not re.fullmatch(r'\+998\d{9}', phone):
+            raise serializers.ValidationError("Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak")
+        return phone
+
+    def validate_email(self, value):
+        email = (value or '').strip()
+        if email and not re.fullmatch(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            raise serializers.ValidationError("Email formati noto'g'ri")
+        return email
             target_role = attrs.get('role')
             if not request.user.can_add_user_with_role(target_role):
                 raise serializers.ValidationError({
@@ -242,6 +250,18 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         if User.objects.filter(pnfl=login).exclude(pk=getattr(instance, 'pk', None)).exists():
             raise serializers.ValidationError("Bu login boshqa foydalanuvchining PNFL qiymati bilan to'qnashadi")
         return login
+
+    def validate_phone(self, value):
+        phone = (value or '').strip()
+        if phone and not re.fullmatch(r'\+998\d{9}', phone):
+            raise serializers.ValidationError("Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak")
+        return phone
+
+    def validate_email(self, value):
+        email = (value or '').strip()
+        if email and not re.fullmatch(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            raise serializers.ValidationError("Email formati noto'g'ri")
+        return email
 
     def validate(self, attrs):
         """Validate role hierarchy and organization assignment."""

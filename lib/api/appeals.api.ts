@@ -297,20 +297,15 @@ interface AppealsApiResponse {
  * @returns Appeal formatidagi murojaatlar ro'yxati
  */
 export async function getAppeals(): Promise<Appeal[]> {
-  try {
-    const response = await fetchApi<TelegramAppealResponse[] | AppealsApiResponse>(
-      '/telegram-bot/appeals/'
-    )
-    
-    const appeals = Array.isArray(response) 
-      ? response 
-      : (response?.results ?? [])
-    
-    return appeals.map(normalizeAppeal)
-  } catch (error) {
-    console.error('[Appeals API] getAppeals xatosi:', error)
-    return []
-  }
+  const response = await fetchApi<TelegramAppealResponse[] | AppealsApiResponse>(
+    '/telegram-bot/appeals/'
+  )
+  
+  const appeals = Array.isArray(response) 
+    ? response 
+    : (response?.results ?? [])
+  
+  return appeals.map(normalizeAppeal)
 }
 
 export interface ManualAppealCreateRequest {

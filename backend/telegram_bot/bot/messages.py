@@ -260,6 +260,8 @@ Kamida 20 ta belgi kiriting.""",
         
         'error_something_wrong': """⚠️ Xatolik yuz berdi.
 
+{reason}
+
 Iltimos, qaytadan urinib ko'ring yoki /start buyrug'ini yuboring.""",
         
         'error_blocked': """🚫 Sizning hisobingiz bloklangan.
@@ -464,6 +466,8 @@ Savollar uchun: +998 XX XXX XX XX""",
 
 Введите минимум 20 символов.""",
         'error_something_wrong': """⚠️ Произошла ошибка.
+
+{reason}
 
 Пожалуйста, попробуйте еще раз или отправьте команду /start.""",
         'error_blocked': """🚫 Ваш аккаунт заблокирован.
@@ -718,6 +722,8 @@ Please try again.""",
 
 Please enter at least 20 characters.""",
         'error_something_wrong': """⚠️ Something went wrong.
+
+{reason}
 
 Please try again or send /start.""",
         'error_blocked': """🚫 Your account has been blocked.

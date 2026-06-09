@@ -1007,7 +1007,13 @@ export function CreateTaskDialog({
                   )}
                 >
                   {form.organization_ids.length > 0
-                    ? `${form.organization_ids.length} ta tashkilot tanlangan`
+                    ? form.organization_ids.length <= 2
+                      ? form.organization_ids
+                          .map((id) => organizationItems.find((org: any) => String(org.id) === String(id)))
+                          .filter(Boolean)
+                          .map((org: any) => org.short_name || org.name)
+                          .join(", ")
+                      : `${form.organization_ids.length} ta tashkilot tanlangan`
                     : "Tashkilotlarni tanlang"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>

@@ -9,8 +9,11 @@ from django.db.models.functions import Coalesce
 import datetime
 from datetime import timedelta
 import json
+import logging
 import subprocess
 import uuid
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
@@ -1218,6 +1221,28 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         )
         return employees[0]
 
+    def _get_task_deputies_for_organizations(self, *, organizations, creator):
+        from users.models import User
+
+        if getattr(creator, 'role', None) == 'HOKIM_YORDAMCHISI':
+            return [creator]
+
+        sector_ids = {
+            organization.sector_id
+            for organization in organizations
+            if getattr(organization, 'sector_id', None)
+        }
+        if not sector_ids:
+            return []
+
+        return list(
+            User.objects.filter(
+                role='HOKIM_YORDAMCHISI',
+                status='FAOL',
+                sector_id__in=sector_ids,
+            )
+        )
+
     def _create_task_context_message(self, *, task, user, appeal, organizations, attachment_files=None):
         from tasks.models import TaskMessage
 
@@ -1312,6 +1337,10 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             category=self._normalize_task_category(appeal),
             source='TELEGRAM',
         )
+
+        deputies = self._get_task_deputies_for_organizations(organizations=organizations, creator=user)
+        if deputies:
+            task.assigned_deputies.set([deputy.id for deputy in deputies])
 
         for uploaded_file in attachment_files or []:
             try:
@@ -1475,6 +1504,15 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 text=response_text
             )
         
+        # Tasdiqlanganda biriktirilgan tashkilotlar bo'lsa, avtomatik topshiriq yaratiladi.
+        if action == 'approve' and not forward_to_site and appeal.assigned_organizations.exists():
+            forward_to_site = True
+            create_task = True
+            if not organization_ids:
+                organization_ids = list(
+                    appeal.assigned_organizations.values_list('id', flat=True)
+                )
+
         # Saytga yuborish
         if forward_to_site:
             self._forward_to_site(appeal, create_task, organization_ids, request.user)
@@ -1503,18 +1541,28 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     
     def _forward_to_site(self, appeal, create_task=False, organization_ids=None, user=None):
         """Murojaatni saytga yuborish"""
-        if create_task and organization_ids and user is not None:
+        org_ids = self._normalize_organization_ids(organization_ids)
+        if not org_ids:
+            org_ids = [
+                str(org_id)
+                for org_id in appeal.assigned_organizations.filter(is_active=True).values_list('id', flat=True)
+            ]
+
+        if user is not None and org_ids:
             default_title = f"Murojaat #{appeal.appeal_number}: {appeal.text[:100]}..."
             deadline = timezone.now() + timedelta(days=7)
-            self._create_task_for_appeal(
-                appeal=appeal,
-                user=user,
-                title=default_title,
-                deadline=deadline,
-                priority='ODDIY',
-                organization_ids=organization_ids,
-            )
-            return
+            try:
+                self._create_task_for_appeal(
+                    appeal=appeal,
+                    user=user,
+                    title=default_title,
+                    deadline=deadline,
+                    priority='ODDIY',
+                    organization_ids=org_ids,
+                )
+                return
+            except Exception as exc:
+                logger.error("Topshiriq yaratishda xato: %s", exc, exc_info=True)
 
         appeal.forwarded_to_site = True
         appeal.status = 'forwarded'

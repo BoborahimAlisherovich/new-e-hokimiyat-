@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FilterOptions } from "@/types"
 import { Search, X, Filter, MessageSquare, Sparkles } from "lucide-react"
@@ -137,58 +137,70 @@ export function AppealFilters({
 
         {/* Filters */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder={tr.status} />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(options.status).map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">{tr.status}</Label>
+            <Select value={statusFilter} onValueChange={onStatusChange}>
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+                <SelectValue placeholder={tr.status} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(options.status).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={priorityFilter} onValueChange={onPriorityChange}>
-            <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder={tr.priority} />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(options.priority).map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">{tr.priority}</Label>
+            <Select value={priorityFilter} onValueChange={onPriorityChange}>
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+                <SelectValue placeholder={tr.priority} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(options.priority).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={categoryFilter} onValueChange={onCategoryChange}>
-            <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder={tr.category} />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(options.category).map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">{tr.category}</Label>
+            <Select value={categoryFilter} onValueChange={onCategoryChange}>
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+                <SelectValue placeholder={tr.category} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(options.category).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={districtFilter} onValueChange={onDistrictChange}>
-            <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
-              <SelectValue placeholder={tr.district} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tr.all}</SelectItem>
-              {options.districts.map((district) => (
-                <SelectItem key={district} value={district}>
-                  {district}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs text-slate-500">{tr.district}</Label>
+            <Select value={districtFilter} onValueChange={onDistrictChange}>
+              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+                <SelectValue placeholder={tr.district} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tr.all}</SelectItem>
+                {options.districts.map((district) => (
+                  <SelectItem key={district} value={district}>
+                    {district}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </PremiumFilterShell>

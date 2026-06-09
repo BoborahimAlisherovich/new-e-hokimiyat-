@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import type { Language, Translations } from './types'
 export type { Language, Translations } from './types'
 import { uzTranslations } from './uz'
@@ -42,7 +42,13 @@ export function I18nProvider({ children, defaultLanguage = 'uz' }: I18nProviderP
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
     localStorage.setItem('language', lang)
+    document.documentElement.lang = lang
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }))
   }
+
+  useEffect(() => {
+    document.documentElement.lang = language
+  }, [language])
 
   const value: I18nContextType = {
     language,

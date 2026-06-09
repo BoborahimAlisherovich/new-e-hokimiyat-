@@ -13,6 +13,7 @@ import type { Language } from '@/lib/i18n/context'
 
 const languages = [
   { code: 'uz' as Language, name: 'O\'zbekcha', flag: '🇺🇿' },
+  { code: 'uz-cyrl' as Language, name: 'Ўзбекча', flag: '🇺🇿' },
   { code: 'ru' as Language, name: 'Русский', flag: '🇷🇺' },
   { code: 'en' as Language, name: 'English', flag: '🇺🇸' },
 ]
