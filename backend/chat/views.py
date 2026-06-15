@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.contrib.auth import get_user_model
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from .models import DirectMessage, ChatConversation
 from .serializers import (
     DirectMessageSerializer,
@@ -52,6 +54,42 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
     queryset = DirectMessage.objects.all()
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def _emit_group_event(self, user_id: int, payload: Dict[str, Any]) -> None:
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            return
+        async_to_sync(channel_layer.group_send)(f'direct_chat_{user_id}', payload)
+
+    def _broadcast_message(self, message: DirectMessage, request) -> None:
+        serialized = DirectMessageSerializer(message, context={'request': request}).data
+        payload = {
+            'type': 'direct_message',
+            'message': serialized,
+        }
+        self._emit_group_event(message.sender_id, payload)
+        self._emit_group_event(message.recipient_id, payload)
+
+    def _broadcast_deleted_message(self, message: DirectMessage) -> None:
+        self._emit_group_event(message.sender_id, {
+            'type': 'message_deleted',
+            'message_id': message.id,
+            'other_user_id': message.recipient_id,
+        })
+        self._emit_group_event(message.recipient_id, {
+            'type': 'message_deleted',
+            'message_id': message.id,
+            'other_user_id': message.sender_id,
+        })
+
+    def _broadcast_messages_read(self, reader_id: int, sender_id: int, message_ids: list[int]) -> None:
+        if not message_ids:
+            return
+        self._emit_group_event(sender_id, {
+            'type': 'messages_read',
+            'user_id': reader_id,
+            'message_ids': message_ids,
+        })
 
     def get_queryset(self) -> QuerySet[DirectMessage]:  # type: ignore[reportIncompatibleMethodOverride]
         """Get messages for the current user."""
@@ -113,6 +151,7 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         conversation = ChatConversation.get_or_create_conversation(request.user, recipient)
         conversation.last_message = message
         conversation.save()
+        self._broadcast_message(message, request)
 
         return Response(
             DirectMessageSerializer(message, context={'request': request}).data,
@@ -146,7 +185,16 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         ).order_by('-created_at')
         
         # Mark received messages as read
-        messages.filter(recipient=request.user).update(is_read=True)
+        unread_ids = list(
+            messages.filter(recipient=request.user, is_read=False).values_list('id', flat=True)
+        )
+        if unread_ids:
+            DirectMessage.objects.filter(id__in=unread_ids).update(is_read=True)
+            self._broadcast_messages_read(
+                reader_id=request.user.id,
+                sender_id=other_user.id,
+                message_ids=unread_ids,
+            )
         
         serializer = DirectMessageSerializer(
             messages,
@@ -187,6 +235,7 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         conversation = ChatConversation.get_or_create_conversation(request.user, recipient)
         conversation.last_message = message
         conversation.save()
+        self._broadcast_message(message, request)
 
         return Response(
             DirectMessageSerializer(message, context={'request': request}).data,
@@ -203,12 +252,45 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        unread_ids = list(
+            DirectMessage.objects.filter(
+                recipient=request.user,
+                sender_id=user_id,
+                is_read=False
+            ).values_list('id', flat=True)
+        )
+
         DirectMessage.objects.filter(
             recipient=request.user,
             sender_id=user_id,
             is_read=False
         ).update(is_read=True)
 
+        self._broadcast_messages_read(
+            reader_id=request.user.id,
+            sender_id=int(user_id),
+            message_ids=unread_ids,
+        )
+
+        return Response({'status': 'messages marked as read'})
+
+    @action(detail=False, methods=['post'], url_path='(?P<user_id>[^/.]+)/mark_read')
+    def mark_read_for_user(self, request, user_id=None):
+        """Compat endpoint used by the frontend chat API."""
+        unread_ids = list(
+            DirectMessage.objects.filter(
+                recipient=request.user,
+                sender_id=user_id,
+                is_read=False
+            ).values_list('id', flat=True)
+        )
+        if unread_ids:
+            DirectMessage.objects.filter(id__in=unread_ids).update(is_read=True)
+            self._broadcast_messages_read(
+                reader_id=request.user.id,
+                sender_id=int(user_id),
+                message_ids=unread_ids,
+            )
         return Response({'status': 'messages marked as read'})
 
     @action(detail=False, methods=['get'], url_path='unread-count')
@@ -250,6 +332,6 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
                 conversation.save()
         except Exception:
             pass  # Conversation yangilanmasa ham xabar o'chirilsin
-        
+        self._broadcast_deleted_message(message)
         message.delete()
         return Response({'status': 'message deleted'}, status=status.HTTP_200_OK)

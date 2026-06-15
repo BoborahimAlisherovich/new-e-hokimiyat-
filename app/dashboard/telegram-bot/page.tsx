@@ -121,12 +121,28 @@ export default function TelegramBotPage() {
     pid: number | null;
   } | null>(null);
 
+  const syncSettingsWithStatus = useCallback(
+    (status: { is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }) => {
+      setBotStatus(status);
+      setSettings((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_active: status.is_active,
+              use_webhook: status.use_webhook,
+            }
+          : prev
+      );
+    },
+    []
+  );
+
   const loadStatus = useCallback(async () => {
     const statusRes = await api.get<{ is_active: boolean; is_running: boolean; use_webhook: boolean; pid: number | null }>(
       "/telegram-bot/settings/bot_status/"
     );
-    setBotStatus(statusRes.data);
-  }, []);
+    syncSettingsWithStatus(statusRes.data);
+  }, [syncSettingsWithStatus]);
 
   const loadWebhookInfo = useCallback(async () => {
     if (!settings?.bot_token && !settings?.has_token) return;
@@ -164,7 +180,7 @@ export default function TelegramBotPage() {
       }
 
       if (statusRes.status === "fulfilled") {
-        setBotStatus(statusRes.value.data);
+        syncSettingsWithStatus(statusRes.value.data);
       } else {
         setBotStatus(null);
       }
@@ -178,7 +194,7 @@ export default function TelegramBotPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [syncSettingsWithStatus, toast]);
 
   useEffect(() => {
     loadData();
@@ -207,6 +223,7 @@ export default function TelegramBotPage() {
       );
       
       if (response.data.success) {
+        setSettings(prev => prev ? { ...prev, is_active: true, use_webhook: false } : null);
         toast({
           title: "Muvaffaqiyat",
           description: "Bot muvaffaqiyatli ishga tushirildi"
@@ -244,7 +261,7 @@ export default function TelegramBotPage() {
           description: "Webhook o'chirildi va polling ishga tushdi"
         });
         await loadStatus();
-        setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
+        setSettings(prev => prev ? { ...prev, is_active: true, use_webhook: false, webhook_url: '' } : null);
       } else {
         toast({
           title: "Xato",
@@ -269,6 +286,7 @@ export default function TelegramBotPage() {
       const response = await api.post<{ success: boolean; error?: string }>("/telegram-bot/settings/stop_bot/");
       
       if (response.data.success) {
+        setSettings(prev => prev ? { ...prev, is_active: false, use_webhook: false } : null);
         toast({
           title: "Muvaffaqiyat",
           description: "Bot to'xtatildi"
@@ -292,6 +310,8 @@ export default function TelegramBotPage() {
     try {
       setSaving(true);
       const payload: Partial<BotSettings> = { ...settings };
+      delete payload.is_active;
+      delete payload.use_webhook;
       if (!payload.bot_token) {
         delete payload.bot_token;
       }
@@ -391,7 +411,7 @@ export default function TelegramBotPage() {
           title: "Muvaffaqiyat",
           description: "Webhook o'rnatildi"
         });
-        setSettings(prev => prev ? { ...prev, use_webhook: true } : null);
+        setSettings(prev => prev ? { ...prev, is_active: true, use_webhook: true } : null);
         await loadStatus();
       } else {
         toast({
@@ -418,7 +438,7 @@ export default function TelegramBotPage() {
           title: "Muvaffaqiyat",
           description: "Webhook o'chirildi"
         });
-        setSettings(prev => prev ? { ...prev, use_webhook: false, webhook_url: '' } : null);
+        setSettings(prev => prev ? { ...prev, is_active: false, use_webhook: false, webhook_url: '' } : null);
         await loadStatus();
       }
     } catch (err) {
@@ -724,11 +744,16 @@ export default function TelegramBotPage() {
                     Botni yoqish yoki o'chirish (xabarlarni qabul qilish)
                   </p>
                 </div>
-                <Switch 
-                  checked={settings?.is_active}
-                  onCheckedChange={(checked) => 
-                    setSettings(prev => prev ? { ...prev, is_active: checked } : null)
-                  }
+                <Switch
+                  checked={Boolean(settings?.use_webhook || botStatus?.is_running || settings?.is_active)}
+                  disabled={starting || stopping || (!settings?.bot_token && !settings?.has_token)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      void startBot(false);
+                    } else {
+                      void stopBot();
+                    }
+                  }}
                 />
               </div>
 

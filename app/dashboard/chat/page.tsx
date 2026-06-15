@@ -31,7 +31,7 @@ import {
   Radio,
   Activity,
 } from "lucide-react"
-import { API_BASE, getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage } from "@/lib/api"
+import { API_BASE, WS_BASE, getAccessToken, getChatConversations, getChatMessages, getCurrentUser, getChatUsers, sendChatMessage, deleteChatMessage, markChatMessagesAsRead } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { useAudioAlert } from "@/hooks/use-audio-alert"
@@ -383,12 +383,22 @@ export default function ChatPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const lastMessageIdsRef = useRef<Record<string, string | undefined>>({})
   const playChatAlert = useAudioAlert()
-  
+  const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const selectedUserIdRef = useRef<string | null>(null)
+  const currentUserRef = useRef<ChatUser | null>(null)
+
+  useEffect(() => {
+    selectedUserIdRef.current = selectedUserId
+  }, [selectedUserId])
+
+  useEffect(() => {
+    currentUserRef.current = currentUser
+  }, [currentUser])
 
   // Faylni sozlash (umumiy funksiya)
   const setFileWithPreview = useCallback((file: File) => {
@@ -698,7 +708,7 @@ export default function ChatPage() {
     }
   }
 
-  const mapApiMessage = (msg: any): Message => {
+  const mapApiMessage = useCallback((msg: any): Message => {
     const attachmentUrl = msg.attachment ? resolveMediaUrl(API_BASE, msg.attachment) : undefined
     const attachment = attachmentUrl
       ? {
@@ -717,7 +727,7 @@ export default function ChatPage() {
       timestamp: msg.created_at || new Date().toISOString(),
       is_read: msg.is_read ?? false,
     }
-  }
+  }, [])
 
   const selectedConversation = selectedUserId ? conversations.get(selectedUserId) : null
   const selectedUser = selectedConversation?.user || users.find(u => u.id === selectedUserId)
@@ -871,6 +881,60 @@ export default function ChatPage() {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, 100)
   }
+
+  const upsertConversationMessage = useCallback((message: Message, userId: string, incoming: boolean) => {
+    setConversations((prev) => {
+      const newMap = new Map(prev)
+      const existing = newMap.get(userId)
+      const baseMessages = existing?.messages || []
+      const alreadyExists = baseMessages.some((item) => item.id === message.id)
+      const messages = alreadyExists
+        ? baseMessages.map((item) => (item.id === message.id ? { ...item, ...message } : item))
+        : [...baseMessages, message]
+      const user = existing?.user || users.find((item) => item.id === userId)
+
+      if (!user) return prev
+
+      newMap.set(userId, {
+        user,
+        messages,
+        unreadCount:
+          incoming && selectedUserIdRef.current !== userId
+            ? (existing?.unreadCount || 0) + (alreadyExists ? 0 : 1)
+            : 0,
+      })
+      return newMap
+    })
+  }, [users])
+
+  const removeMessageFromConversation = useCallback((messageId: string, userId: string) => {
+    setConversations((prev) => {
+      const newMap = new Map(prev)
+      const existing = newMap.get(userId)
+      if (!existing) return prev
+
+      newMap.set(userId, {
+        ...existing,
+        messages: existing.messages.filter((item) => item.id !== messageId),
+      })
+      return newMap
+    })
+  }, [])
+
+  const markMessagesAsReadLocally = useCallback((userId: string, messageIds: string[]) => {
+    setConversations((prev) => {
+      const newMap = new Map(prev)
+      const existing = newMap.get(userId)
+      if (!existing) return prev
+
+      const idSet = new Set(messageIds)
+      newMap.set(userId, {
+        ...existing,
+        messages: existing.messages.map((item) => (idSet.has(item.id) ? { ...item, is_read: true } : item)),
+      })
+      return newMap
+    })
+  }, [])
 
   const sendMessage = async () => {
     const hasContent = newMessage && newMessage.trim()
@@ -1047,7 +1111,7 @@ export default function ChatPage() {
     [conversations]
   )
 
-  const loadConversation = async (userId: string) => {
+  const loadConversation = useCallback(async (userId: string) => {
     try {
       const messages = await getChatMessages(userId)
       const mapped = (messages || []).map(mapApiMessage).reverse()
@@ -1066,10 +1130,11 @@ export default function ChatPage() {
       
       // Dispatch event to update sidebar unread count
       window.dispatchEvent(new Event('chatRead'))
+      await markChatMessagesAsRead(userId).catch(() => {})
     } catch (error) {
       console.error(tr.historyError, error)
     }
-  }
+  }, [mapApiMessage, tr.historyError, users])
 
   const handleSelectUser = (userId: string) => {
     setSelectedUserId(userId)
@@ -1094,6 +1159,67 @@ export default function ChatPage() {
       sendMessage()
     }
   }
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token || !currentUser?.id) return
+
+    const ws = new WebSocket(`${WS_BASE}/ws/chat/?token=${token}`)
+    wsRef.current = ws
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data)
+
+        if (payload?.type === "direct_message" && payload.message) {
+          const message = mapApiMessage(payload.message)
+          const senderId = String(payload.message.sender?.id || "")
+          const recipientId = String(payload.message.recipient?.id || "")
+          const meId = String(currentUserRef.current?.id || "")
+          const otherUserId = senderId === meId ? recipientId : senderId
+          const incoming = Boolean(senderId && senderId !== meId)
+
+          if (!otherUserId) return
+
+          upsertConversationMessage(message, otherUserId, incoming)
+
+          if (incoming && selectedUserIdRef.current === otherUserId) {
+            void loadConversation(otherUserId)
+          }
+          return
+        }
+
+        if (payload?.type === "message_deleted" && payload.message_id && payload.other_user_id) {
+          removeMessageFromConversation(String(payload.message_id), String(payload.other_user_id))
+          return
+        }
+
+        if (payload?.type === "messages_read" && payload.user_id && Array.isArray(payload.message_ids)) {
+          markMessagesAsReadLocally(
+            String(payload.user_id),
+            payload.message_ids.map((item: string | number) => String(item))
+          )
+        }
+      } catch (error) {
+        console.error("Chat websocket error:", error)
+      }
+    }
+
+    ws.onclose = () => {
+      if (wsRef.current === ws) {
+        wsRef.current = null
+      }
+    }
+
+    return () => {
+      if (wsRef.current === ws) {
+        wsRef.current = null
+      }
+      try {
+        ws.close()
+      } catch {}
+    }
+  }, [currentUser?.id, loadConversation, mapApiMessage, markMessagesAsReadLocally, removeMessageFromConversation, upsertConversationMessage])
 
   if (loading) {
     return (

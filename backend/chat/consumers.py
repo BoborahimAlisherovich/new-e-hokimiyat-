@@ -264,3 +264,69 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             user=self.user,
             is_read=False
         ).update(is_read=True, read_at=timezone.now())
+
+
+class DirectChatConsumer(AsyncWebsocketConsumer):
+    """WebSocket consumer for direct user-to-user chat updates."""
+
+    async def connect(self):
+        self.user = self.scope.get('user')
+
+        if not self.user or not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.room_group_name = f'direct_chat_{self.user.id}'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+
+        if data.get('action') == 'mark_read':
+            other_user_id = data.get('user_id')
+            if other_user_id:
+                await self.mark_messages_as_read(other_user_id)
+
+    async def direct_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'direct_message',
+            'message': event['message'],
+        }))
+
+    async def message_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'message_deleted',
+            'message_id': event['message_id'],
+            'other_user_id': event['other_user_id'],
+        }))
+
+    async def messages_read(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'messages_read',
+            'user_id': event['user_id'],
+            'message_ids': event['message_ids'],
+        }))
+
+    @database_sync_to_async
+    def mark_messages_as_read(self, other_user_id):
+        from .models import DirectMessage
+
+        unread_messages = list(
+            DirectMessage.objects.filter(
+                sender_id=other_user_id,
+                recipient=self.user,
+                is_read=False,
+            ).values_list('id', flat=True)
+        )
+        if not unread_messages:
+            return
+
+        DirectMessage.objects.filter(id__in=unread_messages).update(is_read=True)
