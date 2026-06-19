@@ -208,8 +208,9 @@ export function OrganizationCreateDialog({
             <Input 
               id="orgServicePhone" 
               value={formData.servicePhone}
-              onChange={(e) => onChange("servicePhone", e.target.value)}
+              onChange={(e) => onChange("servicePhone", e.target.value.replace(/[^\d+\s()-]/g, ""))}
               placeholder="+998 XX XXX XX XX" 
+              inputMode="tel"
               className="h-11 rounded-xl border-indigo-100/60 focus:border-violet-500 focus:ring-violet-500/20"
             />
           </div>

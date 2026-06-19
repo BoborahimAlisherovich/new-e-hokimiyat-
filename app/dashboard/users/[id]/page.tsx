@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { LoadingSpinner } from "@/components/ui/loading"
 import { getUserById, blockUser, unblockUser, archiveUser } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 import type { User } from "@/types"
 import {
   AlertTriangle,
@@ -76,6 +77,7 @@ function DetailItem({
 export default function UserDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { toast } = useToast()
   const userId = params.id as string
 
   const [user, setUser] = useState<User | null>(null)
@@ -105,8 +107,13 @@ export default function UserDetailPage() {
       setActionLoading(true)
       const updated = await blockUser(user.id)
       setUser(updated)
-    } catch (error) {
-      console.error("Error blocking user:", error)
+      toast({ title: "Bloklandi", description: "Foydalanuvchi vaqtinchalik bloklandi" })
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.message || "Foydalanuvchini bloklab bo'lmadi",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -119,8 +126,13 @@ export default function UserDetailPage() {
       setActionLoading(true)
       const updated = await unblockUser(user.id)
       setUser(updated)
-    } catch (error) {
-      console.error("Error unblocking user:", error)
+      toast({ title: "Faollashtirildi", description: "Foydalanuvchi blokdan chiqarildi" })
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.message || "Foydalanuvchini faollashtirib bo'lmadi",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -133,8 +145,13 @@ export default function UserDetailPage() {
       setActionLoading(true)
       const updated = await archiveUser(user.id)
       setUser(updated)
-    } catch (error) {
-      console.error("Error archiving user:", error)
+      toast({ title: "Arxivlandi", description: "Foydalanuvchi arxivga o'tkazildi" })
+    } catch (error: any) {
+      toast({
+        title: "Xato",
+        description: error?.message || "Foydalanuvchini arxivga o'tkazib bo'lmadi",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }

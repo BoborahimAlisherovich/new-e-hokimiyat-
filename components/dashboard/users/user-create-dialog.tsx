@@ -81,10 +81,14 @@ export function UserCreateDialog({
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
+    const phone = formData.phone.trim()
+    const email = formData.email.trim()
     if (!formData.login.trim()) newErrors.login = "Login majburiy"
     if (!formData.firstName.trim()) newErrors.firstName = "Ism majburiy"
     if (!formData.lastName.trim()) newErrors.lastName = "Familiya majburiy"
-    if (!formData.phone.trim()) newErrors.phone = "Telefon majburiy"
+    if (!phone) newErrors.phone = "Telefon majburiy"
+    if (phone && !/^\+998\d{9}$/.test(phone)) newErrors.phone = "Telefon +998XXXXXXXXX formatida bo'lishi kerak"
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Email formati noto'g'ri"
     if (!formData.pnfl.trim()) newErrors.pnfl = "PNFL majburiy"
     if (!formData.password.trim()) newErrors.password = "Parol majburiy"
     if (formData.password && formData.password.length < 6) newErrors.password = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
@@ -223,8 +227,15 @@ export function UserCreateDialog({
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => onChange("phone", e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  const normalized = raw.startsWith("+")
+                    ? `+${raw.slice(1).replace(/\D/g, "")}`
+                    : raw.replace(/[^\d+]/g, "")
+                  onChange("phone", normalized)
+                }}
                 placeholder="+998 XX XXX XX XX"
+                inputMode="tel"
                 className={errors.phone ? "border-red-500" : ""}
               />
               {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
@@ -237,7 +248,9 @@ export function UserCreateDialog({
                 value={formData.email}
                 onChange={(e) => onChange("email", e.target.value)}
                 placeholder="email@manzil.uz"
+                className={errors.email ? "border-red-500" : ""}
               />
+              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="pnfl">PNFL <span className="text-red-500">*</span></Label>
@@ -260,6 +273,7 @@ export function UserCreateDialog({
                   value={formData.password}
                   onChange={(e) => onChange("password", e.target.value)}
                   placeholder="Kamida 6 ta belgi"
+                  autoComplete="new-password"
                   className={`${errors.password ? "border-red-500" : ""} pr-10`}
                 />
                 <button

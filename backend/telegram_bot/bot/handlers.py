@@ -4,12 +4,13 @@ Telegram bot handlerlari
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Dict, Any
 from datetime import datetime
 import requests
 from django.conf import settings
 from django.db import transaction
-
+from django.db import close_old_connections
 from ..models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
@@ -27,6 +28,7 @@ from .keyboards import (
 )
 
 logger = logging.getLogger(__name__)
+background_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="telegram-bot")
 
 
 class TelegramBot:
@@ -164,6 +166,26 @@ class TelegramBot:
 
 # Global bot instansiyasi
 bot = TelegramBot()
+
+
+def run_in_background(func, *args, **kwargs):
+    def wrapped():
+        close_old_connections()
+        try:
+            func(*args, **kwargs)
+        except Exception as exc:
+            logger.error(f"Background task failed: {func.__name__}: {exc}", exc_info=True)
+        finally:
+            close_old_connections()
+
+    background_executor.submit(wrapped)
+
+
+def bot_error_text(lang: str, reason: str = "") -> str:
+    detail = (reason or "").strip() or "Sababi aniqlanmadi."
+    if len(detail) > 180:
+        detail = detail[:177] + "..."
+    return get_text('error_something_wrong', lang, reason=detail)
 
 
 def get_or_create_user(telegram_data: Dict) -> TelegramUser:
@@ -1604,14 +1626,7 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         
         if not type_id or not category_id:
             logger.error(f"Missing type_id or category_id: type_id={type_id}, category_id={category_id}")
-            bot.send_message(
-                chat_id,
-                get_text('error_something_wrong', lang),
-                reply_markup=main_menu_keyboard(lang)
-            )
-            return
-        
-        appeal_type = AppealType.objects.get(id=type_id)
+            bot.send_message(chat_id, bot_error_text(lang, "Murojaat turi yoki soha tanlanmagan"), reply_markup=main_menu_keyboard(lang))
         category = AppealCategory.objects.get(id=category_id)
 
         loc = data.get('location') or {}
@@ -1751,29 +1766,29 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
             reply_markup=main_menu_keyboard(lang)
         )
         
-        # AI tahlili va adminlarga xabar
-        process_appeal_with_ai(appeal)
-        notify_admins_about_appeal(appeal)
+        # AI tahlili va adminlarga xabar fon rejimida bajariladi.
+        run_in_background(process_appeal_with_ai, appeal)
+        run_in_background(notify_admins_about_appeal, appeal)
         
     except AppealType.DoesNotExist:
         logger.error(f"AppealType topilmadi: type_id={data.get('type_id')}")
         bot.send_message(
             chat_id,
-            get_text('error_something_wrong', lang),
+            bot_error_text(lang, "Murojaat turi topilmadi"),
             reply_markup=main_menu_keyboard(lang)
         )
     except AppealCategory.DoesNotExist:
         logger.error(f"AppealCategory topilmadi: category_id={data.get('category_id')}")
         bot.send_message(
             chat_id,
-            get_text('error_something_wrong', lang),
+            bot_error_text(lang, "Murojaat sohasi topilmadi"),
             reply_markup=main_menu_keyboard(lang)
         )
     except Exception as e:
         logger.error(f"Murojaat yaratishda xato: {type(e).__name__}: {e}", exc_info=True)
         bot.send_message(
             chat_id,
-            get_text('error_something_wrong', lang),
+            bot_error_text(lang, str(e)),
             reply_markup=main_menu_keyboard(lang)
         )
 

@@ -77,12 +77,13 @@ export default function TasksPage() {
   // Build filters object - memoized to avoid recreation
   const buildTaskFilters = useCallback(() => {
     const filters: Record<string, string> = {}
+    if (searchQuery.trim()) filters.search = searchQuery.trim()
     if (statusFilter && statusFilter !== "all") filters.status = statusFilter
     if (priorityFilter && priorityFilter !== "all") filters.priority = priorityFilter
     if (categoryFilter && categoryFilter !== "all") filters.category = categoryFilter
     if (organizationFilter && organizationFilter !== "all") filters.organization = organizationFilter
     return filters
-  }, [statusFilter, priorityFilter, categoryFilter, organizationFilter])
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, organizationFilter])
 
   const loadData = useCallback(async () => {
     try {
@@ -138,23 +139,13 @@ export default function TasksPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [statusFilter, priorityFilter, categoryFilter])
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, organizationFilter])
 
   useEffect(() => {
     if (!isDistrictGovernor && categoryFilter !== "all") {
       setCategoryFilter("all")
     }
   }, [categoryFilter, isDistrictGovernor])
-
-  // Client-side search filter only (status/priority/category are handled server-side)
-  const filteredTasks = useMemo(() => {
-    if (!searchQuery.trim()) return tasks
-    const query = searchQuery.toLowerCase()
-    return tasks.filter(task => 
-      (task.title || '').toLowerCase().includes(query) ||
-      (task.description || '').toLowerCase().includes(query)
-    )
-  }, [tasks, searchQuery])
 
   // Event handlers
   const handleViewTask = (task: Task) => {
@@ -262,7 +253,7 @@ export default function TasksPage() {
               <h2 className="text-lg font-semibold text-slate-800">{t.pages.tasks.tableTitle}</h2>
             </div>
             <TaskTable
-              tasks={filteredTasks}
+              tasks={tasks}
               onView={handleViewTask}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
@@ -275,7 +266,7 @@ export default function TasksPage() {
           <div className="flex flex-col items-center justify-between gap-4 rounded-[24px] border border-white/70 bg-white/78 p-4 shadow-[0_20px_46px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl sm:flex-row">
           <div className="text-sm text-slate-600">
             {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
-            {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{filteredTasks.length}</span>)</span>}
+            {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{tasks.length}</span>)</span>}
           </div>
           <div className="flex items-center gap-2">
             <Button

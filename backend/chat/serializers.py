@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import DirectMessage, ChatConversation
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -74,7 +75,8 @@ class ChatConversationSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user:
             return DirectMessage.objects.filter(
-                conversation=obj,
+                Q(sender=obj.participant1, recipient=obj.participant2) |
+                Q(sender=obj.participant2, recipient=obj.participant1),
                 recipient=request.user,
                 is_read=False
             ).count()

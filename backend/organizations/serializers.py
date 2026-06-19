@@ -2,6 +2,8 @@
 Organization serializers for E-Hokimiyat API.
 """
 
+import re
+
 from rest_framework import serializers
 from .models import Organization, Sector
 
@@ -71,6 +73,15 @@ class OrganizationSerializer(serializers.ModelSerializer):
                 return ' '.join(p for p in parts if p).strip() or None
         return None
 
+    def validate_phone(self, value):
+        phone = (value or '').strip()
+        if phone and not re.fullmatch(r'^\+?[0-9\s()-]{7,20}$', phone):
+            raise serializers.ValidationError("Telefon maydoniga faqat raqam, +, bo'sh joy, qavs va - kiritish mumkin")
+        return phone
+
+    def validate_email(self, value):
+        return (value or '').strip()
+
 
 class OrganizationCreateSerializer(serializers.ModelSerializer):
     """
@@ -83,6 +94,15 @@ class OrganizationCreateSerializer(serializers.ModelSerializer):
             'region', 'district', 'address', 'phone',
             'email', 'website', 'director_name'
         ]
+
+    def validate_phone(self, value):
+        phone = (value or '').strip()
+        if phone and not re.fullmatch(r'^\+?[0-9\s()-]{7,20}$', phone):
+            raise serializers.ValidationError("Telefon maydoniga faqat raqam, +, bo'sh joy, qavs va - kiritish mumkin")
+        return phone
+
+    def validate_email(self, value):
+        return (value or '').strip()
 
 
 class OrganizationStatsSerializer(serializers.Serializer):

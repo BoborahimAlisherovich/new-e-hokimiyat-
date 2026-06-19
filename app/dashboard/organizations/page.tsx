@@ -122,8 +122,11 @@ export default function OrganizationsPage() {
       const matchesStatus = statusFilter === "all" || (org.is_active ? "ACTIVE" : "INACTIVE") === statusFilter
       const matchesType =
         typeFilter === "all" ||
-        String(org.sector ?? "") === typeFilter ||
-        String(org.sector_id ?? "") === typeFilter
+        String(
+          typeof org.sector === "object" && org.sector?.id != null
+            ? org.sector.id
+            : org.sector ?? org.sector_id ?? ""
+        ) === typeFilter
       const matchesSearch =
         (org.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (org.head || "").toLowerCase().includes(searchQuery.toLowerCase()) ||

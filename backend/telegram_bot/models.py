@@ -701,20 +701,30 @@ class TelegramAppeal(models.Model):
     def save(self, *args, **kwargs):
         if not self.appeal_number:
             import datetime
+            from django.db import IntegrityError
+
             today = datetime.date.today()
             prefix = f"TG{today.strftime('%Y%m%d')}"
-            last_appeal = TelegramAppeal.objects.filter(
-                appeal_number__startswith=prefix
-            ).order_by('-appeal_number').first()
-            
-            if last_appeal:
-                last_num = int(last_appeal.appeal_number[-4:])
-                new_num = last_num + 1
-            else:
-                new_num = 1
-            
-            self.appeal_number = f"{prefix}{new_num:04d}"
-        
+
+            for attempt in range(10):
+                last_appeal = TelegramAppeal.objects.filter(
+                    appeal_number__startswith=prefix
+                ).order_by('-appeal_number').first()
+
+                if last_appeal:
+                    last_num = int(last_appeal.appeal_number[-4:])
+                    new_num = last_num + 1
+                else:
+                    new_num = 1
+
+                self.appeal_number = f"{prefix}{new_num:04d}"
+                try:
+                    return super().save(*args, **kwargs)
+                except IntegrityError:
+                    self.appeal_number = None
+                    if attempt >= 9:
+                        raise
+
         super().save(*args, **kwargs)
 
 
