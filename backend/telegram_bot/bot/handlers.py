@@ -11,7 +11,6 @@ import requests
 from django.conf import settings
 from django.db import transaction
 from django.db import close_old_connections
-
 from ..models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
