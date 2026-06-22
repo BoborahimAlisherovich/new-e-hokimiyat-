@@ -548,3 +548,58 @@ export async function getRecurringTasks(params?: {
   const response = await fetchApi<PaginatedResponse<RecurringTaskResponse>>(`/tasks/recurring/${queryString}`)
   return response?.results ?? []
 }
+
+/**
+ * Takrorlanuvchi topshiriqni to'xtatib qo'yish
+ */
+export async function pauseRecurringTask(id: number | string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/tasks/recurring/${id}/pause/`, { method: 'POST' })
+}
+
+/**
+ * Takrorlanuvchi topshiriqni davom ettirish
+ */
+export async function resumeRecurringTask(id: number | string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/tasks/recurring/${id}/resume/`, { method: 'POST' })
+}
+
+/**
+ * Takrorlanuvchi topshiriqni hozir ishga tushirish
+ */
+export async function runRecurringTaskNow(id: number | string): Promise<{ message: string; task_id: number }> {
+  return fetchApi<{ message: string; task_id: number }>(`/tasks/recurring/${id}/run_now/`, { method: 'POST' })
+}
+
+/**
+ * Takrorlanuvchi topshiriq tarixini olish
+ */
+export async function getRecurringTaskHistory(id: number | string): Promise<any[]> {
+  return fetchApi<any[]>(`/tasks/recurring/${id}/history/`)
+}
+
+/**
+ * Yaqin kelajakdagi takrorlanuvchi topshiriqlarni olish
+ */
+export async function getUpcomingRecurringTasks(): Promise<RecurringTaskResponse[]> {
+  return fetchApi<RecurringTaskResponse[]>('/tasks/recurring/upcoming/')
+}
+
+/**
+ * Takrorlanuvchi topshiriqlar statistikasini olish
+ */
+export async function getRecurringTaskStatistics(): Promise<{
+  total: number
+  active: number
+  paused: number
+  by_frequency: Record<string, number>
+  total_tasks_created: number
+}> {
+  return fetchApi('/tasks/recurring/statistics/')
+}
+
+/**
+ * Takrorlanuvchi topshiriqni o'chirish
+ */
+export async function deleteRecurringTask(id: number | string): Promise<void> {
+  return fetchApi<void>(`/tasks/recurring/${id}/`, { method: 'DELETE' })
+}
