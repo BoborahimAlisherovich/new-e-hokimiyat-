@@ -148,6 +148,12 @@ export function Sidebar({ collapsed, isMobile, onCollapsedChange }: SidebarProps
       section: "main"
     },
     {
+      title: t.navigation.recurringTasks,
+      href: "/dashboard/recurring-tasks",
+      icon: Repeat,
+      section: "main"
+    },
+    {
       title: t.navigation.projects,
       href: "/dashboard/projects",
       icon: BriefcaseBusiness,
