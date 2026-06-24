@@ -82,13 +82,21 @@ Murojaatingiz mazmunini yozing.
         
         'ask_attachment': """📎 <b>Fayl qo'shmoqchimisiz?</b>
 
-Rasm, video, audio yoki hujjat yuborishingiz mumkin.
+Faqat rasm (JPG, JPEG, PNG) yoki hujjat (PDF, DOC, DOCX) yuboring.
+Maksimal hajm: 20 MB.
 
 Tugatish uchun "✅ Tugatish" tugmasini bosing.""",
         
         'attachment_received': """✅ Fayl qabul qilindi!
 
 Yana fayl qo'shishingiz yoki "✅ Tugatish" tugmasini bosishingiz mumkin.""",
+        'attachment_type_not_allowed': """⚠️ {file_name} fayl turi qabul qilinmaydi.
+
+Faqat PDF, DOC, DOCX, JPG, JPEG va PNG fayllar qabul qilinadi.
+Maksimal hajm: 20 MB.""",
+        'attachment_too_large': """⚠️ {file_name} juda katta.
+
+Maksimal hajm: 20 MB. Hozirgi hajm: {size_mb} MB.""",
         
         'confirm_appeal': """📋 <b>Murojaatni tasdiqlash</b>
 
@@ -370,12 +378,20 @@ Savollar uchun: +998 XX XXX XX XX""",
 <i>Нужно ввести минимум 20 символов.</i>""",
         'ask_attachment': """📎 <b>Хотите добавить файл?</b>
 
-Вы можете отправить фото, видео, аудио или документ.
+Отправляйте только изображения (JPG, JPEG, PNG) или документы (PDF, DOC, DOCX).
+Максимальный размер: 20 МБ.
 
 Для завершения нажмите кнопку "✅ Завершить".""",
         'attachment_received': """✅ Файл получен!
 
 Вы можете добавить еще файл или нажать "✅ Завершить".""",
+        'attachment_type_not_allowed': """⚠️ Тип файла {file_name} не принимается.
+
+Разрешены только PDF, DOC, DOCX, JPG, JPEG и PNG.
+Максимальный размер: 20 МБ.""",
+        'attachment_too_large': """⚠️ Файл {file_name} слишком большой.
+
+Максимальный размер: 20 МБ. Текущий размер: {size_mb} МБ.""",
         'confirm_appeal': """📋 <b>Подтверждение обращения</b>
 
 <b>Тип:</b> {type}
@@ -626,12 +642,20 @@ Write the details of your appeal.
 <i>At least 20 characters are required.</i>""",
         'ask_attachment': """📎 <b>Would you like to attach a file?</b>
 
-You can send an image, video, audio, or document.
+Send only images (JPG, JPEG, PNG) or documents (PDF, DOC, DOCX).
+Maximum size: 20 MB.
 
 Press "✅ Finish" to complete.""",
         'attachment_received': """✅ File received!
 
 You can add another file or press "✅ Finish".""",
+        'attachment_type_not_allowed': """⚠️ The file type for {file_name} is not allowed.
+
+Only PDF, DOC, DOCX, JPG, JPEG, and PNG files are accepted.
+Maximum size: 20 MB.""",
+        'attachment_too_large': """⚠️ {file_name} is too large.
+
+Maximum size: 20 MB. Current size: {size_mb} MB.""",
         'confirm_appeal': """📋 <b>Confirm Appeal</b>
 
 <b>Type:</b> {type}

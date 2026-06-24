@@ -3,6 +3,7 @@ Telegram bot handlerlari
 """
 
 import logging
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Dict, Any
@@ -29,6 +30,16 @@ from .keyboards import (
 
 logger = logging.getLogger(__name__)
 background_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="telegram-bot")
+
+MAX_BOT_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024
+ALLOWED_BOT_ATTACHMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg"}
+ALLOWED_BOT_ATTACHMENT_MIME_TYPES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/png",
+    "image/jpeg",
+}
 
 
 class TelegramBot:
@@ -186,6 +197,121 @@ def bot_error_text(lang: str, reason: str = "") -> str:
     if len(detail) > 180:
         detail = detail[:177] + "..."
     return get_text('error_something_wrong', lang, reason=detail)
+
+
+def format_file_size_mb(size_bytes: int) -> str:
+    return f"{size_bytes / (1024 * 1024):.1f}"
+
+
+def get_media_payload(message: Dict) -> Optional[Dict[str, Any]]:
+    if "photo" in message:
+        photos = message.get("photo") or []
+        if not photos:
+            return None
+        largest = photos[-1]
+        return {
+            "file_id": largest.get("file_id"),
+            "file_type": "photo",
+            "file_name": None,
+            "mime_type": "image/jpeg",
+            "file_size": largest.get("file_size") or 0,
+        }
+    if "video" in message:
+        video = message["video"]
+        return {
+            "file_id": video.get("file_id"),
+            "file_type": "video",
+            "file_name": video.get("file_name"),
+            "mime_type": (video.get("mime_type") or "").lower(),
+            "file_size": video.get("file_size") or 0,
+        }
+    if "video_note" in message:
+        video_note = message["video_note"]
+        return {
+            "file_id": video_note.get("file_id"),
+            "file_type": "video_note",
+            "file_name": None,
+            "mime_type": (video_note.get("mime_type") or "").lower(),
+            "file_size": video_note.get("file_size") or 0,
+        }
+    if "audio" in message:
+        audio = message["audio"]
+        return {
+            "file_id": audio.get("file_id"),
+            "file_type": "audio",
+            "file_name": audio.get("file_name"),
+            "mime_type": (audio.get("mime_type") or "").lower(),
+            "file_size": audio.get("file_size") or 0,
+        }
+    if "voice" in message:
+        voice = message["voice"]
+        return {
+            "file_id": voice.get("file_id"),
+            "file_type": "voice",
+            "file_name": None,
+            "mime_type": (voice.get("mime_type") or "").lower(),
+            "file_size": voice.get("file_size") or 0,
+        }
+    if "document" in message:
+        document = message["document"]
+        return {
+            "file_id": document.get("file_id"),
+            "file_type": "document",
+            "file_name": document.get("file_name"),
+            "mime_type": (document.get("mime_type") or "").lower(),
+            "file_size": document.get("file_size") or 0,
+        }
+    return None
+
+
+def validate_bot_attachment(payload: Dict[str, Any]) -> tuple[bool, str]:
+    file_size = int(payload.get("file_size") or 0)
+    file_name = (payload.get("file_name") or "").strip()
+    mime_type = (payload.get("mime_type") or "").strip().lower()
+    file_type = payload.get("file_type") or "document"
+
+    if file_size and file_size > MAX_BOT_ATTACHMENT_SIZE_BYTES:
+        return False, get_text(
+            "attachment_too_large",
+            payload.get("language", "uz"),
+            file_name=file_name or "fayl",
+            size_mb=format_file_size_mb(file_size),
+        )
+
+    if file_type == "photo":
+        return True, ""
+
+    if file_type != "document":
+        return False, get_text(
+            "attachment_type_not_allowed",
+            payload.get("language", "uz"),
+            file_name=file_name or file_type,
+        )
+
+    extension = os.path.splitext(file_name)[1].lower() if file_name else ""
+    if extension not in ALLOWED_BOT_ATTACHMENT_EXTENSIONS:
+        return False, get_text(
+            "attachment_type_not_allowed",
+            payload.get("language", "uz"),
+            file_name=file_name or "document",
+        )
+
+    if mime_type and mime_type not in ALLOWED_BOT_ATTACHMENT_MIME_TYPES:
+        return False, get_text(
+            "attachment_type_not_allowed",
+            payload.get("language", "uz"),
+            file_name=file_name or "document",
+        )
+
+    if file_size > MAX_BOT_ATTACHMENT_SIZE_BYTES:
+        return False, get_text(
+            "attachment_too_large",
+            payload.get("language", "uz"),
+            file_name=file_name or "fayl",
+            size_mb=format_file_size_mb(file_size),
+        )
+
+    return True, ""
 
 
 def get_or_create_user(telegram_data: Dict) -> TelegramUser:
@@ -860,43 +986,32 @@ def handle_media(user: TelegramUser, message: Dict, chat_id: int):
     data = state.data or {}
     attachments = data.get('attachments', [])
     
-    # Fayl turini aniqlash
-    file_name = None
-    mime_type = None
-
-    if 'photo' in message:
-        file_id = message['photo'][-1]['file_id']
-        file_type = 'photo'
-    elif 'video' in message:
-        file_id = message['video']['file_id']
-        file_type = 'video'
-        mime_type = message['video'].get('mime_type')
-    elif 'video_note' in message:
-        file_id = message['video_note']['file_id']
-        file_type = 'video_note'
-        mime_type = message['video_note'].get('mime_type')
-    elif 'audio' in message:
-        file_id = message['audio']['file_id']
-        file_type = 'audio'
-        file_name = message['audio'].get('file_name')
-        mime_type = message['audio'].get('mime_type')
-    elif 'voice' in message:
-        file_id = message['voice']['file_id']
-        file_type = 'voice'
-        mime_type = message['voice'].get('mime_type')
-    elif 'document' in message:
-        file_id = message['document']['file_id']
-        file_type = 'document'
-        file_name = message['document'].get('file_name')
-        mime_type = message['document'].get('mime_type')
-    else:
+    payload = get_media_payload(message)
+    if not payload or not payload.get("file_id"):
         return
-    
+
+    payload["language"] = user.language
+    is_allowed, rejection_reason = validate_bot_attachment(payload)
+    if not is_allowed:
+        bot.send_message(
+            chat_id,
+            rejection_reason,
+            reply_markup=attachment_keyboard(user.language)
+        )
+        return
+
+    file_id = payload["file_id"]
+    file_type = payload["file_type"]
+    file_name = payload.get("file_name")
+    mime_type = payload.get("mime_type")
+    file_size = int(payload.get("file_size") or 0)
+
     attachments.append({
         'file_id': file_id,
         'file_type': file_type,
         'file_name': file_name,
-        'mime_type': mime_type
+        'mime_type': mime_type,
+        'file_size': file_size,
     })
 
     if state.state == 'appeal:attachments':
@@ -930,20 +1045,26 @@ def handle_media(user: TelegramUser, message: Dict, chat_id: int):
             attachment.mime_type = mime_type
 
         if file_url:
-            import os
             from django.core.files.base import ContentFile
 
             response = requests.get(file_url, timeout=30)
             if response.status_code == 200:
+                if len(response.content) > MAX_BOT_ATTACHMENT_SIZE_BYTES:
+                    bot.send_message(
+                        chat_id,
+                        get_text(
+                            'attachment_too_large',
+                            user.language,
+                            file_name=file_name or "fayl",
+                            size_mb=format_file_size_mb(len(response.content)),
+                        ),
+                        reply_markup=attachment_keyboard(user.language)
+                    )
+                    return
+
                 file_ext = file_type
                 if file_ext == 'photo':
                     file_ext = 'jpg'
-                elif file_ext == 'voice':
-                    file_ext = 'ogg'
-                elif file_ext in {'video', 'video_note'}:
-                    file_ext = 'mp4'
-                elif file_ext == 'audio':
-                    file_ext = 'mp3'
                 elif file_ext == 'document':
                     if file_name:
                         _, ext = os.path.splitext(file_name)
@@ -1690,7 +1811,6 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         
         # Fayllarni saqlash
         attachments = data.get('attachments', [])
-        allowed_types = {'photo', 'video', 'audio', 'voice', 'document', 'video_note'}
         for att in attachments:
             try:
                 file_id = att.get('file_id')
@@ -1698,9 +1818,24 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                     logger.warning("Attachment skipped: missing file_id")
                     continue
                 file_type = att.get('file_type') or 'document'
-                if file_type not in allowed_types:
+                if file_type not in {'photo', 'document'}:
                     logger.warning(f"Attachment skipped: invalid file_type={file_type}")
-                    file_type = 'document'
+                    continue
+
+                is_allowed, rejection_reason = validate_bot_attachment({
+                    'file_type': file_type,
+                    'file_name': att.get('file_name'),
+                    'mime_type': att.get('mime_type'),
+                    'file_size': att.get('file_size') or 0,
+                    'language': lang,
+                })
+                if not is_allowed:
+                    logger.warning(
+                        "Attachment skipped after validation: %s",
+                        rejection_reason,
+                    )
+                    continue
+
                 file_url = bot.get_file(file_id)
                 original_file_name = att.get('file_name')
                 mime_type = att.get('mime_type')
@@ -1730,22 +1865,12 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                             file_ext = file_type
                             if file_ext == 'photo':
                                 file_ext = 'jpg'
-                            elif file_ext == 'voice':
-                                file_ext = 'ogg'
-                            elif file_ext == 'video':
-                                file_ext = 'mp4'
-                            elif file_ext == 'video_note':
-                                file_ext = 'mp4'
-                            elif file_ext == 'audio':
-                                file_ext = 'mp3'
                             elif file_ext == 'document':
                                 if original_file_name:
                                     _, ext = os.path.splitext(original_file_name)
                                     file_ext = ext.lstrip('.') or 'bin'
                                 else:
                                     file_ext = 'bin'
-                            else:
-                                file_ext = 'bin'
                             
                             file_name = f"{file_id[:20]}.{file_ext}"
                             attachment.file_name = file_name
