@@ -391,7 +391,7 @@ export function VillageAnalytics() {
       transition={{ duration: 0.5, delay: 0.2 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
             <MapPin className="w-5 h-5" />
@@ -408,7 +408,7 @@ export function VillageAnalytics() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <motion.div whileHover={{ scale: 1.02 }} className="relative overflow-hidden">
           <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-white/50 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
             <CardContent className="p-4">
@@ -492,10 +492,10 @@ export function VillageAnalytics() {
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="flex flex-row gap-6">
+            <div className="flex flex-col gap-6 xl:flex-row">
               {/* Chap: Xarita */}
-              <div className="flex-1 min-w-0 relative rounded-xl border border-indigo-100/40 bg-gradient-to-br from-slate-50 to-white p-4 shadow-inner">
-                <svg viewBox="0 0 838 400" className="w-full h-[400px]">
+              <div className="flex-1 min-w-0 relative rounded-xl border border-indigo-100/40 bg-gradient-to-br from-slate-50 to-white p-3 sm:p-4 shadow-inner">
+                <svg viewBox="0 0 838 400" className="w-full h-[260px] sm:h-[320px] lg:h-[400px]">
                 <defs>
                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1"/>
@@ -583,7 +583,7 @@ export function VillageAnalytics() {
             </div>
 
               {/* O'ng: Tanlangan qishloq ma'lumotlari */}
-              <div className="w-[400px] shrink-0 h-fit">
+              <div className="w-full shrink-0 h-fit xl:w-[400px]">
                 <div className="pb-3">
                   <div className="text-base font-semibold flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-emerald-500" />
@@ -611,7 +611,7 @@ export function VillageAnalytics() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <motion.div whileHover={{ scale: 1.02 }} className="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-indigo-100/40">
                           <div className="flex items-center gap-2 mb-2">
                             <BarChart3 className="w-4 h-4 text-slate-600" />
@@ -649,7 +649,7 @@ export function VillageAnalytics() {
                           <motion.div className="bg-amber-500" initial={{ width: 0 }} animate={{ width: `${getPercent(selectedVillage.stats.inProgress, selectedVillage.stats.total)}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }} />
                           <motion.div className="bg-blue-500" initial={{ width: 0 }} animate={{ width: `${getPercent(selectedVillage.stats.pending, selectedVillage.stats.total)}%` }} transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }} />
                         </div>
-                        <div className="flex justify-between text-xs">
+                        <div className="flex flex-col gap-2 text-xs sm:flex-row sm:justify-between">
                           <span className="flex items-center gap-1 text-emerald-600">
                             <div className="w-2 h-2 rounded-full bg-emerald-500" />
                             {t.resolved} ({Math.round(getPercent(selectedVillage.stats.resolved, selectedVillage.stats.total))}%)
@@ -716,7 +716,7 @@ export function VillageAnalytics() {
                 className="pl-9 h-9 bg-indigo-50/30 border-indigo-100/40 focus:bg-white text-sm"
               />
             </div>
-            <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
               {paginatedVillages.length > 0 ? (
                 paginatedVillages.map((village) => (
                   <VillageListItem
@@ -728,18 +728,18 @@ export function VillageAnalytics() {
                   />
                 ))
               ) : (
-                <div className="col-span-2 text-center py-8 text-slate-500">
+                <div className="col-span-1 lg:col-span-2 text-center py-8 text-slate-500">
                   <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>{t.villageNotFound}</p>
                 </div>
               )}
             </div>
             {filteredVillages.length > villagesPerPage && (
-              <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-slate-500">
                   {(currentVillagePage - 1) * villagesPerPage + 1}-{Math.min(currentVillagePage * villagesPerPage, filteredVillages.length)} / {filteredVillages.length}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setVillagePage((prev) => Math.max(1, prev - 1))}
