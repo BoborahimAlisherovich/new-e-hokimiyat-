@@ -20,7 +20,7 @@ def _build_avatar_url(obj, request):
         url = request.build_absolute_uri(obj.avatar.url)
         return url.replace('http://', 'https://', 1) if url.startswith('http://') else url
     # Fallback: request mavjud bo'lmaganda to'liq URL qurish
-    base = os.environ.get('API_BASE_URL', 'https://api.pytech.uz')
+    base = os.environ.get('API_BASE_URL', 'https://api.ehokimiyat.uz')
     return f"{base}{obj.avatar.url}"
 
 

@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Repeat,
   MessageCircle,
   MessageSquare,
   Bot,

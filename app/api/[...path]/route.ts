@@ -1,12 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const RAW_BACKEND =
-  process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:8000'
+function resolveBackendBaseUrl(request: NextRequest): string {
+  const configured =
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_URL
 
-// Route proxies to `${API_BASE}/api/...`, so strip any trailing `/api`.
-const API_BASE = RAW_BACKEND.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '')
+  if (configured) {
+    return configured.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '')
+  }
+
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const host = (forwardedHost || request.headers.get('host') || request.nextUrl.host).trim()
+  const hostname = host.split(':')[0]
+
+  if (hostname === 'ehokimiyat.uz' || hostname === 'www.ehokimiyat.uz') {
+    return 'https://api.ehokimiyat.uz'
+  }
+
+  if (hostname === 'gameroom.uz' || hostname === 'www.gameroom.uz') {
+    return 'https://api.gameroom.uz'
+  }
+
+  if (hostname === 'pytech.uz' || hostname === 'www.pytech.uz') {
+    return 'https://api.pytech.uz'
+  }
+
+  if (hostname === 'localhost' || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) {
+    return `http://${hostname}:8000`
+  }
+
+  return 'http://localhost:8000'
+}
 
 export async function GET(
   request: NextRequest,
@@ -53,10 +77,11 @@ async function proxyRequest(
   pathSegments: string[],
   method: string
 ) {
+  const apiBase = resolveBackendBaseUrl(request)
   const path = pathSegments.join('/')
   const search = request.nextUrl.search || ''
   // Django requires trailing slash for POST requests
-  const url = `${API_BASE}/api/${path}${path.endsWith('/') ? '' : '/'}${search}`
+  const url = `${apiBase}/api/${path}${path.endsWith('/') ? '' : '/'}${search}`
   
   // Get headers from original request
   const headers: Record<string, string> = {}

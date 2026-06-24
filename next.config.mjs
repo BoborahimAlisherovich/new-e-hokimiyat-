@@ -9,6 +9,10 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'api.ehokimiyat.uz',
+      },
+      {
+        protocol: 'https',
         hostname: 'api.pytech.uz',
       },
       {
