@@ -57,6 +57,7 @@ export function TaskFilters({
   const statusLabels: Record<string, string> = {
     YANGI: t.task.statuses.NEW,
     IJRODA: t.task.statuses.IN_PROGRESS,
+    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
     BAJARILDI: t.task.statuses.COMPLETED,
     QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
     MUDDATI_KECH: t.task.statuses.OVERDUE,
@@ -167,6 +168,7 @@ export function TaskFilters({
                 <SelectItem value="all">{t.tasks.allOption}</SelectItem>
                 <SelectItem value="YANGI">{t.task.statuses.NEW}</SelectItem>
                 <SelectItem value="IJRODA">{t.task.statuses.IN_PROGRESS}</SelectItem>
+                <SelectItem value="TEKSHIRUVDA">{t.task.statuses.IN_REVIEW}</SelectItem>
                 <SelectItem value="BAJARILDI">{t.task.statuses.COMPLETED}</SelectItem>
                 <SelectItem value="QAYTA_IJROGA_YUBORILDI">{t.task.statuses.REASSIGNED}</SelectItem>
                 <SelectItem value="MUDDATI_KECH">{t.task.statuses.OVERDUE}</SelectItem>

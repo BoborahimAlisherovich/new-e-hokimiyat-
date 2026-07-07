@@ -35,6 +35,7 @@ export type UserStatus = 'DRAFT' | 'KUTILMOQDA' | 'FAOL' | 'BLOKLANGAN' | 'ARXIV
 export type TaskStatus =
   | 'YANGI'
   | 'IJRODA'
+  | 'TEKSHIRUVDA'
   | 'BAJARILDI'
   | 'QAYTA_IJROGA_YUBORILDI'
   | 'MUDDATI_KECH'
@@ -179,6 +180,7 @@ export const statusLabels: Readonly<Record<UserStatus, string>> = Object.freeze(
 export const taskStatusLabels: Readonly<Record<TaskStatus, string>> = Object.freeze({
   YANGI: 'Yangi',
   IJRODA: 'Ijroda',
+  TEKSHIRUVDA: "Ko'rib chiqilmoqda",
   BAJARILDI: 'Bajarildi',
   QAYTA_IJROGA_YUBORILDI: 'Qayta ijroga',
   MUDDATI_KECH: 'Muddati kech',
@@ -241,6 +243,7 @@ export function getTaskStatusColor(status: TaskStatus): string {
   const colors: Record<TaskStatus, string> = {
     YANGI: 'bg-blue-100 text-blue-800',
     IJRODA: 'bg-yellow-100 text-yellow-800',
+    TEKSHIRUVDA: 'bg-purple-100 text-purple-800',
     BAJARILDI: 'bg-green-100 text-green-800',
     QAYTA_IJROGA_YUBORILDI: 'bg-orange-100 text-orange-800',
     MUDDATI_KECH: 'bg-red-100 text-red-800',

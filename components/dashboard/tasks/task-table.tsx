@@ -24,6 +24,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
   const statusLabels: Record<string, string> = {
     YANGI: t.task.statuses.NEW,
     IJRODA: t.task.statuses.IN_PROGRESS,
+    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
     BAJARILDI: t.task.statuses.COMPLETED,
     QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
     MUDDATI_KECH: t.task.statuses.OVERDUE,
@@ -94,6 +95,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
                   "border-0",
                   task.status === "YANGI" && "bg-blue-100 text-blue-700",
                   task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
+                  task.status === "TEKSHIRUVDA" && "bg-purple-100 text-purple-700",
                   task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
                   task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
                   task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
@@ -196,6 +198,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
                         "inline-flex min-h-9 min-w-[112px] max-w-full items-center justify-center overflow-hidden rounded-full px-3 py-1.5 text-center text-xs font-semibold shadow-sm",
                         task.status === "YANGI" && "bg-blue-100 text-blue-700",
                         task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
+                        task.status === "TEKSHIRUVDA" && "bg-purple-100 text-purple-700",
                         task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
                         task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
                         task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",

@@ -158,6 +158,7 @@ export const uzCyrlTranslations: Translations = {
     statuses: {
       NEW: 'Янги',
       IN_PROGRESS: 'Жараёнда',
+      IN_REVIEW: 'Кўриб чиқилмоқда',
       COMPLETED: 'Бажарилган',
       FAILED: 'Муваффақиятсиз',
       OVERDUE: 'Муддат ўтган',

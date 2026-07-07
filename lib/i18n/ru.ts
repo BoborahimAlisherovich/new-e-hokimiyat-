@@ -158,6 +158,7 @@ export const ruTranslations: Translations = {
     statuses: {
       NEW: 'НОВЫЙ',
       IN_PROGRESS: 'В_ИСПОЛНЕНИИ',
+      IN_REVIEW: 'НА_РАССМОТРЕНИИ',
       COMPLETED: 'ВЫПОЛНЕНО',
       FAILED: 'НЕ_ВЫПОЛНЕНО',
       OVERDUE: 'ПРОСРОЧЕНО',

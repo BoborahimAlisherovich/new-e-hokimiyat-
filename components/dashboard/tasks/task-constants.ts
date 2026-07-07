@@ -11,6 +11,7 @@ export const PRIORITY_COLORS: Record<string, string> = {
 export const STATUS_COLORS: Record<string, string> = {
   YANGI: "bg-blue-50 text-blue-600 border-blue-100",
   IJRODA: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  TEKSHIRUVDA: "bg-purple-50 text-purple-600 border-purple-100",
   BAJARILDI: "bg-teal-50 text-teal-600 border-teal-100",
   QAYTA_IJROGA_YUBORILDI: "bg-amber-50 text-amber-600 border-amber-100",
   MUDDATI_KECH: "bg-red-50 text-red-600 border-red-100",
@@ -21,6 +22,7 @@ export const STATUS_COLORS: Record<string, string> = {
 export const STATUS_LABELS: Record<string, string> = {
   YANGI: "Yangi",
   IJRODA: "Ijroda",
+  TEKSHIRUVDA: "Ko'rib chiqilmoqda",
   BAJARILDI: "Bajarildi",
   QAYTA_IJROGA_YUBORILDI: "Qayta ijroga yuborildi",
   MUDDATI_KECH: "Muddati kechikkan",

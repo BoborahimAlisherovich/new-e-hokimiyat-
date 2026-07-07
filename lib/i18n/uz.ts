@@ -161,6 +161,7 @@ export const uzTranslations: Translations = {
     statuses: {
       NEW: 'Yangi',
       IN_PROGRESS: 'Ijroda',
+      IN_REVIEW: "Ko'rib chiqilmoqda",
       COMPLETED: 'Bajarildi',
       FAILED: 'Bajarilmadi',
       OVERDUE: "Muddati kech",

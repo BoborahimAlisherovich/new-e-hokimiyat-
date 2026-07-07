@@ -10,7 +10,7 @@ export type OrganizationType = 'HOKIMIYAT' | 'MAKTAB' | 'BOLALAR_BOG' | 'SHIFOXO
 
 export type OrganizationStatus = 'ACTIVE' | 'INACTIVE'
 
-export type TaskStatus = 'YANGI' | 'IJRODA' | 'BAJARILDI' | 'QAYTA_IJROGA_YUBORILDI' | 'MUDDATI_KECH' | 'BAJARILMADI' | 'NAZORATDAN_YECHILDI'
+export type TaskStatus = 'YANGI' | 'IJRODA' | 'TEKSHIRUVDA' | 'BAJARILDI' | 'QAYTA_IJROGA_YUBORILDI' | 'MUDDATI_KECH' | 'BAJARILMADI' | 'NAZORATDAN_YECHILDI'
 
 export type TaskPriority = 'PAST' | 'ODDIY' | 'YUQORI' | 'FAVQULODDA'
 

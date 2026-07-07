@@ -239,9 +239,9 @@ export default function TaskDetailPage() {
   const canClose = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
   const canReassign = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
   // Tashkilot xodimlari "Bajarildi" deb belgilashi mumkin, lekin muddatni uzaytira olmaydi
-  const canMarkComplete = task.status === "IJRODA" && isOrgUser
+  const canMarkComplete = ["IJRODA", "TEKSHIRUVDA"].includes(task.status) && isOrgUser
   // Muddat uzaytirish faqat adminlar uchun
-  const canExtend = (task.status === "IJRODA" || task.status === "MUDDATI_KECH") && isAdmin
+  const canExtend = (["IJRODA", "TEKSHIRUVDA", "MUDDATI_KECH"].includes(task.status)) && isAdmin
   
   // Handle save task edits
   const handleSaveTask = async () => {

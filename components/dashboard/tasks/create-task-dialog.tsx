@@ -119,6 +119,13 @@ const FREQUENCY_OPTIONS = [
   { value: "YEARLY", label: "Har yili", days: 30 },
 ]
 
+const toDateInputValue = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 const INITIAL_FORM: CreateFormState = {
   title: "",
   description: "",
@@ -129,9 +136,15 @@ const INITIAL_FORM: CreateFormState = {
   organization_ids: [],
   is_recurring: false,
   frequency: "MONTHLY",
-  start_date: new Date().toISOString().split("T")[0],
+  start_date: toDateInputValue(new Date()),
   end_date: "",
   deadline_days: 7,
+}
+
+const toLocalEndOfDayIso = (dateValue: string) => {
+  if (!dateValue) return ""
+  const localEndOfDay = new Date(`${dateValue}T23:59:59`)
+  return localEndOfDay.toISOString()
 }
 
 // ============================================================================
@@ -275,7 +288,7 @@ export function CreateTaskDialog({
       if (days) {
         const dueDate = new Date()
         dueDate.setDate(dueDate.getDate() + days)
-        setField("due_date", dueDate.toISOString().split("T")[0])
+        setField("due_date", toDateInputValue(dueDate))
       }
     }
   }
@@ -288,7 +301,7 @@ export function CreateTaskDialog({
       setForm((prev) => ({
         ...prev,
         is_recurring: true,
-        start_date: new Date().toISOString().split("T")[0],
+        start_date: toDateInputValue(new Date()),
         deadline_days:
           FREQUENCY_OPTIONS.find((f) => f.value === prev.frequency)?.days || 7,
       }))
@@ -506,14 +519,14 @@ export function CreateTaskDialog({
         // Auto-compute dates
         if (s.is_recurring) {
           newForm.start_date =
-            prev.start_date || new Date().toISOString().split("T")[0]
+            prev.start_date || toDateInputValue(new Date())
         } else {
           // Set due_date based on priority
           const priority = s.priority || "ODDIY"
           const days = PRIORITY_DAYS[priority] || 5
           const dueDate = new Date()
           dueDate.setDate(dueDate.getDate() + days)
-          newForm.due_date = dueDate.toISOString().split("T")[0]
+          newForm.due_date = toDateInputValue(dueDate)
         }
 
         return newForm
@@ -601,8 +614,9 @@ export function CreateTaskDialog({
         payload.append("description", form.description)
         payload.append("priority", form.priority)
         payload.append("category", form.category)
-        if (form.due_date)
-          payload.append("deadline", new Date(form.due_date).toISOString())
+        if (form.due_date) {
+          payload.append("deadline", toLocalEndOfDayIso(form.due_date))
+        }
         if (form.deputy_ids.length > 0) {
           payload.append("deputy_ids", form.deputy_ids.join(","))
         }
@@ -631,52 +645,50 @@ export function CreateTaskDialog({
   // ==================== RENDER ====================
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[780px] max-h-[92vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60">
-        <DialogHeader>
-          <DialogTitle>Yangi topshiriq qo&apos;shish</DialogTitle>
-          <DialogDescription>
-            Topshiriq ma&apos;lumotlarini kiriting yoki audio yozib AI yordamida
-            to&apos;ldiring
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[760px] max-h-[94dvh] overflow-hidden rounded-[28px] border-white/70 bg-white/96 p-0 shadow-[0_30px_100px_-36px_rgba(14,165,233,0.35)] backdrop-blur-2xl sm:w-full">
+        <div className="max-h-[94dvh] overflow-y-auto px-4 py-5 sm:px-6">
+          <DialogHeader className="space-y-2 pr-8">
+            <DialogTitle className="text-xl font-semibold text-slate-900">Yangi topshiriq qo&apos;shish</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Topshiriq ma&apos;lumotlarini kiriting yoki audio yozib AI yordamida to&apos;ldiring
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* ========== AI AUDIO PANEL ========== */}
-        <div
-          ref={audioPanelRef}
-          className={cn(
-            "rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 space-y-3",
-            preferredInputMode === "audio" && "border-indigo-400 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.7)]"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-indigo-700">
-              <Sparkles className="h-4 w-4" />
-              AI yordamida tezkor topshiriq yaratish
-            </div>
-            {aiApplied && (
-              <Badge
-                variant="secondary"
-                className="bg-emerald-100 text-emerald-700 text-xs"
-              >
-                <Check className="h-3 w-3 mr-1" /> AI to&apos;ldirdi
-              </Badge>
+          {/* ========== AI AUDIO PANEL ========== */}
+          <div
+            ref={audioPanelRef}
+            className={cn(
+              "mb-5 rounded-2xl border border-indigo-100/70 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-4 shadow-[0_18px_40px_-30px_rgba(79,70,229,0.45)] space-y-3",
+              preferredInputMode === "audio" && "border-indigo-300"
             )}
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Audio yozing yoki fayl yuklang — AI matnni tahrir qilib, barcha
-            maydonlarni avtomatik to&apos;ldiradi. Takrorlanuvchi topshiriqni ham
-            aniqlaydi.
-          </p>
-
-          {preferredInputMode === "audio" && (
-            <div className="rounded-lg border border-indigo-200/80 bg-white/80 p-3 text-xs text-indigo-700">
-              Telefon uchun tezkor rejim yoqilgan. Mikrofon tugmasi orqali gapirib
-              topshiriqni yaratish mumkin.
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                  <Sparkles className="h-4 w-4" />
+                  AI yordamida tezkor topshiriq yaratish
+                </div>
+                <p className="text-xs leading-5 text-slate-500">
+                  Audio yozing yoki fayl yuklang. AI matnni tartiblaydi va maydonlarni to‘ldiradi.
+                </p>
+              </div>
+              {aiApplied && (
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 bg-emerald-100 text-emerald-700 text-xs"
+                >
+                  <Check className="h-3 w-3 mr-1" /> AI to&apos;ldirdi
+                </Badge>
+              )}
             </div>
-          )}
 
-          <div className="flex items-center gap-2 flex-wrap">
+            {preferredInputMode === "audio" && (
+              <div className="rounded-xl border border-indigo-200/70 bg-white/80 p-3 text-xs leading-5 text-indigo-700">
+                Telefon uchun tezkor rejim yoqilgan. Mikrofon tugmasi orqali gapirib topshiriq yaratish mumkin.
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
             {/* Mic button */}
             <Button
               type="button"
@@ -737,39 +749,39 @@ export function CreateTaskDialog({
               </Button>
             )}
 
-            {aiAnalyzing && (
-              <div className="flex items-center gap-2 text-sm text-indigo-600">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>
-                  Audio matnga o&apos;girilmoqda va AI tahlil qilmoqda...
-                </span>
+              {aiAnalyzing && (
+                <div className="flex items-center gap-2 text-sm text-indigo-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>
+                    Audio matnga o&apos;girilmoqda va AI tahlil qilmoqda...
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Show AI transcription result */}
+            {aiTranscription && !aiAnalyzing && (
+              <div className="rounded-xl bg-white/80 border border-indigo-100/60 p-3 space-y-1">
+                <div className="text-xs font-medium text-indigo-600">
+                  Audio transkripsiyasi:
+                </div>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {aiTranscription}
+                </p>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="flex items-start gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{aiError}</span>
               </div>
             )}
           </div>
 
-          {/* Show AI transcription result */}
-          {aiTranscription && !aiAnalyzing && (
-            <div className="rounded-lg bg-white/70 border border-indigo-100/60 p-3 space-y-1">
-              <div className="text-xs font-medium text-indigo-600">
-                Audio transkripsiyasi (AI tomonidan tahrirlangan):
-              </div>
-              <p className="text-sm text-foreground leading-relaxed">
-                {aiTranscription}
-              </p>
-            </div>
-          )}
-
-          {aiError && (
-            <div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 rounded-lg p-2">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{aiError}</span>
-            </div>
-          )}
-        </div>
-
-        {/* ========== FORM ========== */}
-        <form
-          className="space-y-5"
+          {/* ========== FORM ========== */}
+          <form
+            className="space-y-5"
           onSubmit={(e) => {
             e.preventDefault()
             handleSubmit()
@@ -905,10 +917,10 @@ export function CreateTaskDialog({
                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-full min-w-[320px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
-                  align="start"
-                >
+              <PopoverContent
+                className="w-[calc(100vw-1rem)] max-w-[360px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
+                align="start"
+              >
                   <Command className="bg-white">
                     <CommandInput placeholder="Ism bo'yicha qidirish..." className="bg-white" />
                     <CommandList>
@@ -1019,7 +1031,7 @@ export function CreateTaskDialog({
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-full min-w-[400px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
+                className="w-[calc(100vw-1rem)] max-w-[420px] p-0 bg-white border border-indigo-100/40 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]"
                 align="start"
               >
                 <Command className="bg-white">
@@ -1271,11 +1283,12 @@ export function CreateTaskDialog({
             </div>
           )}
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-2 sm:justify-end">
             <Button
               variant="outline"
               type="button"
               onClick={() => onOpenChange(false)}
+              className="min-w-[120px]"
             >
               Bekor qilish
             </Button>
@@ -1283,6 +1296,7 @@ export function CreateTaskDialog({
               type="submit"
               disabled={isSubmitDisabled}
               className={cn(
+                "min-w-[140px]",
                 form.is_recurring &&
                   "bg-violet-600 hover:bg-violet-700 text-white"
               )}
@@ -1308,6 +1322,7 @@ export function CreateTaskDialog({
             </Button>
           </DialogFooter>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

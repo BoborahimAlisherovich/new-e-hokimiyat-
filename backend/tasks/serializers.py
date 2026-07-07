@@ -250,9 +250,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
     
     def validate_deadline(self, value):
         """Validate that deadline is not in the past (allow today)."""
-        from datetime import timedelta
-        # Allow today's date - just check it's not more than 1 day in the past
-        if value < timezone.now() - timedelta(days=1):
+        # Treat deadlines as calendar dates instead of exact timestamps so
+        # timezone conversions from the frontend do not move them to "yesterday".
+        if value.date() < timezone.localdate():
             raise serializers.ValidationError("Muddat o'tgan bo'lishi mumkin emas")
         return value
     

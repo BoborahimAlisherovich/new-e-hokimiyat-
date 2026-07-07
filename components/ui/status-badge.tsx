@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/i18n/context"
 const taskStatusStyles: Record<TaskStatus, string> = {
   YANGI: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   IJRODA: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  TEKSHIRUVDA: "bg-purple-500/20 text-purple-400 border-purple-500/30",
   BAJARILDI: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
   MUDDATI_KECH: "bg-red-500/20 text-red-400 border-red-500/30",
   NAZORATDAN_YECHILDI: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -35,6 +36,7 @@ export function TaskStatusBadge({ status }: { status: TaskStatus }) {
   const statusLabelsMap: Record<TaskStatus, string> = {
     YANGI: t.task.statuses.NEW,
     IJRODA: t.task.statuses.IN_PROGRESS,
+    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
     BAJARILDI: t.task.statuses.COMPLETED,
     MUDDATI_KECH: t.task.statuses.OVERDUE,
     QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,

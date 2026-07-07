@@ -156,6 +156,7 @@ export interface Translations {
     statuses: {
       NEW: string
       IN_PROGRESS: string
+      IN_REVIEW: string
       COMPLETED: string
       FAILED: string
       OVERDUE: string

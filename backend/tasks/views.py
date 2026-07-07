@@ -211,7 +211,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 task__deadline__lt=now,
             ).count()
             pending = task_orgs.filter(status='YANGI', task__deadline__gte=now).count()
-            in_progress = task_orgs.filter(status='IJRODA', task__deadline__gte=now).count()
+            in_progress = task_orgs.filter(status__in=['IJRODA', 'TEKSHIRUVDA'], task__deadline__gte=now).count()
             completed = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
         else:
             # Admin rollar uchun umumiy Task statusini hisoblash
@@ -220,7 +220,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 Q(status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA'], deadline__lt=now)
             ).count()
             pending = queryset.filter(status='YANGI', deadline__gte=now).count()
-            in_progress = queryset.filter(status='IJRODA', deadline__gte=now).count()
+            in_progress = queryset.filter(status__in=['IJRODA', 'TEKSHIRUVDA'], deadline__gte=now).count()
             completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
         
         active_sectors = queryset.exclude(category='').values('category').distinct().count()
@@ -241,6 +241,12 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         now = timezone.now()
         seven_days_ago = now - timedelta(days=7)
+        active_statuses = [
+            TaskStatus.YANGI,
+            TaskStatus.IJRODA,
+            TaskStatus.TEKSHIRUVDA,
+            TaskStatus.QAYTA_IJROGA_YUBORILDI,
+        ]
 
         if user.role in UserRole.ORGANIZATION_ROLES and user.organization:
             queryset = queryset.filter(assigned_organizations__organization=user.organization)
@@ -265,6 +271,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                     Q(assigned_organizations__status=TaskStatus.MUDDATI_KECH, deadline__lt=seven_days_ago)
                 ).distinct()
 
+            if status_value in active_statuses:
+                return queryset.filter(
+                    assigned_organizations__status=status_value,
+                    deadline__gte=now,
+                ).distinct()
+
             return queryset.filter(assigned_organizations__status=status_value).distinct()
 
         # Admin/creator: Task.status + overdue computation
@@ -287,6 +299,9 @@ class TaskViewSet(viewsets.ModelViewSet):
                 Q(status=TaskStatus.BAJARILMADI) |
                 Q(status=TaskStatus.MUDDATI_KECH, deadline__lt=seven_days_ago)
             )
+
+        if status_value in active_statuses:
+            return queryset.filter(status=status_value, deadline__gte=now)
 
         return queryset.filter(status=status_value)
     
@@ -354,6 +369,45 @@ class TaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni ko'rish.
+
+        Tashkilot foydalanuvchisi topshiriqni birinchi marta ochsa, uning
+        tashkilot bo'yicha holati `TEKSHIRUVDA` ga o'tadi.
+        """
+        task = self.get_object()
+        user = request.user
+
+        if user.role in UserRole.ORGANIZATION_ROLES and user.organization:
+            task_org = task.assigned_organizations.filter(organization=user.organization).first()
+            if task_org and task_org.status in {TaskStatus.YANGI, TaskStatus.QAYTA_IJROGA_YUBORILDI}:
+                old_status = task_org.status
+                task_org.status = TaskStatus.TEKSHIRUVDA
+                task_org.save(update_fields=['status', 'updated_at'])
+                task.sync_status_from_assignments()
+
+                AuditLog.log(
+                    user=user,
+                    action='TASK_UPDATED',
+                    entity_type='TASK_ORGANIZATION',
+                    entity_id=str(task_org.id),
+                    description=f"{user.full_name} topshiriqni ko'rib chiqmoqda: {task.title}",
+                    old_values={'status': old_status},
+                    new_values={'status': task_org.status},
+                    ip_address=getattr(request, 'client_ip', None)
+                )
+
+        task = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
+            Prefetch(
+                'assigned_organizations',
+                queryset=TaskOrganization.objects.select_related('organization', 'assigned_to'),
+            ),
+            'assigned_deputies',
+        ).get(pk=task.pk)
+
+        serializer = self.get_serializer(task)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='ai-analyze')
     def ai_analyze(self, request: Request) -> Response:
