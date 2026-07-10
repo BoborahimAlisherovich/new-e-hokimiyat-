@@ -263,23 +263,24 @@ const MapPath = memo(function MapPath({
     ? (village.stats.resolved / village.stats.total) * 100 
     : 0
 
-  const getFillClass = () => {
-    if (isSelected) return "fill-emerald-400/90"
-    if (completionRate >= 70) return "fill-emerald-200/70"
-    if (completionRate >= 40) return "fill-amber-200/70"
-    return "fill-red-200/70"
-  }
+  const fillColor = isSelected
+    ? "rgba(16, 185, 129, 0.9)"
+    : completionRate >= 70
+      ? "rgba(167, 243, 208, 0.72)"
+      : completionRate >= 40
+        ? "rgba(253, 230, 138, 0.72)"
+        : "rgba(254, 202, 202, 0.72)"
 
   return (
     <path
       d={village.path}
       className={cn(
         "stroke-slate-400/50 stroke-[1.5px] transition-all duration-300 cursor-pointer",
-        getFillClass(),
         isSelected
           ? "stroke-emerald-600 stroke-[2.5px] drop-shadow-lg"
-          : "hover:stroke-emerald-500 hover:stroke-[2px] hover:fill-emerald-300/80",
+          : "hover:stroke-emerald-500 hover:stroke-[2px]",
       )}
+      style={{ fill: fillColor }}
       onMouseMove={(e) => onMouseMove(e, village)}
       onMouseLeave={onMouseLeave}
       onClick={(e) => onClick(e, village)}
@@ -492,10 +493,10 @@ export function VillageAnalytics() {
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="flex flex-col gap-6 xl:flex-row">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
               {/* Chap: Xarita */}
-              <div className="flex-1 min-w-0 relative rounded-xl border border-indigo-100/40 bg-gradient-to-br from-slate-50 to-white p-3 sm:p-4 shadow-inner">
-                <svg viewBox="0 0 838 400" className="w-full h-[260px] sm:h-[320px] lg:h-[400px]">
+              <div className="relative min-h-[320px] xl:min-h-[460px] min-w-0 overflow-hidden rounded-xl border border-indigo-100/40 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 p-3 sm:p-4 shadow-inner">
+                <svg viewBox="0 0 838 400" className="block w-full min-h-[260px] sm:min-h-[320px] lg:min-h-[400px] xl:min-h-[420px]" preserveAspectRatio="xMidYMid meet">
                 <defs>
                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1"/>
@@ -583,7 +584,7 @@ export function VillageAnalytics() {
             </div>
 
               {/* O'ng: Tanlangan qishloq ma'lumotlari */}
-              <div className="w-full shrink-0 h-fit xl:w-[400px]">
+              <div className="w-full shrink-0 h-fit">
                 <div className="pb-3">
                   <div className="text-base font-semibold flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-emerald-500" />
