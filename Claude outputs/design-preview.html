@@ -1,0 +1,708 @@
+<title>E-Hokimiyat dizayn tizimi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* ---------------------------------------------------------------- TOKENS
+     Sahifa xromasi ko'ruvchining temasiga bo'ysunadi. Namuna bloklari
+     (.chip-light / .chip-dark) esa o'z to'liq token to'plamiga ega — ular
+     bo'yoq namunasi kabi, ko'ruvchi temasidan qat'i nazar bir xil ko'rinadi. */
+  :root{
+    --ink:#0d1524;
+    --ink-2:#3f4d66;
+    --ink-3:#6b7a94;
+    --ground:#f2f5fa;
+    --panel:#ffffff;
+    --line:#dfe5ef;
+    --line-2:#c6d0e0;
+    --brand:#3366ff;
+    --brand-ink:#1e40af;
+    --brand-wash:#e9efff;
+    --ok:#047857;
+    --bad:#be123c;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r:10px;
+    --shadow:0 1px 3px rgb(13 21 36/.07),0 8px 24px -12px rgb(13 21 36/.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ink:#e9eef8;
+      --ink-2:#aab8d0;
+      --ink-3:#8494ae;
+      --ground:#080d1a;
+      --panel:#101828;
+      --line:#212e46;
+      --line-2:#31405c;
+      --brand:#6d92ff;
+      --brand-ink:#a9c1ff;
+      --brand-wash:#17223d;
+      --ok:#34d399;
+      --bad:#fb7185;
+      --shadow:0 1px 3px rgb(0 0 0/.4),0 8px 24px -12px rgb(0 0 0/.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e9eef8;
+    --ink-2:#aab8d0;
+    --ink-3:#8494ae;
+    --ground:#080d1a;
+    --panel:#101828;
+    --line:#212e46;
+    --line-2:#31405c;
+    --brand:#6d92ff;
+    --brand-ink:#a9c1ff;
+    --brand-wash:#17223d;
+    --ok:#34d399;
+    --bad:#fb7185;
+    --shadow:0 1px 3px rgb(0 0 0/.4),0 8px 24px -12px rgb(0 0 0/.5);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:"cv02","cv03","cv04","cv11";
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px}
+  @media(min-width:1000px){
+    .wrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:44px;padding:44px 28px 96px}
+  }
+
+  /* ------------------------------------------------------------- NAV RAIL */
+  .rail{display:none}
+  @media(min-width:1000px){
+    .rail{display:block;position:sticky;top:44px;align-self:start}
+    .rail-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+    .rail a{display:block;padding:5px 0;font-size:13.5px;color:var(--ink-2);text-decoration:none;border-left:2px solid var(--line);padding-left:12px}
+    .rail a:hover{color:var(--brand);border-left-color:var(--brand)}
+    .rail a:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  }
+
+  /* --------------------------------------------------------------- HEADER */
+  header{margin-bottom:40px}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);margin-bottom:10px}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.08;font-weight:800;letter-spacing:-.028em;margin:0 0 12px;text-wrap:balance}
+  .lede{font-size:16.5px;color:var(--ink-2);max-width:62ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .meta span{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 9px}
+
+  /* -------------------------------------------------------------- SECTION */
+  section{margin-top:56px;scroll-margin-top:24px}
+  h2{font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:20px;font-weight:700;letter-spacing:-.018em;margin:18px 0 6px}
+  .sub{color:var(--ink-2);max-width:66ch;margin:0 0 20px;font-size:14.5px}
+  p{margin:0 0 12px}
+  code{font-family:var(--mono);font-size:.86em;background:var(--brand-wash);color:var(--brand-ink);padding:1.5px 5px;border-radius:4px}
+
+  /* ---------------------------------------------------------- FACT STRIPE */
+  .facts{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:620px){.facts{grid-template-columns:repeat(3,1fr)}}
+  .fact{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+  .fact-n{font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+  .fact-n small{font-size:15px;font-weight:600;color:var(--ink-3);letter-spacing:0}
+  .fact-l{font-size:13px;color:var(--ink-2);margin-top:7px}
+
+  /* ---------------------------------------------------------- SWATCH GRID */
+  .sw{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr))}
+  .sw-item{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .sw-chip{height:56px}
+  .sw-body{padding:9px 11px 11px}
+  .sw-name{font-size:12.5px;font-weight:600}
+  .sw-hex{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:1px}
+
+  /* ------------------------------------------------------------ TYPE SCALE */
+  .scale{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .scale-row{display:flex;align-items:baseline;gap:16px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .scale-row:last-child{border-bottom:0}
+  .scale-tag{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:104px;flex:none}
+  .scale-spec{color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* -------------------------------------------------- APP SPECIMEN SCOPES */
+  .spec-pair{display:grid;gap:16px}
+  @media(min-width:820px){.spec-pair{grid-template-columns:1fr 1fr}}
+  .spec{border-radius:12px;border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow)}
+  .spec-cap{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:7px 12px;border-bottom:1px solid}
+
+  /* Yorug' tema namunasi — loyihaning haqiqiy tokenlari */
+  .app-light{
+    --bg:#f5f7fb;--card:#fff;--fg:#0d1524;--mut:#5a6a85;--bd:#e3e8f0;--bds:#cbd5e3;
+    --pri:#3366ff;--prisoft:#ebf0ff;--prisoftfg:#1e40af;--muted:#f1f4f9;
+    --y-bg:#eff4ff;--y-fg:#1d4ed8;--y-bd:#c7d7fe;
+    --t-bg:#f3f0ff;--t-fg:#6d28d9;--t-bd:#ddd2fe;
+    --i-bg:#fff7e6;--i-fg:#92400e;--i-bd:#fde3b0;
+    --b-bg:#e6f6fb;--b-fg:#0e7490;--b-bd:#b6e3f0;
+    --n-bg:#e9f7f0;--n-fg:#047857;--n-bd:#b7e4cd;
+    --k-bg:#feecef;--k-fg:#be123c;--k-bd:#fbcdd6;
+    --q-bg:#fff1e6;--q-fg:#c2410c;--q-bd:#fdd8b5;
+    --z-bg:#eef1f6;--z-fg:#334155;--z-bd:#cbd5e3;
+    background:var(--bg);color:var(--fg);
+  }
+  /* To'q tema namunasi */
+  .app-dark{
+    --bg:#0a1020;--card:#121a2e;--fg:#e8edf7;--mut:#97a6c2;--bd:#22304a;--bds:#33415f;
+    --pri:#5b84ff;--prisoft:#1a2647;--prisoftfg:#a8c0ff;--muted:#16203a;
+    --y-bg:#16264a;--y-fg:#93c5fd;--y-bd:#24396b;
+    --t-bg:#241a45;--t-fg:#c4b5fd;--t-bd:#3a2a6b;
+    --i-bg:#33260c;--i-fg:#fcd34d;--i-bd:#4d3a12;
+    --b-bg:#0d2c36;--b-fg:#67e8f9;--b-bd:#14424f;
+    --n-bg:#102b22;--n-fg:#6ee7b7;--n-bd:#1a4034;
+    --k-bg:#3a1620;--k-fg:#fda4af;--k-bd:#57202f;
+    --q-bg:#3a2210;--q-fg:#fdba74;--q-bd:#57331a;
+    --z-bg:#1b2540;--z-fg:#b6c2d9;--z-bd:#33415f;
+    background:var(--bg);color:var(--fg);
+  }
+  .app-light .spec-cap{background:#fff;border-color:#e3e8f0;color:#5a6a85}
+  .app-dark .spec-cap{background:#121a2e;border-color:#22304a;color:#97a6c2}
+  .spec-body{padding:16px}
+
+  /* Nishonlar — loyihadagi .badge-status ning aynan o'zi */
+  .bs{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;border:1px solid transparent;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap}
+  .bs::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor;flex:none}
+  .s-y{background:var(--y-bg);color:var(--y-fg);border-color:var(--y-bd)}
+  .s-t{background:var(--t-bg);color:var(--t-fg);border-color:var(--t-bd)}
+  .s-i{background:var(--i-bg);color:var(--i-fg);border-color:var(--i-bd)}
+  .s-b{background:var(--b-bg);color:var(--b-fg);border-color:var(--b-bd)}
+  .s-n{background:var(--n-bg);color:var(--n-fg);border-color:var(--n-bd)}
+  .s-k{background:var(--k-bg);color:var(--k-fg);border-color:var(--k-bd)}
+  .s-q{background:var(--q-bg);color:var(--q-fg);border-color:var(--q-bd)}
+  .s-z{background:var(--z-bg);color:var(--z-fg);border-color:var(--z-bd);border-style:dashed}
+  .badge-row{display:flex;flex-wrap:wrap;gap:7px}
+  .fav::before{animation:dp 1.8s cubic-bezier(.16,1,.3,1) infinite}
+  @keyframes dp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+
+  /* Stat plitalari */
+  .tiles{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+  .tile{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+  .tile-bar{position:absolute;inset:0 0 auto;height:2px}
+  .tile-in{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px}
+  .tile-l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+  .tile-v{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}
+  .tile-ic{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;flex:none}
+  .tile-ic svg{width:19px;height:19px}
+
+  /* Jadval */
+  .tb{width:100%;border-collapse:collapse;font-size:13px}
+  .tb th{text-align:left;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);padding:9px 12px;border-bottom:1px solid var(--bd)}
+  .tb td{padding:11px 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+  .tb tr:last-child td{border-bottom:0}
+  .tb .tt{font-weight:600}
+  .tb .dim{color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tb-scroll{overflow-x:auto}
+  .tb-wrap{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+  .tb-head{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--bd);font-weight:600;font-size:14px}
+  .cnt{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--mut);background:var(--muted);border-radius:6px;padding:2px 7px;font-variant-numeric:tabular-nums}
+  .late{color:var(--k-fg);font-weight:600}
+
+  /* ------------------------------------------------------------- AI SCREEN */
+  .ai{
+    --bg:#070c18;--card:#101a30;--card2:#16223c;--fg:#eaf0fc;--mut:#8fa1c0;
+    --bd:#1e2b45;--acc:#5b84ff;--acc2:#22d3ee;
+    background:
+      radial-gradient(600px 320px at 78% -8%,rgba(91,132,255,.20),transparent 70%),
+      radial-gradient(420px 280px at 8% 108%,rgba(34,211,238,.13),transparent 70%),
+      var(--bg);
+    color:var(--fg);border-radius:16px;border:1px solid var(--bd);overflow:hidden
+  }
+  .ai-grid{display:grid;gap:0}
+  @media(min-width:860px){.ai-grid{grid-template-columns:1fr 1fr}}
+  .ai-pane{padding:20px}
+  .ai-pane+.ai-pane{border-top:1px solid var(--bd)}
+  @media(min-width:860px){.ai-pane+.ai-pane{border-top:0;border-left:1px solid var(--bd)}}
+  .ai-top{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .ai-av{width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,#5b84ff,#22d3ee);display:grid;place-items:center;flex:none;color:#04122b;font-weight:800;font-size:13px}
+  .ai-h{font-size:17px;font-weight:700;letter-spacing:-.02em}
+  .ai-s{font-size:12px;color:var(--mut)}
+  .ai-q{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.22;margin:0 0 4px;text-wrap:balance}
+  .ai-hint{font-size:12.5px;color:var(--mut);margin:0 0 18px}
+  .wave{display:flex;align-items:center;justify-content:center;gap:3px;height:78px;margin:6px 0 18px}
+  .wave i{width:3px;border-radius:2px;background:linear-gradient(180deg,#22d3ee,#5b84ff);animation:wv 1.25s ease-in-out infinite}
+  @keyframes wv{0%,100%{transform:scaleY(.28)}50%{transform:scaleY(1)}}
+  .mic{width:56px;height:56px;border-radius:999px;margin:0 auto;background:linear-gradient(140deg,#5b84ff,#3f6bff);display:grid;place-items:center;box-shadow:0 8px 26px -8px rgba(91,132,255,.7)}
+  .mic svg{width:24px;height:24px;color:#fff}
+  .prompt{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;color:inherit;font:inherit;cursor:pointer;margin-bottom:9px}
+  .prompt:hover{border-color:var(--acc)}
+  .prompt:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .prompt b{display:block;font-size:13.5px;font-weight:600;margin-bottom:2px}
+  .prompt span{font-size:12px;color:var(--mut)}
+  .ai-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin:0 0 9px}
+  .bub{max-width:88%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;margin-bottom:9px}
+  .bub-u{margin-left:auto;background:linear-gradient(140deg,#3f6bff,#5b84ff);color:#fff;border-bottom-right-radius:5px}
+  .bub-a{background:var(--card);border:1px solid var(--bd);border-bottom-left-radius:5px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin-top:9px;font-size:12.5px}
+  .kv dt{color:var(--mut)}
+  .kv dd{margin:0;font-weight:600}
+  .ai-cta{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .btn{border:0;border-radius:9px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .btn-p{background:var(--acc);color:#04122b}
+  .btn-g{background:transparent;color:var(--fg);border:1px solid var(--bd)}
+  .btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  /* ---------------------------------------------------------- AUDIT TABLE */
+  .audit{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .audit th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 13px;border-bottom:1px solid var(--line);font-weight:700}
+  .audit td{padding:10px 13px;border-bottom:1px solid var(--line)}
+  .audit tr:last-child td{border-bottom:0}
+  .audit .num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pass{color:var(--ok);font-weight:700}
+  .fail{color:var(--bad);font-weight:700}
+  .audit-scroll{overflow-x:auto}
+
+  .note{background:var(--brand-wash);border:1px solid color-mix(in srgb,var(--brand) 26%,transparent);border-radius:var(--r);padding:14px 16px;font-size:14px;color:var(--ink)}
+  .note strong{color:var(--brand-ink)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  }
+</style>
+
+<div class="wrap">
+  <nav class="rail" aria-label="Bo'limlar">
+    <div class="rail-title">Bo'limlar</div>
+    <a href="#palitra">Palitra</a>
+    <a href="#shrift">Tipografiya</a>
+    <a href="#status">Statuslar</a>
+    <a href="#komponent">Komponentlar</a>
+    <a href="#ai">AI oynasi</a>
+    <a href="#audit">Kontrast auditi</a>
+  </nav>
+
+  <main>
+    <header>
+      <div class="eyebrow">Xatirchi tumani hokimligi · ijro nazorati tizimi</div>
+      <h1>E-Hokimiyat dizayn tizimi</h1>
+      <p class="lede">
+        Saytning ko'rinishi endi bitta token to'plamidan qurilgan. Bu sahifa —
+        tasdiqlash uchun namuna: har bir rang, o'lcham va holat nishoni
+        loyihadagi <code>app/globals.css</code> dagi aynan shu qiymatlardan
+        olingan.
+      </p>
+      <div class="meta">
+        <span>v4 · 2026-09-08</span>
+        <span>Tailwind CSS 4.1.9</span>
+        <span>Inter (o'z serverimizdan)</span>
+        <span>WCAG 2.1 AA</span>
+      </div>
+    </header>
+
+    <section id="nima">
+      <h2>Nima o'zgardi</h2>
+      <p class="sub">
+        Muammo faqat rang tanlashda emas edi: Tailwind v4 uchun majburiy
+        <code>@theme</code> bloki yo'q edi, shuning uchun dizayn tizimining
+        yarmi brauzerga hatto yetib bormasdi.
+      </p>
+      <div class="facts">
+        <div class="fact">
+          <div class="fact-n">480<small> ta</small></div>
+          <div class="fact-l">
+            <code>bg-card</code>, <code>text-muted-foreground</code>,
+            <code>border-border</code> kabi class umuman kompilyatsiya
+            qilinmasdi — shadcn komponentlari rangsiz edi
+          </div>
+        </div>
+        <div class="fact">
+          <div class="fact-n">1.55<small> → 4.68</small></div>
+          <div class="fact-l">
+            Eng past matn kontrasti. Ilgari topshiriq statusi amalda
+            o'qilmasdi (norma 4.5:1)
+          </div>
+        </div>
+        <div class="fact">
+          <div class="fact-n">6<small> → 1</small></div>
+          <div class="fact-l">
+            Bir xil 8 status uchun oltita raqib rang jadvali bor edi. Endi
+            yagona manba: <code>lib/status-styles.ts</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="palitra">
+      <h2>Palitra</h2>
+      <h3>Neytral asos</h3>
+      <p class="sub">
+        Kulranglar ko'kka bir oz og'dirilgan — bu ak&#1089;ent bilan bir
+        oilada turishini bildiradi va sof kulrangning "tanlanmagan"
+        ta'sirini yo'qotadi.
+      </p>
+      <div class="sw">
+        <div class="sw-item"><div class="sw-chip" style="background:#f5f7fb"></div><div class="sw-body"><div class="sw-name">Fon</div><div class="sw-hex">#F5F7FB · background</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#fff;border-bottom:1px solid #e3e8f0"></div><div class="sw-body"><div class="sw-name">Karta</div><div class="sw-hex">#FFFFFF · card</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#f1f4f9"></div><div class="sw-body"><div class="sw-name">So'ndirilgan</div><div class="sw-hex">#F1F4F9 · muted</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#e3e8f0"></div><div class="sw-body"><div class="sw-name">Chegara</div><div class="sw-hex">#E3E8F0 · border</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#5a6a85"></div><div class="sw-body"><div class="sw-name">Ikkilamchi matn</div><div class="sw-hex">#5A6A85 · 5.48:1</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#0d1524"></div><div class="sw-body"><div class="sw-name">Asosiy matn</div><div class="sw-hex">#0D1524 · 18.26:1</div></div></div>
+      </div>
+
+      <h3>Brend</h3>
+      <p class="sub">
+        Bitta ak&#1089;ent — ko'k. Boldlik shu yerda sarflanadi, qolgan hamma
+        narsa jim turadi. Ilgari saytda beshta raqib palitra bir vaqtda
+        ishlardi: indigo/pushti (body), cyan/teal (shell), indigo/violet
+        (header), orange (filtrlar), indigo (login).
+      </p>
+      <div class="sw">
+        <div class="sw-item"><div class="sw-chip" style="background:#3366ff"></div><div class="sw-body"><div class="sw-name">Primary</div><div class="sw-hex">#3366FF</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#2451d6"></div><div class="sw-body"><div class="sw-name">Primary hover</div><div class="sw-hex">#2451D6</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#ebf0ff"></div><div class="sw-body"><div class="sw-name">Primary soft</div><div class="sw-hex">#EBF0FF</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#1e40af"></div><div class="sw-body"><div class="sw-name">Soft ustida matn</div><div class="sw-hex">#1E40AF · 7.66:1</div></div></div>
+      </div>
+
+      <h3>Semantik</h3>
+      <p class="sub">
+        Semantik ranglar ak&#1089;entdan alohida: "yaxshi / ogohlantirish /
+        xato" ma'nosini tashiydi, brend rangi vazifasini bajarmaydi.
+      </p>
+      <div class="sw">
+        <div class="sw-item"><div class="sw-chip" style="background:#047857"></div><div class="sw-body"><div class="sw-name">Muvaffaqiyat</div><div class="sw-hex">#047857 · success</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#b45309"></div><div class="sw-body"><div class="sw-name">Ogohlantirish</div><div class="sw-hex">#B45309 · warning</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#dc2626"></div><div class="sw-body"><div class="sw-name">Xato</div><div class="sw-hex">#DC2626 · destructive</div></div></div>
+        <div class="sw-item"><div class="sw-chip" style="background:#1d4ed8"></div><div class="sw-body"><div class="sw-name">Ma'lumot</div><div class="sw-hex">#1D4ED8 · info</div></div></div>
+      </div>
+    </section>
+
+    <section id="shrift">
+      <h2>Tipografiya</h2>
+      <p class="sub">
+        Inter. Ilgari u CSS'da yozilgan, lekin <strong>hech qachon
+        yuklanmagan</strong> edi — brauzer standart shriftni ko'rsatardi.
+        Endi variable shrift <code>public/fonts</code> dan beriladi:
+        Google CDN'ga bog'liqlik yo'q, ichki tarmoqda ham ishlaydi, lotin
+        sahifada faqat ~48&nbsp;KB yuklanadi.
+      </p>
+      <div class="scale">
+        <div class="scale-row"><span class="scale-tag">h1 · 24/700</span><span class="scale-spec" style="font-size:24px;font-weight:700;letter-spacing:-.02em">Topshiriqlar ijrosi nazorati</span></div>
+        <div class="scale-row"><span class="scale-tag">h2 · 20/650</span><span class="scale-spec" style="font-size:20px;font-weight:600;letter-spacing:-.015em">Tasdiqlashda turgan topshiriqlar</span></div>
+        <div class="scale-row"><span class="scale-tag">h3 · 17/600</span><span class="scale-spec" style="font-size:17px;font-weight:600;letter-spacing:-.01em">Xatirchi tumani obodonlashtirish</span></div>
+        <div class="scale-row"><span class="scale-tag">md · 15/500</span><span class="scale-spec" style="font-size:15px;font-weight:500">Tashkilot rahbari hisobot yukladi</span></div>
+        <div class="scale-row"><span class="scale-tag">base · 14/400</span><span class="scale-spec" style="font-size:14px">Asosiy matn — jadval kataklari, tavsiflar, izohlar</span></div>
+        <div class="scale-row"><span class="scale-tag">sm · 13/400</span><span class="scale-spec" style="font-size:13px;color:var(--ink-2)">Ikkilamchi ma'lumot, sana va vaqt</span></div>
+        <div class="scale-row"><span class="scale-tag">xs · 12/600</span><span class="scale-spec" style="font-size:12px;font-weight:600;color:var(--ink-2)">Nishonlar va yorliqlar</span></div>
+        <div class="scale-row"><span class="scale-tag">2xs · 11/600</span><span class="scale-spec" style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)">Ustun sarlavhalari</span></div>
+      </div>
+      <p class="sub" style="margin-top:14px">
+        Ilgari shkala yo'q edi: o'lchamlar <code>text-[9px]</code> dan
+        <code>text-[28px]</code> gacha tasodifiy yozilgan, <code>html</code>
+        ning asosiy o'lchami esa uch joyda qayta belgilangan edi. Endi
+        sakkiz pog'ona — boshqa qiymat ishlatilmaydi.
+      </p>
+    </section>
+
+    <section id="status">
+      <h2>Topshiriq statuslari</h2>
+      <p class="sub">
+        Ijro nazorati tizimida status — sahifadagi eng muhim ma'lumot.
+        <strong>«Bajarildi»</strong> ataylab <strong>«Tasdiqlashda»</strong>
+        deb qayta nomlandi: bu holat ijrochi hisobotni topshirgan, lekin
+        hokim hali nazoratdan yechmagan holatni bildiradi. Har bir juftlik
+        ikkala temada ham 4.5:1 dan yuqori.
+      </p>
+      <div class="spec-pair">
+        <div class="spec app-light">
+          <div class="spec-cap">Yorug' tema</div>
+          <div class="spec-body">
+            <div class="badge-row">
+              <span class="bs s-y">Yangi</span>
+              <span class="bs s-t">Ko'rib chiqilmoqda</span>
+              <span class="bs s-i">Ijroda</span>
+              <span class="bs s-b">Tasdiqlashda</span>
+              <span class="bs s-n">Nazoratdan yechildi</span>
+              <span class="bs s-k">Muddati kechikkan</span>
+              <span class="bs s-q">Qayta ijroga yuborildi</span>
+              <span class="bs s-z">Bajarilmadi</span>
+            </div>
+          </div>
+        </div>
+        <div class="spec app-dark">
+          <div class="spec-cap">To'q tema</div>
+          <div class="spec-body">
+            <div class="badge-row">
+              <span class="bs s-y">Yangi</span>
+              <span class="bs s-t">Ko'rib chiqilmoqda</span>
+              <span class="bs s-i">Ijroda</span>
+              <span class="bs s-b">Tasdiqlashda</span>
+              <span class="bs s-n">Nazoratdan yechildi</span>
+              <span class="bs s-k">Muddati kechikkan</span>
+              <span class="bs s-q">Qayta ijroga yuborildi</span>
+              <span class="bs s-z">Bajarilmadi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Ikki muhim ajratish</h3>
+      <p class="sub" style="margin-bottom:14px">
+        Ilgari <strong>«Bajarilmadi»</strong> va <strong>«Nazoratdan
+        yechildi»</strong> bir xil ko'rinardi — ya'ni muvaffaqiyatsiz va
+        muvaffaqiyatli yakun farqlanmasdi. <strong>«Ijroda»</strong> esa
+        yashil edi, go'yo ish tugagan. Ikkisi ham tuzatildi: yakunlanmagan
+        ish hech qachon yashil bo'lmaydi, muvaffaqiyatsiz yakun uzuq
+        chegara bilan belgilanadi.
+      </p>
+
+      <h3>Muhimlik darajasi</h3>
+      <div class="spec app-light" style="margin-top:10px">
+        <div class="spec-body">
+          <div class="badge-row">
+            <span class="bs s-k fav">Favqulodda</span>
+            <span class="bs s-q">Yuqori</span>
+            <span class="bs s-y">Oddiy</span>
+            <span class="bs s-z" style="border-style:solid">Past</span>
+          </div>
+          <p style="margin:12px 0 0;font-size:12.5px;color:var(--mut)">
+            «Favqulodda» nuqtachasi pulsatsiya qiladi — faqat
+            <code style="background:#ebf0ff;color:#1e40af">opacity</code> va
+            <code style="background:#ebf0ff;color:#1e40af">transform</code>
+            orqali. Ilgari saytdagi cheksiz animatsiyalar
+            <code style="background:#ebf0ff;color:#1e40af">box-shadow</code>
+            va <code style="background:#ebf0ff;color:#1e40af">border-radius</code>
+            ni harakatlantirardi — har kadrda to'liq qayta chizish.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="komponent">
+      <h2>Komponentlar</h2>
+      <p class="sub">
+        Kartalar endi shaffof oq (<code>bg-white/78</code>) va
+        <code>backdrop-blur-xl</code> emas. Saytda 161 ta blur bor edi va
+        ular faqat mobilda o'chirilardi — natijada mobil va desktop
+        <strong>ikki xil dizayn</strong> edi, mobil versiyasi esa hech
+        qachon loyihalashtirilmagan.
+      </p>
+
+      <div class="spec app-light">
+        <div class="spec-cap">Ko'rsatkich plitalari</div>
+        <div class="spec-body">
+          <div class="tiles">
+            <div class="tile">
+              <span class="tile-bar" style="background:#3366ff"></span>
+              <div class="tile-in">
+                <div><div class="tile-l">Jami topshiriq</div><div class="tile-v">248</div></div>
+                <span class="tile-ic" style="background:#ebf0ff;color:#1e40af"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6"/><path d="M10 5h4"/><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 10h6"/><path d="M9 14h6"/></svg></span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-bar" style="background:#0e7490"></span>
+              <div class="tile-in">
+                <div><div class="tile-l">Tasdiqlashda</div><div class="tile-v">17</div></div>
+                <span class="tile-ic" style="background:#e6f6fb;color:#0e7490"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-bar" style="background:#dc2626"></span>
+              <div class="tile-in">
+                <div><div class="tile-l">Muddati kech</div><div class="tile-v">9</div></div>
+                <span class="tile-ic" style="background:#feecef;color:#b91c1c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-bar" style="background:#047857"></span>
+              <div class="tile-in">
+                <div><div class="tile-l">Nazoratdan yechildi</div><div class="tile-v">184</div></div>
+                <span class="tile-ic" style="background:#e9f7f0;color:#046c4e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <p style="margin:12px 0 0;font-size:12.5px;color:var(--mut)">
+            Ilgari bu kartalarda <strong>qo'lda yozilgan «+12%», «+8%»,
+            «-3%»</strong> o'sish ko'rsatkichlari haqiqiy ma'lumot sifatida
+            chiqarilardi, progress chizig'i esa muddati o'tgan topshiriqlar
+            uchun «bajarilish foizi»ni ko'rsatardi. Ikkisi ham olib tashlandi.
+          </p>
+        </div>
+      </div>
+
+      <div class="spec app-light" style="margin-top:16px">
+        <div class="spec-cap">Topshiriqlar ro'yxati</div>
+        <div class="spec-body">
+          <div class="tb-wrap">
+            <div class="tb-head">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;color:#5a6a85"><path d="M9 2h6"/><path d="M10 5h4"/><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 10h6"/><path d="M9 14h6"/></svg>
+              Topshiriqlar ro'yxati
+              <span class="cnt">4</span>
+            </div>
+            <div class="tb-scroll">
+              <table class="tb">
+                <thead>
+                  <tr>
+                    <th>Topshiriq</th><th>Muhimlik</th><th>Muddat</th><th>Holat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="tt">Markaziy ko'chani obodonlashtirish<div class="dim" style="font-weight:400;font-size:12px">Qurilish bo'limi</div></td>
+                    <td><span class="bs s-q">Yuqori</span></td>
+                    <td class="dim">12.09.2026</td>
+                    <td><span class="bs s-b">Tasdiqlashda</span></td>
+                  </tr>
+                  <tr>
+                    <td class="tt">Maktablarda issiqlik tizimi tekshiruvi<div class="dim" style="font-weight:400;font-size:12px">Ta'lim bo'limi, Energetika</div></td>
+                    <td><span class="bs s-k fav">Favqulodda</span></td>
+                    <td class="late">04.09.2026</td>
+                    <td><span class="bs s-k">Muddati kechikkan</span></td>
+                  </tr>
+                  <tr>
+                    <td class="tt">Qishloq shifoxonasi dori zaxirasi hisoboti<div class="dim" style="font-weight:400;font-size:12px">Sog'liqni saqlash bo'limi</div></td>
+                    <td><span class="bs s-y">Oddiy</span></td>
+                    <td class="dim">18.09.2026</td>
+                    <td><span class="bs s-i">Ijroda</span></td>
+                  </tr>
+                  <tr>
+                    <td class="tt">Ichimlik suvi quvurlarini almashtirish<div class="dim" style="font-weight:400;font-size:12px">Suv ta'minoti</div></td>
+                    <td><span class="bs s-q">Yuqori</span></td>
+                    <td class="dim">30.08.2026</td>
+                    <td><span class="bs s-q">Qayta ijroga yuborildi</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p style="margin:12px 0 0;font-size:12.5px;color:var(--mut)">
+            Muhimlik ustuni qo'shildi — ilgari u faqat mobil kartada bor edi.
+            Satrlar endi klaviatura bilan ham ochiladi
+            (<code style="background:#ebf0ff;color:#1e40af">Enter</code>),
+            <code style="background:#ebf0ff;color:#1e40af">min-w-[980px]</code>
+            qattiq kengligi olib tashlandi.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai">
+      <h2>AI orqali topshiriq yaratish</h2>
+      <p class="sub">
+        Siz ko'rsatgan to'q uslub — lekin binafsha o'rniga saytning ko'k
+        ak&#1089;enti bilan. Hokim topshiriqni ovoz bilan aytadi, AI uni
+        maydonlarga ajratib beradi, tasdiqlashdan oldin ko'rsatadi. Bu
+        ekran mavjud <code>aiAnalyzeTask</code> va audio endpoint'lariga
+        ulanadi.
+      </p>
+      <div class="ai">
+        <div class="ai-grid">
+          <div class="ai-pane">
+            <div class="ai-top">
+              <span class="ai-av">AI</span>
+              <div>
+                <div class="ai-h">Topshiriq yordamchisi</div>
+                <div class="ai-s">Hokim · Xatirchi tumani</div>
+              </div>
+            </div>
+            <p class="ai-q">Topshiriqni ayting — qolganini o'zim to'ldiraman</p>
+            <p class="ai-hint">Tinglayapman…</p>
+            <div class="wave" aria-hidden="true">
+              <i style="height:18px;animation-delay:0s"></i><i style="height:34px;animation-delay:.07s"></i>
+              <i style="height:52px;animation-delay:.14s"></i><i style="height:26px;animation-delay:.21s"></i>
+              <i style="height:64px;animation-delay:.28s"></i><i style="height:44px;animation-delay:.35s"></i>
+              <i style="height:70px;animation-delay:.42s"></i><i style="height:30px;animation-delay:.49s"></i>
+              <i style="height:56px;animation-delay:.56s"></i><i style="height:22px;animation-delay:.63s"></i>
+              <i style="height:48px;animation-delay:.7s"></i><i style="height:66px;animation-delay:.77s"></i>
+              <i style="height:36px;animation-delay:.84s"></i><i style="height:58px;animation-delay:.91s"></i>
+              <i style="height:24px;animation-delay:.98s"></i><i style="height:42px;animation-delay:1.05s"></i>
+              <i style="height:62px;animation-delay:1.12s"></i><i style="height:28px;animation-delay:1.19s"></i>
+              <i style="height:20px;animation-delay:1.26s"></i><i style="height:38px;animation-delay:1.33s"></i>
+            </div>
+            <div class="mic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><path d="M12 19v3"/></svg>
+            </div>
+            <p class="ai-lab" style="margin:22px 0 9px">Tez shablonlar</p>
+            <button class="prompt" type="button">
+              <b>Haftalik obodonlashtirish hisoboti</b>
+              <span>Har dushanba · barcha mahalla raislari</span>
+            </button>
+            <button class="prompt" type="button">
+              <b>Muddati kechikkanlarni so'rash</b>
+              <span>Ijroda 7 kundan oshgan topshiriqlar bo'yicha</span>
+            </button>
+            <button class="prompt" type="button">
+              <b>Qish mavsumiga tayyorgarlik</b>
+              <span>Ta'lim va sog'liqni saqlash sohalari</span>
+            </button>
+          </div>
+
+          <div class="ai-pane">
+            <p class="ai-lab">Suhbat</p>
+            <div class="bub bub-u">
+              Buğirdoq mahallasidagi maktab yo'lini ta'mirlash bo'yicha
+              qurilish bo'limiga favqulodda topshiriq bering, muddati
+              beshinchi sentabr
+            </div>
+            <div class="bub bub-a">
+              Topshiriqni shunday tushundim — tekshirib tasdiqlang:
+              <dl class="kv">
+                <dt>Sarlavha</dt><dd>Buğirdoq MFY maktab yo'lini ta'mirlash</dd>
+                <dt>Soha</dt><dd>Qurilish</dd>
+                <dt>Tashkilot</dt><dd>Tuman qurilish bo'limi</dd>
+                <dt>Muhimlik</dt><dd>Favqulodda</dd>
+                <dt>Muddat</dt><dd>05.09.2026</dd>
+              </dl>
+              <div class="ai-cta">
+                <button class="btn btn-p" type="button">Topshiriqni yaratish</button>
+                <button class="btn btn-g" type="button">Tahrirlash</button>
+              </div>
+            </div>
+            <div class="bub bub-a" style="max-width:100%">
+              <span style="font-size:12.5px;color:var(--mut)">
+                Soha «Qurilish» deb tanlandi, chunki tashkilotning sohasi
+                shunday. Ilgari bu maydon «teg» deb nomlangan va
+                ishlamaydigan ikki tugmadan iborat edi.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="audit">
+      <h2>Kontrast auditi</h2>
+      <p class="sub">
+        Har bir juftlik o'lchandi. Chapdagi ustun — ilgari saytda turgan
+        qiymat, o'ngdagi — yangisi. WCAG 2.1 AA me'yori: oddiy matn uchun
+        4.5:1.
+      </p>
+      <div class="audit-scroll">
+        <table class="audit">
+          <thead>
+            <tr>
+              <th>Element</th>
+              <th class="num">Ilgari</th>
+              <th class="num">Endi</th>
+              <th>Holat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Status «Ijroda»</td><td class="num fail">1.55:1</td><td class="num pass">6.65:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Status «Tasdiqlashda»</td><td class="num fail">1.74:1</td><td class="num pass">4.83:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Status «Yangi»</td><td class="num fail">2.43:1</td><td class="num pass">6.08:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Status «Muddati kech»</td><td class="num fail">2.43:1</td><td class="num pass">5.52:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Status «Bajarilmadi»</td><td class="num fail">2.65:1</td><td class="num pass">9.15:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Ikkilamchi matn</td><td class="num fail">3.15:1</td><td class="num pass">5.48:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Login «Aura group» yozuvi</td><td class="num fail">1.50:1</td><td class="num pass">5.48:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Input placeholder</td><td class="num fail">1.50:1</td><td class="num pass">5.48:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Asosiy tugma matni</td><td class="num">—</td><td class="num pass">4.68:1</td><td class="pass">O'tdi</td></tr>
+            <tr><td>Asosiy matn</td><td class="num">—</td><td class="num pass">18.26:1</td><td class="pass">AAA</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="sub" style="margin-top:22px">
+        Shuningdek olib tashlandi: touch qurilmalarda barcha tugma va
+        havolalarga <code>min-width:44px</code> va
+        <code>font-size:16px</code> majburlaydigan qoida. U matn ichidagi
+        havolalarni buzardi va planshetda butun sahifa o'lchamini
+        desktopdan boshqacha qilib qo'yardi.
+      </p>
+
+      <div class="note" style="margin-top:20px">
+        <strong>Keyingi qadam.</strong> Poydevor tayyor. Navbatda:
+        topshiriq yaratish oqimini «Soha» bilan qayta yozish, isbot yuklash
+        va hokim uchun «Tasdiqlashda» navbati, so'ngra interaktiv xarita
+        (1.21&nbsp;MB → ~30&nbsp;KB) va Telegram uslubidagi chat.
+      </div>
+    </section>
+  </main>
+</div>

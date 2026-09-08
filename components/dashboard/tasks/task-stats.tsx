@@ -1,64 +1,109 @@
 "use client"
 
-import { useTranslation } from "@/lib/i18n/context"
-import { ClipboardList, Clock, Loader2, CheckCircle2, TrendingUp } from "lucide-react"
-import { PremiumStatsGrid } from "@/components/dashboard/premium-dashboard-ui"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ClipboardList,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+} from "lucide-react"
 
-type TaskStatsProps = {
+import { PremiumStatsGrid, type PremiumStatItem } from "@/components/dashboard/premium-dashboard-ui"
+
+/**
+ * Topshiriqlar ko'rsatkichlari.
+ *
+ * Muhim o'zgarish: ilgari «Bajarildi» soni backend'da BAJARILDI va
+ * NAZORATDAN_YECHILDI ni birga qo'shardi — ya'ni hokim nechta ish uning
+ * tasdig'ini kutayotganini ko'rishning imkoni yo'q edi. Endi
+ * «Tasdiqlashda» alohida plita va u bosiladigan: to'g'ridan-to'g'ri
+ * tasdiqlash navbatiga olib boradi.
+ */
+
+export type TaskStatsProps = {
   total: number
   pending: number
   inProgress: number
+  /** Hisobot topshirilgan, hokim tasdig'ini kutmoqda */
+  awaitingApproval: number
+  /** Nazoratdan yechilgan (yakunlangan) */
   completed: number
+  overdue?: number
+  returned?: number
+  /** Tasdiqlash navbatiga havola ko'rsatilsinmi (faqat hokim uchun) */
+  canApprove?: boolean
 }
 
-export function TaskStats({ total, pending, inProgress, completed }: TaskStatsProps) {
-  const t = useTranslation()
-  
-  const stats = [
+export function TaskStats({
+  total,
+  pending,
+  inProgress,
+  awaitingApproval,
+  completed,
+  overdue = 0,
+  returned = 0,
+  canApprove = false,
+}: TaskStatsProps) {
+  const items: PremiumStatItem[] = [
     {
-      label: t.dashboard.totalTasks,
+      label: "Jami topshiriq",
       value: total,
       icon: ClipboardList,
-      gradient: "from-slate-500 to-slate-700",
-      bgGradient: "from-slate-50 to-slate-100",
-      iconBg: "bg-indigo-50/50",
-      textColor: "text-slate-700",
-      borderColor: "border-indigo-100/40"
+      tone: "neutral",
     },
     {
-      label: t.task.statuses.NEW,
+      label: "Yangi",
       value: pending,
-      icon: Clock,
-      gradient: "from-amber-500 to-orange-600",
-      bgGradient: "from-amber-50 to-orange-50",
-      iconBg: "bg-amber-100",
-      textColor: "text-amber-600",
-      borderColor: "border-amber-200/50"
+      icon: Loader2,
+      tone: "primary",
     },
     {
-      label: t.task.statuses.IN_PROGRESS,
+      label: "Ijroda",
       value: inProgress,
       icon: Loader2,
-      gradient: "from-blue-500 to-indigo-600",
-      bgGradient: "from-blue-50 to-indigo-50",
-      iconBg: "bg-blue-100",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-200/50"
+      tone: "warning",
+      hint: returned > 0 ? `${returned} ta qayta ijroda` : undefined,
     },
     {
-      label: t.task.statuses.COMPLETED,
+      label: "Tasdiqlashda",
+      value: awaitingApproval,
+      icon: ShieldCheck,
+      tone: "info",
+      hint: awaitingApproval > 0 ? "Hokim tasdig‘ini kutmoqda" : "Navbat bo‘sh",
+      href: canApprove && awaitingApproval > 0 ? "/dashboard/tasks/pending-approval" : undefined,
+    },
+    {
+      label: "Nazoratdan yechildi",
       value: completed,
       icon: CheckCircle2,
-      gradient: "from-emerald-500 to-teal-600",
-      bgGradient: "from-emerald-50 to-teal-50",
-      iconBg: "bg-emerald-100",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-200/50"
-    }
+      tone: "success",
+      hint: total > 0 ? `${Math.round((completed / total) * 100)}% yakunlangan` : undefined,
+    },
+    {
+      label: "Muddati kechikkan",
+      value: overdue,
+      icon: AlertTriangle,
+      tone: overdue > 0 ? "danger" : "neutral",
+    },
   ]
-  
-  return <PremiumStatsGrid items={stats.map((stat, index) => ({
-    ...stat,
-    hint: index === 3 && total > 0 ? `${Math.round((completed / total) * 100)}% yakunlangan` : undefined,
-  }))} />
+
+  return <PremiumStatsGrid items={items} columns={3} />
+}
+
+/** Faqat qayta ijroga yuborilganlar uchun kichik plita (kerak bo'lsa) */
+export function ReturnedStat({ value }: { value: number }) {
+  return (
+    <PremiumStatsGrid
+      columns={2}
+      items={[
+        {
+          label: "Qayta ijroga yuborilgan",
+          value,
+          icon: RotateCcw,
+          tone: "warning",
+        },
+      ]}
+    />
+  )
 }

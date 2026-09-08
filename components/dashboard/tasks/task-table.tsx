@@ -1,46 +1,90 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+import type React from "react"
+import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import type { Task } from "@/types"
-import { PRIORITY_COLORS } from "@/components/dashboard/tasks/task-constants"
-import { FileX, AlertTriangle } from "lucide-react"
-import { useTranslation } from "@/lib/i18n/context"
+import {
+  AlertTriangle,
+  ClipboardList,
+  Eye,
+  FileX,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react"
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { PremiumEmptyState, PremiumTableShell } from "@/components/dashboard/premium-dashboard-ui"
+import { cn } from "@/lib/utils"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
+import { TASK_STATUS_TERMINAL } from "@/lib/status-styles"
+import type { Task } from "@/types"
+
+/**
+ * Tuzatilgan nuqsonlar:
+ *  - Satrlar klaviatura bilan ochilmasdi (onClick bor, tabIndex/onKeyDown yo'q)
+ *    → endi role="link" + tabIndex + Enter/Space.
+ *  - onView/onEdit/onDelete proplari e'lon qilingan, lekin destructuring'da
+ *    tashlab ketilgan edi → hech qanday satr amali ishlamasdi. Endi ulangan.
+ *  - Desktop jadvalda MUHIMLIK ustuni yo'q edi (mobil kartada bor) — ijro
+ *    nazoratida bu ikkinchi eng muhim maydon. Qo'shildi.
+ *  - min-w-[980px] + table-fixed + qattiq colgroup: 768–979px da yarim satr
+ *    ko'rinardi, 1440px+ da bo'sh joy qolardi → moslashuvchan ustunlar,
+ *    kamroq muhim ustunlar kichik ekranda yashiriladi.
+ *  - "Bajarilmadi" va "Nazoratdan yechildi" bir xil ko'rinardi → status
+ *    ranglari lib/status-styles.ts dan, uzuq chegara bilan ajratilgan.
+ *  - toLocaleDateString("uz-UZ") tanlangan tildan qat'i nazar qotib qolgan edi.
+ */
+
+type SortKey = "title" | "deadline" | "created_at" | "status" | "priority"
 
 type TaskTableProps = {
   tasks: Task[]
   onView?: (task: Task) => void
   onEdit?: (task: Task) => void
-  onDelete?: (taskId: number) => void
+  onDelete?: (taskId: number | string) => void
+  /** Server tomonida saralash — berilmasa sarlavhalar bosilmaydi */
+  sortKey?: SortKey
+  sortDir?: "asc" | "desc"
+  onSortChange?: (key: SortKey) => void
+  /** Bo'sh holatda ko'rsatiladigan harakat tugmasi */
+  emptyAction?: React.ReactNode
+  canEdit?: boolean
+  canDelete?: boolean
 }
 
-export function TaskTable({ tasks }: TaskTableProps) {
+export function TaskTable({
+  tasks,
+  onView,
+  onEdit,
+  onDelete,
+  sortKey,
+  sortDir = "desc",
+  onSortChange,
+  emptyAction,
+  canEdit = false,
+  canDelete = false,
+}: TaskTableProps) {
   const router = useRouter()
   const t = useTranslation()
+  const { language: locale } = useI18n()
 
-  const statusLabels: Record<string, string> = {
-    YANGI: t.task.statuses.NEW,
-    IJRODA: t.task.statuses.IN_PROGRESS,
-    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
-    BAJARILDI: t.task.statuses.COMPLETED,
-    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
-    MUDDATI_KECH: t.task.statuses.OVERDUE,
-    BAJARILMADI: t.task.statuses.FAILED,
-    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
-  }
-
-  const priorityLabels: Record<string, string> = {
-    PAST: t.task.priorities.PAST,
-    ODDIY: t.task.priorities.ODDIY,
-    YUQORI: t.task.priorities.YUQORI,
-    FAVQULODDA: t.task.priorities.FAVQULODDA,
-    MUHIM: t.task.priorities.MUHIM,
-    SHOSHILINCH: t.task.priorities.SHOSHILINCH,
-    MUHIM_SHOSHILINCH: t.task.priorities.MUHIM_SHOSHILINCH,
-  }
+  const dateFmt = useMemo(
+    () =>
+      new Intl.DateTimeFormat(intlLocale(locale), {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    [locale],
+  )
 
   const categoryLabels: Record<string, string> = {
     IJTIMOIY: t.task.categories.IJTIMOIY,
@@ -51,167 +95,202 @@ export function TaskTable({ tasks }: TaskTableProps) {
     SOG_LIQNI_SAQLASH: t.task.categories.SOG_LIQNI_SAQLASH,
     BOSHQA: t.task.categories.BOSHQA,
   }
-  
+
+  // "Ko'rish" satrni bosish bilan bir xil, shuning uchun menyu faqat
+  // tahrirlash yoki o'chirish mavjud bo'lganda ko'rsatiladi.
+  const hasActions = Boolean((canEdit && onEdit) || (canDelete && onDelete))
+
   if (tasks.length === 0) {
     return (
-      <PremiumEmptyState
-        icon={FileX}
-        title={t.tasks.emptyTitle}
-        description={t.tasks.emptyDescription}
-        tone="from-cyan-50 to-slate-100 text-slate-500"
-      />
+      <PremiumTableShell icon={ClipboardList} title={t.tasks.listTitle ?? "Topshiriqlar ro'yxati"}>
+        <PremiumEmptyState
+          icon={FileX}
+          title={t.tasks.emptyTitle}
+          description={t.tasks.emptyDescription}
+          action={emptyAction}
+        />
+      </PremiumTableShell>
     )
+  }
+
+  const open = (task: Task) => {
+    if (onView) onView(task)
+    else router.push(`/dashboard/tasks/${task.id}`)
+  }
+
+  const rowKeyDown = (e: React.KeyboardEvent, task: Task) => {
+    if (e.key === "Enter" || e.key === " ") {
+      // Satr ichidagi tugma/menyu bosilganda satr ochilmasligi kerak
+      if ((e.target as HTMLElement).closest("[data-row-action]")) return
+      e.preventDefault()
+      open(task)
+    }
   }
 
   return (
     <PremiumTableShell
-      icon={ClipboardListIcon}
-      title="Topshiriqlar ro'yxati"
-      countLabel={`${tasks.length} ta topshiriq`}
-      accentClassName="bg-gradient-to-r from-cyan-50/55 via-white/30 to-amber-50/35"
+      icon={ClipboardList}
+      title={t.tasks.listTitle ?? "Topshiriqlar ro'yxati"}
+      countLabel={String(tasks.length)}
     >
-      <div className="grid gap-3 p-4 md:hidden">
+      {/* ---------------------------------------------------------- MOBIL */}
+      <ul className="contain-list divide-y divide-border md:hidden">
         {tasks.map((task) => {
-          const isOverdue = task.deadline && new Date(task.deadline) < new Date() &&
-            !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
-          const organizationsText = getOrganizationsText(task)
+          const overdue = isOverdue(task)
+          const orgs = getOrganizationsText(task)
 
           return (
-            <article
-              key={task.id}
-              className={cn(
-                "rounded-[22px] border bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]",
-                isOverdue ? "border-red-200" : "border-cyan-100/70",
-              )}
-            >
-              <button type="button" onClick={() => router.push(`/dashboard/tasks/${task.id}`)} className="w-full text-left">
-                <p className="break-words text-sm font-semibold text-slate-900">{task.title || "—"}</p>
-                <p className="mt-2 text-sm text-slate-600">{categoryLabels[task.category] || task.category || "—"}</p>
-                <p className="mt-1 break-words text-sm leading-6 text-slate-500">{organizationsText || "Tashkilot biriktirilmagan"}</p>
-              </button>
+            <li key={task.id}>
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={() => open(task)}
+                onKeyDown={(e) => rowKeyDown(e, task)}
+                className="row-link block w-full px-4 py-3.5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 break-words text-md font-semibold text-foreground">
+                    {task.title || "—"}
+                  </p>
+                  {hasActions && (
+                    <RowActions
+                      task={task}
+                      onView={onView}
+                      onEdit={canEdit ? onEdit : undefined}
+                      onDelete={canDelete ? onDelete : undefined}
+                      labels={t}
+                    />
+                  )}
+                </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Badge className={cn(
-                  "border-0",
-                  task.status === "YANGI" && "bg-blue-100 text-blue-700",
-                  task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
-                  task.status === "TEKSHIRUVDA" && "bg-purple-100 text-purple-700",
-                  task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
-                  task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
-                  task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
-                  task.status === "BAJARILMADI" && "bg-indigo-50/50 text-slate-700",
-                  task.status === "NAZORATDAN_YECHILDI" && "bg-indigo-50/50 text-slate-700"
-                )}>
-                  {statusLabels[task.status] || task.status}
-                </Badge>
-                <Badge className={cn("border-0", PRIORITY_COLORS[task.priority] || "bg-slate-100 text-slate-700")}>
-                  {priorityLabels[task.priority] || task.priority}
-                </Badge>
-              </div>
+                <p className="mt-1 break-words text-sm text-muted-foreground">
+                  {orgs || "Tashkilot biriktirilmagan"}
+                </p>
 
-              <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-                <span className={cn("flex items-center gap-1", isOverdue && "font-semibold text-red-600")}>
-                  {isOverdue && <AlertTriangle className="h-3.5 w-3.5" />}
-                  Muddat: {formatTaskDate(task.deadline || task.due_date)}
-                </span>
-                <span>
-                  Yaratilgan: {formatTaskDate(task.created_at)}
-                </span>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <TaskStatusBadge status={task.status} size="sm" showHint />
+                  <PriorityBadge priority={task.priority} size="sm" />
+                  {task.category && (
+                    <span className="badge-status badge-status-plain st-bajarilmadi text-2xs">
+                      {categoryLabels[task.category] || task.category}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1",
+                      overdue && "font-semibold text-destructive",
+                    )}
+                  >
+                    {overdue && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
+                    {t.tasks.deadlineLabel}: {fmt(dateFmt, task.deadline || task.due_date)}
+                  </span>
+                  <span>Yaratilgan: {fmt(dateFmt, task.created_at)}</span>
+                </div>
               </div>
-            </article>
+            </li>
           )
         })}
-      </div>
+      </ul>
 
-      <div className="hidden overflow-x-auto md:block">
-        <Table className="min-w-[980px] table-fixed">
-          <colgroup>
-            <col className="w-[300px]" />
-            <col className="w-[160px]" />
-            <col className="w-[220px]" />
-            <col className="w-[140px]" />
-            <col className="w-[140px]" />
-            <col className="w-[160px]" />
-          </colgroup>
+      {/* -------------------------------------------------------- DESKTOP */}
+      <div className="scroll-x hidden md:block">
+        <Table className="min-w-[760px]">
           <TableHeader>
-            <TableRow className="border-b border-cyan-100/60 bg-gradient-to-r from-cyan-50/70 via-white to-slate-50/80 hover:bg-gradient-to-r">
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">{t.tasks.titleLabel}</TableHead>
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">{t.tasks.categoryLabel}</TableHead>
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">{t.tasks.organizationsLabel}</TableHead>
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">{t.tasks.deadlineLabel}</TableHead>
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">Yaratilgan sana</TableHead>
-              <TableHead className="h-12 px-4 py-3 text-sm font-semibold text-slate-800">{t.tasks.statusLabel}</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <SortableHead k="title" {...{ sortKey, sortDir, onSortChange }} className="w-[26%]">
+                {t.tasks.titleLabel}
+              </SortableHead>
+              <TableHead className="hidden w-[18%] lg:table-cell">
+                {t.tasks.organizationsLabel}
+              </TableHead>
+              <SortableHead k="priority" {...{ sortKey, sortDir, onSortChange }} className="w-[11%]">
+                Muhimlik
+              </SortableHead>
+              <SortableHead k="deadline" {...{ sortKey, sortDir, onSortChange }} className="w-[13%]">
+                {t.tasks.deadlineLabel}
+              </SortableHead>
+              <TableHead className="hidden w-[13%] xl:table-cell">Yaratilgan</TableHead>
+              <SortableHead k="status" {...{ sortKey, sortDir, onSortChange }} className="w-[15%]">
+                {t.tasks.statusLabel}
+              </SortableHead>
+              {hasActions && (
+                <TableHead className="w-[56px] text-right">
+                  <span className="sr-only">Amallar</span>
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="contain-list">
             {tasks.map((task) => {
-              const isOverdue = task.deadline && new Date(task.deadline) < new Date() &&
-                !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
-              const organizationsText = getOrganizationsText(task)
+              const overdue = isOverdue(task)
+              const orgs = getOrganizationsText(task)
 
               return (
                 <TableRow
                   key={task.id}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={task.title || undefined}
+                  onClick={() => open(task)}
+                  onKeyDown={(e) => rowKeyDown(e, task)}
                   className={cn(
-                    "h-[72px] cursor-pointer align-middle border-b border-slate-200/80 odd:bg-white even:bg-slate-50/70 hover:bg-cyan-50/70",
-                    isOverdue && "odd:bg-red-50/80 even:bg-red-50/70 hover:bg-red-50"
+                    "row-link h-14",
+                    overdue && "bg-destructive-soft/40 hover:bg-destructive-soft/70",
                   )}
-                  onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
                 >
-                  <TableCell className="px-4 py-3 align-middle">
-                    <TruncatedCellText className="text-sm font-semibold text-slate-900" title={task.title || "—"}>
+                  <TableCell className="max-w-0">
+                    <p className="truncate font-semibold text-foreground" title={task.title || "—"}>
                       {task.title || "—"}
-                    </TruncatedCellText>
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground lg:hidden" title={orgs}>
+                      {orgs || "—"}
+                    </p>
                   </TableCell>
-                  <TableCell className="px-4 py-3 align-middle">
-                    <TruncatedCellText className="text-sm font-medium text-slate-700" title={categoryLabels[task.category] || task.category || "—"}>
-                      {categoryLabels[task.category] || task.category || "—"}
-                    </TruncatedCellText>
+
+                  <TableCell className="hidden max-w-0 lg:table-cell">
+                    <p className="truncate text-muted-foreground" title={orgs || "—"}>
+                      {orgs || "—"}
+                    </p>
                   </TableCell>
-                  <TableCell className="px-4 py-3 align-middle">
-                    <TruncatedCellText className="text-sm text-slate-700" title={organizationsText || "—"}>
-                      {organizationsText || "—"}
-                    </TruncatedCellText>
+
+                  <TableCell>
+                    <PriorityBadge priority={task.priority} size="sm" />
                   </TableCell>
-                  <TableCell className="px-4 py-3 align-middle">
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-sm font-medium text-ellipsis",
-                        isOverdue ? "text-red-600" : "text-slate-600"
-                      )}
-                      title={formatTaskDate(task.deadline || task.due_date)}
-                    >
-                      {isOverdue && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                        {formatTaskDate(task.deadline || task.due_date)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 align-middle">
-                    <TruncatedCellText className="text-sm font-medium text-slate-600" title={formatTaskDate(task.created_at)}>
-                      {formatTaskDate(task.created_at)}
-                    </TruncatedCellText>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 align-middle">
+
+                  <TableCell>
                     <span
                       className={cn(
-                        "inline-flex min-h-9 min-w-[112px] max-w-full items-center justify-center overflow-hidden rounded-full px-3 py-1.5 text-center text-xs font-semibold shadow-sm",
-                        task.status === "YANGI" && "bg-blue-100 text-blue-700",
-                        task.status === "IJRODA" && "bg-emerald-100 text-emerald-700",
-                        task.status === "TEKSHIRUVDA" && "bg-purple-100 text-purple-700",
-                        task.status === "BAJARILDI" && "bg-teal-100 text-teal-700",
-                        task.status === "QAYTA_IJROGA_YUBORILDI" && "bg-amber-100 text-amber-700",
-                        task.status === "MUDDATI_KECH" && "bg-red-100 text-red-700",
-                        task.status === "BAJARILMADI" && "bg-indigo-50/50 text-slate-700",
-                        task.status === "NAZORATDAN_YECHILDI" && "bg-indigo-50/50 text-slate-700"
+                        "inline-flex items-center gap-1.5 whitespace-nowrap font-medium tabular-nums",
+                        overdue ? "text-destructive" : "text-muted-foreground",
                       )}
-                      title={statusLabels[task.status] || task.status}
                     >
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                        {statusLabels[task.status] || task.status}
-                      </span>
+                      {overdue && <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />}
+                      {fmt(dateFmt, task.deadline || task.due_date)}
                     </span>
                   </TableCell>
+
+                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground xl:table-cell">
+                    {fmt(dateFmt, task.created_at)}
+                  </TableCell>
+
+                  <TableCell>
+                    <TaskStatusBadge status={task.status} showHint />
+                  </TableCell>
+
+                  {hasActions && (
+                    <TableCell className="text-right">
+                      <RowActions
+                        task={task}
+                        onView={onView}
+                        onEdit={canEdit ? onEdit : undefined}
+                        onDelete={canDelete ? onDelete : undefined}
+                        labels={t}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}
@@ -222,42 +301,124 @@ export function TaskTable({ tasks }: TaskTableProps) {
   )
 }
 
-function ClipboardListIcon(props: React.ComponentProps<typeof AlertTriangle>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><path d="M9 2h6"/><path d="M10 5h4"/><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 10h6"/><path d="M9 14h6"/><path d="M9 18h4"/></svg>
+/* ------------------------------------------------------------- YORDAMCHILAR */
+
+function SortableHead({
+  k,
+  sortKey,
+  sortDir,
+  onSortChange,
+  className,
+  children,
+}: {
+  k: SortKey
+  sortKey?: SortKey
+  sortDir?: "asc" | "desc"
+  onSortChange?: (key: SortKey) => void
+  className?: string
+  children: React.ReactNode
+}) {
+  const active = sortKey === k
+  if (!onSortChange) {
+    return <TableHead className={className}>{children}</TableHead>
+  }
+  return (
+    <TableHead
+      className={className}
+      aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onSortChange(k)}
+        className="inline-flex items-center gap-1 rounded-xs font-semibold hover:text-foreground"
+      >
+        {children}
+        <span aria-hidden className={cn("text-2xs", active ? "opacity-100" : "opacity-30")}>
+          {active && sortDir === "asc" ? "▲" : "▼"}
+        </span>
+      </button>
+    </TableHead>
+  )
+}
+
+function RowActions({
+  task,
+  onView,
+  onEdit,
+  onDelete,
+  labels,
+}: {
+  task: Task
+  onView?: (task: Task) => void
+  onEdit?: (task: Task) => void
+  onDelete?: (id: number | string) => void
+  labels: any
+}) {
+  return (
+    <div data-row-action onClick={(e) => e.stopPropagation()}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={`${task.title ?? "Topshiriq"} — amallar`}
+        >
+          <MoreHorizontal className="h-4 w-4" aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          {onView && (
+            <DropdownMenuItem onSelect={() => onView(task)}>
+              <Eye className="mr-2 h-4 w-4" aria-hidden />
+              {labels.common?.view ?? "Ko'rish"}
+            </DropdownMenuItem>
+          )}
+          {onEdit && (
+            <DropdownMenuItem onSelect={() => onEdit(task)}>
+              <Pencil className="mr-2 h-4 w-4" aria-hidden />
+              {labels.common?.edit ?? "Tahrirlash"}
+            </DropdownMenuItem>
+          )}
+          {onDelete && (
+            <DropdownMenuItem
+              onSelect={() => onDelete(task.id)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+              {labels.common?.delete ?? "O'chirish"}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+function isOverdue(task: Task) {
+  if (!task.deadline) return false
+  if (TASK_STATUS_TERMINAL.has(task.status) || task.status === "BAJARILDI") return false
+  return new Date(task.deadline) < new Date()
 }
 
 function getOrganizationsText(task: Task) {
   return (task.assigned_organizations || [])
-    .map((org: any) => (typeof org === "object" ? (org.organization?.name || org.name) : org))
+    .map((org: any) => (typeof org === "object" ? org.organization?.name || org.name : org))
     .filter(Boolean)
     .join(", ")
 }
 
-function formatTaskDate(value?: string | null) {
+function fmt(f: Intl.DateTimeFormat, value?: string | null) {
   if (!value) return "—"
-
-  return new Date(value).toLocaleDateString("uz-UZ", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? "—" : f.format(d)
 }
 
-function TruncatedCellText({
-  children,
-  className,
-  title,
-}: {
-  children: React.ReactNode
-  className?: string
-  title: string
-}) {
-  return (
-    <div
-      className={cn("overflow-hidden whitespace-nowrap text-ellipsis", className)}
-      title={title}
-    >
-      {children}
-    </div>
-  )
+function intlLocale(locale: string) {
+  switch (locale) {
+    case "ru":
+      return "ru-RU"
+    case "en":
+      return "en-GB"
+    case "uz-cyrl":
+      return "uz-Cyrl-UZ"
+    default:
+      return "uz-Latn-UZ"
+  }
 }

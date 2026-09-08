@@ -24,7 +24,13 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, WS_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, approveTask, rejectTask, requestDeadlineExtension, markTaskComplete } from "@/lib/api"
+import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, WS_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, requestDeadlineExtension } from "@/lib/api"
+// approveTask/rejectTask/markTaskComplete olib tashlandi:
+//   rejectTask() mavjud bo'lmagan /tasks/{id}/reject/ ga so'rov yuborardi (404),
+//   markTaskComplete() esa fayl qabul qilmaydi - shuning uchun topshiriq
+//   nol isbot bilan "bajarildi" bo'lardi. To'g'ri endpointlar approval.api da.
+import { approveTaskExecution, returnTaskForRework } from "@/lib/api/approval.api"
+import { ReportDialog, ReturnReasonDialog } from "@/components/dashboard/tasks/task-action-dialogs"
 import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import {
@@ -83,6 +89,9 @@ export default function TaskDetailPage() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [isLocationLoading, setIsLocationLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isReportOpen, setIsReportOpen] = useState(false)
+  const [isReturnOpen, setIsReturnOpen] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   
   // Edit form state
   const [editTitle, setEditTitle] = useState("")
@@ -239,9 +248,12 @@ export default function TaskDetailPage() {
   const canClose = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
   const canReassign = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
   // Tashkilot xodimlari "Bajarildi" deb belgilashi mumkin, lekin muddatni uzaytira olmaydi
-  const canMarkComplete = ["IJRODA", "TEKSHIRUVDA"].includes(task.status) && isOrgUser
+  // Ijrochi YANGI va QAYTA_IJROGA_YUBORILDI holatlaridan ham hisobot topshira oladi
+  const canMarkComplete = ["YANGI", "IJRODA", "TEKSHIRUVDA", "QAYTA_IJROGA_YUBORILDI", "MUDDATI_KECH"].includes(task.status) && isOrgUser
   // Muddat uzaytirish faqat adminlar uchun
-  const canExtend = (["IJRODA", "TEKSHIRUVDA", "MUDDATI_KECH"].includes(task.status)) && isAdmin
+  // Backend extend_request faqat TASHKILOT rollariga ruxsat beradi (CanExecuteTasks).
+  // Ilgari tugma isAdmin uchun chiqarilardi - ya'ni faqat 403 oladiganlarga.
+  const canExtend = (["IJRODA", "TEKSHIRUVDA", "MUDDATI_KECH", "QAYTA_IJROGA_YUBORILDI"].includes(task.status)) && isOrgUser
   
   // Handle save task edits
   const handleSaveTask = async () => {
@@ -296,54 +308,54 @@ export default function TaskDetailPage() {
     }
   }
   
-  // Handle mark complete (tashkilot uchun)
-  const handleMarkComplete = async () => {
-    if (!confirm("Topshiriqni bajarildi deb belgilamoqchimisiz?")) return
-    
-    setIsSaving(true)
-    try {
-      const updatedTask = await markTaskComplete(id)
-      setTask(updatedTask)
-      refreshTimeline()
-      alert("Topshiriq bajarildi deb belgilandi!")
-    } catch (error) {
-      console.error("Mark complete error:", error)
-      alert("Topshiriqni bajarildi deb belgilashda xatolik yuz berdi")
-    } finally {
-      setIsSaving(false)
-    }
+  // Hisobot va ISBOT topshirish oynasini ochadi.
+  const handleMarkComplete = () => {
+    setActionError(null)
+    setIsReportOpen(true)
   }
-  
-  // Handle approve/close task
+
+  // Nazoratdan yechish (faqat hokim)
   const handleApproveTask = async () => {
     if (!confirm("Topshiriqni nazoratdan yechmoqchimisiz?")) return
-    
+
     setIsSaving(true)
+    setActionError(null)
     try {
-      const updatedTask = await approveTask(id, { comment: "Topshiriq nazoratdan yechildi" })
-      setTask(updatedTask)
+      const updatedTask = await approveTaskExecution(id, {
+        comment: "Topshiriq nazoratdan yechildi",
+      })
+      setTask(updatedTask as any)
       refreshTimeline()
-    } catch (error) {
-      console.error("Approve task error:", error)
-      alert("Topshiriqni tasdiqlashda xatolik yuz berdi")
+    } catch (error: any) {
+      setActionError(
+        error?.data?.detail || error?.message || "Topshiriqni tasdiqlab bo'lmadi"
+      )
     } finally {
       setIsSaving(false)
     }
   }
-  
-  // Handle reject (reassign) task
-  const handleRejectTask = async () => {
-    const reason = prompt("Qayta ijroga yuborish sababini kiriting:")
-    if (!reason?.trim()) return
-    
+
+  // Qayta ijroga yuborish - sabab majburiy, oyna orqali olinadi
+  const handleRejectTask = () => {
+    setActionError(null)
+    setIsReturnOpen(true)
+  }
+
+  const submitReturn = async (reason: string) => {
     setIsSaving(true)
+    setActionError(null)
     try {
-      const updatedTask = await rejectTask(id, { comment: reason })
-      setTask(updatedTask)
+      const updatedTask = await returnTaskForRework(id, reason)
+      setTask(updatedTask as any)
+      setIsReturnOpen(false)
       refreshTimeline()
-    } catch (error) {
-      console.error("Reject task error:", error)
-      alert("Topshiriqni qayta ijroga yuborishda xatolik yuz berdi")
+    } catch (error: any) {
+      setActionError(
+        error?.data?.comment?.[0] ||
+          error?.data?.detail ||
+          error?.message ||
+          "Qayta ijroga yuborib bo'lmadi"
+      )
     } finally {
       setIsSaving(false)
     }
@@ -1222,7 +1234,38 @@ export default function TaskDetailPage() {
             </PremiumSideCard>
           </div>
         </div>
+        {actionError && (
+          <p
+            role="alert"
+            className="mt-4 rounded-md bg-destructive-soft px-3 py-2.5 text-sm text-destructive-soft-foreground"
+          >
+            {actionError}
+          </p>
+        )}
       </DashboardDetailFrame>
+
+      {isReportOpen && (
+        <ReportDialog
+          taskId={id}
+          taskTitle={task.title}
+          onClose={() => setIsReportOpen(false)}
+          onSubmitted={(updated) => {
+            setTask(updated as any)
+            setIsReportOpen(false)
+            refreshTimeline()
+          }}
+        />
+      )}
+
+      {isReturnOpen && (
+        <ReturnReasonDialog
+          subtitle={task.title}
+          busy={isSaving}
+          error={actionError}
+          onCancel={() => setIsReturnOpen(false)}
+          onSubmit={submitReturn}
+        />
+      )}
     </>
   )
 }

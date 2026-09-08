@@ -1,686 +1,1063 @@
-/* ═══════════════════════════════════════════════════════════════
-   E-Hokimiyat Government Portal — Premium Design System v3.0
-   ═══════════════════════════════════════════════════════════════ */
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@layer utilities {
-  .overflow-wrap-anywhere {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
+/* =============================================================================
+   E-HOKIMIYAT — DESIGN SYSTEM v4
+   Tailwind CSS v4. Bitta manba: tokenlar :root da, @theme inline orqali
+   Tailwind utility'lariga bog'lanadi. @theme bo'lmasa bg-card / text-primary /
+   border-border kabi class'lar UMUMAN kompilyatsiya qilinmaydi.
+   Ranglar WCAG 2.1 AA (matn 4.5:1, katta matn 3:1) bo'yicha tekshirilgan.
+   ============================================================================= */
+
+@custom-variant dark (&:is(.dark *));
+
+/* -------------------------------------------------------------------- SHRIFT
+   Inter o'z serverimizdan beriladi (public/fonts) — Google CDN'ga bog'liqlik
+   yo'q, ichki tarmoqda ham ishlaydi. Variable shrift: 100–900 og'irliklar
+   bitta faylda. unicode-range bo'yicha bo'lingan, shuning uchun lotin
+   sahifada faqat ~48KB yuklanadi, kirill kerak bo'lganda qo'shiladi.
+   ---------------------------------------------------------------------------*/
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-cyrillic-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-cyrillic-ext-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F,
+    U+FE2E-FE2F;
 }
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.18); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.35); }
-}
-
-/* ─── Design Tokens ────────────────────────────────────────── */
+/* ---------------------------------------------------------------- LIGHT TEMA */
 :root {
-  --background: #f5f7ff;
-  --background-gradient:
-    radial-gradient(ellipse 1600px 900px at 0% 0%, rgba(99,102,241,0.13), transparent 60%),
-    radial-gradient(ellipse 1200px 700px at 100% 8%, rgba(6,182,212,0.10), transparent 55%),
-    radial-gradient(ellipse 900px 600px at 35% 95%, rgba(168,85,247,0.09), transparent 55%),
-    radial-gradient(ellipse 700px 500px at 90% 65%, rgba(236,72,153,0.05), transparent 50%),
-    radial-gradient(ellipse 500px 400px at 15% 50%, rgba(16,185,129,0.04), transparent 50%),
-    linear-gradient(145deg, #f5f7ff 0%, #eef0fb 25%, #f0ecff 50%, #e8f4fe 75%, #f5f7ff 100%);
+  color-scheme: light;
 
-  --foreground: #0f172a;
-  --card: rgba(255,255,255,0.82);
-  --card-foreground: #0f172a;
-  --popover: rgba(255,255,255,0.97);
-  --popover-foreground: #0f172a;
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-  --secondary: rgba(241,245,249,0.85);
-  --secondary-foreground: #0f172a;
-  --muted: rgba(248,250,252,0.9);
-  --muted-foreground: #64748b;
-  --accent: rgba(224,231,255,0.7);
-  --accent-foreground: #0f172a;
-  --destructive: #ef4444;
+  /* Sirtlar */
+  --background: #f5f7fb;
+  --foreground: #0d1524; /* 16.4:1 on card */
+  --card: #ffffff;
+  --card-foreground: #0d1524;
+  --popover: #ffffff;
+  --popover-foreground: #0d1524;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef1f6;
+
+  /* Brend */
+  --primary: #3366ff;
+  --primary-foreground: #ffffff; /* 4.62:1 */
+  --primary-hover: #2451d6;
+  --primary-active: #1c41ad;
+  --primary-soft: #ebf0ff;
+  --primary-soft-foreground: #1e40af; /* 7.9:1 on soft */
+
+  /* Neytral */
+  --secondary: #eef1f6;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f4f9;
+  --muted-foreground: #5a6a85; /* 5.0:1 on card, 4.7:1 on muted */
+  --accent: #ebf0ff;
+  --accent-foreground: #1e40af;
+
+  --border: #e3e8f0;
+  --border-strong: #cbd5e3;
+  --input: #dde4ef;
+  --ring: #3366ff;
+
+  /* Semantik */
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: rgba(199,210,254,0.40);
-  --input: rgba(255,255,255,0.95);
-  --ring: #6366f1;
-  --chart-1: #6366f1;
-  --chart-2: #06b6d4;
-  --chart-3: #10b981;
-  --chart-4: #f97316;
-  --chart-5: #8b5cf6;
-  --radius: 0.75rem;
-  --sidebar: rgba(255,255,255,0.92);
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0891b2;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(236,254,255,0.88);
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: rgba(186,230,253,0.45);
-  --sidebar-ring: #0891b2;
-  --warning: #f59e0b;
-  --warning-foreground: #1e293b;
-  --success: #10b981;
-  --success-foreground: #ffffff;
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --destructive-soft: #feecef;
+  --destructive-soft-foreground: #b91c1c;
 
-  /* Premium gradients */
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-  --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  --gradient-warm: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #ef4444 100%);
-  --gradient-surface: linear-gradient(160deg, rgba(255,255,255,0.92) 0%, rgba(248,250,255,0.85) 100%);
-  --shadow-card: 0 1px 3px rgba(99,102,241,0.05), 0 4px 16px rgba(99,102,241,0.04);
-  --shadow-card-hover: 0 8px 30px rgba(99,102,241,0.12), 0 2px 8px rgba(99,102,241,0.06);
-  --shadow-elevated: 0 20px 60px -15px rgba(99,102,241,0.18), 0 8px 20px -8px rgba(0,0,0,0.06);
+  --success: #047857;
+  --success-foreground: #ffffff;
+  --success-soft: #e9f7f0;
+  --success-soft-foreground: #046c4e;
+
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --warning-soft: #fff7e6;
+  --warning-soft-foreground: #92400e;
+
+  --info: #1d4ed8;
+  --info-foreground: #ffffff;
+  --info-soft: #eff4ff;
+  --info-soft-foreground: #1d4ed8;
+
+  /* Topshiriq statuslari — surface / text / border uchligi.
+     Har bir matn o'z siniga nisbatan >= 4.7:1 */
+  --st-yangi-bg: #eff4ff;
+  --st-yangi-fg: #1d4ed8;
+  --st-yangi-bd: #c7d7fe;
+
+  --st-tekshiruvda-bg: #f3f0ff;
+  --st-tekshiruvda-fg: #6d28d9;
+  --st-tekshiruvda-bd: #ddd2fe;
+
+  --st-ijroda-bg: #fff7e6;
+  --st-ijroda-fg: #92400e;
+  --st-ijroda-bd: #fde3b0;
+
+  --st-bajarildi-bg: #e6f6fb;
+  --st-bajarildi-fg: #0e7490;
+  --st-bajarildi-bd: #b6e3f0;
+
+  --st-yechildi-bg: #e9f7f0;
+  --st-yechildi-fg: #047857;
+  --st-yechildi-bd: #b7e4cd;
+
+  --st-kech-bg: #feecef;
+  --st-kech-fg: #be123c;
+  --st-kech-bd: #fbcdd6;
+
+  --st-qayta-bg: #fff1e6;
+  --st-qayta-fg: #c2410c;
+  --st-qayta-bd: #fdd8b5;
+
+  --st-bajarilmadi-bg: #eef1f6;
+  --st-bajarilmadi-fg: #334155;
+  --st-bajarilmadi-bd: #cbd5e3;
+
+  /* Diagrammalar — ketma-ket ajratiladigan, ranglar ko'rligiga chidamli */
+  --chart-1: #3366ff;
+  --chart-2: #0e9488;
+  --chart-3: #f59e0b;
+  --chart-4: #7c3aed;
+  --chart-5: #e11d63;
+  --chart-6: #0e7490;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #3366ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ebf0ff;
+  --sidebar-accent-foreground: #1e40af;
+  --sidebar-border: #e3e8f0;
+  --sidebar-ring: #3366ff;
+
+  /* Radius shkalasi — 5 pog'ona, boshqa qiymat ishlatilmaydi */
+  --radius: 0.75rem; /* 12px */
+  --radius-xs: 0.375rem; /* 6px */
+  --radius-sm: 0.5rem; /* 8px */
+  --radius-md: 0.625rem; /* 10px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.25rem; /* 20px */
+
+  /* Shadow shkalasi — 4 pog'ona */
+  --shadow-xs: 0 1px 2px 0 rgb(13 21 36 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(13 21 36 / 0.06), 0 1px 2px -1px rgb(13 21 36 / 0.04);
+  --shadow-md: 0 4px 12px -2px rgb(13 21 36 / 0.08), 0 2px 6px -2px rgb(13 21 36 / 0.05);
+  --shadow-lg: 0 12px 32px -8px rgb(13 21 36 / 0.12), 0 4px 12px -4px rgb(13 21 36 / 0.06);
+  --shadow-focus: 0 0 0 3px rgb(51 102 255 / 0.18);
+
+  /* Harakat */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
 }
 
-/* ─── Base ──────────────────────────────────────────────────── */
-* {
-  border-color: var(--border);
-  outline-color: var(--ring);
+/* ----------------------------------------------------------------- DARK TEMA */
+.dark {
+  color-scheme: dark;
+
+  --background: #0a1020;
+  --foreground: #e8edf7;
+  --card: #121a2e;
+  --card-foreground: #e8edf7;
+  --popover: #16203a;
+  --popover-foreground: #e8edf7;
+  --surface-raised: #16203a;
+  --surface-sunken: #0d1424;
+
+  --primary: #5b84ff;
+  --primary-foreground: #06102a;
+  --primary-hover: #7597ff;
+  --primary-active: #486fe6;
+  --primary-soft: #1a2647;
+  --primary-soft-foreground: #a8c0ff;
+
+  --secondary: #1b2540;
+  --secondary-foreground: #e8edf7;
+  --muted: #16203a;
+  --muted-foreground: #97a6c2;
+  --accent: #1a2647;
+  --accent-foreground: #a8c0ff;
+
+  --border: #22304a;
+  --border-strong: #33415f;
+  --input: #22304a;
+  --ring: #5b84ff;
+
+  --destructive: #f05252;
+  --destructive-foreground: #1a0808;
+  --destructive-soft: #3a1620;
+  --destructive-soft-foreground: #fda4af;
+
+  --success: #34d399;
+  --success-foreground: #04160f;
+  --success-soft: #102b22;
+  --success-soft-foreground: #6ee7b7;
+
+  --warning: #fbbf24;
+  --warning-foreground: #1a1204;
+  --warning-soft: #33260c;
+  --warning-soft-foreground: #fcd34d;
+
+  --info: #60a5fa;
+  --info-foreground: #04101f;
+  --info-soft: #16264a;
+  --info-soft-foreground: #93c5fd;
+
+  --st-yangi-bg: #16264a;
+  --st-yangi-fg: #93c5fd;
+  --st-yangi-bd: #24396b;
+
+  --st-tekshiruvda-bg: #241a45;
+  --st-tekshiruvda-fg: #c4b5fd;
+  --st-tekshiruvda-bd: #3a2a6b;
+
+  --st-ijroda-bg: #33260c;
+  --st-ijroda-fg: #fcd34d;
+  --st-ijroda-bd: #4d3a12;
+
+  --st-bajarildi-bg: #0d2c36;
+  --st-bajarildi-fg: #67e8f9;
+  --st-bajarildi-bd: #14424f;
+
+  --st-yechildi-bg: #102b22;
+  --st-yechildi-fg: #6ee7b7;
+  --st-yechildi-bd: #1a4034;
+
+  --st-kech-bg: #3a1620;
+  --st-kech-fg: #fda4af;
+  --st-kech-bd: #57202f;
+
+  --st-qayta-bg: #3a2210;
+  --st-qayta-fg: #fdba74;
+  --st-qayta-bd: #57331a;
+
+  --st-bajarilmadi-bg: #1b2540;
+  --st-bajarilmadi-fg: #b6c2d9;
+  --st-bajarilmadi-bd: #33415f;
+
+  --chart-1: #5b84ff;
+  --chart-2: #2dd4bf;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #fb7185;
+  --chart-6: #22d3ee;
+
+  --sidebar: #121a2e;
+  --sidebar-foreground: #e8edf7;
+  --sidebar-primary: #5b84ff;
+  --sidebar-primary-foreground: #06102a;
+  --sidebar-accent: #1a2647;
+  --sidebar-accent-foreground: #a8c0ff;
+  --sidebar-border: #22304a;
+  --sidebar-ring: #5b84ff;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.5), 0 4px 12px -4px rgb(0 0 0 / 0.35);
+  --shadow-focus: 0 0 0 3px rgb(91 132 255 / 0.3);
+}
+
+/* ============================================================================
+   @theme inline — tokenlarni Tailwind utility'lariga bog'lash.
+   BU BLOK BO'LMASA bg-card, text-muted-foreground, border-border va yana
+   ~480 ta class ishlamaydi.
+   ============================================================================ */
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  /* Tipografiya shkalasi — faqat shu qiymatlar ishlatiladi */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem; /* 12px */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem; /* 13px */
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem; /* 14px — asosiy matn */
+  --text-base--line-height: 1.375rem;
+  --text-md: 0.9375rem; /* 15px */
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.0625rem; /* 17px */
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.25rem; /* 20px */
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem; /* 24px */
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem; /* 30px */
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem; /* 36px */
+  --text-4xl--line-height: 2.5rem;
+
+  --ease-out-soft: var(--ease-out);
 }
 
-body {
-  background-color: var(--background);
-  background-image: var(--background-gradient);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: var(--font-family);
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.6;
-  letter-spacing: -0.01em;
+/* ================================================================ BASE LAYER */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
+
+  * {
+    /* Fokus halqasi butun saytda bitta xil */
+    outline-color: var(--ring);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+
+  /* Sarlavhalar shkalasi */
+  h1 {
+    font-size: var(--text-2xl);
+    line-height: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: var(--text-xl);
+    line-height: 1.75rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: var(--text-lg);
+    line-height: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-size: var(--text-md);
+    line-height: 1.5rem;
+    font-weight: 600;
+  }
+
+  /* Klaviatura fokusi — har joyda ko'rinadigan, bitta uslub */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+  /* Sichqoncha bosishida halqa chiqmaydi */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* iOS'da inputga bosganda zoom bo'lmasligi uchun — faqat formalarga */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 1rem; /* 16px */
+    }
+  }
+
+  /* Skroll paneli */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: content-box;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  /* Tanlash */
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--primary-soft-foreground);
+  }
+
+  /* Placeholder kontrasti */
+  ::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+
+  /* Rasm va media hech qachon konteynerdan chiqmaydi */
+  img,
+  svg,
+  video,
+  canvas,
+  audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+    max-width: 100%;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
 }
 
-#main-content {
-  -webkit-overflow-scrolling: touch;
+/* ========================================================== KOMPONENT QATLAM */
+@layer components {
+  /* --- Status va muhimlik nishonlari — YAGONA manba.
+     Ilgari bir xil 8 status uchun 6 xil rang tizimi bor edi. --- */
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.1875rem 0.5rem;
+    border-radius: var(--radius-xs);
+    border: 1px solid transparent;
+    font-size: var(--text-xs);
+    line-height: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-status::before {
+    content: "";
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 999px;
+    background: currentColor;
+    flex: none;
+  }
+  .badge-status-plain::before {
+    display: none;
+  }
+
+  .st-yangi {
+    background: var(--st-yangi-bg);
+    color: var(--st-yangi-fg);
+    border-color: var(--st-yangi-bd);
+  }
+  .st-tekshiruvda {
+    background: var(--st-tekshiruvda-bg);
+    color: var(--st-tekshiruvda-fg);
+    border-color: var(--st-tekshiruvda-bd);
+  }
+  .st-ijroda {
+    background: var(--st-ijroda-bg);
+    color: var(--st-ijroda-fg);
+    border-color: var(--st-ijroda-bd);
+  }
+  .st-bajarildi {
+    background: var(--st-bajarildi-bg);
+    color: var(--st-bajarildi-fg);
+    border-color: var(--st-bajarildi-bd);
+  }
+  .st-yechildi {
+    background: var(--st-yechildi-bg);
+    color: var(--st-yechildi-fg);
+    border-color: var(--st-yechildi-bd);
+  }
+  .st-kech {
+    background: var(--st-kech-bg);
+    color: var(--st-kech-fg);
+    border-color: var(--st-kech-bd);
+  }
+  .st-qayta {
+    background: var(--st-qayta-bg);
+    color: var(--st-qayta-fg);
+    border-color: var(--st-qayta-bd);
+  }
+  /* "Bajarilmadi" — "Nazoratdan yechildi" bilan adashmasligi uchun
+     uzuq chegara bilan ajratiladi */
+  .st-bajarilmadi {
+    background: var(--st-bajarilmadi-bg);
+    color: var(--st-bajarilmadi-fg);
+    border-color: var(--st-bajarilmadi-bd);
+    border-style: dashed;
+  }
+
+  /* Favqulodda muhimlik — diqqatni tortadigan, lekin arzon animatsiya
+     (faqat opacity, box-shadow emas) */
+  .st-favqulodda::before {
+    animation: dot-pulse 1.8s var(--ease-out) infinite;
+  }
+
+  /* --- Kartalar --- */
+  .surface {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+  }
+  .surface-interactive {
+    transition: box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+  .surface-interactive:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+  }
+
+  /* --- Jadval satri (klaviaturaga ochiq satrlar uchun) --- */
+  .row-link {
+    cursor: pointer;
+    transition: background-color var(--dur-fast) linear;
+  }
+  .row-link:hover {
+    background: var(--muted);
+  }
+  .row-link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+    background: var(--accent);
+  }
+
+  /* --- Interaktiv xarita shakllari ---
+     Faqat fill va stroke o'tadi. `transition-all` yoki yo'lda CSS
+     filter/drop-shadow ishlatish taqiqlangan: bitta yo'l 18 KB geometriya
+     bo'lishi mumkin va har kadrda qayta rasterizatsiya qilinadi. */
+  .map-shape {
+    stroke: var(--border-strong);
+    stroke-width: 0.7;
+    transition: fill 150ms linear, stroke 150ms linear;
+    cursor: pointer;
+    outline: none;
+  }
+  .map-shape[data-hover="1"] {
+    stroke: var(--primary);
+    stroke-width: 1.6;
+  }
+  .map-shape[data-selected="1"] {
+    stroke: var(--primary);
+    stroke-width: 2.2;
+  }
+  .map-shape[data-dimmed="1"] {
+    opacity: 0.28;
+  }
+  .map-shape:focus-visible {
+    stroke: var(--ring);
+    stroke-width: 2.4;
+  }
+
+  /* --- Fon panjarasi (dashboard-shell ishlatadi) --- */
+  .bg-grid-pattern {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--border) 65%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--border) 65%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 32px 32px;
+  }
 }
 
-::selection {
-  background: rgba(99, 102, 241, 0.18);
-}
-
-/* ─── Premium Inputs ───────────────────────────────────────── */
-.input-modern {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.625rem;
-  border: 1.5px solid rgba(199,210,254,0.5);
-  background: rgba(255,255,255,0.9);
-  color: #1a202c;
-  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: 0 1px 2px rgba(99,102,241,0.04);
-}
-.input-modern:focus {
-  border-color: rgba(99,102,241,0.5);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1), 0 1px 2px rgba(99,102,241,0.04);
-  background: #ffffff;
-}
-.input-modern::placeholder { color: #94a3b8; }
-
-/* ─── Premium Buttons ──────────────────────────────────────── */
-.btn-modern {
-  padding: 0.625rem 1.25rem;
-  background: var(--gradient-primary);
-  color: #ffffff;
-  border-radius: 0.625rem;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
-  border: none;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.btn-modern::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
-}
-.btn-modern:hover::before { transform: translateX(100%); }
-.btn-modern:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99,102,241,0.35);
-}
-.btn-modern:active { transform: translateY(0) scale(0.98); }
-.btn-modern:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  background: rgba(255,255,255,0.85);
-  color: #334155;
-  border-radius: 0.625rem;
-  font-weight: 500;
-  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-  border: 1.5px solid rgba(199,210,254,0.5);
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-}
-.btn-secondary:hover {
-  background: rgba(255,255,255,0.95);
-  border-color: rgba(99,102,241,0.3);
-  box-shadow: 0 2px 8px rgba(99,102,241,0.08);
-}
-
-/* ─── Animated Text Gradient ───────────────────────────────── */
-.text-gradient-animated {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 30%, #06b6d4 70%, #6366f1 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradient-shift 4s ease-in-out infinite;
-}
-
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* ─── Hover Effects ────────────────────────────────────────── */
-.hover-lift-effect {
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.hover-lift-effect:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-}
-.hover-scale-effect {
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.hover-scale-effect:hover { transform: scale(1.02); }
-.hover-glow-effect {
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-}
-.hover-glow-effect:hover {
-  box-shadow: 0 0 30px rgba(99,102,241,0.2), 0 0 60px rgba(99,102,241,0.08);
-}
-
-/* ─── Glass Cards ──────────────────────────────────────────── */
-.card-modern {
-  background: var(--gradient-surface);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border-radius: 1rem;
-  box-shadow: var(--shadow-card);
-  border: 1px solid rgba(255,255,255,0.5);
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-}
-.card-modern:hover {
-  box-shadow: var(--shadow-card-hover);
-  background: rgba(255,255,255,0.92);
-  transform: translateY(-2px);
-  border-color: rgba(99,102,241,0.15);
-}
-
-.glass-card-premium {
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.6);
-  box-shadow:
-    0 4px 24px -4px rgba(99,102,241,0.08),
-    0 1px 3px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.8);
-  border-radius: 1rem;
-}
-
-.premium-gradient {
-  background: linear-gradient(135deg,
-    rgba(99,102,241,0.08) 0%,
-    rgba(139,92,246,0.04) 50%,
-    rgba(6,182,212,0.06) 100%);
-}
-
-/* ─── Grid Pattern ─────────────────────────────────────────── */
-.bg-grid-pattern {
-  background-image:
-    linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-/* ─── Premium Shadows ──────────────────────────────────────── */
-.modern-shadow-premium { box-shadow: var(--shadow-card); }
-.modern-shadow-premium:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-2px);
-}
-
-/* ─── Government Portal Cards ──────────────────────────────── */
-.gov-card {
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(16px) saturate(130%);
-  -webkit-backdrop-filter: blur(16px) saturate(130%);
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 14px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-}
-.gov-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--gradient-primary);
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
-}
-.gov-card:hover::before { opacity: 1; }
-.gov-card:hover {
-  background: rgba(255,255,255,0.95);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated);
-}
-
-/* ─── Keyframe Animations ──────────────────────────────────── */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse-modern {
-  0%, 100% {
-    opacity: 1; transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(99,102,241,0.3);
+/* ============================================================== ANIMATSIYALAR
+   Faqat kompozitsiyaga tushadigan xossalar: transform va opacity.
+   Ilgari box-shadow, border-radius va background-position cheksiz
+   animatsiya qilinardi — har kadrda to'liq repaint bo'lardi.
+   ============================================================================ */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.85; transform: scale(1.04);
-    box-shadow: 0 0 0 10px rgba(99,102,241,0);
+    opacity: 0.45;
+    transform: scale(0.82);
   }
-}
-
-@keyframes rotate-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes float-gentle {
-  0%, 100% { transform: translateY(0px) scale(1); opacity: 0.5; }
-  33% { transform: translateY(-8px) scale(1.02); opacity: 0.7; }
-  66% { transform: translateY(-4px) scale(0.98); opacity: 0.6; }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
 }
 
-@keyframes shimmer-premium {
-  0% { background-position: -200% center; opacity: 0; }
-  50% { opacity: 0.8; }
-  100% { background-position: 200% center; opacity: 0; }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-@keyframes bounce-in {
-  0% { opacity: 0; transform: scale(0.3); }
-  50% { opacity: 1; transform: scale(1.05); }
-  70% { transform: scale(0.95); }
-  100% { transform: scale(1); }
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.2); }
-  50% { box-shadow: 0 0 40px rgba(99,102,241,0.4); }
+.animate-float-gentle {
+  animation: float-gentle 9s var(--ease-out) infinite;
+  will-change: transform;
+}
+.animate-fade-in {
+  animation: fade-in 260ms var(--ease-out) both;
 }
 
-@keyframes gradient-orbit {
-  0% { transform: rotate(0deg) translateX(30px) rotate(0deg); }
-  100% { transform: rotate(360deg) translateX(30px) rotate(-360deg); }
+/* ================================================= AI YORDAMCHI — ROBOTCHA
+   Barcha animatsiyalar faqat transform va opacity ustida ishlaydi, shuning
+   uchun ular kompozitor qatlamida bajariladi va CPU'ni band qilmaydi.
+   Holatlar `data-state` orqali: idle | listening | thinking | done
+   ---------------------------------------------------------------------------*/
+.robot {
+  animation: robot-float 4.5s var(--ease-out) infinite;
+  will-change: transform;
+}
+.robot-shadow {
+  animation: robot-shadow 4.5s var(--ease-out) infinite;
+}
+/* Ko'z pirpirashi — scaleY, shuning uchun qayta chizish yo'q */
+.robot-eye {
+  transform-origin: center;
+  animation: robot-blink 6s steps(1, end) infinite;
+}
+.robot-eye--right {
+  animation-delay: 0.08s;
+}
+.robot-antenna-tip {
+  transform-origin: center;
+  animation: robot-glow 2.2s var(--ease-out) infinite;
+}
+.robot-chest {
+  transform-origin: center;
+  animation: robot-glow 3s var(--ease-out) infinite;
+}
+.robot-arm {
+  transform-origin: 50% 20%;
+}
+[data-state="idle"] .robot-arm--left {
+  animation: robot-wave-l 5s var(--ease-out) infinite;
+}
+[data-state="idle"] .robot-arm--right {
+  animation: robot-wave-r 5s var(--ease-out) infinite;
 }
 
-@keyframes morph-blob {
-  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-  50% { border-radius: 40% 60% 40% 60% / 40% 70% 50% 60%; }
-  75% { border-radius: 60% 30% 50% 40% / 70% 50% 60% 30%; }
+/* Tinglash: robot atrofida tarqaladigan halqalar */
+.robot-ring {
+  transform-origin: center;
+  opacity: 0;
+}
+[data-state="listening"] .robot-ring {
+  animation: robot-ring 2s var(--ease-out) infinite;
+}
+[data-state="listening"] .robot-ring:nth-of-type(2) {
+  animation-delay: 0.55s;
+}
+[data-state="listening"] .robot-ring:nth-of-type(3) {
+  animation-delay: 1.1s;
+}
+[data-state="listening"] .robot {
+  animation-duration: 2.4s;
 }
 
-/* ─── Animation Utilities ──────────────────────────────────── */
-.animate-spin { animation: spin 1s linear infinite; }
-.animate-pulse-modern:hover { animation: pulse-modern 2s cubic-bezier(0.4,0,0.6,1) infinite; }
-.animate-rotate-slow:hover { animation: rotate-slow 8s linear infinite; }
-.animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
-.animate-fade-in { animation: fade-in 0.4s ease-out; }
-.animate-slide-in-right { animation: slide-in-right 0.5s ease-out; }
-.animate-float-gentle { animation: float-gentle 8s ease-in-out infinite; }
+/* O'ylash: uchta nuqta */
+[data-state="thinking"] .robot-think {
+  animation: robot-think 1.4s var(--ease-out) infinite;
+}
+[data-state="thinking"] .robot-think:nth-of-type(2) {
+  animation-delay: 0.18s;
+}
+[data-state="thinking"] .robot-think:nth-of-type(3) {
+  animation-delay: 0.36s;
+}
 
-@media (max-width: 767px) {
-  body {
-    background-attachment: scroll;
+/* Tayyor: bir marta sakraydi */
+[data-state="done"] .robot {
+  animation: robot-nod 700ms var(--ease-out) 1;
+}
+
+@keyframes robot-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+@keyframes robot-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.28;
+  }
+  50% {
+    transform: scale(0.88);
+    opacity: 0.16;
+  }
+}
+@keyframes robot-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  94%,
+  97% {
+    transform: scaleY(0.12);
+  }
+}
+@keyframes robot-glow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.86);
+  }
+}
+@keyframes robot-wave-l {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+  78% {
+    transform: rotate(-16deg);
+  }
+  86% {
+    transform: rotate(-4deg);
+  }
+}
+@keyframes robot-wave-r {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+  78% {
+    transform: rotate(16deg);
+  }
+  86% {
+    transform: rotate(4deg);
+  }
+}
+@keyframes robot-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.62);
+
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+@keyframes robot-think {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+    opacity: 1;
+  }
+}
+@keyframes robot-nod {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  35% {
+    transform: translate3d(0, -10px, 0) rotate(-4deg);
+  }
+  70% {
+    transform: translate3d(0, 2px, 0) rotate(3deg);
+  }
+}
+
+/* Ovoz to'lqini — har bir ustun o'z kechikishi bilan */
+.wave-bar {
+  transform-origin: center;
+  animation: wave-bar 1.15s var(--ease-out) infinite;
+}
+@keyframes wave-bar {
+  0%,
+  100% {
+    transform: scaleY(0.24);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* ============================================================ FOYDALI QATLAM */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
   }
 
-  .bg-grid-pattern {
-    background-size: 32px 32px;
+  /* Mobil qurilmalarda tizim panellari ostiga tushmaslik uchun */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom, 0px);
+  }
+  .inset-safe-bottom {
+    bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Performance: disable expensive GPU effects on mobile */
-  .card-modern,
-  .glass-card-premium,
-  .btn-secondary {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  /* Mobil klaviatura ochilganda ham to'g'ri ishlaydigan balandlik */
+  .h-dvh {
+    height: 100dvh;
+  }
+  .min-h-dvh {
+    min-height: 100dvh;
   }
 
-  .card-modern,
-  .glass-card-premium {
-    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06) !important;
-    transform: none !important;
+  /* Katta ro'yxat/jadvallarni izolyatsiya qilib, layout narxini kamaytirish */
+  .contain-list {
+    contain: content;
   }
 
-  /* Tailwind backdrop blur utilities (e.g., `backdrop-blur-xl`) */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Gorizontal scroll konteyneri — jadvallar uchun majburiy */
+  .scroll-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ============================================================= PERFORMANS
+   Blur qimmat: backdrop-filter elementning orqasidagi hamma narsani har
+   kadrda qayta rasterizatsiya qiladi. Ilgari 161 ta backdrop-blur bor edi va
+   faqat mobilda o'chirilardi. Endi hamma joyda cheklanadi.
+   ============================================================================ */
+@media (prefers-reduced-transparency: reduce) {
   [class*="backdrop-blur"] {
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* Huge soft blurs (orbs/backgrounds) can cause scroll jank */
-  .blur-3xl,
-  .blur-2xl {
-    filter: none !important;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+/* Zaif qurilmalarda dekorativ blur va nurlarni butunlay o'chirish */
+@media (max-width: 1023px) {
+  [class*="backdrop-blur"] {
+    backdrop-filter: blur(6px) !important;
   }
+  .blur-3xl,
+  .blur-2xl {
+    filter: blur(40px) !important;
+  }
+}
 
+@media (max-width: 767px) {
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+  }
+  .blur-3xl,
+  .blur-2xl,
+  .blur-xl {
+    display: none !important;
+  }
+  .animate-float-gentle {
+    animation: none;
+  }
+}
+
+/* Harakatni kamaytirish so'ralgan bo'lsa — hammasi to'xtaydi */
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-
-  .animate-float-gentle,
-  .text-gradient-animated,
-  .hover-lift-effect,
-  .hover-scale-effect,
-  .hover-glow-effect {
-    animation: none !important;
-    transform: none !important;
+  html {
+    scroll-behavior: auto;
   }
 }
-.animate-float { animation: float-gentle 5s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
-.animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }
-.animate-morph { animation: morph-blob 12s ease-in-out infinite; }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
-}
-
-.shimmer-premium {
-  position: relative;
-  overflow: hidden;
-}
-.shimmer-premium::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-  animation: shimmer-premium 3.5s ease-in-out infinite;
-}
-
-/* ─── Loading States ───────────────────────────────────────── */
-.loading-skeleton {
-  background: linear-gradient(90deg, #eef2ff 25%, #e0e7ff 50%, #eef2ff 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.5rem;
-}
-
-.loading-spinner {
-  display: inline-block;
-  width: 20px; height: 20px;
-  border: 2px solid rgba(99,102,241,0.15);
-  border-top: 2px solid #6366f1;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.loading-dots {
-  display: inline-flex;
-  gap: 4px;
-}
-.loading-dots span {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background-color: #6366f1;
-  animation: pulse-modern 1.4s ease-in-out infinite both;
-}
-.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-.loading-dots span:nth-child(3) { animation-delay: 0; }
-
-/* ─── Status Badges ────────────────────────────────────────── */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  letter-spacing: 0.01em;
-}
-
-.priority-high {
-  background: linear-gradient(135deg, rgba(254,202,202,0.8), rgba(254,178,178,0.6));
-  color: #b91c1c;
-  backdrop-filter: blur(4px);
-}
-.priority-high:hover { background: rgba(254,202,202,1); }
-
-.priority-medium {
-  background: linear-gradient(135deg, rgba(254,240,138,0.8), rgba(253,230,110,0.6));
-  color: #a16207;
-  backdrop-filter: blur(4px);
-}
-.priority-medium:hover { background: rgba(254,240,138,1); }
-
-.priority-low {
-  background: linear-gradient(135deg, rgba(220,252,231,0.8), rgba(187,247,208,0.6));
-  color: #14532d;
-  backdrop-filter: blur(4px);
-}
-.priority-low:hover { background: rgba(220,252,231,1); }
-
-/* ─── Status Indicator ─────────────────────────────────────── */
-.status-indicator {
-  position: relative;
-  background: var(--gradient-primary);
-  box-shadow: 0 4px 10px rgba(99,102,241,0.25);
-  border-radius: inherit;
-}
-.status-indicator::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-  border-radius: inherit;
-}
-
-/* ─── Premium Input ────────────────────────────────────────── */
-.input-premium {
-  background: rgba(255,255,255,0.9);
-  border: 1.5px solid rgba(99,102,241,0.15);
-  backdrop-filter: blur(8px);
-  border-radius: 0.625rem;
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.input-premium:focus {
-  background: #ffffff;
-  border-color: rgba(99,102,241,0.45);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
-}
-
-/* ─── Premium Button ───────────────────────────────────────── */
-.btn-premium {
-  background: var(--gradient-primary);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: 0 4px 14px rgba(99,102,241,0.25);
-}
-.btn-premium::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.6s;
-}
-.btn-premium:hover::before { left: 100%; }
-.btn-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99,102,241,0.35);
-}
-
-/* ─── Interactive Card ─────────────────────────────────────── */
-.interactive-card {
-  position: relative;
-  overflow: hidden;
-}
-.interactive-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s;
-}
-.interactive-card:hover::before { transform: translateX(100%); }
-
-/* ─── Skeleton Loaders ─────────────────────────────────────── */
-.skeleton {
-  background: linear-gradient(90deg, #eef2ff 25%, #e0e7ff 50%, #eef2ff 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-.skeleton-text { height: 1rem; margin-bottom: 0.5rem; border-radius: 0.375rem; }
-.skeleton-text.large { height: 1.5rem; }
-.skeleton-text.small { height: 0.75rem; }
-.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
-.skeleton-card { height: 120px; border-radius: 0.75rem; }
-
-/* ─── Glassmorphism Utilities ──────────────────────────────── */
-.glass-effect {
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(255,255,255,0.3);
-}
-
-/* ─── Hover Utilities ──────────────────────────────────────── */
-.hover-lift {
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-elevated);
-}
-.hover-scale {
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.hover-scale:hover { transform: scale(1.02); }
-
-/* ─── Smooth Transitions ───────────────────────────────────── */
-a, button, input, select, textarea,
-[role="button"], .btn, .card, .badge,
-.nav-link, .sidebar-item, .menu-item {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* ─── Button Interactions ──────────────────────────────────── */
-.btn-glow:hover {
-  box-shadow: 0 0 24px rgba(99,102,241,0.35);
-  transform: translateY(-2px);
-}
-.btn-press:active { transform: translateY(0) scale(0.97); }
-
-/* ─── Responsive ───────────────────────────────────────────── */
-@media screen and (max-width: 640px) { html { font-size: 14px; } }
-@media screen and (max-width: 480px) { html { font-size: 13px; } }
-
-@media (hover: none) and (pointer: coarse) {
-  button, a, input, textarea, select {
-    min-height: 44px; min-width: 44px; font-size: 16px;
+/* Yuqori kontrast rejimi */
+@media (prefers-contrast: more) {
+  :root {
+    --border: #94a3b8;
+    --border-strong: #64748b;
+    --muted-foreground: #475569;
   }
-  button:active { transform: scale(0.95); transition: transform 0.1s ease; }
-  .hover-lift:hover, .hover-scale:hover, .hover-glow-effect:hover,
-  .hover-lift-effect:hover { transform: none; box-shadow: none; }
-  .touch-target { padding: 12px 16px; margin: 4px; }
+  .badge-status {
+    border-width: 2px;
+  }
 }
 
-@media screen and (max-width: 768px) {
-  .container { padding-left: 1rem; padding-right: 1rem; }
-  h1 { font-size: 1.5rem; }
-  h2 { font-size: 1.25rem; }
-  h3 { font-size: 1.125rem; }
-  .card-modern { padding: 1rem; margin: 0.5rem 0; }
-  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-}
-
-@media screen and (max-width: 480px) {
-  h1 { font-size: 1.25rem; }
-  h2 { font-size: 1.125rem; }
-  h3 { font-size: 1rem; }
-}
-
-/* Icon sizes */
-.icon-xs { width: 12px; height: 12px; }
-.icon-sm { width: 14px; height: 14px; }
-.icon-md { width: 16px; height: 16px; }
-.icon-lg { width: 20px; height: 20px; }
-
-@media screen and (max-width: 640px) {
-  .icon-xs { width: 10px; height: 10px; }
-  .icon-sm { width: 12px; height: 12px; }
-  .icon-md { width: 14px; height: 14px; }
-  .icon-lg { width: 16px; height: 16px; }
-}
-
-/* ─── Touch Scrollbar ──────────────────────────────────────── */
-@media (pointer: coarse) {
-  ::-webkit-scrollbar { width: 3px; height: 3px; }
-  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); }
+/* ================================================================ CHOP ETISH */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .no-print,
+  nav,
+  aside,
+  [data-print="hide"] {
+    display: none !important;
+  }
+  .surface {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
 }

@@ -224,6 +224,10 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
         return ''
     
     def get_attachments_count(self, obj):
+        # Annotatsiyadan olinadi (qo'shimcha so'rov yo'q).
+        annotated = getattr(obj, '_attachments_count', None)
+        if annotated is not None:
+            return int(annotated)
         return obj.attachments.count()
 
     def get_new_messages_count(self, obj):
@@ -246,7 +250,13 @@ class TelegramAppealListSerializer(serializers.ModelSerializer):
         return messages.filter(is_from_admin=False).count()
 
     def get_last_message_at(self, obj):
-        """Oxirgi xabar vaqti"""
+        """Oxirgi xabar vaqti — annotatsiyadan (Max), so'rovsiz."""
+        annotated = getattr(obj, '_last_message_at', None)
+        if annotated is not None:
+            try:
+                return annotated.isoformat()
+            except AttributeError:
+                return None
         last_msg = obj.messages.order_by('-created_at').first()
         return last_msg.created_at.isoformat() if last_msg else None
 

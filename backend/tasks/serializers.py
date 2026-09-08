@@ -11,7 +11,9 @@ from .models import (
     TaskAttachment, TaskMessage, DeadlineExtensionRequest
 )
 from users.serializers import UserMinimalSerializer
+from organizations.models import Sector
 from organizations.serializers import OrganizationMinimalSerializer
+from core.file_validators import validate_uploads
 
 
 def _guess_file_type(file_obj) -> str:
@@ -112,6 +114,7 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     days_remaining = serializers.IntegerField(read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
 
     def _effective_status(self, task: Task) -> str:
         """
@@ -160,7 +163,8 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'title', 'priority', 'category', 'status', 'deadline',
+            'id', 'title', 'priority', 'category', 'sector', 'sector_name',
+            'status', 'deadline',
             'created_by', 'created_by_name', 'assigned_deputies', 'assigned_organizations',
             'is_overdue', 'days_remaining', 'created_at'
         ]
@@ -177,6 +181,7 @@ class TaskSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     days_remaining = serializers.IntegerField(read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
 
     def _effective_status(self, task: Task) -> str:
         # Keep logic in sync with TaskMinimalSerializer.
@@ -215,7 +220,8 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'title', 'description', 'priority', 'category', 'status',
+            'id', 'title', 'description', 'priority', 'category',
+            'sector', 'sector_name', 'status',
             'deadline', 'completed_at', 'closed_at',
             'latitude', 'longitude', 'address',
             'created_by', 'closed_by', 'assigned_deputies', 'assigned_organizations',
@@ -239,14 +245,36 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
+    # Soha (Sector) - topshiriq yaratishda majburiy
+    sector = serializers.PrimaryKeyRelatedField(
+        queryset=Sector.objects.filter(is_active=True),
+        required=True,
+        allow_null=False,
+        error_messages={
+            'required': 'Soha tanlanishi shart',
+            'null': 'Soha tanlanishi shart',
+            'does_not_exist': 'Tanlangan soha topilmadi yoki faol emas',
+            'incorrect_type': "Soha noto'g'ri formatda yuborildi",
+        },
+    )
+    # Orqaga moslik uchun: eski frontend `category` yuborishi mumkin.
+    category = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    sector_name = serializers.CharField(source='sector.name', read_only=True)
     
     class Meta:
         model = Task
         fields = [
             'title', 'description', 'priority', 'category',
+            'sector', 'sector_name',
             'deadline', 'latitude', 'longitude', 'address',
             'organizations', 'deputy_ids', 'attachments'
         ]
+    
+    def validate_attachments(self, value):
+        """Yuklangan fayllarni umumiy qoidalar bo'yicha tekshirish."""
+        if value:
+            validate_uploads(value)
+        return value
     
     def validate_deadline(self, value):
         """Validate that deadline is not in the past (allow today)."""
@@ -322,14 +350,32 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         organizations = attrs.get('organizations') or []
         deputy_ids = attrs.get('deputy_ids') or []
-
-        if not user:
-            return attrs
+        sector = attrs.get('sector')
 
         from organizations.models import Organization
         from users.models import User
 
         orgs = list(Organization.objects.filter(id__in=organizations, is_active=True).select_related('sector'))
+
+        # Tanlangan barcha tashkilotlar topshiriq sohasiga tegishli bo'lishi shart.
+        # Quyidagi hokim o'rinbosari qoidalari ham shu moslikni nazarda tutadi.
+        if sector is not None and orgs:
+            mismatched = [
+                org.name for org in orgs
+                if org.sector_id is None or str(org.sector_id) != str(sector.pk)
+            ]
+            if mismatched:
+                raise serializers.ValidationError({
+                    'sector': (
+                        f"Quyidagi tashkilotlar «{sector.name}» sohasiga tegishli emas: "
+                        + ", ".join(sorted(mismatched))
+                        + ". Sohani o'zgartiring yoki shu sohadagi tashkilotlarni tanlang."
+                    )
+                })
+
+        if not user:
+            return attrs
+
         deputy_map = {
             str(item.id): item
             for item in User.objects.filter(id__in=deputy_ids, role=UserRole.HOKIM_YORDAMCHISI).select_related('sector')
@@ -476,11 +522,25 @@ class TaskReportSerializer(serializers.Serializer):
     """
     Serializer for submitting task report.
     """
-    comment = serializers.CharField(required=True)
+    comment = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True,
+        error_messages={
+            'required': 'Hisobot izohi talab qilinadi',
+            'blank': 'Hisobot izohi talab qilinadi',
+        },
+    )
     attachments = serializers.ListField(
         child=serializers.FileField(),
         required=False
     )
+
+    def validate_attachments(self, value):
+        """Hisobot ilovalarini umumiy qoidalar bo'yicha tekshirish."""
+        if value:
+            validate_uploads(value)
+        return value
 
 
 class TaskAcceptSerializer(serializers.Serializer):

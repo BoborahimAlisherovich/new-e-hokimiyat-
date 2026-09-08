@@ -27,6 +27,7 @@ class Task(BaseModel):
     STATUS_CHOICES = [
         ('YANGI', 'Yangi'),
         ('IJRODA', 'Ijroda'),
+        ('TEKSHIRUVDA', 'Tekshiruvda'),
         ('BAJARILDI', 'Bajarildi'),
         ('QAYTA_IJROGA_YUBORILDI', "Qayta ijroga yuborildi"),
         ('MUDDATI_KECH', "Muddati kechikkan"),
@@ -52,6 +53,16 @@ class Task(BaseModel):
         default='ODDIY',
         verbose_name='Ustuvorlik'
     )
+    sector = models.ForeignKey(
+        'organizations.Sector',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='tasks',
+        verbose_name='Soha'
+    )
+    # DEPRECATED: erkin matnli kategoriya. `sector` bilan almashtirildi.
+    # Ustun eski ma'lumotlar uchun saqlanib turadi.
     category = models.CharField(max_length=100, blank=True, verbose_name='Kategoriya')
     
     # Status
@@ -160,6 +171,10 @@ class Task(BaseModel):
             desired = 'QAYTA_IJROGA_YUBORILDI'
         elif any(s in ['IJRODA', 'BAJARILDI'] for s in statuses):
             desired = 'IJRODA'
+        elif any(s == 'TEKSHIRUVDA' for s in statuses):
+            # Tashkilot topshiriqni ko'rib chiqmoqda (eski xatti-harakat qoldig'i).
+            # Ota-topshiriqni YANGI ga qaytarmaslik kerak.
+            desired = 'TEKSHIRUVDA'
         else:
             desired = 'YANGI'
 
@@ -214,6 +229,7 @@ class TaskOrganization(BaseModel):
     STATUS_CHOICES = [
         ('YANGI', 'Yangi'),
         ('IJRODA', 'Ijroda'),
+        ('TEKSHIRUVDA', 'Tekshiruvda'),
         ('BAJARILDI', 'Bajarildi'),
         ('QAYTA_IJROGA_YUBORILDI', "Qayta ijroga yuborildi"),
         ('MUDDATI_KECH', "Muddati kechikkan"),
@@ -293,6 +309,7 @@ class TaskExecution(BaseModel):
         ('MUDDAT_UZAYTIRILDI', 'Muddat uzaytirildi'),
         ('IZOH_QOSHILDI', "Izoh qo'shildi"),
         ('FAYL_YUKLANDI', 'Fayl yuklandi'),
+        ('TAHRIRLANDI', 'Tahrirlandi'),
     ]
     
     task = models.ForeignKey(
@@ -615,6 +632,15 @@ class RecurringTask(BaseModel):
         default='ODDIY',
         verbose_name='Muhimlik darajasi'
     )
+    sector = models.ForeignKey(
+        'organizations.Sector',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='recurring_tasks',
+        verbose_name='Soha'
+    )
+    # DEPRECATED: `sector` bilan almashtirildi.
     category = models.CharField(
         max_length=100,
         blank=True,
@@ -714,6 +740,7 @@ class RecurringTask(BaseModel):
             description=self.description,
             priority=self.priority,
             category=self.category,
+            sector=self.sector,
             deadline=timezone.now() + timedelta(days=self.deadline_days),
             created_by=self.created_by,
             source='RECURRING',

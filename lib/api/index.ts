@@ -91,6 +91,7 @@ export {
   logout,
   getCurrentUser,
   refreshToken,
+  refetchCurrentUser,
 } from './auth.api'
 
 // ============================================================================

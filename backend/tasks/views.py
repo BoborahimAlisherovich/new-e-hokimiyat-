@@ -16,18 +16,21 @@ Endpointlar:
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from datetime import timedelta
-from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
+from django.db import transaction
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -37,6 +40,7 @@ from rest_framework.serializers import Serializer
 
 from audit.models import AuditLog
 from core.constants import FileType, Messages, TaskStatus, UserRole
+from core.file_validators import resolve_file_type, validate_uploads
 from core.permissions import CanCloseTask, CanCreateTasks, CanExecuteTasks
 from core.ai_service import AIService
 from notifications.services import create_notification, notify_task_chat_message
@@ -67,6 +71,20 @@ from .serializers import (
 
 if TYPE_CHECKING:
     from django.core.files.uploadedfile import UploadedFile
+
+logger = logging.getLogger(__name__)
+
+# Topshiriq tahrirlashga ruxsati bo'lgan rollar
+TASK_EDITOR_ROLES = ('HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN')
+
+# Yopilgan topshiriqlar - ular ustida hech qanday o'zgartirish qilinmaydi
+LOCKED_TASK_STATUSES = ('NAZORATDAN_YECHILDI', 'BAJARILMADI')
+
+# Tahrirlanishi kuzatiladigan maydonlar
+TRACKED_TASK_FIELDS = (
+    'title', 'description', 'priority', 'deadline',
+    'category', 'sector', 'address', 'latitude', 'longitude',
+)
 
 
 # =============================================================================
@@ -185,52 +203,96 @@ class TaskViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     # `status` filtering is handled in `get_queryset` because organization users
     # need filtering by TaskOrganization.status and overdue must work without Celery.
-    filterset_fields = ['priority', 'category']
+    filterset_fields = ['priority', 'category', 'sector']
     search_fields = ['title', 'description']
     ordering_fields = ['deadline', 'created_at', 'priority', 'status']
     ordering = ['status', 'deadline', '-created_at']
 
     @action(detail=False, methods=['get'])
     def stats(self, request: Request) -> Response:
-        """Topshiriqlar statistikasi (filtrlar bilan)."""
+        """Topshiriqlar statistikasi (filtrlar bilan).
+
+        Barcha sanoqlar BITTA `aggregate()` so'rovida hisoblanadi.
+
+        Maydonlar:
+            total             - jami topshiriqlar
+            pending           - yangi (muddati o'tmagan)
+            in_progress       - ijroda / tekshiruvda (muddati o'tmagan)
+            completed         - YOPILGAN (NAZORATDAN_YECHILDI) topshiriqlar
+            awaiting_approval - hisobot topshirilgan, lekin hokim tasdiqlamagan
+                                (kamida bitta tashkilot BAJARILDI holatida)
+            returned          - qayta ijroga yuborilgan
+                                (kamida bitta tashkilot QAYTA_IJROGA_YUBORILDI)
+            overdue           - muddati o'tgan
+            active_sectors    - topshiriqlarda ishlatilgan sohalar soni
+        """
         user = request.user
         queryset = self.filter_queryset(self.get_queryset())
         now = timezone.now()
 
-        total = queryset.count()
-        
-        # Tashkilot xodimlari uchun TaskOrganization statusini hisoblash
+        overdue_statuses = ['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA']
+
         if user.role in ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'] and user.organization:
-            task_ids = queryset.values_list('id', flat=True)
+            # Tashkilot xodimlari uchun TaskOrganization statusini hisoblash.
             task_orgs = TaskOrganization.objects.filter(
-                task_id__in=task_ids,
-                organization=user.organization
+                task__in=queryset.values('id'),
+                organization=user.organization,
             )
-            overdue = task_orgs.filter(
-                status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'MUDDATI_KECH', 'TEKSHIRUVDA'],
-                task__deadline__lt=now,
-            ).count()
-            pending = task_orgs.filter(status='YANGI', task__deadline__gte=now).count()
-            in_progress = task_orgs.filter(status__in=['IJRODA', 'TEKSHIRUVDA'], task__deadline__gte=now).count()
-            completed = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
+            counts = task_orgs.aggregate(
+                total=Count('id'),
+                overdue=Count('id', filter=Q(
+                    status__in=overdue_statuses + ['MUDDATI_KECH'],
+                    task__deadline__lt=now,
+                )),
+                pending=Count('id', filter=Q(status='YANGI', task__deadline__gte=now)),
+                in_progress=Count('id', filter=Q(
+                    status__in=['IJRODA', 'TEKSHIRUVDA'],
+                    task__deadline__gte=now,
+                )),
+                completed=Count('id', filter=Q(status='NAZORATDAN_YECHILDI')),
+                awaiting_approval=Count('id', filter=Q(status='BAJARILDI')),
+                returned=Count('id', filter=Q(status='QAYTA_IJROGA_YUBORILDI')),
+            )
         else:
-            # Admin rollar uchun umumiy Task statusini hisoblash
-            overdue = queryset.filter(
-                Q(status='MUDDATI_KECH') |
-                Q(status__in=['YANGI', 'IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA'], deadline__lt=now)
-            ).count()
-            pending = queryset.filter(status='YANGI', deadline__gte=now).count()
-            in_progress = queryset.filter(status__in=['IJRODA', 'TEKSHIRUVDA'], deadline__gte=now).count()
-            completed = queryset.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-        
-        active_sectors = queryset.exclude(category='').values('category').distinct().count()
+            # Admin/yaratuvchi rollar: Task.status + TaskOrganization bo'yicha
+            # kutilayotgan/qaytarilgan topshiriqlar. `assigned_organizations`
+            # bo'yicha JOIN qatorlarni ko'paytirgani uchun barcha sanoqlar
+            # `distinct=True` bilan olinadi.
+            counts = queryset.aggregate(
+                total=Count('id', distinct=True),
+                overdue=Count('id', distinct=True, filter=(
+                    Q(status='MUDDATI_KECH') |
+                    Q(status__in=overdue_statuses, deadline__lt=now)
+                )),
+                pending=Count('id', distinct=True, filter=Q(status='YANGI', deadline__gte=now)),
+                in_progress=Count('id', distinct=True, filter=Q(
+                    status__in=['IJRODA', 'TEKSHIRUVDA'],
+                    deadline__gte=now,
+                )),
+                completed=Count('id', distinct=True, filter=Q(status='NAZORATDAN_YECHILDI')),
+                awaiting_approval=Count('id', distinct=True, filter=Q(
+                    assigned_organizations__status='BAJARILDI'
+                )),
+                returned=Count('id', distinct=True, filter=Q(
+                    assigned_organizations__status='QAYTA_IJROGA_YUBORILDI'
+                )),
+            )
+
+        active_sectors = (
+            queryset.filter(sector__isnull=False)
+            .values('sector')
+            .distinct()
+            .count()
+        )
 
         return Response({
-            'total': total,
-            'pending': pending,
-            'in_progress': in_progress,
-            'completed': completed,
-            'overdue': overdue,
+            'total': int(counts.get('total') or 0),
+            'pending': int(counts.get('pending') or 0),
+            'in_progress': int(counts.get('in_progress') or 0),
+            'completed': int(counts.get('completed') or 0),
+            'awaiting_approval': int(counts.get('awaiting_approval') or 0),
+            'returned': int(counts.get('returned') or 0),
+            'overdue': int(counts.get('overdue') or 0),
             'active_sectors': active_sectors,
         })
 
@@ -331,31 +393,111 @@ class TaskViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), CanCreateTasks()]
         return [IsAuthenticated()]
     
-    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Topshiriqni yangilash.
-        
-        Faqat HOKIM, HOKIM_YORDAMCHISI va ADMIN tahrirlashi mumkin.
+    @staticmethod
+    def _field_snapshot(task: Task) -> Dict[str, Any]:
+        """Kuzatiladigan maydonlarning hozirgi qiymatlarini olish."""
+        snapshot: Dict[str, Any] = {}
+        for field in TRACKED_TASK_FIELDS:
+            if field == 'sector':
+                snapshot[field] = str(task.sector_id) if task.sector_id else None
+            else:
+                value = getattr(task, field, None)
+                snapshot[field] = None if value is None else str(value)
+        return snapshot
+
+    def _guard_task_edit(self, request: Request) -> Optional[Response]:
+        """Tahrirlash huquqi va topshiriq holatini tekshirish.
+
+        Returns:
+            Xatolik `Response` obyekti yoki `None` (ruxsat berilgan).
         """
         user = request.user
-        if user.role not in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN']:
+        if user.role not in TASK_EDITOR_ROLES:
             return Response(
                 {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().update(request, *args, **kwargs)
+
+        task = self.get_object()
+        if task.status in LOCKED_TASK_STATUSES:
+            return Response(
+                {'detail': (
+                    "Yopilgan topshiriqni tahrirlash mumkin emas "
+                    f"(holat: {task.get_status_display()})"
+                )},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return None
+
+    def _log_task_edit(self, request: Request, before: Dict[str, Any]) -> None:
+        """Maydon darajasidagi o'zgarishlarni ijro jurnaliga yozish."""
+        task = Task.objects.select_related('sector').get(pk=self.kwargs.get('pk') or self.kwargs.get('id'))
+        after = self._field_snapshot(task)
+
+        changed = {
+            field: {'old': before.get(field), 'new': after.get(field)}
+            for field in TRACKED_TASK_FIELDS
+            if before.get(field) != after.get(field)
+        }
+        if not changed:
+            return
+
+        readable = ', '.join(
+            f"{field}: «{values['old'] or '-'}» -> «{values['new'] or '-'}»"
+            for field, values in changed.items()
+        )
+
+        TaskExecution.objects.create(
+            task=task,
+            executed_by=request.user,
+            action_type='TAHRIRLANDI',
+            comment=f"{request.user.full_name} topshiriqni tahrirladi. {readable}",
+            old_status=task.status,
+            new_status=task.status,
+        )
+
+        AuditLog.log(
+            user=request.user,
+            action='TASK_UPDATED',
+            entity_type='TASK',
+            entity_id=task.id,
+            description=f"{request.user.full_name} topshiriqni tahrirladi: {task.title}",
+            old_values={field: values['old'] for field, values in changed.items()},
+            new_values={field: values['new'] for field, values in changed.items()},
+            ip_address=getattr(request, 'client_ip', None)
+        )
+
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Topshiriqni yangilash.
+        
+        Faqat HOKIM, HOKIM_YORDAMCHISI va ADMIN tahrirlashi mumkin.
+        Yopilgan (NAZORATDAN_YECHILDI / BAJARILMADI) topshiriqlar tahrirlanmaydi.
+        """
+        denied = self._guard_task_edit(request)
+        if denied is not None:
+            return denied
+
+        before = self._field_snapshot(self.get_object())
+        response = super().update(request, *args, **kwargs)
+        if response.status_code < 400:
+            self._log_task_edit(request, before)
+        return response
     
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Topshiriqni qisman yangilash.
         
         Faqat HOKIM, HOKIM_YORDAMCHISI va ADMIN tahrirlashi mumkin.
+        Yopilgan (NAZORATDAN_YECHILDI / BAJARILMADI) topshiriqlar tahrirlanmaydi.
         """
-        user = request.user
-        if user.role not in ['HOKIM', 'HOKIM_YORDAMCHISI', 'TASHKILOT_RAHBARI', 'ADMIN']:
-            return Response(
-                {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().partial_update(request, *args, **kwargs)
+        denied = self._guard_task_edit(request)
+        if denied is not None:
+            return denied
+
+        before = self._field_snapshot(self.get_object())
+        response = super().partial_update(request, *args, **kwargs)
+        if response.status_code < 400:
+            self._log_task_edit(request, before)
+        return response
     
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Topshiriqni o'chirish.
@@ -373,32 +515,15 @@ class TaskViewSet(viewsets.ModelViewSet):
     def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Topshiriqni ko'rish.
 
-        Tashkilot foydalanuvchisi topshiriqni birinchi marta ochsa, uning
-        tashkilot bo'yicha holati `TEKSHIRUVDA` ga o'tadi.
+        MUHIM: GET so'rovi HECH QANDAY holatni o'zgartirmaydi.
+        Ilgari bu metod tashkilot foydalanuvchisi topshiriqni ochganda
+        `TaskOrganization.status` ni `TEKSHIRUVDA` ga o'tkazardi. Bu
+        `accept` va `report` endpointlarini butunlay ishlamas holga
+        keltirgani uchun olib tashlandi.
         """
         task = self.get_object()
-        user = request.user
 
-        if user.role in UserRole.ORGANIZATION_ROLES and user.organization:
-            task_org = task.assigned_organizations.filter(organization=user.organization).first()
-            if task_org and task_org.status in {TaskStatus.YANGI, TaskStatus.QAYTA_IJROGA_YUBORILDI}:
-                old_status = task_org.status
-                task_org.status = TaskStatus.TEKSHIRUVDA
-                task_org.save(update_fields=['status', 'updated_at'])
-                task.sync_status_from_assignments()
-
-                AuditLog.log(
-                    user=user,
-                    action='TASK_UPDATED',
-                    entity_type='TASK_ORGANIZATION',
-                    entity_id=str(task_org.id),
-                    description=f"{user.full_name} topshiriqni ko'rib chiqmoqda: {task.title}",
-                    old_values={'status': old_status},
-                    new_values={'status': task_org.status},
-                    ip_address=getattr(request, 'client_ip', None)
-                )
-
-        task = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
+        task = Task.objects.select_related('created_by', 'closed_by', 'sector').prefetch_related(
             Prefetch(
                 'assigned_organizations',
                 queryset=TaskOrganization.objects.select_related('organization', 'assigned_to'),
@@ -627,7 +752,7 @@ QOIDALAR:
             Filtrlangan topshiriqlar queryset'i
         """
         user = self.request.user
-        queryset = Task.objects.select_related('created_by', 'closed_by').prefetch_related(
+        queryset = Task.objects.select_related('created_by', 'closed_by', 'sector').prefetch_related(
             Prefetch(
                 'assigned_organizations',
                 queryset=TaskOrganization.objects.select_related('organization', 'assigned_to'),
@@ -743,7 +868,9 @@ QOIDALAR:
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if task_org.status not in ['YANGI', 'QAYTA_IJROGA_YUBORILDI']:
+        # TEKSHIRUVDA - eski (xato) GET-mutatsiyasi qoldirgan holat.
+        # Bunday qatorlar ham ijroga olinishi kerak.
+        if task_org.status not in ['YANGI', 'QAYTA_IJROGA_YUBORILDI', 'TEKSHIRUVDA']:
             return Response(
                 {'detail': "Bu topshiriqni qabul qilib bo'lmaydi"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -798,13 +925,21 @@ QOIDALAR:
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if task_org.status not in ['IJRODA', 'QAYTA_IJROGA_YUBORILDI', 'MUDDATI_KECH']:
+        # TEKSHIRUVDA / YANGI - eski GET-mutatsiyasi va to'g'ridan-to'g'ri
+        # hisobot topshirish holatlari uchun ham ruxsat beriladi.
+        if task_org.status not in ['YANGI', 'IJRODA', 'TEKSHIRUVDA', 'QAYTA_IJROGA_YUBORILDI', 'MUDDATI_KECH']:
             return Response(
                 {'detail': "Bu topshiriq uchun hisobot topshirish mumkin emas"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        serializer = TaskReportSerializer(data=request.data)
+        files = request.FILES.getlist('attachments')
+        try:
+            file_types = validate_uploads(files)
+        except ValidationError as exc:
+            return Response({'attachments': exc.detail}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = TaskReportSerializer(data={'comment': request.data.get('comment', '')})
         serializer.is_valid(raise_exception=True)
         
         old_status = task_org.status
@@ -822,16 +957,17 @@ QOIDALAR:
             new_status=task_org.status
         )
         
-        # Handle file attachments
-        files = request.FILES.getlist('attachments')
-        for f in files:
+        # Handle file attachments (turi to'g'ri belgilanadi, aks holda
+        # rasmlar DOCUMENT bo'lib qolib, oldindan ko'rinmaydi)
+        for f, file_type in zip(files, file_types):
             TaskAttachment.objects.create(
                 task=task,
                 execution=execution,
                 uploaded_by=user,
                 file=f,
                 file_name=f.name,
-                file_size=f.size
+                file_size=f.size,
+                file_type=file_type,
             )
         
         AuditLog.log(
@@ -858,125 +994,362 @@ QOIDALAR:
         
         return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
+    @staticmethod
+    def _notify_organization(task: Task, organization, *, title: str, message: str) -> None:
+        """Tashkilot xodimlariga bildirishnoma yuborish."""
+        if organization is None:
+            return
+        for member in organization.employees.filter(
+            status='FAOL',
+            role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
+        ):
+            create_notification(
+                user=member,
+                title=title,
+                message=message,
+                notification_type='TASK',
+                related_task=task,
+                link=f'/dashboard/tasks/{task.id}'
+            )
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanCloseTask])
     def close(self, request, pk=None):
-        """
-        Close task (remove from control).
-        Only Hokim can do this.
-        
+        """Topshiriqni nazoratdan yechish (tasdiqlash). Faqat HOKIM.
+
         POST /api/tasks/{id}/close/
+        Body (ixtiyoriy):
+            {"organization_id": "<uuid>", "comment": "<ixtiyoriy izoh>"}
+
+        `organization_id` berilsa - faqat shu tashkilotning biriktirilishi
+        yopiladi (boshqa tashkilotlar kechikayotgan bo'lsa ham). Ota-topshiriq
+        `NAZORATDAN_YECHILDI` ga faqat BARCHA biriktirilishlar yopilganda o'tadi.
         """
         task = self.get_object()
-        
-        # Check if all organizations have completed
-        all_completed = all(
-            to.status == 'BAJARILDI' 
-            for to in task.assigned_organizations.all()
-        )
-        
-        if not all_completed:
+        organization_id = request.data.get('organization_id')
+        comment = (request.data.get('comment') or '').strip()
+
+        assignments = list(task.assigned_organizations.select_related('organization').all())
+        if not assignments:
             return Response(
-                {'detail': "Barcha tashkilotlar topshiriqni bajarmaguncha yopib bo'lmaydi"},
+                {'detail': "Topshiriqqa hech qanday tashkilot biriktirilmagan"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        old_status = task.status
-        task.close(request.user)
-        
-        # Update all task organizations
-        task.assigned_organizations.update(status='NAZORATDAN_YECHILDI')
-        
-        # Create execution record
-        TaskExecution.objects.create(
-            task=task,
-            executed_by=request.user,
-            action_type='NAZORATDAN_YECHILDI',
-            old_status=old_status,
-            new_status=task.status
-        )
-        
+
+        if organization_id:
+            targets = [a for a in assignments if str(a.organization_id) == str(organization_id)]
+            if not targets:
+                return Response(
+                    {'detail': "Tashkilot bu topshiriqqa biriktirilmagan"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if targets[0].status == 'NAZORATDAN_YECHILDI':
+                return Response(
+                    {'detail': "Bu tashkilotning topshirig'i allaqachon nazoratdan yechilgan"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if targets[0].status != 'BAJARILDI':
+                return Response(
+                    {'detail': (
+                        "Faqat hisobot topshirilgan (bajarilgan) tashkilotni "
+                        "nazoratdan yechish mumkin"
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            blocking = [
+                a.organization.name for a in assignments
+                if a.status not in ('BAJARILDI', 'NAZORATDAN_YECHILDI')
+            ]
+            if blocking:
+                return Response(
+                    {'detail': (
+                        "Barcha tashkilotlar topshiriqni bajarmaguncha yopib bo'lmaydi. "
+                        f"Kutilayotgan tashkilotlar: {', '.join(sorted(blocking))}. "
+                        "Bitta tashkilotni alohida tasdiqlash uchun `organization_id` yuboring."
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            targets = [a for a in assignments if a.status == 'BAJARILDI']
+            if not targets:
+                return Response(
+                    {'detail': "Yopish uchun tasdiqlanishi kerak bo'lgan tashkilot yo'q"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        old_task_status = task.status
+        closed_names: List[str] = []
+
+        with transaction.atomic():
+            for assignment in targets:
+                old_status = assignment.status
+                assignment.status = 'NAZORATDAN_YECHILDI'
+                assignment.save(update_fields=['status', 'updated_at'])
+                closed_names.append(assignment.organization.name)
+
+                TaskExecution.objects.create(
+                    task=task,
+                    task_organization=assignment,
+                    executed_by=request.user,
+                    action_type='NAZORATDAN_YECHILDI',
+                    comment=comment,
+                    old_status=old_status,
+                    new_status=assignment.status,
+                )
+
+            task.refresh_from_db()
+            remaining = task.assigned_organizations.exclude(status='NAZORATDAN_YECHILDI').exists()
+            if not remaining:
+                task.close(request.user)
+            else:
+                task.sync_status_from_assignments()
+
         AuditLog.log(
             user=request.user,
             action='TASK_CLOSED',
             entity_type='TASK',
             entity_id=task.id,
-            description=f"{request.user.full_name} topshiriqni yopdi: {task.title}",
-            old_values={'status': old_status},
-            new_values={'status': task.status},
+            description=(
+                f"{request.user.full_name} topshiriqni nazoratdan yechdi: {task.title} "
+                f"({', '.join(closed_names)})"
+            ),
+            old_values={'status': old_task_status},
+            new_values={'status': task.status, 'organizations': closed_names},
             ip_address=getattr(request, 'client_ip', None)
         )
-        
+
+        # Ijrochi tashkilotlarni tasdiqlash haqida xabardor qilish
+        for assignment in targets:
+            self._notify_organization(
+                task,
+                assignment.organization,
+                title='Topshiriq tasdiqlandi',
+                message=(
+                    f"Topshiriq nazoratdan yechildi: {task.title}"
+                    + (f". Izoh: {comment}" if comment else '')
+                ),
+            )
+
+        task = self.get_queryset().get(pk=task.pk)
         return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanCloseTask])
-    def reassign(self, request, pk=None):
+    # =========================================================================
+    # QAYTA IJROGA YUBORISH (return / reassign)
+    # =========================================================================
+
+    def _return_to_execution(self, request: Request, task: Task) -> Response:
+        """`return` va `reassign` uchun umumiy mantiq.
+
+        Body:
+            comment         - MAJBURIY, kamida 10 belgi
+            organization_id - ixtiyoriy. Berilmasa, hozirda `BAJARILDI`
+                              holatidagi BARCHA tashkilotlar qaytariladi.
         """
-        Send task back for re-execution.
-        Only Hokim can do this.
-        
-        POST /api/tasks/{id}/reassign/
-        """
-        task = self.get_object()
         organization_id = request.data.get('organization_id')
-        comment = request.data.get('comment', '')
-        
-        try:
-            task_org = task.assigned_organizations.get(organization_id=organization_id)
-        except TaskOrganization.DoesNotExist:
+        comment = (request.data.get('comment') or '').strip()
+
+        if not comment:
             return Response(
-                {'detail': "Tashkilot topilmadi"},
+                {'comment': "Qaytarish sababini yozing (kamida 10 belgi)"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        if task_org.status != 'BAJARILDI':
+        if len(comment) < 10:
             return Response(
-                {'detail': "Faqat bajarilgan topshiriqlarni qayta yuborish mumkin"},
+                {'comment': (
+                    "Qaytarish sababi juda qisqa. Kamida 10 belgi kiriting "
+                    f"(hozir {len(comment)} belgi)"
+                )},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        old_status = task_org.status
-        task_org.status = 'QAYTA_IJROGA_YUBORILDI'
-        task_org.completed_at = None
-        task_org.save()
-        task.sync_status_from_assignments()
-        
-        TaskExecution.objects.create(
-            task=task,
-            task_organization=task_org,
-            executed_by=request.user,
-            action_type='QAYTA_YUBORILDI',
-            comment=comment,
-            old_status=old_status,
-            new_status=task_org.status
-        )
-        
+
+        assignments = list(task.assigned_organizations.select_related('organization').all())
+
+        if organization_id:
+            targets = [a for a in assignments if str(a.organization_id) == str(organization_id)]
+            if not targets:
+                return Response(
+                    {'detail': "Tashkilot bu topshiriqqa biriktirilmagan"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if targets[0].status not in ('BAJARILDI', 'NAZORATDAN_YECHILDI'):
+                return Response(
+                    {'detail': "Faqat hisobot topshirilgan topshiriqni qayta ijroga yuborish mumkin"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            targets = [a for a in assignments if a.status == 'BAJARILDI']
+            if not targets:
+                return Response(
+                    {'detail': "Qayta ijroga yuborish uchun hisobot topshirgan tashkilot yo'q"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        returned_names: List[str] = []
+
+        with transaction.atomic():
+            for assignment in targets:
+                old_status = assignment.status
+                assignment.status = 'QAYTA_IJROGA_YUBORILDI'
+                assignment.completed_at = None
+                assignment.save(update_fields=['status', 'completed_at', 'updated_at'])
+                returned_names.append(assignment.organization.name)
+
+                TaskExecution.objects.create(
+                    task=task,
+                    task_organization=assignment,
+                    executed_by=request.user,
+                    action_type='QAYTA_YUBORILDI',
+                    comment=comment,
+                    old_status=old_status,
+                    new_status=assignment.status,
+                )
+
+            # Ota-topshiriq allaqachon yopilgan bo'lsa, uni qayta ochamiz
+            if task.status == 'NAZORATDAN_YECHILDI':
+                task.status = 'QAYTA_IJROGA_YUBORILDI'
+                task.closed_at = None
+                task.closed_by = None
+                task.save(update_fields=['status', 'closed_at', 'closed_by', 'updated_at'])
+            task.sync_status_from_assignments()
+
         AuditLog.log(
             user=request.user,
             action='TASK_REASSIGNED',
             entity_type='TASK',
             entity_id=task.id,
-            description=f"{request.user.full_name} topshiriqni qayta ijroga yubordi: {task.title}",
-            old_values={'status': old_status},
-            new_values={'status': task_org.status},
+            description=(
+                f"{request.user.full_name} topshiriqni qayta ijroga yubordi: {task.title} "
+                f"({', '.join(returned_names)})"
+            ),
+            old_values={'status': 'BAJARILDI'},
+            new_values={'status': 'QAYTA_IJROGA_YUBORILDI', 'organizations': returned_names},
             ip_address=getattr(request, 'client_ip', None)
         )
-        
-        # Notify organization
-        for user in task_org.organization.employees.filter(
-            status='FAOL',
-            role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL']
-        ):
-            create_notification(
-                user=user,
+
+        for assignment in targets:
+            self._notify_organization(
+                task,
+                assignment.organization,
                 title='Topshiriq qayta yuborildi',
-                message=f"Topshiriq qayta ijroga yuborildi: {task.title}",
-                notification_type='TASK',
-                related_task=task,
-                link=f'/dashboard/tasks/{task.id}'
+                message=f"Topshiriq qayta ijroga yuborildi: {task.title}. Sabab: {comment}",
             )
-        
+
+        task = self.get_queryset().get(pk=task.pk)
         return Response(TaskDetailSerializer(task, context={"request": request}).data)
-    
+
+    @action(detail=True, methods=['post'], url_path='return',
+            permission_classes=[IsAuthenticated, CanCloseTask])
+    def return_for_rework(self, request, pk=None):
+        """Hisobotni qaytarish (qayta ijroga yuborish). Faqat HOKIM.
+
+        POST /api/tasks/{id}/return/
+        Body:
+            {"comment": "<majburiy, kamida 10 belgi>",
+             "organization_id": "<ixtiyoriy uuid>"}
+        """
+        return self._return_to_execution(request, self.get_object())
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanCloseTask])
+    def reassign(self, request, pk=None):
+        """`/return/` uchun eski nom (alias). Faqat HOKIM.
+
+        POST /api/tasks/{id}/reassign/
+        """
+        return self._return_to_execution(request, self.get_object())
+
+    # =========================================================================
+    # TASDIQLASH KUTILAYOTGAN TOPSHIRIQLAR
+    # =========================================================================
+
+    def _attachment_payload(self, attachment: TaskAttachment) -> Dict[str, Any]:
+        """Ilova (fayl) uchun JSON."""
+        request = self.request
+        file_url = ''
+        try:
+            file_url = attachment.file.url
+        except Exception:
+            file_url = ''
+        if file_url and request is not None:
+            file_url = request.build_absolute_uri(file_url)
+
+        return {
+            'id': str(attachment.id),
+            'file': file_url,
+            'file_name': attachment.file_name,
+            'file_type': attachment.file_type,
+            'file_size': attachment.file_size,
+            'uploaded_at': attachment.created_at,
+        }
+
+    def _awaiting_organizations(self, task: Task) -> List[Dict[str, Any]]:
+        """Tasdiqlash kutayotgan (BAJARILDI) biriktirilishlar ro'yxati."""
+        payload: List[Dict[str, Any]] = []
+
+        # Har bir biriktirilish uchun oxirgi hisobot ijrosini topamiz
+        reports: Dict[Any, TaskExecution] = {}
+        for execution in task.executions.all():
+            if execution.action_type != 'HISOBOT_TOPSHIRILDI':
+                continue
+            key = execution.task_organization_id
+            existing = reports.get(key)
+            if existing is None or execution.created_at > existing.created_at:
+                reports[key] = execution
+
+        for assignment in task.assigned_organizations.all():
+            if assignment.status != 'BAJARILDI':
+                continue
+            report = reports.get(assignment.id)
+            payload.append({
+                'id': str(assignment.id),
+                'organization_id': str(assignment.organization_id),
+                'organization_name': assignment.organization.name,
+                'status': assignment.status,
+                'reported_at': assignment.completed_at or (report.created_at if report else None),
+                'report_comment': report.comment if report else '',
+                'attachments': [
+                    self._attachment_payload(att)
+                    for att in (report.attachments.all() if report else [])
+                ],
+            })
+        return payload
+
+    @action(detail=False, methods=['get'], url_path='pending-approval',
+            permission_classes=[IsAuthenticated, CanCloseTask])
+    def pending_approval(self, request: Request) -> Response:
+        """Hokim tasdig'ini kutayotgan topshiriqlar.
+
+        GET /api/tasks/pending-approval/
+
+        Ro'yxat `GET /api/tasks/` bilan bir xil paginatsiya va serializer'dan
+        foydalanadi. Har bir element qo'shimcha `awaiting_organizations`
+        maydonini oladi.
+
+        Filtrlar: ?search= ?priority= ?sector= ?organization= ?ordering=
+        """
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            assigned_organizations__status='BAJARILDI'
+        ).distinct().prefetch_related(
+            Prefetch(
+                'executions',
+                queryset=TaskExecution.objects.filter(
+                    action_type='HISOBOT_TOPSHIRILDI'
+                ).prefetch_related('attachments'),
+            ),
+        )
+
+        page = self.paginate_queryset(queryset)
+        target = page if page is not None else queryset
+        serializer = TaskMinimalSerializer(target, many=True, context=self.get_serializer_context())
+
+        data = []
+        for task, item in zip(target, serializer.data):
+            row = dict(item)
+            row['awaiting_organizations'] = self._awaiting_organizations(task)
+            data.append(row)
+
+        if page is not None:
+            return self.get_paginated_response(data)
+        return Response(data)
+
     @action(detail=True, methods=['post'], url_path='mark-complete')
     def mark_complete(self, request, pk=None):
         """

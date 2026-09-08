@@ -1,133 +1,124 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import type React from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
+import { Plus, ShieldCheck, Sparkles } from "lucide-react"
+
 import { Header } from "@/components/layout/header"
-import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame"
-import { Button } from "@/components/ui/button"
-import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialog"
 import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
 import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
 import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
-import type { Task } from "@/types"
-import { getOrganizations, getTaskStats, getTasksPage, getUsers, deleteTask, getCurrentUser } from "@/lib/api"
+import { PremiumTableSkeleton, PremiumStatsSkeleton } from "@/components/dashboard/premium-dashboard-ui"
+import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/i18n/context"
-import { useGSAPPageEntrance } from "@/hooks/use-gsap"
-import { CheckCircle2, Clock3, ListTodo, Mic, Plus, Sparkles } from "lucide-react"
+import { getCurrentUser } from "@/lib/api/auth.api"
+import { getOrganizations } from "@/lib/api/organizations.api"
+import { getSectors, type Sector } from "@/lib/api/sectors.api"
+import { deleteTask, getTaskStats, getTasksPage } from "@/lib/api/tasks.api"
+import type { Task } from "@/types"
 
+/**
+ * TOPSHIRIQLAR RO'YXATI
+ *
+ * Tuzatilgan nuqsonlar:
+ *  - Har harf bosilganda BESH parallel so'rov ketardi (users, organizations,
+ *    tasks, stats, currentUser) — holbuki faqat ikkitasi qidiruvga bog'liq.
+ *    Endi ma'lumotnoma (tashkilot, soha, foydalanuvchi) bir marta yuklanadi.
+ *  - `setLoading(true)` butun sahifani unmount qilardi: har harfda jadval,
+ *    filtrlar va animatsiya qaytadan qurilardi. Endi faqat jadval joyida
+ *    skelet ko'rsatiladi.
+ *  - Debounce yo'q edi. Endi 400 ms (filtr komponentida).
+ *  - Javoblar tartibsiz kelib bir-birini bosib ketishi mumkin edi
+ *    (AbortController yo'q). Endi so'rov navbati raqami bilan tekshiriladi.
+ *  - Sahifada TO'RT qatlam sarlavha bor edi (Header h1 + DashboardPageFrame
+ *    h2 + filtr h3 + jadval h2) va YETTI ta ko'rsatkich plitasi. Endi bitta
+ *    sarlavha va bitta KPI qatori.
+ *  - Ikkita dekorativ "hujjat" chipi UI matni sifatida chiqarilardi.
+ *  - `onEdit`/`onDelete` jadvalga uzatilardi, lekin jadval ularni
+ *    e'tiborsiz qoldirardi — endi ishlaydi.
+ *  - O'chirishdan keyin `totalCount` va statistika yangilanmasdi.
+ */
+
+type StatsShape = {
+  total: number
+  pending: number
+  in_progress: number
+  completed: number
+  awaiting_approval: number
+  returned: number
+  overdue: number
+}
+
+const EMPTY_STATS: StatsShape = {
+  total: 0,
+  pending: 0,
+  in_progress: 0,
+  completed: 0,
+  awaiting_approval: 0,
+  returned: 0,
+  overdue: 0,
+}
 
 export default function TasksPage() {
   const t = useTranslation()
-  const pageRef = useGSAPPageEntrance()
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [users, setUsers] = useState<any[]>([])
+
+  /* --------------------------------------------------------- Ma'lumotnoma */
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const [organizations, setOrganizations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [sectors, setSectors] = useState<Sector[]>([])
+  const [refLoaded, setRefLoaded] = useState(false)
+  const [refError, setRefError] = useState<string | null>(null)
+
+  /* ------------------------------------------------------------- Ro'yxat */
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [stats, setStats] = useState<StatsShape>(EMPTY_STATS)
+  const [listLoading, setListLoading] = useState(true)
+  const [listError, setListError] = useState<string | null>(null)
+
+  /* ------------------------------------------------------------- Filtrlar */
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [priorityFilter, setPriorityFilter] = useState("all")
+  const [sectorFilter, setSectorFilter] = useState("all")
+  const [organizationFilter, setOrganizationFilter] = useState("all")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-  const [totalCount, setTotalCount] = useState(0)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<Task["status"] | "all">("all")
-  const [priorityFilter, setPriorityFilter] = useState<Task["priority"] | "all">("all")
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
-  const [organizationFilter, setOrganizationFilter] = useState<string>("all")
+
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [createTaskMode, setCreateTaskMode] = useState<"manual" | "audio">("manual")
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-  })
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  
-  // Rolga qarab topshiriq yaratish imkoniyati
-  const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
-  const isDistrictGovernor = currentUser?.role === "HOKIM"
-  const getEntityId = (value: unknown): string => {
-    if (!value) return ""
-    if (typeof value === "string" || typeof value === "number") return String(value)
-    if (typeof value === "object" && value !== null && "id" in value) {
-      const id = (value as { id?: unknown }).id
-      return typeof id === "string" || typeof id === "number" ? String(id) : ""
-    }
-    return ""
-  }
 
-  const visibleOrganizations = useMemo(() => {
-    if (!currentUser) return organizations
+  const reqIdRef = useRef(0)
 
-    if (currentUser.role === "TASHKILOT_RAHBARI") {
-      const currentOrgId = getEntityId(currentUser.organization) || getEntityId(currentUser.organization_id)
-      return organizations.filter((org) => String(org.id) === currentOrgId)
-    }
-
-    if (currentUser.role === "HOKIM_YORDAMCHISI") {
-      const currentSectorId = getEntityId(currentUser.sector) || getEntityId(currentUser.sector_id)
-      return organizations.filter((org: any) => {
-        const organizationSectorId = getEntityId(org.sector) || getEntityId(org.sector_id)
-        return organizationSectorId === currentSectorId
-      })
-    }
-
-    return organizations
-  }, [organizations, currentUser])
-
-  // Build filters object - memoized to avoid recreation
-  const buildTaskFilters = useCallback(() => {
-    const filters: Record<string, string> = {}
-    if (searchQuery.trim()) filters.search = searchQuery.trim()
-    if (statusFilter && statusFilter !== "all") filters.status = statusFilter
-    if (priorityFilter && priorityFilter !== "all") filters.priority = priorityFilter
-    if (categoryFilter && categoryFilter !== "all") filters.category = categoryFilter
-    if (organizationFilter && organizationFilter !== "all") filters.organization = organizationFilter
-    return filters
-  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, organizationFilter])
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
-      const filters = buildTaskFilters()
-      const [usersData, orgsData, tasksPage, statsData, me] = await Promise.all([
-        getUsers(),
-        getOrganizations(),
-        getTasksPage(filters, page, pageSize, '-created_at'),
-        getTaskStats(filters),
-        getCurrentUser(),
-      ])
-      setUsers(usersData || [])
-      setOrganizations(orgsData || [])
-      setTasks(tasksPage?.results || [])
-      setTotalCount(tasksPage?.count ?? 0)
-      setCurrentUser(me)
-      setStats({
-        total: statsData.total ?? 0,
-        pending: statsData.pending ?? 0,
-        inProgress: statsData.in_progress ?? 0,
-        completed: statsData.completed ?? 0,
-      })
-    } catch (error) {
-      console.error("Tasks load error:", error)
-      setUsers([])
-      setOrganizations([])
-      setTasks([])
-      setTotalCount(0)
-      setStats({
-        total: 0,
-        pending: 0,
-        inProgress: 0,
-        completed: 0,
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [buildTaskFilters, page, pageSize])
-
+  /* --------------------------------------- Ma'lumotnomani BIR MARTA yuklash */
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    let alive = true
 
+    Promise.all([
+      getCurrentUser().catch(() => null),
+      getOrganizations().catch(() => []),
+      getSectors().catch(() => [] as Sector[]),
+    ])
+      .then(([me, orgs, secs]) => {
+        if (!alive) return
+        setCurrentUser(me)
+        setOrganizations(orgs || [])
+        setSectors((secs as Sector[]).filter((s) => s.is_active !== false))
+      })
+      .catch(() => {
+        if (alive) setRefError("Ma’lumotnomani yuklab bo‘lmadi.")
+      })
+      .finally(() => {
+        if (alive) setRefLoaded(true)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  /* ---------------------------------------------------- Mobil sahifa hajmi */
   useEffect(() => {
     if (typeof window === "undefined") return
     const media = window.matchMedia?.("(max-width: 767px)")
@@ -137,207 +128,311 @@ export default function TasksPage() {
     return () => media?.removeEventListener?.("change", apply)
   }, [])
 
+  /* ------------------------------------------------------------- Rollar */
+  const role = String(currentUser?.role ?? "")
+  const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
+  const canApprove = role === "HOKIM"
+  const canEdit = role === "HOKIM" || role === "HOKIM_YORDAMCHISI" || role === "ADMIN"
+  const canDelete = role === "HOKIM" || role === "ADMIN"
+  const isDistrictGovernor = role === "HOKIM"
+
+  const visibleOrganizations = useMemo(() => {
+    if (!currentUser) return organizations
+    const idOf = (v: unknown): string => {
+      if (!v) return ""
+      if (typeof v === "string" || typeof v === "number") return String(v)
+      if (typeof v === "object" && v && "id" in (v as any)) return String((v as any).id ?? "")
+      return ""
+    }
+
+    if (role === "TASHKILOT_RAHBARI" || role === "TASHKILOT_MASUL") {
+      const own = idOf(currentUser.organization) || idOf(currentUser.organization_id)
+      return organizations.filter((o) => String(o.id) === own)
+    }
+    if (role === "HOKIM_YORDAMCHISI" || role === "HOKIMLIK_MASUL") {
+      const own = idOf(currentUser.sector) || idOf(currentUser.sector_id)
+      if (!own) return organizations
+      return organizations.filter((o) => (idOf(o.sector) || idOf(o.sector_id)) === own)
+    }
+    return organizations
+  }, [organizations, currentUser, role])
+
+  /* ------------------------------------------------------ Ro'yxatni yuklash */
+  const filters = useMemo(() => {
+    const f: Record<string, string> = {}
+    if (searchQuery.trim()) f.search = searchQuery.trim()
+    if (statusFilter !== "all") f.status = statusFilter
+    if (priorityFilter !== "all") f.priority = priorityFilter
+    if (sectorFilter !== "all") f.sector = sectorFilter
+    if (organizationFilter !== "all") f.organization = organizationFilter
+    return f
+  }, [searchQuery, statusFilter, priorityFilter, sectorFilter, organizationFilter])
+
+  const loadList = useCallback(async () => {
+    const id = ++reqIdRef.current
+    setListLoading(true)
+    setListError(null)
+
+    try {
+      const [tasksPage, statsData] = await Promise.all([
+        getTasksPage(filters, page, pageSize, "-created_at"),
+        getTaskStats(filters),
+      ])
+
+      // Kechikkan javob yangi natijani bosib ketmasligi uchun
+      if (id !== reqIdRef.current) return
+
+      setTasks(tasksPage?.results || [])
+      setTotalCount(tasksPage?.count ?? 0)
+      setStats({ ...EMPTY_STATS, ...(statsData as any) })
+    } catch (err: any) {
+      if (id !== reqIdRef.current) return
+      setTasks([])
+      setTotalCount(0)
+      setStats(EMPTY_STATS)
+      setListError(
+        err?.message ||
+          "Topshiriqlarni yuklab bo‘lmadi. Ulanishni tekshirib, qayta urinib ko‘ring.",
+      )
+    } finally {
+      if (id === reqIdRef.current) setListLoading(false)
+    }
+  }, [filters, page, pageSize])
+
+  useEffect(() => {
+    void loadList()
+  }, [loadList])
+
   useEffect(() => {
     setPage(1)
-  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, organizationFilter])
+  }, [searchQuery, statusFilter, priorityFilter, sectorFilter, organizationFilter])
 
-  useEffect(() => {
-    if (!isDistrictGovernor && categoryFilter !== "all") {
-      setCategoryFilter("all")
-    }
-  }, [categoryFilter, isDistrictGovernor])
-
-  // Event handlers
-  const handleViewTask = (task: Task) => {
-    setSelectedTask(task)
-  }
-
-  const handleCreateTask = (mode: "manual" | "audio" = "manual") => {
-    setCreateTaskMode(mode)
-    setIsCreateDialogOpen(true)
-  }
-
-  const handleEditTask = (task: Task) => {
-    setSelectedTask(task)
-  }
-
-  const handleDeleteTask = async (taskId: number) => {
-    if (!confirm(t.pages.tasks.deleteConfirm)) return
-    try {
-      await deleteTask(taskId)
-      setTasks(prev => prev.filter(task => task.id !== taskId))
-    } catch (error) {
-      console.error("Delete task error:", error)
-      alert(t.pages.tasks.deleteError)
-    }
-  }
+  /* ----------------------------------------------------------- Harakatlar */
+  const handleDelete = useCallback(
+    async (taskId: number | string) => {
+      if (!window.confirm(t.pages?.tasks?.deleteConfirm ?? "Topshiriq o‘chirilsinmi?")) return
+      try {
+        await deleteTask(taskId)
+        // Ilgari faqat satr filtrlanardi, hisoblar esa eskirib qolardi
+        await loadList()
+      } catch {
+        setListError("O‘chirib bo‘lmadi. Huquqingiz yetarli ekanini tekshirib ko‘ring.")
+      }
+    },
+    [loadList, t],
+  )
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
-  if (loading) {
-    return (
-      <>
-        <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-        <div className="p-6 min-h-[60vh] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-500 text-sm">{t.common.loading}</p>
-          </div>
-        </div>
-      </>
-    )
-  }
-
+  /* ------------------------------------------------------------------ RENDER */
   return (
     <>
-      <Header title={t.pages.tasks.title} description={t.pages.tasks.description} />
-      <div ref={pageRef}>
-      <DashboardPageFrame
-        eyebrow="Topshiriqlar"
-        title="Ijro intizomi, yuklama va nazorat bir joyda boshqariladi."
-        description="Filtrlash, nazorat va bajarilish holatini bir ekranda kuzatib, muhim topshiriqlarni tezroq boshqarish mumkin."
-        stats={[
-          { label: "Jami", value: totalCount, icon: ListTodo, tone: "from-cyan-500/18 to-cyan-100/70" },
-          { label: "Ijroda", value: stats.inProgress, icon: Clock3, tone: "from-amber-400/24 to-amber-100/75" },
-          { label: "Bajarildi", value: stats.completed, icon: CheckCircle2, tone: "from-emerald-500/18 to-emerald-100/70" },
-        ]}
-      >
-        {/* Stats */}
-        <section data-gsap-section>
+      <Header
+        title={t.pages?.tasks?.title ?? "Topshiriqlar"}
+        description={t.pages?.tasks?.description ?? "Ijro intizomi va nazorat"}
+        actions={
+          canCreateTask ? (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/dashboard/tasks/new"
+                className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                Yangi topshiriq
+              </Link>
+              <Link
+                href="/dashboard/tasks/new/ai"
+                className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                <Sparkles className="h-4 w-4 text-primary" aria-hidden />
+                AI orqali
+              </Link>
+            </div>
+          ) : undefined
+        }
+      />
+
+      <div className="space-y-4 p-4 pb-28 sm:p-6 sm:pb-6">
+        {refError && (
+          <p role="alert" className="rounded-md bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
+            {refError}
+          </p>
+        )}
+
+        {/* Hokim uchun tasdiqlash navbatiga tezkor kirish */}
+        {canApprove && stats.awaiting_approval > 0 && (
+          <Link
+            href="/dashboard/tasks/pending-approval"
+            className="surface surface-interactive flex items-center gap-3 p-3.5"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info-soft-foreground">
+              <ShieldCheck className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-md font-semibold text-foreground">
+                {stats.awaiting_approval} ta topshiriq tasdig‘ingizni kutmoqda
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Hisobot va isbotlar yuklangan — nazoratdan yechish yoki qayta ijroga yuborish
+              </span>
+            </span>
+            <span className="shrink-0 text-sm font-semibold text-primary">Ko‘rish →</span>
+          </Link>
+        )}
+
+        {/* KPI */}
+        {!refLoaded && listLoading ? (
+          <PremiumStatsSkeleton count={6} />
+        ) : (
           <TaskStats
             total={stats.total}
             pending={stats.pending}
-            inProgress={stats.inProgress}
+            inProgress={stats.in_progress}
+            awaitingApproval={stats.awaiting_approval}
             completed={stats.completed}
+            overdue={stats.overdue}
+            returned={stats.returned}
+            canApprove={canApprove}
           />
-        </section>
+        )}
 
-        {/* Filters */}
-        <section data-gsap-section>
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos topshiriq oqimi</span>
-            <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
+        {/* Filtrlar */}
+        <TaskFilters
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          priorityFilter={priorityFilter}
+          sectorFilter={sectorFilter}
+          organizationFilter={organizationFilter}
+          sectors={sectors}
+          organizations={visibleOrganizations}
+          showSectorFilter={isDistrictGovernor || role === "ADMIN"}
+          showCreateButton={false}
+          resultCount={totalCount}
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+          onPriorityChange={setPriorityFilter}
+          onSectorChange={setSectorFilter}
+          onOrganizationChange={setOrganizationFilter}
+          onClear={() => {
+            setSearchQuery("")
+            setStatusFilter("all")
+            setPriorityFilter("all")
+            setSectorFilter("all")
+            setOrganizationFilter("all")
+          }}
+        />
+
+        {/* Jadval — faqat shu joy yuklanish holatiga o'tadi */}
+        {listError ? (
+          <div role="alert" className="surface p-6 text-center">
+            <p className="text-md font-semibold text-foreground">Yuklab bo‘lmadi</p>
+            <p className="mt-1 text-sm text-muted-foreground">{listError}</p>
+            <button
+              type="button"
+              onClick={() => void loadList()}
+              className="mt-4 inline-flex h-11 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
+              Qayta urinish
+            </button>
           </div>
-          <div className="rounded-[26px] border border-white/70 bg-white/78 p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-            <h3 className="text-base font-semibold text-slate-800 mb-4">{t.pages.tasks.filtersTitle}</h3>
-            <TaskFilters
-            searchQuery={searchQuery}
-            statusFilter={statusFilter}
-            priorityFilter={priorityFilter}
-            categoryFilter={categoryFilter}
-            showCategoryFilter={isDistrictGovernor}
-            organizationFilter={organizationFilter}
-            organizations={visibleOrganizations}
-            onSearchChange={setSearchQuery}
-            onStatusChange={(value) => setStatusFilter(value as any)}
-            onPriorityChange={(value) => setPriorityFilter(value as any)}
-            onCategoryChange={setCategoryFilter}
-            onOrganizationChange={setOrganizationFilter}
-            onCreate={handleCreateTask}
-            showCreateButton={canCreateTask}
-            onClear={() => {
-              setSearchQuery("")
-              setStatusFilter("all")
-              setPriorityFilter("all")
-              setCategoryFilter("all")
-              setOrganizationFilter("all")
-            }}
+        ) : listLoading ? (
+          <div className="surface overflow-hidden">
+            <PremiumTableSkeleton rows={8} columns={5} />
+          </div>
+        ) : (
+          <TaskTable
+            tasks={tasks}
+            onView={(task) => setSelectedTask(task)}
+            onEdit={canEdit ? (task) => setSelectedTask(task) : undefined}
+            onDelete={canDelete ? handleDelete : undefined}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            emptyAction={
+              canCreateTask ? (
+                <Link
+                  href="/dashboard/tasks/new"
+                  className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Birinchi topshiriqni yaratish
+                </Link>
+              ) : undefined
+            }
           />
-        </div>
-        </section>
+        )}
 
-        {/* Tasks Table */}
-        <section data-gsap-section>
-          <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-            <div className="border-b border-cyan-100/60 bg-gradient-to-r from-cyan-50/55 via-white/30 to-transparent px-6 py-4">
-              <h2 className="text-lg font-semibold text-slate-800">{t.pages.tasks.tableTitle}</h2>
+        {/* Sahifalash */}
+        {totalPages > 1 && (
+          <div className="surface flex flex-col items-center justify-between gap-3 p-3 sm:flex-row">
+            <p className="text-sm text-muted-foreground">
+              Jami:{" "}
+              <span className="font-semibold tabular-nums text-foreground">{totalCount}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <PageBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                Oldingi
+              </PageBtn>
+              <span className="rounded-md bg-muted px-3 py-1.5 text-sm font-medium tabular-nums text-foreground">
+                {page} / {totalPages}
+              </span>
+              <PageBtn
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= totalPages}
+              >
+                Keyingi
+              </PageBtn>
             </div>
-            <TaskTable
-              tasks={tasks}
-              onView={handleViewTask}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-            />
           </div>
-        </section>
-
-        {/* Pagination */}
-        <section data-gsap-section>
-          <div className="flex flex-col items-center justify-between gap-4 rounded-[24px] border border-white/70 bg-white/78 p-4 shadow-[0_20px_46px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl sm:flex-row">
-          <div className="text-sm text-slate-600">
-            {t.pages.tasks.totalLabel}: <span className="font-semibold text-slate-800">{totalCount}</span>
-            {searchQuery && <span className="ml-2">({t.pages.tasks.filteredLabel}: <span className="font-semibold text-blue-600">{tasks.length}</span>)</span>}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="text-sm"
-            >
-              {t.pages.tasks.previous}
-            </Button>
-            <span className="text-sm font-medium text-slate-700 px-3 py-1.5 bg-slate-100 rounded-md">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= totalPages}
-              className="text-sm"
-            >
-              {t.pages.tasks.next}
-            </Button>
-          </div>
-        </div>
-        </section>
-      </DashboardPageFrame>
+        )}
       </div>
 
-      <TaskDetailDialog
-        task={selectedTask}
-        onClose={() => setSelectedTask(null)}
-      />
+      <TaskDetailDialog task={selectedTask} onClose={() => setSelectedTask(null)} />
 
-      <CreateTaskDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        organizations={visibleOrganizations}
-        users={users}
-        currentUser={currentUser}
-        onCreated={loadData}
-        preferredInputMode={createTaskMode}
-      />
-
+      {/* Mobil: bitta asosiy harakat. Pastki navigatsiya ustida turadi. */}
       {canCreateTask && (
-        <div className="fixed inset-x-0 bottom-4 z-30 px-4 sm:hidden">
-          <div className="mx-auto flex max-w-md items-center gap-2 rounded-2xl border border-cyan-100/70 bg-white/92 p-2 shadow-[0_22px_48px_-26px_rgba(2,132,199,0.45)] backdrop-blur-xl">
-            <Button
-              type="button"
-              onClick={() => handleCreateTask("audio")}
-              className="h-12 flex-1 rounded-xl bg-cyan-600 text-white shadow-sm hover:bg-cyan-700"
+        <div className="fixed inset-x-0 bottom-16 z-30 px-4 pb-safe sm:hidden">
+          <div className="mx-auto flex max-w-md items-center gap-2">
+            <Link
+              href="/dashboard/tasks/new"
+              className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-lg"
             >
-              <Mic className="mr-2 h-4 w-4" />
-              Audio orqali
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleCreateTask("manual")}
-              className="h-12 flex-1 rounded-xl border-slate-200 bg-white"
-            >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden />
               Yangi topshiriq
-            </Button>
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-600" />
-            Telefon uchun tezkor yaratish pastki panel orqali ishlaydi
+            </Link>
+            <Link
+              href="/dashboard/tasks/new/ai"
+              aria-label="AI orqali yaratish"
+              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-lg"
+            >
+              <Sparkles className="h-5 w-5 text-primary" aria-hidden />
+            </Link>
           </div>
         </div>
       )}
     </>
+  )
+}
+
+function PageBtn({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex h-11 items-center rounded-md border border-border px-3 text-sm font-semibold text-foreground",
+        disabled ? "opacity-40" : "hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
   )
 }

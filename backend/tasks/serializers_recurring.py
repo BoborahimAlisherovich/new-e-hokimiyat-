@@ -4,6 +4,7 @@ Recurring Task Serializers.
 
 from rest_framework import serializers
 from tasks.models import RecurringTask, RecurringTaskHistory
+from organizations.models import Sector
 from organizations.serializers import OrganizationSerializer
 from users.models import User
 from users.serializers import UserMinimalSerializer
@@ -24,6 +25,20 @@ class RecurringTaskSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    sector = serializers.PrimaryKeyRelatedField(
+        queryset=Sector.objects.filter(is_active=True),
+        required=True,
+        allow_null=False,
+        error_messages={
+            'required': 'Soha tanlanishi shart',
+            'null': 'Soha tanlanishi shart',
+            'does_not_exist': 'Tanlangan soha topilmadi yoki faol emas',
+            'incorrect_type': "Soha noto'g'ri formatda yuborildi",
+        },
+    )
+    sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
+    # Orqaga moslik uchun (eski erkin matnli kategoriya)
+    category = serializers.CharField(required=False, allow_blank=True, max_length=100)
     
     class Meta:
         model = RecurringTask
@@ -33,7 +48,7 @@ class RecurringTaskSerializer(serializers.ModelSerializer):
             'cron_expression', 'cron_description',
             'start_date', 'end_date',
             'next_run_date', 'last_run_date',
-            'priority', 'category', 'deadline_days',
+            'priority', 'category', 'sector', 'sector_name', 'deadline_days',
             'organizations', 'organizations_count',
             'assigned_deputies', 'deputy_ids',
             'created_by', 'created_by_name',
@@ -52,6 +67,22 @@ class RecurringTaskSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         organizations = attrs.get('organizations')
         deputies = attrs.get('assigned_deputies', [])
+        sector = attrs.get('sector')
+
+        # Tanlangan tashkilotlar topshiriq sohasiga mos bo'lishi shart
+        if sector is not None and organizations:
+            mismatched = [
+                org.name for org in organizations
+                if org.sector_id is None or str(org.sector_id) != str(sector.pk)
+            ]
+            if mismatched:
+                raise serializers.ValidationError({
+                    'sector': (
+                        f"Quyidagi tashkilotlar «{sector.name}» sohasiga tegishli emas: "
+                        + ", ".join(sorted(mismatched))
+                        + ". Sohani o'zgartiring yoki shu sohadagi tashkilotlarni tanlang."
+                    )
+                })
 
         if not user:
             return attrs
@@ -86,6 +117,7 @@ class RecurringTaskDetailSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     organizations_list = OrganizationSerializer(source='organizations', many=True, read_only=True)
     assigned_deputies = UserMinimalSerializer(many=True, read_only=True)
+    sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
     recent_history = serializers.SerializerMethodField()
     
     class Meta:
@@ -95,7 +127,7 @@ class RecurringTaskDetailSerializer(serializers.ModelSerializer):
             'frequency', 'cron_expression', 'cron_description',
             'start_date', 'end_date',
             'next_run_date', 'last_run_date',
-            'priority', 'category', 'deadline_days',
+            'priority', 'category', 'sector', 'sector_name', 'deadline_days',
             'organizations', 'organizations_list', 'assigned_deputies',
             'created_by', 'created_by_name',
             'status', 'total_created',

@@ -1,24 +1,43 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import type React from "react"
 import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
 import { ArrowLeft } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+/**
+ * TAFSILOT FREYMI — topshiriq, murojaat, loyiha, foydalanuvchi, tashkilot
+ * sahifalari ishlatadi.
+ *
+ * O'zgartirildi:
+ *  1. Uchta `blur-3xl` dekorativ shar va cyan→teal gradientli hero olib
+ *     tashlandi (tokenlarga o'tildi).
+ *  2. `<h1>` → `<h2>`. Header allaqachon `<h1>` chiqaradi, shuning uchun
+ *     tafsilot sahifalarida IKKI `<h1>` bo'lardi.
+ *  3. Nonlar zanjiri (breadcrumb) qo'shildi: ilgari yo'l ko'rsatuvchi
+ *     yagona element chaqiruvchi eslab qolishi kerak bo'lgan `backHref`
+ *     tugmasi edi.
+ *  4. Sensorli nishonlar >= 44px.
+ */
 
 interface DetailStat {
   label: string
   value: string | number
   icon: LucideIcon
-  tone: string
+  /** Eski prop — endi ishlatilmaydi */
+  tone?: string
 }
 
 interface DashboardDetailFrameProps {
-  eyebrow: string
+  eyebrow?: string
   title: string
   description?: string
   backHref?: string
   backLabel?: string
+  /** Nonlar zanjiri: [{label, href}] — oxirgisi joriy sahifa */
+  breadcrumbs?: { label: string; href?: string }[]
   stats?: DetailStat[]
   badges?: React.ReactNode
   actions?: React.ReactNode
@@ -32,6 +51,7 @@ export function DashboardDetailFrame({
   description,
   backHref,
   backLabel = "Orqaga",
+  breadcrumbs,
   stats = [],
   badges,
   actions,
@@ -39,91 +59,91 @@ export function DashboardDetailFrame({
   className,
 }: DashboardDetailFrameProps) {
   return (
-    <div className={cn("relative px-2.5 py-2.5 sm:px-3 sm:py-3", className)}>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/24 to-transparent blur-3xl" />
-        <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/18 to-transparent blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/16 to-transparent blur-3xl" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl space-y-3">
-        <section className="grid gap-3 2xl:grid-cols-[1.45fr_1fr]">
-          <div
-            data-gsap-card
-            className="relative overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(6,182,212,0.96),rgba(13,148,136,0.92))] p-3.5 text-white shadow-[0_24px_60px_-30px_rgba(13,148,136,0.58)]"
-          >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_34%)]" />
-            <div className="pointer-events-none absolute -right-10 top-0 h-24 w-24 rounded-full border border-white/15" />
-            <div className="relative space-y-3">
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2.5">
-                  <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-50/90">
-                    {eyebrow}
-                  </div>
-                  <div>
-                    <h1 className="text-lg font-semibold tracking-tight text-white sm:text-[24px]">
-                      {title}
-                    </h1>
-                    {description && (
-                      <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-cyan-50/85">
-                        {description}
-                      </p>
-                    )}
-                  </div>
-                  {badges && <div className="flex flex-wrap items-center gap-2">{badges}</div>}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {backHref && (
-                    <Button
-                      asChild
-                      variant="secondary"
-                      className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18"
-                    >
-                      <Link href={backHref}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        {backLabel}
-                      </Link>
-                    </Button>
+    <div className={cn("space-y-4 p-4 sm:p-6", className)}>
+      {/* Nonlar zanjiri */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <nav aria-label="Nonlar zanjiri">
+          <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            {breadcrumbs.map((b, i) => {
+              const last = i === breadcrumbs.length - 1
+              return (
+                <li key={`${b.label}-${i}`} className="flex items-center gap-1">
+                  {b.href && !last ? (
+                    <Link href={b.href} className="hover:text-foreground hover:underline">
+                      {b.label}
+                    </Link>
+                  ) : (
+                    <span className={cn(last && "font-medium text-foreground")} aria-current={last ? "page" : undefined}>
+                      {b.label}
+                    </span>
                   )}
-                  {actions}
-                </div>
+                  {!last && <span aria-hidden>/</span>}
+                </li>
+              )
+            })}
+          </ol>
+        </nav>
+      )}
+
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+        <div className="surface animate-fade-in p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-2">
+              {eyebrow && (
+                <p className="text-2xs font-bold uppercase tracking-[0.1em] text-primary">
+                  {eyebrow}
+                </p>
+              )}
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-foreground text-balance">
+                  {title}
+                </h2>
+                {description && (
+                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+                )}
               </div>
+              {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {backHref && (
+                <Link
+                  href={backHref}
+                  className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-3.5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  {backLabel}
+                </Link>
+              )}
+              {actions}
             </div>
           </div>
+        </div>
 
-          {stats.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  data-gsap-card
-                  className={cn(
-                    "rounded-[18px] border border-white/75 bg-gradient-to-br p-3 shadow-[0_18px_44px_-30px_rgba(15,23,42,0.22)] backdrop-blur-xl",
-                    stat.tone,
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-600">
-                        {stat.label}
-                      </p>
-                      <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div className="rounded-xl bg-white/75 p-2 shadow-sm ring-1 ring-white/80">
-                      <stat.icon className="h-4 w-4 text-slate-700" />
-                    </div>
+        {stats.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            {stats.map((stat) => (
+              <div key={stat.label} className="surface animate-fade-in p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="mt-1 text-xl font-bold tabular-nums tracking-tight text-foreground">
+                      {stat.value}
+                    </p>
                   </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <stat.icon className="h-4.5 w-4.5" aria-hidden />
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-        {children}
-      </div>
+      {children}
     </div>
   )
 }

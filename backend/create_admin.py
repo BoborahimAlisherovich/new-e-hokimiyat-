@@ -27,7 +27,7 @@ def create_admin_user():
     last_name = os.environ.get("ADMIN_LAST_NAME", "User").strip() or "User"
 
     if not login or not pnfl or not password:
-        print("❌ ADMIN_LOGIN, ADMIN_PNFL va ADMIN_PASSWORD qiymatlari kerak")
+        print("X ADMIN_LOGIN, ADMIN_PNFL va ADMIN_PASSWORD qiymatlari kerak")
         return
 
     user = User.objects.filter(login__iexact=login).first()
@@ -35,7 +35,7 @@ def create_admin_user():
         user = User.objects.filter(pnfl=pnfl).first()
 
     if user:
-        print(f"🔄 Mavjud admin (login: {user.login}, pnfl: {user.pnfl}) yangilanmoqda...")
+        print(f"Mavjud admin (login: {user.login}, pnfl: {user.pnfl}) yangilanmoqda...")
         user.login = login
         user.pnfl = pnfl
         user.first_name = first_name
@@ -47,9 +47,9 @@ def create_admin_user():
         user.is_superuser = True
         user.set_password(password)
         user.save()
-        print(f"✅ Admin foydalanuvchi muvaffaqiyatli yangilandi ({login})")
+        print(f"Admin foydalanuvchi muvaffaqiyatli yangilandi ({login})")
     else:
-        print("🛠 Superuser yaratilmoqda...")
+        print("Superuser yaratilmoqda...")
         try:
             User.objects.create_superuser(
                 login=login,
@@ -59,9 +59,9 @@ def create_admin_user():
                 last_name=last_name,
                 role="ADMIN",
             )
-            print(f"✅ Superuser muvaffaqiyatli yaratildi ({login})")
+            print(f"Superuser muvaffaqiyatli yaratildi ({login})")
         except Exception as exc:
-            print(f"❌ Xatolik yuz berdi: {exc}")
+            print(f"Xatolik yuz berdi: {exc}")
 
 
 if __name__ == "__main__":

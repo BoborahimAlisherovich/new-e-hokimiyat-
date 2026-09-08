@@ -1,240 +1,323 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, X, Filter, Sparkles } from "lucide-react"
-import { useTranslation } from "@/lib/i18n/context"
+import type React from "react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { Filter, Plus, RotateCcw, Search, Sparkles, X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 import { PremiumCountBadge, PremiumFilterShell } from "@/components/dashboard/premium-dashboard-ui"
+import { TASK_STATUSES, TASK_STATUS_LABEL, PRIORITIES, PRIORITY_LABEL } from "@/lib/status-styles"
+import type { Sector } from "@/lib/api/sectors.api"
 
-type Organization = {
-  id: string
-  name: string
-}
+/**
+ * TOPSHIRIQ FILTRLARI
+ *
+ * Tuzatilgan nuqsonlar:
+ *  - Yonma-yon IKKI yaratish tugmasi bor edi ("Tezkor yaratish" va "Yangi
+ *    topshiriq"), va ASOSIY (gradientli) tugma buzuq wizard'ni ochardi.
+ *    Endi bitta asosiy tugma + AI uchun ikkilamchi tugma.
+ *  - `<Button>` `<Link>` ichida joylashgan edi — bu HTML'da ruxsat
+ *    etilmaydi va klaviatura bilan ishlashni buzadi. Endi Link o'zi tugma
+ *    ko'rinishida.
+ *  - «Soha» filtri qotib qolgan 7 kategoriyadan iborat edi; backend'da esa
+ *    `category` erkin matn maydoni. Endi haqiqiy `Sector` API'sidan keladi.
+ *  - Faol filtr chiplari faqat ko'rsatuv uchun edi — har birini alohida
+ *    olib tashlash imkoni yo'q edi. Endi bor.
+ *  - Har bosishda qidiruv so'rov yuborardi (debounce yo'q) — endi debounce
+ *    ota-komponentda (app/dashboard/tasks/page.tsx).
+ *  - `<Label>` va Select bir-biriga bog'lanmagan edi (htmlFor yo'q).
+ */
 
-type TaskFiltersProps = {
+export type TaskFiltersProps = {
   searchQuery: string
   statusFilter: string
   priorityFilter: string
-  categoryFilter: string
-  showCategoryFilter?: boolean
-  organizationFilter?: string
-  organizations?: Organization[]
-  onSearchChange: (value: string) => void
-  onStatusChange: (value: string) => void
-  onPriorityChange: (value: string) => void
-  onCategoryChange: (value: string) => void
-  onOrganizationChange?: (value: string) => void
-  onCreate?: () => void
-  onClear: () => void
+  sectorFilter: string
+  organizationFilter: string
+  sectors: Sector[]
+  organizations: { id: string | number; name?: string }[]
+  showSectorFilter?: boolean
   showCreateButton?: boolean
+  onSearchChange: (v: string) => void
+  onStatusChange: (v: string) => void
+  onPriorityChange: (v: string) => void
+  onSectorChange: (v: string) => void
+  onOrganizationChange: (v: string) => void
+  onClear: () => void
+  /** Filtrlangan natijalar soni */
+  resultCount?: number
 }
 
-export function TaskFilters({
-  searchQuery,
-  statusFilter,
-  priorityFilter,
-  categoryFilter,
-  showCategoryFilter = true,
-  organizationFilter = "all",
-  organizations = [],
-  onSearchChange,
-  onStatusChange,
-  onPriorityChange,
-  onCategoryChange,
-  onOrganizationChange,
-  onCreate,
-  onClear,
-  showCreateButton = true,
-}: TaskFiltersProps) {
-  const t = useTranslation()
-  
-  const hasActiveFilters = statusFilter !== "all" || priorityFilter !== "all" || 
-    (showCategoryFilter && categoryFilter !== "all") || organizationFilter !== "all" || searchQuery !== ""
+export function TaskFilters(props: TaskFiltersProps) {
+  const {
+    searchQuery,
+    statusFilter,
+    priorityFilter,
+    sectorFilter,
+    organizationFilter,
+    sectors,
+    organizations,
+    showSectorFilter = true,
+    showCreateButton = false,
+    onSearchChange,
+    onStatusChange,
+    onPriorityChange,
+    onSectorChange,
+    onOrganizationChange,
+    onClear,
+    resultCount,
+  } = props
 
-  const statusLabels: Record<string, string> = {
-    YANGI: t.task.statuses.NEW,
-    IJRODA: t.task.statuses.IN_PROGRESS,
-    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
-    BAJARILDI: t.task.statuses.COMPLETED,
-    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
-    MUDDATI_KECH: t.task.statuses.OVERDUE,
-    BAJARILMADI: t.task.statuses.FAILED,
-    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
-  }
+  // Yozish paytida input o'z holatini yuritadi, so'rov debounce bilan ketadi
+  const [localSearch, setLocalSearch] = useState(searchQuery)
 
-  const priorityLabels: Record<string, string> = {
-    FAVQULODDA: t.tasks.priorityOptionCritical,
-    YUQORI: t.tasks.priorityOptionHigh,
-    ODDIY: t.tasks.priorityOptionMedium,
-    PAST: t.tasks.priorityOptionLow,
-  }
+  useEffect(() => {
+    setLocalSearch(searchQuery)
+  }, [searchQuery])
 
-  const categoryLabels: Record<string, string> = {
-    IJTIMOIY: t.task.categories.IJTIMOIY,
-    IQTISODIY: t.task.categories.IQTISODIY,
-    HUQUQIY: t.task.categories.HUQUQIY,
-    INFRASTRUKTURA: t.task.categories.INFRASTRUKTURA,
-    TA_LIM: t.task.categories.TA_LIM,
-    SOG_LIQNI_SAQLASH: t.task.categories.SOG_LIQNI_SAQLASH,
-    BOSHQA: t.task.categories.BOSHQA,
-  }
+  useEffect(() => {
+    if (localSearch === searchQuery) return
+    const t = setTimeout(() => onSearchChange(localSearch), 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSearch])
 
-  const organizationLabel = organizations.find(
-    (org) => String(org.id) === String(organizationFilter)
-  )?.name
+  const sectorName = useMemo(
+    () => sectors.find((s) => s.id === sectorFilter)?.name,
+    [sectors, sectorFilter],
+  )
+  const orgName = useMemo(
+    () => organizations.find((o) => String(o.id) === organizationFilter)?.name,
+    [organizations, organizationFilter],
+  )
 
-  const activeFilters = [
-    searchQuery ? { label: "Qidiruv", value: searchQuery } : null,
-    statusFilter !== "all"
-      ? { label: "Holat", value: statusLabels[statusFilter] || statusFilter }
-      : null,
-    priorityFilter !== "all"
-      ? { label: "Muhimlik", value: priorityLabels[priorityFilter] || priorityFilter }
-      : null,
-    showCategoryFilter && categoryFilter !== "all"
-      ? { label: "Soha", value: categoryLabels[categoryFilter] || categoryFilter }
-      : null,
-    organizationFilter !== "all"
-      ? { label: "Tashkilot", value: organizationLabel || organizationFilter }
-      : null,
-  ].filter(Boolean) as { label: string; value: string }[]
-  
+  const chips: { key: string; label: string; onRemove: () => void }[] = []
+  if (searchQuery.trim())
+    chips.push({
+      key: "q",
+      label: `Qidiruv: «${searchQuery.trim()}»`,
+      onRemove: () => {
+        setLocalSearch("")
+        onSearchChange("")
+      },
+    })
+  if (statusFilter !== "all")
+    chips.push({
+      key: "status",
+      label: `Holat: ${TASK_STATUS_LABEL[statusFilter] ?? statusFilter}`,
+      onRemove: () => onStatusChange("all"),
+    })
+  if (priorityFilter !== "all")
+    chips.push({
+      key: "priority",
+      label: `Muhimlik: ${PRIORITY_LABEL[priorityFilter] ?? priorityFilter}`,
+      onRemove: () => onPriorityChange("all"),
+    })
+  if (sectorFilter !== "all" && sectorName)
+    chips.push({
+      key: "sector",
+      label: `Soha: ${sectorName}`,
+      onRemove: () => onSectorChange("all"),
+    })
+  if (organizationFilter !== "all" && orgName)
+    chips.push({
+      key: "org",
+      label: `Tashkilot: ${orgName}`,
+      onRemove: () => onOrganizationChange("all"),
+    })
+
+  const hasFilters = chips.length > 0
+
   return (
-    <PremiumFilterShell
-      icon={Filter}
-      title="Topshiriqlar filtri"
-      description="Topshiriqlarni qidiring, saralang va kerakli oqimni ajrating"
-      accentClassName="bg-gradient-to-r from-amber-50 via-orange-50/90 to-rose-50/80"
-      badge={
-        hasActiveFilters ? (
-          <PremiumCountBadge className="border-orange-200 bg-orange-100 text-orange-700">
-            <Sparkles className="mr-1 h-3 w-3" />
-            {activeFilters.length} ta filtr
-          </PremiumCountBadge>
-        ) : undefined
-      }
-      clearAction={
-        hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={onClear} className="text-slate-500 hover:bg-red-50 hover:text-red-600">
-            <X className="mr-1 h-4 w-4" />
-            Tozalash
-          </Button>
-        ) : undefined
-      }
-    >
-      <div className="space-y-4">
-        {hasActiveFilters && activeFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {activeFilters.map((filter) => (
-              <Badge key={`${filter.label}-${filter.value}`} variant="outline" className="border-orange-200 bg-white/70 text-xs text-orange-700">
-                {filter.label}: {filter.value}
-              </Badge>
-            ))}
+    <div className="space-y-3">
+      {/* Yaratish tugmalari — sarlavha qatoridan alohida, bitta asosiy */}
+      {showCreateButton && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/tasks/new"
+            className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Yangi topshiriq
+          </Link>
+          <Link
+            href="/dashboard/tasks/new/ai"
+            className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <Sparkles className="h-4 w-4 text-primary" aria-hidden />
+            AI orqali
+          </Link>
+        </div>
+      )}
+
+      <PremiumFilterShell
+        icon={Filter}
+        title="Filtrlar"
+        description="Holat, muhimlik, soha va tashkilot bo‘yicha saralash"
+        collapsible
+        defaultOpen={false}
+        badge={
+          typeof resultCount === "number" ? (
+            <PremiumCountBadge tone={hasFilters ? "primary" : "neutral"}>
+              {resultCount} natija
+            </PremiumCountBadge>
+          ) : undefined
+        }
+        clearAction={
+          hasFilters ? (
+            <button
+              type="button"
+              onClick={() => {
+                setLocalSearch("")
+                onClear()
+              }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-semibold text-foreground hover:bg-muted"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+              Tozalash
+            </button>
+          ) : undefined
+        }
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Qidiruv */}
+          <div className="sm:col-span-2 lg:col-span-4">
+            <label
+              htmlFor="tf-search"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Qidiruv
+            </label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <input
+                id="tf-search"
+                type="search"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                placeholder="Topshiriq nomi yoki tafsiloti bo‘yicha…"
+                className="h-11 w-full rounded-md border border-input bg-card pl-8.5 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              />
+            </div>
           </div>
-        )}
-        {/* Search and Actions */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Topshiriqlarni qidirish (sarlavha/tavsif)"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="h-11 rounded-xl border-cyan-100/60 bg-white/90 pl-10 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-all"
+
+          <Select
+            id="tf-status"
+            label="Holat"
+            value={statusFilter}
+            onChange={onStatusChange}
+            options={[
+              { value: "all", label: "Barchasi" },
+              ...TASK_STATUSES.map((s) => ({ value: s, label: TASK_STATUS_LABEL[s] })),
+            ]}
+          />
+
+          <Select
+            id="tf-priority"
+            label="Muhimlik"
+            value={priorityFilter}
+            onChange={onPriorityChange}
+            options={[
+              { value: "all", label: "Barchasi" },
+              ...PRIORITIES.map((p) => ({ value: p, label: PRIORITY_LABEL[p] })),
+            ]}
+          />
+
+          {showSectorFilter && (
+            <Select
+              id="tf-sector"
+              label="Soha"
+              value={sectorFilter}
+              onChange={onSectorChange}
+              options={[
+                { value: "all", label: "Barcha sohalar" },
+                ...sectors.map((s) => ({ value: s.id, label: s.name })),
+              ]}
             />
-          </div>
-          <div className="flex gap-2">
-            {showCreateButton && onCreate && (
-              <Button onClick={onCreate} className="h-11 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 text-white shadow-sm transition-all hover:from-orange-700 hover:to-rose-700 hover:shadow-md">
-                <Plus className="h-4 w-4 mr-1" />
-                {t.tasks.newTask}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className={`grid gap-3 sm:grid-cols-2 ${showCategoryFilter ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
-          <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Holat bo'yicha</Label>
-            <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
-                <SelectValue placeholder="Holat bo'yicha" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-                <SelectItem value="YANGI">{t.task.statuses.NEW}</SelectItem>
-                <SelectItem value="IJRODA">{t.task.statuses.IN_PROGRESS}</SelectItem>
-                <SelectItem value="TEKSHIRUVDA">{t.task.statuses.IN_REVIEW}</SelectItem>
-                <SelectItem value="BAJARILDI">{t.task.statuses.COMPLETED}</SelectItem>
-                <SelectItem value="QAYTA_IJROGA_YUBORILDI">{t.task.statuses.REASSIGNED}</SelectItem>
-                <SelectItem value="MUDDATI_KECH">{t.task.statuses.OVERDUE}</SelectItem>
-                <SelectItem value="BAJARILMADI">{t.task.statuses.FAILED}</SelectItem>
-                <SelectItem value="NAZORATDAN_YECHILDI">{t.task.statuses.RESOLVED}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Muhimlik bo'yicha</Label>
-            <Select value={priorityFilter} onValueChange={onPriorityChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
-                <SelectValue placeholder="Muhimlik bo'yicha" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-                <SelectItem value="FAVQULODDA">{t.tasks.priorityOptionCritical}</SelectItem>
-                <SelectItem value="YUQORI">{t.tasks.priorityOptionHigh}</SelectItem>
-                <SelectItem value="ODDIY">{t.tasks.priorityOptionMedium}</SelectItem>
-                <SelectItem value="PAST">{t.tasks.priorityOptionLow}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {showCategoryFilter && (
-            <div className="space-y-1">
-              <Label className="text-xs text-slate-500">Soha bo'yicha</Label>
-              <Select value={categoryFilter} onValueChange={onCategoryChange}>
-                <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
-                  <SelectValue placeholder="Soha bo'yicha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t.tasks.allOption}</SelectItem>
-                  <SelectItem value="IJTIMOIY">{t.task.categories.IJTIMOIY}</SelectItem>
-                  <SelectItem value="IQTISODIY">{t.task.categories.IQTISODIY}</SelectItem>
-                  <SelectItem value="HUQUQIY">{t.task.categories.HUQUQIY}</SelectItem>
-                  <SelectItem value="INFRASTRUKTURA">{t.task.categories.INFRASTRUKTURA}</SelectItem>
-                  <SelectItem value="TA_LIM">{t.task.categories.TA_LIM}</SelectItem>
-                  <SelectItem value="SOG_LIQNI_SAQLASH">{t.task.categories.SOG_LIQNI_SAQLASH}</SelectItem>
-                  <SelectItem value="BOSHQA">{t.task.categories.BOSHQA}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           )}
 
-          {onOrganizationChange && (
-            <div className="space-y-1">
-              <Label className="text-xs text-slate-500">Tashkilot bo'yicha</Label>
-              <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:border-orange-400 focus:ring-2 focus:ring-orange-200">
-                  <SelectValue placeholder="Tashkilot bo'yicha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Barchasi</SelectItem>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <Select
+            id="tf-org"
+            label="Tashkilot"
+            value={organizationFilter}
+            onChange={onOrganizationChange}
+            options={[
+              { value: "all", label: "Barcha tashkilotlar" },
+              ...organizations.map((o) => ({
+                value: String(o.id),
+                label: o.name ?? String(o.id),
+              })),
+            ]}
+          />
         </div>
-      </div>
-    </PremiumFilterShell>
+      </PremiumFilterShell>
+
+      {/* Faol filtrlar — har birini alohida olib tashlash mumkin */}
+      {hasFilters && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {chips.map((c) => (
+            <span
+              key={c.key}
+              className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-1 text-xs font-medium text-primary-soft-foreground"
+            >
+              {c.label}
+              <button
+                type="button"
+                onClick={c.onRemove}
+                aria-label={`${c.label} — olib tashlash`}
+                className="rounded-xs hover:text-destructive"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* -------------------------------------------------------------- Yordamchi */
+
+function Select({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  className?: string
+}) {
+  return (
+    <div className={className}>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+      >
+        {label}
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-11 w-full rounded-md border border-input bg-card px-2.5 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
   )
 }

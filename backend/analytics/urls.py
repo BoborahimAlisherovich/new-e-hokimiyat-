@@ -9,7 +9,8 @@ from .views import (
     OrganizationAnalyticsView,
     UserAnalyticsView,
     TaskTrendsView,
-    AnalyticsExportView
+    AnalyticsExportView,
+    VillageAnalyticsView,
 )
 
 urlpatterns = [
@@ -19,4 +20,6 @@ urlpatterns = [
     path('users/', UserAnalyticsView.as_view(), name='analytics-users'),
     path('trends/', TaskTrendsView.as_view(), name='analytics-trends'),
     path('export/', AnalyticsExportView.as_view(), name='analytics-export'),
+    # Interaktiv xarita uchun qishloqlar kesimi
+    path('villages/', VillageAnalyticsView.as_view(), name='analytics-villages'),
 ]

@@ -1,41 +1,32 @@
-export const PRIORITY_COLORS: Record<string, string> = {
-  PAST: "bg-slate-50 text-slate-600 border-slate-200",
-  ODDIY: "bg-amber-50 text-amber-600 border-amber-200",
-  YUQORI: "bg-orange-50 text-orange-600 border-orange-200",
-  FAVQULODDA: "bg-rose-50 text-rose-600 border-rose-200",
-  MUHIM: "bg-orange-50 text-orange-600 border-orange-200",
-  SHOSHILINCH: "bg-rose-50 text-rose-600 border-rose-200",
-  MUHIM_SHOSHILINCH: "bg-rose-50 text-rose-600 border-rose-200",
-}
+/**
+ * ESKI FAYL — MOSLASHUV QATLAMI.
+ *
+ * Bu yerda ilgari topshiriq statuslari va muhimliklari uchun alohida rang
+ * jadvali bor edi (bir xil statuslar uchun boshqa joylarda yana 5 xil jadval
+ * bilan birga). Endi yagona manba — lib/status-styles.ts.
+ *
+ * Yangi kodda to'g'ridan-to'g'ri quyidagilardan foydalaning:
+ *   import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
+ *   import { taskStatusClass, priorityClass } from "@/lib/status-styles"
+ */
 
-export const STATUS_COLORS: Record<string, string> = {
-  YANGI: "bg-blue-50 text-blue-600 border-blue-100",
-  IJRODA: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  TEKSHIRUVDA: "bg-purple-50 text-purple-600 border-purple-100",
-  BAJARILDI: "bg-teal-50 text-teal-600 border-teal-100",
-  QAYTA_IJROGA_YUBORILDI: "bg-amber-50 text-amber-600 border-amber-100",
-  MUDDATI_KECH: "bg-red-50 text-red-600 border-red-100",
-  BAJARILMADI: "bg-slate-50 text-slate-600 border-slate-200",
-  NAZORATDAN_YECHILDI: "bg-slate-50 text-slate-600 border-slate-200",
-}
+export {
+  TASK_STATUS_CLASS as STATUS_COLORS,
+  TASK_STATUS_LABEL as STATUS_LABELS,
+  PRIORITY_CLASS as PRIORITY_COLORS,
+  PRIORITY_LABEL as PRIORITY_LABELS,
+  TASK_STATUS_HINT,
+  TASK_STATUS_ORDER,
+  TASK_STATUS_TERMINAL,
+  TASK_STATUS_AWAITING_APPROVAL,
+  TASK_STATUS_NEEDS_ACTION,
+  PRIORITY_ORDER,
+  PRIORITY_DEFAULT_DAYS,
+  TASK_STATUSES,
+  PRIORITIES,
+  taskStatusClass,
+  priorityClass,
+  badgeClass,
+} from "@/lib/status-styles"
 
-export const STATUS_LABELS: Record<string, string> = {
-  YANGI: "Yangi",
-  IJRODA: "Ijroda",
-  TEKSHIRUVDA: "Ko'rib chiqilmoqda",
-  BAJARILDI: "Bajarildi",
-  QAYTA_IJROGA_YUBORILDI: "Qayta ijroga yuborildi",
-  MUDDATI_KECH: "Muddati kechikkan",
-  BAJARILMADI: "Bajarilmadi",
-  NAZORATDAN_YECHILDI: "Nazoratdan yechildi",
-}
-
-export const PRIORITY_LABELS: Record<string, string> = {
-  PAST: "Past",
-  ODDIY: "O'rtacha",
-  YUQORI: "Yuqori",
-  FAVQULODDA: "Favqulodda",
-  MUHIM: "Muhim",
-  SHOSHILINCH: "Shoshilinch",
-  MUHIM_SHOSHILINCH: "Muhim/shoshilinch",
-}
+export type { TaskStatusKey, PriorityKey } from "@/lib/status-styles"

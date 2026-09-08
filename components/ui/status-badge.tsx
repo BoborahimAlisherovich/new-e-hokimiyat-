@@ -1,96 +1,130 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import type { TaskStatus, UserStatus, TaskPriority } from "@/lib/constants"
+import type { TaskStatus, UserStatus } from "@/lib/constants"
 import { useTranslation } from "@/lib/i18n/context"
+import {
+  PRIORITY_LABEL,
+  TASK_STATUS_HINT,
+  TASK_STATUS_LABEL,
+  USER_STATUS_LABEL,
+  priorityClass,
+  taskStatusClass,
+  userStatusClass,
+} from "@/lib/status-styles"
 
-const taskStatusStyles: Record<TaskStatus, string> = {
-  YANGI: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  IJRODA: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  TEKSHIRUVDA: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  BAJARILDI: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  MUDDATI_KECH: "bg-red-500/20 text-red-400 border-red-500/30",
-  NAZORATDAN_YECHILDI: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  QAYTA_IJROGA_YUBORILDI: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  BAJARILMADI: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+/**
+ * Barcha holat nishonlari shu fayldan chiqadi. Ranglar lib/status-styles.ts
+ * dagi klasslar orqali, klasslarning o'zi app/globals.css dagi tokenlarda —
+ * shuning uchun bitta joyda o'zgartirilsa hamma joyda o'zgaradi va dark tema
+ * avtomatik ishlaydi.
+ *
+ * Ilgari bu yerda bg-blue-500/20 text-blue-400 kabi DARK TEMA ranglari
+ * yorug' fonda ishlatilgan edi: text-yellow-400 oq fonda 1.55:1 kontrast
+ * bergan (WCAG AA talabi 4.5:1) — ya'ni topshiriq statusi amalda o'qilmasdi.
+ */
+
+type BadgeSize = "sm" | "md"
+
+const sizeClass: Record<BadgeSize, string> = {
+  sm: "text-2xs px-1.5 py-0.5",
+  md: "",
 }
 
-const userStatusStyles: Record<UserStatus, string> = {
-  DRAFT: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  KUTILMOQDA: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  FAOL: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  BLOKLANGAN: "bg-red-500/20 text-red-400 border-red-500/30",
-  ARXIV: "bg-gray-600/20 text-gray-500 border-gray-600/30",
-}
-
-const priorityStyles: Record<string, string> = {
-  FAVQULODDA: "bg-red-500/20 text-red-400 border-red-500/30",
-  YUQORI: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  ODDIY: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  PAST: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-}
-
-export function TaskStatusBadge({ status }: { status: TaskStatus }) {
+export function TaskStatusBadge({
+  status,
+  size = "md",
+  showHint = false,
+  className,
+}: {
+  status: TaskStatus | string | null | undefined
+  size?: BadgeSize
+  /** Statusning ma'nosini title atributida ko'rsatish */
+  showHint?: boolean
+  className?: string
+}) {
   const t = useTranslation()
-  const statusLabelsMap: Record<TaskStatus, string> = {
-    YANGI: t.task.statuses.NEW,
-    IJRODA: t.task.statuses.IN_PROGRESS,
-    TEKSHIRUVDA: t.task.statuses.IN_REVIEW,
-    BAJARILDI: t.task.statuses.COMPLETED,
-    MUDDATI_KECH: t.task.statuses.OVERDUE,
-    QAYTA_IJROGA_YUBORILDI: t.task.statuses.REASSIGNED,
-    BAJARILMADI: t.task.statuses.FAILED,
-    NAZORATDAN_YECHILDI: t.task.statuses.RESOLVED,
+
+  const i18nMap: Record<string, string | undefined> = {
+    YANGI: t.task?.statuses?.NEW,
+    IJRODA: t.task?.statuses?.IN_PROGRESS,
+    TEKSHIRUVDA: t.task?.statuses?.IN_REVIEW,
+    BAJARILDI: t.task?.statuses?.COMPLETED,
+    MUDDATI_KECH: t.task?.statuses?.OVERDUE,
+    QAYTA_IJROGA_YUBORILDI: t.task?.statuses?.REASSIGNED,
+    BAJARILMADI: t.task?.statuses?.FAILED,
+    NAZORATDAN_YECHILDI: t.task?.statuses?.RESOLVED,
   }
+
+  const key = status ?? ""
+  const label =
+    i18nMap[key] ?? TASK_STATUS_LABEL[key] ?? key ?? t.common?.unknown ?? "—"
+
   return (
-    <Badge variant="outline" className={cn("font-medium", taskStatusStyles[status])}>
-      {statusLabelsMap[status]}
-    </Badge>
+    <span
+      className={cn(taskStatusClass(key), sizeClass[size], className)}
+      title={showHint ? TASK_STATUS_HINT[key] : undefined}
+    >
+      {label}
+    </span>
   )
 }
 
-export function UserStatusBadge({ status }: { status: UserStatus }) {
+export function UserStatusBadge({
+  status,
+  size = "md",
+  className,
+}: {
+  status: UserStatus | string | null | undefined
+  size?: BadgeSize
+  className?: string
+}) {
   const t = useTranslation()
-  const statusLabelsMap: Record<UserStatus, string> = {
-    DRAFT: t.user.statuses.DRAFT,
-    KUTILMOQDA: t.user.statuses.PENDING,
-    FAOL: t.user.statuses.ACTIVE,
-    BLOKLANGAN: t.user.statuses.BLOCKED,
-    ARXIV: t.user.statuses.ARCHIVED,
+
+  const i18nMap: Record<string, string | undefined> = {
+    DRAFT: t.user?.statuses?.DRAFT,
+    KUTILMOQDA: t.user?.statuses?.PENDING,
+    FAOL: t.user?.statuses?.ACTIVE,
+    BLOKLANGAN: t.user?.statuses?.BLOCKED,
+    ARXIV: t.user?.statuses?.ARCHIVED,
   }
-  if (!status || !userStatusStyles[status]) {
-    return (
-      <Badge variant="outline" className="font-medium bg-gray-500/20 text-gray-400 border-gray-500/30">
-        {t.common.unknown}
-      </Badge>
-    )
-  }
+
+  const key = status ?? ""
+  const label =
+    i18nMap[key] ?? USER_STATUS_LABEL[key] ?? t.common?.unknown ?? "—"
+
   return (
-    <Badge variant="outline" className={cn("font-medium", userStatusStyles[status])}>
-      {statusLabelsMap[status]}
-    </Badge>
+    <span className={cn(userStatusClass(key), sizeClass[size], className)}>
+      {label}
+    </span>
   )
 }
 
-export function PriorityBadge({ priority }: { priority: string }) {
+export function PriorityBadge({
+  priority,
+  size = "md",
+  className,
+}: {
+  priority: string | null | undefined
+  size?: BadgeSize
+  className?: string
+}) {
   const t = useTranslation()
-  const priorityLabelsMap: Record<string, string> = {
-    FAVQULODDA: t.task.priorities.FAVQULODDA,
-    YUQORI: t.task.priorities.YUQORI,
-    ODDIY: t.task.priorities.ODDIY,
-    PAST: t.task.priorities.PAST,
+
+  const i18nMap: Record<string, string | undefined> = {
+    FAVQULODDA: t.task?.priorities?.FAVQULODDA,
+    YUQORI: t.task?.priorities?.YUQORI,
+    ODDIY: t.task?.priorities?.ODDIY,
+    PAST: t.task?.priorities?.PAST,
   }
-  if (!priority || !priorityStyles[priority]) {
-    return (
-      <Badge variant="outline" className="font-medium bg-gray-500/20 text-gray-400 border-gray-500/30">
-        {priority || t.common.unknown}
-      </Badge>
-    )
-  }
+
+  const key = priority ?? ""
+  const label =
+    i18nMap[key] ?? PRIORITY_LABEL[key] ?? key ?? t.common?.unknown ?? "—"
+
   return (
-    <Badge variant="outline" className={cn("font-medium", priorityStyles[priority])}>
-      {priorityLabelsMap[priority] || priority}
-    </Badge>
+    <span className={cn(priorityClass(key), sizeClass[size], className)}>
+      {label}
+    </span>
   )
 }

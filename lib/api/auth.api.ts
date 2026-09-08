@@ -21,6 +21,7 @@ import {
   API_BASE 
 } from './client'
 import { TOKEN_KEYS } from './types'
+import { invalidateCurrentUser, loadCurrentUser, primeCurrentUser } from '@/lib/current-user'
 
 // ============================================================================
 // Authentication Functions
@@ -59,11 +60,16 @@ export async function login(
   setAccessToken(response.access)
   setRefreshToken(response.refresh)
   
-  // Foydalanuvchi ma'lumotlarini saqlash
-  if (typeof window !== 'undefined' && response.user) {
-    localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(response.user))
+  // Sessiya almashdi — eski `/auth/me` keshi yaroqsiz
+  invalidateCurrentUser()
+
+  // Foydalanuvchi ma'lumotlarini saqlash. Login javobi allaqachon
+  // foydalanuvchini qaytaradi, shuning uchun uni keshga yozamiz va
+  // dashboard ochilganda qo'shimcha `/auth/me` so'rovi ketmaydi.
+  if (response.user) {
+    primeCurrentUser(response.user)
   }
-  
+
   return response
 }
 
@@ -83,7 +89,8 @@ export async function logout(): Promise<void> {
     // Logout xatosini e'tiborsiz qoldirish
   } finally {
     clearTokens()
-    
+    invalidateCurrentUser()
+
     if (typeof window !== 'undefined') {
       localStorage.removeItem(TOKEN_KEYS.USER)
     }
@@ -91,17 +98,25 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Joriy autentifikatsiyalangan foydalanuvchini oladi
- * 
+ * Joriy autentifikatsiyalangan foydalanuvchini oladi.
+ *
+ * MUHIM: bu funksiya `lib/current-user.ts` dagi umumiy kesh orqali ishlaydi.
+ * Bir vaqtda kelgan chaqiruvlar bitta `/auth/me` so'rovini bo'lishadi va
+ * qisqa TTL ichida takroriy chaqiruv tarmoqqa chiqmaydi. Ilgari bu oddiy
+ * `fetch` edi va har sahifa yuklanishida 3 ta bir xil so'rov ketardi.
+ *
+ * Yangi kodda `useCurrentUser()` (React kontekst) ni afzal ko'ring.
+ *
  * @returns Joriy foydalanuvchi ma'lumotlari
  * @throws {ApiError} - Foydalanuvchi autentifikatsiyalanmagan
- * 
- * @example
- * const currentUser = await getCurrentUser()
- * console.log(currentUser.first_name)
  */
 export async function getCurrentUser(): Promise<User> {
-  return fetchApi<User>('/auth/me/')
+  return loadCurrentUser()
+}
+
+/** Keshni chetlab o'tib, foydalanuvchini majburan qayta o'qiydi */
+export async function refetchCurrentUser(): Promise<User> {
+  return loadCurrentUser({ force: true })
 }
 
 /**

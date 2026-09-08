@@ -22,6 +22,60 @@ from organizations.models import Organization
 from users.models import User
 from telegram_bot.models import TelegramAppeal
 
+def _organization_stats():
+    """
+    Tashkilotlar kesimidagi ko'rsatkichlar — IKKI so'rov (ilgari 4N+1).
+
+    Ilgari har bir tashkilot uchun to'rtta alohida `.count()` bajarilardi:
+    `for org in organizations:` ichida total/completed/overdue/in_progress.
+    200 tashkilotda bu 800+ so'rov degani. Xuddi shu kod eksport yo'lida
+    ham so'zma-so'z takrorlangan edi.
+    """
+    grouped = {
+        row['organization_id']: row
+        for row in (
+            TaskOrganization.objects
+            .filter(organization__is_active=True)
+            .values('organization_id')
+            .annotate(
+                total=Count('id'),
+                completed=Count('id', filter=Q(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI'])),
+                overdue=Count('id', filter=Q(status='MUDDATI_KECH')),
+                in_progress=Count('id', filter=Q(status='IJRODA')),
+            )
+        )
+    }
+
+    stats = []
+    # Topshiriqsiz tashkilotlar ham ro'yxatda qoladi (eski xatti-harakat).
+    for org in Organization.objects.filter(is_active=True).only('id', 'name', 'short_name'):
+        row = grouped.get(org.id, {})
+        total = row.get('total', 0) or 0
+        completed = row.get('completed', 0) or 0
+        overdue = row.get('overdue', 0) or 0
+        in_progress = row.get('in_progress', 0) or 0
+
+        completion_rate = (completed / total * 100) if total else 0
+        penalty = (overdue / total * 50) if total else 0
+        rating = max(0.0, completion_rate - penalty)
+
+        stats.append({
+            'id': str(org.id),
+            'name': org.name,
+            'short_name': org.short_name,
+            'total': total,
+            'completed': completed,
+            'in_progress': in_progress,
+            'overdue': overdue,
+            'completion_rate': round(completion_rate, 1),
+            'rating': round(rating, 1),
+        })
+
+    stats.sort(key=lambda x: x['rating'], reverse=True)
+    return stats
+
+
+
 
 class IsHokimOrHokimlikMasul:
     """Permission for viewing analytics."""
@@ -293,42 +347,25 @@ class OrganizationAnalyticsView(views.APIView):
     permission_classes = [IsAuthenticated, IsHokimOrHokimlikMasul]
     
     def get(self, request):
-        organizations = Organization.objects.filter(is_active=True)
-        
-        org_stats = []
-        for org in organizations:
-            task_orgs = TaskOrganization.objects.filter(organization=org)
-            
-            total = task_orgs.count()
-            completed = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-            overdue = task_orgs.filter(status='MUDDATI_KECH').count()
-            in_progress = task_orgs.filter(status='IJRODA').count()
-            
-            # Calculate completion rate
-            completion_rate = (completed / total * 100) if total > 0 else 0
-            
-            # Calculate rating (simple formula: completion rate - overdue penalty)
-            rating = max(0, completion_rate - (overdue / total * 50) if total > 0 else 0)
-            
-            org_stats.append({
+        # 4N+1 tuzatildi — _organization_stats() bitta agregat so'rov ishlatadi.
+        stats = _organization_stats()[:5]
+
+        return Response([
+            {
                 'organization': {
-                    'id': str(org.id),
-                    'name': org.name,
-                    'short_name': org.short_name,
+                    'id': row['id'],
+                    'name': row['name'],
+                    'short_name': row['short_name'],
                 },
-                'total_tasks': total,
-                'completed_tasks': completed,
-                'in_progress_tasks': in_progress,
-                'overdue_tasks': overdue,
-                'completion_rate': round(completion_rate, 1),
-                'rating': round(rating, 1),
-            })
-        
-        # Sort by rating descending and return only TOP 5
-        org_stats.sort(key=lambda x: x['rating'], reverse=True)
-        top_5_orgs = org_stats[:5]  # Faqat eng yaxshi 5 tashkilot
-        
-        return Response(top_5_orgs)
+                'total_tasks': row['total'],
+                'completed_tasks': row['completed'],
+                'in_progress_tasks': row['in_progress'],
+                'overdue_tasks': row['overdue'],
+                'completion_rate': row['completion_rate'],
+                'rating': row['rating'],
+            }
+            for row in stats
+        ])
 
 
 class UserAnalyticsView(views.APIView):
@@ -486,16 +523,33 @@ class AnalyticsExportView(views.APIView):
 
         tasks = Task.objects.all()
 
+        # Ilgari bu blok yettita alohida .count() so'rovi yuborardi.
+        # Endi bitta aggregate. `pending_approval` ham to'g'rilandi: u
+        # YANGI ni sanardi, holbuki tasdiqlash kutayotgan holat BAJARILDI.
+        agg = tasks.aggregate(
+            total=Count('id'),
+            new=Count('id', filter=Q(status='YANGI')),
+            in_progress=Count('id', filter=Q(status='IJRODA')),
+            awaiting_approval=Count('id', filter=Q(status='BAJARILDI')),
+            closed=Count('id', filter=Q(status='NAZORATDAN_YECHILDI')),
+            resubmitted=Count('id', filter=Q(status='QAYTA_IJROGA_YUBORILDI')),
+            overdue=Count('id', filter=Q(status='MUDDATI_KECH')),
+        )
+        user_agg = User.objects.aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(status='FAOL')),
+        )
+
         summary = {
-            'total_tasks': tasks.count(),
-            'new_tasks': tasks.filter(status='YANGI').count(),
-            'in_progress_tasks': tasks.filter(status='IJRODA').count(),
-            'completed_tasks': tasks.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count(),
-            'pending_approval': tasks.filter(status='YANGI').count(),
-            'resubmitted': tasks.filter(status='QAYTA_IJROGA_YUBORILDI').count(),
-            'overdue_tasks': tasks.filter(status='MUDDATI_KECH').count(),
-            'total_users': User.objects.count(),
-            'active_users': User.objects.filter(status='FAOL').count(),
+            'total_tasks': agg['total'] or 0,
+            'new_tasks': agg['new'] or 0,
+            'in_progress_tasks': agg['in_progress'] or 0,
+            'completed_tasks': (agg['awaiting_approval'] or 0) + (agg['closed'] or 0),
+            'pending_approval': agg['awaiting_approval'] or 0,
+            'resubmitted': agg['resubmitted'] or 0,
+            'overdue_tasks': agg['overdue'] or 0,
+            'total_users': user_agg['total'] or 0,
+            'active_users': user_agg['active'] or 0,
             'total_organizations': Organization.objects.filter(is_active=True).count(),
         }
 
@@ -519,26 +573,19 @@ class AnalyticsExportView(views.APIView):
             .order_by('date')
         )
 
-        organizations = Organization.objects.filter(is_active=True)
-        org_stats = []
-        for org in organizations:
-            task_orgs = TaskOrganization.objects.filter(organization=org)
-            total = task_orgs.count()
-            completed = task_orgs.filter(status__in=['BAJARILDI', 'NAZORATDAN_YECHILDI']).count()
-            overdue = task_orgs.filter(status='MUDDATI_KECH').count()
-            in_progress = task_orgs.filter(status='IJRODA').count()
-            completion_rate = (completed / total * 100) if total > 0 else 0
-            rating = max(0, completion_rate - (overdue / total * 50) if total > 0 else 0)
-
-            org_stats.append({
-                'name': org.name,
-                'total_tasks': total,
-                'completed_tasks': completed,
-                'in_progress_tasks': in_progress,
-                'overdue_tasks': overdue,
-                'completion_rate': round(completion_rate, 1),
-                'rating': round(rating, 1),
-            })
+        # Xuddi shu 4N+1 eksport yo'lida ham bor edi — endi umumiy yordamchi.
+        org_stats = [
+            {
+                'name': row['name'],
+                'total_tasks': row['total'],
+                'completed_tasks': row['completed'],
+                'in_progress_tasks': row['in_progress'],
+                'overdue_tasks': row['overdue'],
+                'completion_rate': row['completion_rate'],
+                'rating': row['rating'],
+            }
+            for row in _organization_stats()
+        ]
 
         users_by_role = list(User.objects.filter(status='FAOL').values('role').annotate(count=Count('id')))
         users_by_status = list(User.objects.values('status').annotate(count=Count('id')))
@@ -679,3 +726,70 @@ class AnalyticsExportView(views.APIView):
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="analytics_report.pdf"'
         return response
+
+class VillageAnalyticsView(views.APIView):
+    """
+    Qishloqlar kesimidagi agregat — interaktiv xarita shu bilan bo'yaladi.
+
+    GET /api/analytics/villages/
+    200 { "<qishloq_kodi>": { "appeals_total": 18, "appeals_open": 4,
+                              "appeals_closed": 14 }, ... }
+
+    Kalit — `BotRegion.code`. Xarita geometriyasidagi `code` maydoni ham
+    aynan shu (public/geo/xatirchi-villages.paths.json). Agar kodlar mos
+    kelmasa, admin panelida `BotRegion.code` ni geometriya kodiga
+    tenglashtirish kifoya — migratsiya kerak emas.
+
+    MUHIM CHEKLOV: `Task` modelida qishloq/hudud o'lchovi YO'Q — faqat
+    erkin `address` va ixtiyoriy `latitude`/`longitude`. Shuning uchun bu
+    endpoint FAQAT murojaatlar bo'yicha raqam qaytaradi. Topshiriqlarni
+    ham qishloq kesimida ko'rsatish uchun `Task` ga `region` FK qo'shish
+    kerak; u qo'shilmagan holda nol qiymatlarni "ma'lumot" sifatida
+    chiqarish xato bo'lardi, shuning uchun ular umuman yuborilmaydi.
+
+    Ikkita agregat so'rov: murojaat Telegram foydalanuvchisi orqali
+    (`telegram_user__region`) yoki qo'lda kiritilgan (`citizen_region`)
+    bo'lishi mumkin.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        result = {}
+
+        def merge(code, total, closed):
+            if not code:
+                return
+            row = result.setdefault(
+                str(code),
+                {'appeals_total': 0, 'appeals_open': 0, 'appeals_closed': 0},
+            )
+            row['appeals_total'] += int(total or 0)
+            row['appeals_closed'] += int(closed or 0)
+            row['appeals_open'] = row['appeals_total'] - row['appeals_closed']
+
+        telegram_rows = (
+            TelegramAppeal.objects
+            .filter(telegram_user__region__isnull=False)
+            .values('telegram_user__region__code')
+            .annotate(
+                total=Count('id'),
+                closed=Count('id', filter=Q(closed_at__isnull=False)),
+            )
+        )
+        for row in telegram_rows:
+            merge(row['telegram_user__region__code'], row['total'], row['closed'])
+
+        manual_rows = (
+            TelegramAppeal.objects
+            .filter(telegram_user__isnull=True, citizen_region__isnull=False)
+            .values('citizen_region__code')
+            .annotate(
+                total=Count('id'),
+                closed=Count('id', filter=Q(closed_at__isnull=False)),
+            )
+        )
+        for row in manual_rows:
+            merge(row['citizen_region__code'], row['total'], row['closed'])
+
+        return Response(result)

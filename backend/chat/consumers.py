@@ -6,6 +6,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
+from django.db.models import Q
 
 
 class TaskChatConsumer(AsyncWebsocketConsumer):
@@ -267,7 +268,27 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
 
 class DirectChatConsumer(AsyncWebsocketConsumer):
-    """WebSocket consumer for direct user-to-user chat updates."""
+    """
+    To'g'ridan-to'g'ri chat uchun WebSocket.
+
+    Bu konsumer ilgari juda kam ish qilardi: faqat uchta hodisani uzatardi
+    va `mark_read` amalini bajarganda hech kimga xabar bermasdi (shuning
+    uchun jo'natuvchining ikki belgisi (✓✓) hech qachon yangilanmasdi).
+    Presence esa umuman socket'ga bog'lanmagan edi — `last_seen` faqat HTTP
+    so'rovlarda yangilanardi va frontend foydalanuvchilar ro'yxatini qayta
+    so'ramaganidan onlayn nuqtalar sahifa yuklangan holatda qotib qolardi.
+
+    KLIENT -> SERVER amallari:
+      {action: "ping", ts}                              -> pong
+      {action: "mark_read", user_id, last_message_id?}  -> o'qilgan deb belgilash
+      {action: "typing", user_id, is_typing}            -> suhbatdoshga yozilmoqda
+      {action: "resync", since_id}                      -> uzilishdan keyingi bo'shliq
+
+    SERVER -> KLIENT hodisalari (services.py dan):
+      direct_message · conversation_updated · message_edited ·
+      message_deleted · messages_read · delivered · chat_typing ·
+      chat_presence · pong · resync_result · ready
+    """
 
     async def connect(self):
         self.user = self.scope.get('user')
@@ -280,9 +301,21 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
+        # Klient socket tayyor bo'lganini bilishi kerak (reconnect mantiqi uchun)
+        await self.send(text_data=json.dumps({
+            'type': 'ready',
+            'user_id': str(self.user.id),
+        }))
+
+        # Onlayn holat + ulanish paytida yetkazilmagan xabarlarni belgilash
+        await self._set_presence(True)
+        await self._mark_delivered()
+
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        if getattr(self, 'user', None) and self.user.is_authenticated:
+            await self._set_presence(False)
 
     async def receive(self, text_data):
         try:
@@ -290,43 +323,144 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return
 
-        if data.get('action') == 'mark_read':
-            other_user_id = data.get('user_id')
-            if other_user_id:
-                await self.mark_messages_as_read(other_user_id)
+        action = data.get('action')
 
-    async def direct_message(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'direct_message',
-            'message': event['message'],
-        }))
-
-    async def message_deleted(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'message_deleted',
-            'message_id': event['message_id'],
-            'other_user_id': event['other_user_id'],
-        }))
-
-    async def messages_read(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'messages_read',
-            'user_id': event['user_id'],
-            'message_ids': event['message_ids'],
-        }))
-
-    @database_sync_to_async
-    def mark_messages_as_read(self, other_user_id):
-        from .models import DirectMessage
-
-        unread_messages = list(
-            DirectMessage.objects.filter(
-                sender_id=other_user_id,
-                recipient=self.user,
-                is_read=False,
-            ).values_list('id', flat=True)
-        )
-        if not unread_messages:
+        if action == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong', 'ts': data.get('ts')}))
             return
 
-        DirectMessage.objects.filter(id__in=unread_messages).update(is_read=True)
+        if action in ('mark_read', 'read'):
+            peer = data.get('user_id')
+            if peer:
+                await self._mark_read(peer, data.get('last_message_id'))
+            return
+
+        if action == 'typing':
+            peer = data.get('user_id')
+            if peer:
+                await self._typing(peer, bool(data.get('is_typing', True)))
+            return
+
+        if action == 'resync':
+            await self._resync(data.get('since_id'), data.get('user_id'))
+            return
+
+    # ------------------------------------------------------------ hodisalar
+    # Har bir handler nomi services.py dagi payload['type'] bilan bir xil.
+
+    async def _forward(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def direct_message(self, event):
+        await self._forward(event)
+
+    async def conversation_updated(self, event):
+        await self._forward(event)
+
+    async def message_edited(self, event):
+        await self._forward(event)
+
+    async def message_deleted(self, event):
+        await self._forward(event)
+
+    async def messages_read(self, event):
+        await self._forward(event)
+
+    async def delivered(self, event):
+        await self._forward(event)
+
+    async def chat_typing(self, event):
+        await self._forward(event)
+
+    async def chat_presence(self, event):
+        await self._forward(event)
+
+    # ------------------------------------------------------------- yordamchi
+
+    @database_sync_to_async
+    def _set_presence_sync(self, is_online):
+        from . import services
+
+        try:
+            type(self.user).objects.filter(pk=self.user.pk).update(last_seen=timezone.now())
+            self.user.last_seen = timezone.now()
+        except Exception:
+            pass
+        services.broadcast_presence(self.user, is_online)
+
+    async def _set_presence(self, is_online):
+        await self._set_presence_sync(is_online)
+
+    @database_sync_to_async
+    def _mark_read_sync(self, other_user_id, up_to_id):
+        from . import services
+
+        ids = services.mark_conversation_read(
+            reader=self.user,
+            other_user_id=other_user_id,
+            up_to_id=up_to_id,
+        )
+        if ids:
+            services.broadcast_messages_read(
+                self.user.id, other_user_id, ids, last_message_id=max(ids)
+            )
+        return ids
+
+    async def _mark_read(self, other_user_id, up_to_id=None):
+        await self._mark_read_sync(other_user_id, up_to_id)
+
+    @database_sync_to_async
+    def _mark_delivered_sync(self):
+        from collections import defaultdict
+        from . import services
+        from .models import DirectMessage
+
+        ids = services.mark_delivered(recipient=self.user)
+        if not ids:
+            return
+        by_sender = defaultdict(list)
+        for mid, sender_id in DirectMessage.objects.filter(
+            id__in=ids
+        ).values_list('id', 'sender_id'):
+            by_sender[sender_id].append(mid)
+        for sender_id, message_ids in by_sender.items():
+            services.broadcast_delivered(self.user.id, sender_id, message_ids)
+
+    async def _mark_delivered(self):
+        await self._mark_delivered_sync()
+
+    @database_sync_to_async
+    def _resync_sync(self, since_id, other_user_id):
+        """
+        Uzilish davomida kelgan xabarlarni qaytaradi. Ilgani reconnect
+        umuman yo'q edi: socket uzilsa chat jim o'lardi va sahifa qo'lda
+        yangilanmaguncha xabarlar yetib kelmasdi.
+        """
+        from . import services
+        from .models import DirectMessage
+
+        try:
+            since = int(since_id)
+        except (TypeError, ValueError):
+            return []
+
+        qs = services.message_queryset().filter(
+            Q(sender=self.user) | Q(recipient=self.user),
+            id__gt=since,
+        )
+        if other_user_id:
+            try:
+                other = type(self.user).objects.get(pk=other_user_id)
+                qs = qs.filter(services.pair_filter(self.user, other))
+            except Exception:
+                pass
+
+        rows = list(qs.order_by('id')[:200])
+        return [services.serialize_message(m) for m in rows]
+
+    async def _resync(self, since_id, other_user_id=None):
+        messages = await self._resync_sync(since_id, other_user_id)
+        await self.send(text_data=json.dumps({
+            'type': 'resync_result',
+            'messages': messages,
+        }))

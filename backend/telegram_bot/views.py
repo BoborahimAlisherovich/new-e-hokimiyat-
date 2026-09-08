@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Count, Q, F, Value, OuterRef, Subquery, DateTimeField, Sum
+from django.db.models import Count, Q, F, Value, OuterRef, Subquery, DateTimeField, Sum, Max
 from django.db.models.functions import Coalesce
 import datetime
 from datetime import timedelta
@@ -955,7 +955,28 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        # N+1 TUZATILDI. Ilgari bu yerda oddiy `TelegramAppeal.objects.all()`
+        # bo'lib, ro'yxat serializeri har SATR uchun alohida so'rov
+        # yuborardi: attachments.count(), messages.first(),
+        # telegram_user.region.name_uz, appeal_type.name_uz,
+        # category.name_uz va assigned_organizations M2M — bir sahifada
+        # ~7 x 100 = ~700 SQL so'rov. Bu ilovadagi eng ko'p chaqiriladigan
+        # endpoint (frontend'da uch joydan).
+        queryset = (
+            super().get_queryset()
+            .select_related(
+                'telegram_user',
+                'telegram_user__region',
+                'appeal_type',
+                'category',
+                'citizen_region',
+            )
+            .prefetch_related('assigned_organizations', 'attachments')
+            .annotate(
+                _attachments_count=Count('attachments', distinct=True),
+                _last_message_at=Max('messages__created_at'),
+            )
+        )
         user = self.request.user
 
         if user.role not in ['HOKIM', 'ADMIN']:

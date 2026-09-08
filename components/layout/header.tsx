@@ -1,426 +1,399 @@
-// @ts-nocheck
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Bell, Search, User, Settings, Zap, Menu, X, Globe, Sparkles } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import type React from "react"
+import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Bell, Check, Globe, LogOut, Menu, Search, Settings, User, X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
+import type { Language } from "@/lib/i18n/types"
+import { logout } from "@/lib/api/auth.api"
+import { getNotifications, markAllNotificationsRead } from "@/lib/api/common.api"
+import { useCurrentUser } from "@/components/layout/current-user-provider"
+import { notifyUnreadChanged, useUnread } from "@/components/layout/unread-provider"
+import { useMobileNav } from "@/components/layout/mobile-nav-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { UserAvatar } from "@/components/ui/user-avatar"
-import Link from "next/link"
-import { WS_BASE, getAccessToken, getNotifications, getUnreadNotificationsCount, logout, getCurrentUser } from "@/lib/api"
-import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
-import type { User as UserType } from "@/types"
-import { useI18n, useTranslation } from "@/lib/i18n/context"
-import { useAudioAlert } from "@/hooks/use-audio-alert"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+
+/**
+ * SAHIFA SARLAVHASI
+ *
+ * Tuzatilgan muammolar:
+ *  1. Har 15 sekundda UCHTA so'rov yuboradigan `setInterval` — va yonida
+ *     ochilgan WebSocket faqat ovozni o'chirish uchun ishlatilardi.
+ *     Endi hisoblar umumiy `UnreadProvider` dan (60 s, `document.hidden`
+ *     bo'lganda to'xtaydi).
+ *  2. `isMobileMenuOpen` holati e'lon qilingan va o'rnatilardi, lekin
+ *     HECH QAYERDA o'qilmasdi — hamburger tugmasi hech narsa qilmasdi.
+ *     Ikkinchi, ishlaydigan hamburger esa sidebar'da `fixed left-4 top-4`
+ *     bilan sarlavha ustiga chiqib turardi. Endi bitta tugma, header ichida.
+ *  3. Qo'ng'iroq `hidden md:flex` edi — telefonda bildirishnomalarga
+ *     kirishning imkoni yo'q edi. Endi barcha o'lchamlarda.
+ *  4. Qidiruv `hidden lg:block` edi. Endi kichik ekranda ikonka bosilsa
+ *     to'liq ekranli panel ochiladi.
+ *  5. Til menyusida emoji bayroqlar ishlatilardi va `uz` bilan `uz-cyrl`
+ *     ikkisi ham 🇺🇿 — farqlanmasdi. Endi matnli kodlar: UZ / ЎЗ / RU / EN.
+ *  6. Chiqish tugmasida `<X>` ikonkasi turardi.
+ *  7. `px-6` qat'iy edi — 375px ekranda har tomondan 24px yo'qolardi.
+ */
 
 interface HeaderProps {
   title: string
   description?: string
   actions?: React.ReactNode
+  /** Mobil menyuni ochish — shell uzatadi */
+  onMenuClick?: () => void
 }
 
-export function Header({ title, description, actions }: HeaderProps) {
-  const router = useRouter()
-  const playAlert = useAudioAlert()
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
- const [recentNotifications, setRecentNotifications] = useState<any[]>([])
- const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+const LANGUAGES: { code: Language; short: string; name: string }[] = [
+  { code: "uz", short: "UZ", name: "O‘zbekcha" },
+  { code: "uz-cyrl", short: "ЎЗ", name: "Ўзбекча" },
+  { code: "ru", short: "RU", name: "Русский" },
+  { code: "en", short: "EN", name: "English" },
+]
 
-  const { language, setLanguage } = useI18n()
+export function Header({ title, description, actions, onMenuClick }: HeaderProps) {
   const t = useTranslation()
+  const router = useRouter()
+  const { language, setLanguage } = useI18n()
+  const { user, role } = useCurrentUser()
+  const unread = useUnread()
+  // Sahifalar <Header> ni prop uzatmasdan chaqiradi, shuning uchun mobil
+  // menyuni ochish shell'dan kontekst orqali keladi.
+  const mobileNav = useMobileNav()
+  const openMenu = onMenuClick ?? mobileNav.open
 
- useEffect(() => {
- let isMounted = true
- let previousUnreadCount = 0
- let initialized = false
- let wsReady = false
- let ws: WebSocket | null = null
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [notifLoading, setNotifLoading] = useState(false)
+  const searchRef = useRef<HTMLInputElement | null>(null)
 
-    const mapNotificationType = (type?: string) => {
-      switch (type) {
-        case 'TASK_ASSIGNED':
-        case 'TASK_UPDATED':
-        case 'TASK_COMPLETED':
-        case 'TASK_OVERDUE':
-        case 'MESSAGE':
-        case 'SYSTEM':
-          return type
-        case 'TASK':
-          return 'TASK_ASSIGNED'
-        case 'DEADLINE':
-          return 'TASK_OVERDUE'
-        case 'SUCCESS':
-          return 'TASK_COMPLETED'
-        case 'WARNING':
-          return 'TASK_UPDATED'
-        case 'ERROR':
-          return 'TASK_OVERDUE'
-        case 'INFO':
-        default:
-          return 'SYSTEM'
-      }
-    }
+  const fullName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+    (user as any)?.full_name ||
+    (user as any)?.username ||
+    "—"
+  const roleLabel = role ? ((t.roles as any)?.[role] ?? role) : ""
 
-    const normalizeWsNotification = (raw: any) => {
-      const createdAt = raw?.created_at ?? new Date().toISOString()
-      const mappedType = mapNotificationType(raw?.notification_type ?? raw?.type)
-      return {
-        id: raw?.id,
-        user_id: raw?.user_id ?? 0,
-        title: raw?.title ?? '',
-        message: raw?.message ?? '',
-        type: mappedType,
-        is_read: Boolean(raw?.is_read),
-        read_at: raw?.read_at ?? undefined,
-        related_task_id: raw?.related_task_id ?? raw?.related_task ?? undefined,
-        link: raw?.link,
-        created_at: createdAt,
-        updated_at: raw?.updated_at ?? createdAt,
-      }
-    }
-
-    const loadHeaderData = async () => {
-      try {
-        const [user, count, list] = await Promise.all([
-          getCurrentUser().catch(() => null),
-          getUnreadNotificationsCount().catch(() => 0),
-          getNotifications(1, 5).catch(() => []),
-        ])
-
-        if (!isMounted) return
-
-        if (user) setCurrentUser(user)
-        setUnreadCount(count)
-        setRecentNotifications(list.slice(0, 5))
-
-        if (!wsReady && initialized && count > previousUnreadCount) {
-          playAlert(720, 0.16)
-          window.dispatchEvent(new CustomEvent("notificationReceived", { detail: { unreadCount: count } }))
-        }
-        initialized = true
-        previousUnreadCount = count
-      } catch {}
-    }
-
-    loadHeaderData()
-    const interval = window.setInterval(loadHeaderData, 15000)
-
-    const token = getAccessToken()
-    if (token) {
-      try {
-        const wsUrl = `${WS_BASE}/ws/notifications/?token=${token}`
-        ws = new WebSocket(wsUrl)
-        ws.onopen = () => { wsReady = true }
-        ws.onclose = () => { wsReady = false }
-        ws.onmessage = (ev) => {
-          try {
-            const payload = JSON.parse(ev.data)
-            if (payload?.type === "unread_count") {
-              const count = Number(payload.count) || 0
-              if (isMounted) setUnreadCount(count)
-              previousUnreadCount = count
-              initialized = true
-              return
-            }
-            if (payload?.type === "notification" && payload.notification) {
-              if (isMounted) {
-                const normalized = normalizeWsNotification(payload.notification)
-                setRecentNotifications((prev) => [normalized, ...(prev || [])].slice(0, 5))
-              }
-              playAlert(720, 0.16)
-              window.dispatchEvent(new CustomEvent("notificationReceived", { detail: { unreadCount: previousUnreadCount + 1 } }))
-            }
-          } catch {}
-        }
-      } catch {}
-    }
-
+  /* Bildirishnomalar ro'yxati faqat menyu ochilganda yuklanadi */
+  useEffect(() => {
+    if (!notifOpen) return
+    let alive = true
+    setNotifLoading(true)
+    getNotifications(1, 6)
+      .then((res: any) => {
+        if (!alive) return
+        setNotifications(Array.isArray(res) ? res : res?.results ?? [])
+      })
+      .catch(() => {
+        if (alive) setNotifications([])
+      })
+      .finally(() => {
+        if (alive) setNotifLoading(false)
+      })
     return () => {
-      isMounted = false
-      window.clearInterval(interval)
-      if (ws) { try { ws.close() } catch {} }
+      alive = false
     }
-  }, [playAlert])
+  }, [notifOpen])
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus()
+  }, [searchOpen])
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = query.trim()
+    if (!q) return
+    setSearchOpen(false)
+    router.push(`/dashboard/tasks?search=${encodeURIComponent(q)}`)
+  }
+
+  const onLogout = async () => {
     try {
       await logout()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-      // Even if logout fails on backend, clear tokens and redirect
-      router.push('/login')
+    } finally {
+      window.location.href = "/login"
     }
   }
 
-    return (
-      <motion.header 
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="sticky top-0 z-50 isolate flex h-16 w-full items-center justify-between border-b border-cyan-100/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.72))] backdrop-blur-2xl px-6 shadow-[0_1px_24px_-10px_rgba(14,165,233,0.20)]" 
-        role="banner"
-      >
+  const markAll = async () => {
+    try {
+      await markAllNotificationsRead()
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+      notifyUnreadChanged()
+    } catch {
+      /* jim qolmaydi: hisob keyingi yangilanishda tiklanadi */
+    }
+  }
 
-      {/* Left section - Title */}
-      <motion.div 
-        initial={{ x: -10, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="flex min-w-0 items-center gap-4 flex-1"
-      >
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-slate-900 truncate">{title}</h1>
+  return (
+    <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 backdrop-blur-sm sm:px-6">
+      <div className="flex h-16 items-center gap-2">
+        {/* Mobil menyu — YAGONA hamburger */}
+        <button
+          type="button"
+          onClick={openMenu}
+          aria-label={t.navigation.mainMenu}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
+        >
+          <Menu className="h-5 w-5" aria-hidden />
+        </button>
+
+        {/* Sarlavha — sahifadagi yagona <h1> */}
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-md font-semibold text-foreground sm:text-lg">{title}</h1>
           {description && (
-            <p className="text-xs text-slate-500 truncate hidden sm:block mt-0.5">
-              {description}
-            </p>
+            <p className="hidden truncate text-xs text-muted-foreground sm:block">{description}</p>
           )}
         </div>
-      </motion.div>
 
-      {/* Center section - Search */}
-      <motion.div 
-        initial={{ y: -5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="relative hidden lg:block flex-1 max-w-md mx-6"
-      >
-        <div className="relative group">
-          <Search className={cn(
-            "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200",
-            isSearchFocused ? "text-cyan-600" : "group-hover:text-slate-600"
-          )} />
-          <Input 
-            placeholder={t.common.search}
-            className={cn(
-              "w-full h-10 bg-white/80 border border-cyan-100 rounded-xl pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:border-cyan-400 transition-all duration-200"
-            )}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-            aria-label={t.common.search}
-          />
-        </div>
-      </motion.div>
+        {/* Desktop qidiruv */}
+        <form onSubmit={submitSearch} className="hidden lg:block lg:w-72">
+          <label htmlFor="hdr-search" className="sr-only">
+            {t.common?.search ?? "Qidirish"}
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <input
+              id="hdr-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.common?.search ?? "Qidirish"}
+              className="h-11 w-full rounded-md border border-input bg-background pl-8.5 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            />
+          </div>
+        </form>
 
-      {/* Right section - Notifications and User */}
-      <motion.div 
-        initial={{ x: 10, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="flex items-center gap-2 flex-1 justify-end"
-      >
-        {/* Mobile menu toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="lg:hidden h-9 w-9 rounded-lg hover:bg-slate-100"
+        {/* Mobil qidiruv tugmasi */}
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-label={t.common?.search ?? "Qidirish"}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
         >
-          <Menu className="h-5 w-5 text-slate-600" />
-        </Button>
+          <Search className="h-5 w-5" aria-hidden />
+        </button>
 
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-
- {/* Language Selector */}
- <DropdownMenu>
-
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 rounded-xl hover:bg-slate-100"
-              >
-                <Globe className="h-[22px] w-[22px] text-cyan-700" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg rounded-xl">
-              <DropdownMenuLabel className="text-xs font-semibold text-slate-700 px-3 py-2">{t.common.selectLanguage}</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-slate-200" />
-              <DropdownMenuItem 
-                onClick={() => setLanguage('uz')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz' && "bg-indigo-50 text-indigo-700")}
-              >
-                <span className="mr-2">🇺🇿</span>
-                <span>{t.settings.languageUzLatin}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setLanguage('uz-cyrl')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'uz-cyrl' && "bg-indigo-50 text-indigo-700")}
-              >
-                <span className="mr-2">🇺🇿</span>
-                <span>{t.settings.languageUzCyrl}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setLanguage('ru')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'ru' && "bg-indigo-50 text-indigo-700")}
-              >
-                <span className="mr-2">🇷🇺</span>
-                <span>{t.settings.languageRu}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setLanguage('en')}
-                className={cn("px-3 py-2 text-sm cursor-pointer rounded-lg mx-1", language === 'en' && "bg-indigo-50 text-indigo-700")}
-              >
-                <span className="mr-2">🇬🇧</span>
-                <span>{t.settings.languageEn}</span>
-              </DropdownMenuItem>
- </DropdownMenuContent>
- </DropdownMenu>
-
-
- {/* Notifications */}
- <DropdownMenu>
-
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={cn(
-                  "relative hidden h-10 w-10 rounded-2xl border shadow-sm transition md:flex",
-                  unreadCount > 0
-                    ? "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700 shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)] hover:from-amber-100 hover:to-orange-100"
-                    : "border-cyan-100 bg-white/85 text-slate-700 hover:border-cyan-200 hover:bg-cyan-50"
-                )}
-              >
-                <Bell className={cn(
-                  "h-5 w-5",
-                  unreadCount > 0 ? "animate-pulse" : ""
-                )} />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-semibold text-white shadow-sm">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 bg-white border border-slate-200 shadow-lg rounded-xl">
-            <DropdownMenuLabel className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-sm text-slate-900">{t.navigation.notifications}</span>
-              </div>
-              <Link href="/dashboard/notifications">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                >
-                  {t.common.all}
-                </Button>
-              </Link>
-            </DropdownMenuLabel>
-            <div className="max-h-64 overflow-y-auto">
-              {recentNotifications.map((notification) => (
-                <DropdownMenuItem key={notification.id} asChild>
-                  <Link
-                    href={
-                      notification.link ||
-                      (notification.related_task_id ? `/dashboard/tasks/${notification.related_task_id}` : `/dashboard/notifications/${notification.id}`)
-                    }
-                    className="flex flex-col items-start gap-1.5 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                        notification.type === "TASK_OVERDUE" ? "bg-red-500" : "bg-indigo-600"
-                      )} />
-                      <span className={cn(
-                        "font-medium text-xs flex-1",
-                        notification.type === "TASK_OVERDUE" ? "text-red-600" : "text-slate-900"
-                      )}>
-                        {notification.title}
-                      </span>
-                      {!notification.is_read && (
-                        <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></div>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-600 line-clamp-2">{notification.message}</span>
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </div>
-            
-            {recentNotifications.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-                <Bell className="w-10 h-10 text-slate-300 mb-2" />
-                <p className="text-sm font-medium text-slate-900 mb-1">{t.notifications.emptyTitle}</p>
-                <p className="text-xs text-slate-500">{t.notifications.emptyDescription}</p>
-              </div>
+        {/* Bildirishnomalar — barcha o'lchamlarda */}
+        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+          <DropdownMenuTrigger
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label={`${t.navigation.notifications}${unread.notifications ? ` (${unread.notifications})` : ""}`}
+          >
+            <Bell className="h-5 w-5" aria-hidden />
+            {unread.notifications > 0 && (
+              <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 tabular-nums text-destructive-foreground">
+                {unread.notifications > 9 ? "9+" : unread.notifications}
+              </span>
             )}
- </DropdownMenuContent>
- </DropdownMenu>
-
- {/* User Menu */}
- <DropdownMenu>
-
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="h-10 w-10 rounded-xl hover:bg-slate-100 p-0"
-              >
-                <UserAvatar
-                  firstName={currentUser?.first_name}
-                  lastName={currentUser?.last_name}
-                  avatarUrl={currentUser?.avatar_url}
-                  size="md"
-                />
-              </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl">
-            <DropdownMenuLabel className="px-3 py-2">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-indigo-600" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-slate-900 truncate">
-                    {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : t.common.user}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {currentUser?.email || ""}
-                  </p>
-                </div>
+          <DropdownMenuContent align="end" className="w-[min(92vw,20rem)] p-0">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="text-sm font-semibold text-foreground">
+                {t.navigation.notifications}
+              </span>
+              {unread.notifications > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void markAll()}
+                  className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-primary hover:bg-muted"
+                >
+                  <Check className="h-3.5 w-3.5" aria-hidden />
+                  Barchasini o‘qilgan qilish
+                </button>
+              )}
+            </div>
+
+            {notifLoading ? (
+              <div className="space-y-2 p-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-md bg-muted" />
+                ))}
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-slate-100" />
-            <Link href="/dashboard/settings?tab=profile">
-              <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
-                <User className="w-4 h-4 text-slate-500 mr-2" />
-                <span className="text-sm text-slate-700">{t.settings.profile}</span>
+            ) : notifications.length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Yangi bildirishnoma yo‘q
+              </p>
+            ) : (
+              <ul className="max-h-80 divide-y divide-border overflow-y-auto">
+                {notifications.map((n) => (
+                  <li key={n.id}>
+                    <Link
+                      href={`/dashboard/notifications/${n.id}`}
+                      onClick={() => setNotifOpen(false)}
+                      className={cn(
+                        "block px-3 py-2.5 hover:bg-muted",
+                        !n.is_read && "bg-accent/50",
+                      )}
+                    >
+                      <span className="flex items-start gap-2">
+                        {!n.is_read && (
+                          <span
+                            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                            aria-label="o‘qilmagan"
+                          />
+                        )}
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-foreground">
+                            {n.title ?? "—"}
+                          </span>
+                          {n.message && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {n.message}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="border-t border-border p-2">
+              <Link
+                href="/dashboard/notifications"
+                onClick={() => setNotifOpen(false)}
+                className="flex h-10 items-center justify-center rounded-md text-sm font-semibold text-primary hover:bg-muted"
+              >
+                Barchasini ko‘rish
+              </Link>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Til — matnli kodlar, emoji bayroqlar emas */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-md px-2 text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label="Tilni tanlash"
+          >
+            <Globe className="h-4 w-4" aria-hidden />
+            {LANGUAGES.find((l) => l.code === language)?.short ?? "UZ"}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {LANGUAGES.map((l) => (
+              <DropdownMenuItem
+                key={l.code}
+                onSelect={() => setLanguage(l.code)}
+                className={cn("gap-2", language === l.code && "bg-accent")}
+              >
+                <span className="w-7 text-xs font-bold tabular-nums">{l.short}</span>
+                {l.name}
+                {language === l.code && <Check className="ml-auto h-4 w-4" aria-hidden />}
               </DropdownMenuItem>
-            </Link>
-            <Link href="/dashboard/settings">
-              <DropdownMenuItem className="px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg mx-1">
-                <Settings className="w-4 h-4 text-slate-500 mr-2" />
-                <span className="text-sm text-slate-700">{t.navigation.settings}</span>
-              </DropdownMenuItem>
-            </Link>
-            <DropdownMenuSeparator className="bg-slate-100" />
-            <DropdownMenuItem 
-              onClick={handleLogout}
-              className="px-3 py-2 cursor-pointer hover:bg-red-50 rounded-lg mx-1"
-            >
-              <X className="w-4 h-4 text-red-500 mr-2" />
-              <span className="text-sm text-red-600 font-medium">{t.common.logout}</span>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Foydalanuvchi */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="flex h-11 shrink-0 items-center gap-2 rounded-md px-1.5 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label="Foydalanuvchi menyusi"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-2xs font-bold text-primary-soft-foreground">
+              {initials(fullName)}
+            </span>
+            <span className="hidden min-w-0 text-left xl:block">
+              <span className="block max-w-32 truncate text-xs font-semibold text-foreground">
+                {fullName}
+              </span>
+              <span className="block max-w-32 truncate text-2xs text-muted-foreground">
+                {roleLabel}
+              </span>
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-2 py-1.5">
+              <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
+              <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings" className="gap-2">
+                <User className="h-4 w-4" aria-hidden />
+                Profil
+              </Link>
             </DropdownMenuItem>
- </DropdownMenuContent>
- </DropdownMenu>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings" className="gap-2">
+                <Settings className="h-4 w-4" aria-hidden />
+                {t.navigation.settings}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => void onLogout()}
+              className="gap-2 text-destructive focus:text-destructive"
+            >
+              <LogOut className="h-4 w-4" aria-hidden />
+              {t.common?.logout ?? "Chiqish"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      </motion.div>
+        {/* Sahifa harakatlari */}
+        {actions && <div className="ml-1 hidden shrink-0 sm:block">{actions}</div>}
+      </div>
 
-      {/* User Chat Dialog */}
-    </motion.header>
+      {/* Sahifa harakatlari — mobilda alohida qator */}
+      {actions && <div className="pb-3 sm:hidden">{actions}</div>}
+
+      {/* Mobil qidiruv paneli */}
+      <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+        <SheetContent side="top" className="p-4">
+          <SheetTitle className="sr-only">{t.common?.search ?? "Qidirish"}</SheetTitle>
+          <form onSubmit={submitSearch} className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Topshiriq qidirish…"
+                aria-label={t.common?.search ?? "Qidirish"}
+                className="h-11 w-full rounded-md border border-input bg-card pl-8.5 pr-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-11 shrink-0 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground"
+            >
+              Qidirish
+            </button>
+          </form>
+        </SheetContent>
+      </Sheet>
+    </header>
+  )
+}
+
+function initials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "?"
   )
 }

@@ -1,221 +1,144 @@
-// @ts-nocheck
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import React from "react"
-import { ListTodo, CheckCircle, AlertCircle, Clock, TrendingUp, ArrowUp } from "lucide-react"
-import { getTaskStats } from "@/lib/api"
-import { cn } from "@/lib/utils"
-import { StatsCardSkeleton } from "@/components/ui/loading-skeleton"
-import { motion } from "framer-motion"
-import { useTranslation } from "@/lib/i18n/context"
+import { useEffect, useState } from "react"
+import { AlertTriangle, CheckCircle2, ListTodo, Loader2, ShieldCheck } from "lucide-react"
 
-const computeStats = (stats: {
+import { getTaskStats } from "@/lib/api/tasks.api"
+import {
+  PremiumStatsGrid,
+  PremiumStatsSkeleton,
+  type PremiumStatItem,
+} from "@/components/dashboard/premium-dashboard-ui"
+import { useTranslation } from "@/lib/i18n/context"
+import { useCurrentUser } from "@/components/layout/current-user-provider"
+
+/**
+ * DASHBOARD KPI QATORI
+ *
+ * Olib tashlangan narsalar:
+ *  1. QO'LDA YOZILGAN o'sish ko'rsatkichlari: `trendValue: "+12%"`,
+ *     `"+8%"`, `"-3%"`, `"+5%"` — ular haqiqiy ma'lumot sifatida, o'sish
+ *     strelkasi bilan chiqarilardi. Ijro nazorati tizimida bu shunchaki
+ *     bezak emas, xato ma'lumot.
+ *  2. Har kartadagi progress chizig'i `value / totalTasks` ni hisoblab
+ *     "bajarilish foizi" deb yozardi — MUDDATI KECHIKKAN kartada u
+ *     "kechikkan / jami" ni bajarilish foizi sifatida ko'rsatardi.
+ *  3. `.catch(() => {})` — so'rov yiqilsa hammasi nol ko'rinardi va
+ *     bu haqiqiy nol bilan farqlanmasdi. Endi xato ko'rsatiladi.
+ *  4. Kartaning ichida 7 ta kontent uyasi bor edi (yorliq, qiymat, soxta
+ *     trend, o'zgarish, izoh, 56px ikonka, progress) va u bitta raqam
+ *     uchun ~250px balandlik egallardi.
+ */
+
+interface Stats {
   total: number
-  completed: number
-  overdue: number
+  pending: number
   in_progress: number
+  completed: number
+  awaiting_approval: number
+  overdue: number
   active_sectors: number
-}) => {
-  return {
-    totalTasks: stats.total,
-    completedTasks: stats.completed,
-    overdueTasks: stats.overdue,
-    inProgressTasks: stats.in_progress,
-    activeSectors: stats.active_sectors,
-  }
+}
+
+const ZERO: Stats = {
+  total: 0,
+  pending: 0,
+  in_progress: 0,
+  completed: 0,
+  awaiting_approval: 0,
+  overdue: 0,
+  active_sectors: 0,
 }
 
 export function StatsCards() {
   const t = useTranslation()
-  const [statsData, setStatsData] = React.useState({
-    totalTasks: 0,
-    completedTasks: 0,
-    overdueTasks: 0,
-    inProgressTasks: 0,
-    activeSectors: 0,
-  })
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { role } = useCurrentUser()
+  const [stats, setStats] = useState<Stats>(ZERO)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  React.useEffect(() => {
-    let mounted = true
-    setIsLoading(true)
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
     getTaskStats()
-      .then((stats) => {
-        if (!mounted) return
-        setStatsData(computeStats(stats))
+      .then((data: any) => {
+        if (!alive) return
+        setStats({ ...ZERO, ...data })
+        setError(null)
       })
-      .catch(() => {})
+      .catch((err: any) => {
+        if (!alive) return
+        setError(err?.message || "Ko‘rsatkichlarni yuklab bo‘lmadi")
+      })
       .finally(() => {
-        if (mounted) setIsLoading(false)
+        if (alive) setLoading(false)
       })
     return () => {
-      mounted = false
+      alive = false
     }
   }, [])
 
-  const { totalTasks, completedTasks, overdueTasks, inProgressTasks, activeSectors } = statsData
+  if (loading) return <PremiumStatsSkeleton count={4} />
 
-  const stats = [
+  if (error) {
+    return (
+      <div role="alert" className="surface p-4 text-center">
+        <p className="text-sm font-semibold text-foreground">Ko‘rsatkichlar yuklanmadi</p>
+        <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+      </div>
+    )
+  }
+
+  const canApprove = role === "HOKIM"
+
+  const items: PremiumStatItem[] = [
     {
-      label: t.dashboard.totalTasks,
-      value: totalTasks.toString(),
-      change: `${activeSectors}`,
-      changeLabel: t.dashboard.inSectors,
+      label: t.dashboard?.totalTasks ?? "Jami topshiriq",
+      value: stats.total,
       icon: ListTodo,
-      gradient: "from-indigo-500 to-violet-500",
-      bgColor: "bg-gradient-to-br from-indigo-500/12 to-violet-500/12",
-      iconColor: "text-indigo-600",
-      trend: "up",
-      trendValue: "+12%",
-      description: t.dashboard.allTasksDescription,
+      tone: "neutral",
+      hint:
+        stats.active_sectors > 0
+          ? `${stats.active_sectors} ta sohada`
+          : undefined,
+      href: "/dashboard/tasks",
     },
     {
-      label: t.dashboard.completed,
-      value: completedTasks.toString(),
-      change: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%",
-      changeLabel: t.dashboard.completionLabel,
-      icon: CheckCircle,
-      gradient: "from-emerald-500 to-cyan-500",
-      bgColor: "bg-gradient-to-br from-emerald-500/12 to-cyan-500/12",
-      iconColor: "text-emerald-600",
-      trend: "up",
-      trendValue: "+8%",
-      description: t.dashboard.completedDescription,
+      label: "Ijroda",
+      value: stats.in_progress,
+      icon: Loader2,
+      tone: "warning",
+      href: "/dashboard/tasks?status=IJRODA",
     },
     {
-      label: t.dashboard.overdue,
-      value: overdueTasks.toString(),
-      change: t.dashboard.overdueStatus,
-      changeLabel: t.dashboard.statusLabel,
-      icon: AlertCircle,
-      gradient: "from-rose-500 to-pink-500",
-      bgColor: "bg-gradient-to-br from-rose-500/12 to-pink-500/12",
-      iconColor: "text-rose-600",
-      trend: "down",
-      trendValue: "-3%",
-      description: t.dashboard.overdueDescription,
+      label: "Tasdiqlashda",
+      value: stats.awaiting_approval,
+      icon: ShieldCheck,
+      tone: "info",
+      hint: stats.awaiting_approval > 0 ? "Hokim tasdig‘ini kutmoqda" : "Navbat bo‘sh",
+      href: canApprove ? "/dashboard/tasks/pending-approval" : "/dashboard/tasks",
     },
     {
-      label: t.dashboard.inProgress,
-      value: inProgressTasks.toString(),
-      change: t.dashboard.active,
-      changeLabel: t.dashboard.statusLabel,
-      icon: Clock,
-      gradient: "from-amber-500 to-orange-500",
-      bgColor: "bg-gradient-to-br from-amber-500/10 to-orange-500/10",
-      iconColor: "text-amber-600",
-      trend: "up",
-      trendValue: "+5%",
-      description: t.dashboard.inProgressDescription,
+      label: "Muddati kechikkan",
+      value: stats.overdue,
+      icon: AlertTriangle,
+      tone: stats.overdue > 0 ? "danger" : "success",
+      href: "/dashboard/tasks?status=MUDDATI_KECH",
+    },
+    {
+      label: "Nazoratdan yechildi",
+      value: stats.completed,
+      icon: CheckCircle2,
+      tone: "success",
+      hint:
+        stats.total > 0
+          ? `${Math.round((stats.completed / stats.total) * 100)}% yakunlangan`
+          : undefined,
+      href: "/dashboard/tasks?status=NAZORATDAN_YECHILDI",
     },
   ]
 
-  return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {isLoading ? (
-        Array.from({ length: 4 }).map((_, index) => (
-          <StatsCardSkeleton key={index} style={{ animationDelay: `${index * 100}ms` }} />
-        ))
-      ) : (
-        stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              delay: index * 0.1,
-              type: "spring",
-              stiffness: 300,
-              damping: 24
-            }}
-            whileHover={{ scale: 1.02, y: -4 }}
-          >
-            <Card
-              className="group relative overflow-hidden bg-white/75 backdrop-blur-2xl border-white/50 rounded-2xl shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-[0_12px_40px_-8px_rgba(99,102,241,0.15)] transition-all duration-300 ring-1 ring-indigo-50/50"
-            >
-              {/* Gradient overlay */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-          
-              <CardContent className="relative z-10 p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-600">{stat.label}</p>
-                    <div className="flex items-baseline gap-3">
-                      <h3 className="text-3xl font-bold text-slate-900">{stat.value}</h3>
-                      <motion.div 
-                        className="flex items-center gap-2"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
-                      >
-                        <TrendingUp className={cn(
-                          "h-4 w-4 transition-colors duration-250",
-                          stat.trend === "up" ? "text-emerald-600" : "text-red-600"
-                        )} />
-                        <span className={cn(
-                          "text-sm font-semibold transition-colors duration-250",
-                          stat.trend === "up" ? "text-emerald-600" : "text-red-600"
-                        )}>
-                          {stat.trendValue}
-                        </span>
-                      </motion.div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-600">{stat.change}</span>
-                      <span className="text-xs text-slate-500">{stat.changeLabel}</span>
-                    </div>
-                  </div>
-                </div>
-            
-                {/* Icon container */}
-                <div className="relative">
-                  <motion.div 
-                    className={cn(
-                      "relative w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-md",
-                      stat.bgColor
-                    )}
-                    whileHover={{ rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    <stat.icon className={cn(
-                      "h-7 w-7 transition-colors duration-250",
-                      stat.iconColor
-                    )} />
-                  </motion.div>
-                </div>
-            
-                {/* Progress indicator */}
-                <div className="mt-6 space-y-3">
-                  <div className="flex justify-between text-xs text-slate-600">
-                    <span>{t.dashboard.completionLabel}</span>
-                    <span>{stat.change}</span>
-                  </div>
-                  <div className="relative h-2 bg-indigo-50/50 rounded-full overflow-hidden">
-                    <motion.div 
-                      className={`h-full rounded-full bg-gradient-to-r ${stat.gradient}`}
-                      initial={{ width: 0 }}
-                      animate={{ 
-                        width: `${Math.min(100, (parseInt(stat.value) / Math.max(1, totalTasks)) * 100)}%`
-                      }}
-                      transition={{ 
-                        delay: index * 0.1 + 0.5,
-                        duration: 1,
-                        ease: "easeOut"
-                      }}
-                    />
-                  </div>
-                </div>
-            
-                {/* Description */}
-                <p className="text-xs text-slate-500 mt-3">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))
-      )}
-    </div>
-  )
+  return <PremiumStatsGrid items={items} columns={3} />
 }
+
+export default StatsCards

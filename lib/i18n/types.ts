@@ -34,6 +34,9 @@ export interface Translations {
     today: string
     daysRemaining: string
     daysOverdue: string
+    menu: string
+    close: string
+    refresh: string
   }
   auth: {
     systemName: string
@@ -57,6 +60,25 @@ export interface Translations {
     termsOfService: string
     privacyPolicy: string
     agreeToTerms: string
+    welcomeTitle: string
+    welcomeSubtitle: string
+    secureBadge: string
+    loginLabel: string
+    loginPlaceholder: string
+    passwordLabel: string
+    passwordPlaceholder: string
+    submit: string
+    showPassword: string
+    hidePassword: string
+    errorTitle: string
+    enterLogin: string
+    enterPassword: string
+    authError: string
+    genericError: string
+    redirecting: string
+    contactAdmin: string
+    ministry: string
+    developedBy: string
     check: string
     retry: string
   }
@@ -78,6 +100,13 @@ export interface Translations {
     communicationSection: string
     analyticsSection: string
     mainMenu: string
+    recurringTasks: string
+    map: string
+    operationsSection: string
+    administrationSection: string
+    roleError: string
+    roleErrorRetry: string
+    bottomNavLabel: string
   }
   sidebar: {
     appName: string
