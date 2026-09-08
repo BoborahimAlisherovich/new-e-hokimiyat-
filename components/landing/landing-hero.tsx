@@ -2,18 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { motion, useReducedMotion } from "framer-motion"
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  Landmark,
-  LogIn,
-  Menu,
-  Send,
-  ShieldCheck,
-  X,
-} from "lucide-react"
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion"
+import { ArrowRight, ChevronDown, Landmark, LogIn, Menu, Send, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -28,15 +18,27 @@ const NAV = [
 ]
 
 /**
- * QAHRAMON BO'LIM
+ * QAHRAMON BO'LIM — AYLANTIRIB OCHILADIGAN SURAT
  *
- * Fon — hokimiyat binosining haqiqiy surati (public/xatirchi-login.png,
- * 1024x1024). Surat kunduzgi va pastki qismi juda yorqin, shuning uchun
- * matn o'qilishi `.hero-veil` dagi uch qatlamli gradient bilan
- * ta'minlanadi (chapdan quyuq, pastdan quyuq, o'ngdan yengil).
+ * Fon — hokimiyat binosining haqiqiy surati (public/xatirchi-login.png).
  *
- * Ustidagi barcha oq matn kontrasti >= 4.5:1 — gradientning eng yengil
- * joyida ham matn joylashmaydi.
+ * Yondashuv: surat QUYUQLASHTIRILMAYDI. Butun rasmni qoraytirish
+ * binoni ko'rinmas qilib qo'yardi, shuning uchun:
+ *   1. `.hero-tint` — juda yengil umumiy tonlash (navbar va pastki
+ *      chiziq ostida matn o'qilishi uchun);
+ *   2. `.hero-scrim` — faqat MATN turgan tomonga qo'yiladigan gradient
+ *      (desktopda chapdan, mobilda pastdan). Rasm markazi ochiq qoladi.
+ *
+ * Aylantirilganda (useScroll):
+ *   - matn yuqoriga siljib so'nadi,
+ *   - ikkala parda ham shaffoflashadi,
+ *   - surat parallaks bilan siljib, masshtabi 1.0 ga qaytadi
+ *     → bino to'liq, to'siqsiz ko'rinadi.
+ *
+ * Buning uchun bo'lim balandligi ekrandan katta (`h-[120dvh]`), ichida
+ * esa `sticky` blok turadi: shu qo'shimcha bo'shliq aylantirish
+ * "ochilishi" uchun joy beradi. Tashqi konteynerda `overflow-hidden`
+ * BO'LMASLIGI kerak — aks holda `sticky` ishlamaydi.
  */
 export function Hero({
   onLogin,
@@ -49,6 +51,16 @@ export function Hero({
   const reduce = useReducedMotion()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const { scrollY } = useScroll()
+
+  // Aylantirish oynasi ~0-560px: shu masofada surat to'liq ochiladi
+  const scrimOpacity = useTransform(scrollY, [0, 460], [1, 0])
+  const tintOpacity = useTransform(scrollY, [0, 560], [1, 0.28])
+  const imageY = useTransform(scrollY, [0, 1100], [0, 150])
+  const imageScale = useTransform(scrollY, [0, 700], [1.08, 1.0])
+  const contentOpacity = useTransform(scrollY, [0, 340], [1, 0])
+  const contentY = useTransform(scrollY, [0, 420], [0, -60])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -66,24 +78,13 @@ export function Hero({
           transition: { duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] as const },
         }
 
-  return (
-    <header className="relative isolate min-h-[100dvh] overflow-hidden">
-      {/* ------------------------------------------------------------ FON */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/xatirchi-login.png"
-          alt="Xatirchi tumani hokimligi binosi"
-          fill
-          priority
-          quality={92}
-          sizes="100vw"
-          className="scale-[1.06] object-cover object-[center_60%] lg:object-[center_38%]"
-          // Mobilda kadr pastroqdan olinadi: rasm 1:1 va tepasi ochiq osmon,
-          // shuning uchun telefonda bino ekranning yuqori qismini to'ldiradi.
-        />
-      </div>
-      <div className="hero-veil grain absolute inset-0 -z-10" aria-hidden />
+  /* Harakat kamaytirilgan bo'lsa — hech narsa siljimaydi */
+  const scrollStyle = reduce
+    ? {}
+    : { opacity: contentOpacity, y: contentY }
 
+  return (
+    <header className="relative h-[120dvh] lg:h-[145dvh]">
       {/* -------------------------------------------------------- NAVBAR */}
       <nav
         className={cn(
@@ -97,11 +98,11 @@ export function Hero({
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#4d86ff] to-[#2dd4bf] text-[#030b1f]">
               <Landmark className="h-5 w-5" aria-hidden />
             </span>
-            <span className="leading-tight">
+            <span className="leading-tight [text-shadow:0_1px_10px_rgba(3,11,31,0.55)]">
               <span className="block text-[15px] font-extrabold tracking-tight text-white">
                 e-Hokimiyat
               </span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a9bde4]">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#cfdcf7]">
                 Xatirchi tumani
               </span>
             </span>
@@ -112,7 +113,7 @@ export function Hero({
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-[#cfdcf7] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d86ff]"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-white/90 transition-colors [text-shadow:0_1px_10px_rgba(3,11,31,0.6)] hover:bg-white/12 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d86ff]"
               >
                 {item.label}
               </a>
@@ -124,7 +125,7 @@ export function Hero({
               href={TELEGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden h-11 items-center gap-2 rounded-xl border border-white/18 bg-white/[0.07] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/[0.13] sm:inline-flex"
+              className="hidden h-11 items-center gap-2 rounded-xl border border-white/25 bg-[#030b1f]/45 px-4 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-[#030b1f]/65 sm:inline-flex"
             >
               <Send className="h-4 w-4" aria-hidden />
               Ariza yuborish
@@ -133,7 +134,7 @@ export function Hero({
             <button
               type="button"
               onClick={onLogin}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-[#0a2050] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-[#0a2050] shadow-[0_10px_30px_-12px_rgba(3,11,31,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <LogIn className="h-4 w-4" aria-hidden />
               <span className="hidden min-[400px]:inline">
@@ -149,14 +150,13 @@ export function Hero({
               onClick={() => setMenuOpen((v) => !v)}
               aria-expanded={menuOpen}
               aria-label="Menyu"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 lg:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#030b1f]/45 text-white backdrop-blur-md transition-colors hover:bg-[#030b1f]/65 lg:hidden"
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobil menyu */}
         {menuOpen && (
           <div className="glass-strong border-t border-white/10 lg:hidden">
             <ul className="mx-auto max-w-7xl px-4 py-2 sm:px-6">
@@ -176,153 +176,141 @@ export function Hero({
         )}
       </nav>
 
-      {/* ------------------------------------------------------- KONTENT */}
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-7xl flex-col justify-end px-4 pb-10 pt-28 sm:px-6 sm:pb-14 lg:px-8 lg:pb-20">
-        <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          {/* Chap: sarlavha */}
-          <div className="max-w-2xl">
-            <motion.p
-              {...fade(0.05)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/16 bg-white/[0.07] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#bcd0f7]"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2dd4bf]" aria-hidden />
-              Raqamli hokimiyat platformasi
-            </motion.p>
-
-            <motion.h1
-              {...fade(0.14)}
-              className="mt-5 text-4xl font-extrabold leading-[1.06] tracking-[-0.03em] text-white text-balance sm:text-5xl lg:text-[64px]"
-            >
-              Xalq dardi —{" "}
-              <span className="text-gradient-sky">davlat e&apos;tiborida.</span>
-            </motion.h1>
-
-            <motion.p
-              {...fade(0.24)}
-              className="mt-5 max-w-xl text-[15px] leading-7 text-[#c3d3f2] sm:text-base sm:leading-8"
-            >
-              Xatirchi tumani aholisining murojaatlari endi bitta aqlli tizimda:
-              qabul qilinadi, tegishli tashkilotga yo&apos;naltiriladi, muddati
-              nazoratga olinadi va natijasi <strong className="font-semibold text-white">isbot bilan</strong> tasdiqlanadi.
-            </motion.p>
-
-            <motion.div {...fade(0.34)} className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={TELEGRAM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#7aa7ff] via-[#4d86ff] to-[#2dd4bf] px-6 text-[15px] font-bold text-[#030b1f] shadow-[0_18px_50px_-16px_rgba(77,134,255,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                <Send className="h-[18px] w-[18px]" aria-hidden />
-                Ariza yuborish
-                <ArrowRight
-                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                  aria-hidden
-                />
-              </a>
-              <a
-                href="#qanday"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-6 text-[15px] font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/[0.12]"
-              >
-                Qanday ishlaydi
-                <ChevronDown className="h-4 w-4" aria-hidden />
-              </a>
-            </motion.div>
-          </div>
-
-          {/* O'ng: shisha karta — murojaat yo'li (NAMUNA) */}
-          <motion.aside
-            {...fade(0.44)}
-            className="glass-strong hidden rounded-3xl p-5 lg:block"
-            aria-label="Murojaat yo‘li namunasi"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#bcd0f7]">
-                Murojaat yo&apos;li
-              </p>
-              <span className="rounded-md bg-white/12 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#cfdcf7]">
-                namuna
-              </span>
-            </div>
-
-            <p className="mt-3 font-mono text-[13px] font-semibold text-white">
-              № XT-2026-000412
-            </p>
-            <p className="mt-1 text-xs leading-5 text-[#a9bde4]">
-              «Buğirdoq MFY — ko&apos;cha yorug&apos;ligi ishlamaydi»
-            </p>
-
-            <ol className="mt-4 space-y-3">
-              {[
-                { t: "Qabul qilindi", s: "Telegram bot · 09:14", done: true },
-                { t: "Sohaga yo'naltirildi", s: "Energetika · 09:15", done: true },
-                { t: "Ijroda", s: "Tuman elektr tarmoqlari", done: true },
-                { t: "Isbot yuklandi", s: "3 foto · tasdiq kutilmoqda", done: false },
-              ].map((step, i) => (
-                <li key={step.t} className="flex gap-3">
-                  <span className="relative flex flex-col items-center">
-                    <span
-                      className={cn(
-                        "flex h-5 w-5 items-center justify-center rounded-full",
-                        step.done ? "bg-[#2dd4bf]" : "border-2 border-[#4d86ff] bg-transparent",
-                      )}
-                    >
-                      {step.done && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#03231f]" aria-hidden />
-                      )}
-                    </span>
-                    {i < 3 && <span className="mt-1 h-5 w-px bg-white/20" aria-hidden />}
-                  </span>
-                  <span className="min-w-0 pb-0.5">
-                    <span className="block text-[13px] font-semibold text-white">{step.t}</span>
-                    <span className="block text-[11px] text-[#93a9d6]">{step.s}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-
-            <p className="mt-4 flex items-start gap-1.5 border-t border-white/12 pt-3 text-[11px] leading-5 text-[#93a9d6]">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2dd4bf]" aria-hidden />
-              Har bir bosqich vaqti bilan yozib boriladi — jarayon tarixi
-              o&apos;chirilmaydi.
-            </p>
-          </motion.aside>
-        </div>
-
-        {/* Faktlar chizig'i */}
-        <motion.dl
-          {...fade(0.54)}
-          className="glass-strong mt-10 grid grid-cols-2 divide-white/12 rounded-2xl sm:mt-12 sm:grid-cols-4 sm:divide-x"
+      {/* --------------------------------------- YOPISHIB TURADIGAN QATLAM */}
+      <div className="sticky top-0 h-[100dvh] overflow-hidden">
+        {/* Surat — parallaks bilan */}
+        <motion.div
+          className="absolute inset-0 -z-20"
+          style={reduce ? {} : { y: imageY, scale: imageScale }}
         >
-          {[
-            { v: "70", l: "mahalla va qishloq" },
-            { v: "20", l: "faoliyat sohasi" },
-            { v: "24/7", l: "murojaat qabuli" },
-            { v: "3", l: "til: o'zbek, rus, ingliz" },
-          ].map((f) => (
-            <div key={f.l} className="px-4 py-4 text-center sm:px-5">
-              <dt className="sr-only">{f.l}</dt>
-              <dd>
-                <span className="block text-2xl font-extrabold tracking-tight text-white tabular-nums sm:text-3xl">
-                  {f.v}
-                </span>
-                <span className="mt-0.5 block text-[11px] font-medium leading-4 text-[#a9bde4]">
-                  {f.l}
-                </span>
-              </dd>
-            </div>
-          ))}
-        </motion.dl>
+          <Image
+            src="/xatirchi-login.png"
+            alt="Xatirchi tumani hokimligi binosi"
+            fill
+            priority
+            quality={92}
+            sizes="100vw"
+            className="object-cover object-[center_58%] lg:object-[center_42%]"
+          />
+        </motion.div>
 
-        {/* Pastga ishora */}
-        <div
-          className="scroll-hint pointer-events-none mt-8 hidden justify-center lg:flex"
+        {/* Yengil umumiy tonlash */}
+        <motion.div
+          className="hero-tint absolute inset-0 -z-10"
+          style={reduce ? {} : { opacity: tintOpacity }}
           aria-hidden
+        />
+        {/* Matn ostidagi scrim — aylantirilganda butunlay ketadi */}
+        <motion.div
+          className="hero-scrim grain absolute inset-0 -z-10"
+          style={reduce ? {} : { opacity: scrimOpacity }}
+          aria-hidden
+        />
+
+        {/* ------------------------------------------------------ KONTENT
+            Markaziy kompozitsiya: bino simmetrik, shuning uchun matn ham
+            o'rtada — o'q markaziy portal va gerb bilan bir chiziqda. */}
+        <motion.div
+          style={scrollStyle}
+          className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col items-center justify-center px-6 pb-10 pt-20 text-center sm:pb-8 sm:pt-24 lg:max-w-4xl"
         >
-          <span className="flex h-9 w-5 items-start justify-center rounded-full border border-white/25 pt-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-white/70" />
-          </span>
-        </div>
+          <motion.p
+            {...fade(0.05)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#030b1f]/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d5e2fb] backdrop-blur-md"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2dd4bf]" aria-hidden />
+            Raqamli hokimiyat platformasi
+          </motion.p>
+
+          <motion.h1
+            {...fade(0.14)}
+            className="mt-6 text-[34px] font-semibold leading-[1.08] tracking-[-0.03em] text-white text-balance [text-shadow:0_2px_34px_rgba(3,11,31,0.8)] sm:mt-7 sm:text-[54px] sm:tracking-[-0.035em] sm:leading-[1.06] lg:text-[68px]"
+          >
+            Xalq dardi —{" "}
+            <span className="text-gradient-sky">davlat e&apos;tiborida.</span>
+          </motion.h1>
+
+          <motion.p
+            {...fade(0.24)}
+            className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-[#dbe6ff] text-pretty [text-shadow:0_1px_18px_rgba(3,11,31,0.9)] sm:mt-6 sm:text-[17px] sm:leading-8"
+          >
+            Xatirchi tumani aholisining murojaatlari endi bitta aqlli tizimda:
+            qabul qilinadi, tegishli tashkilotga yo&apos;naltiriladi, muddati
+            nazoratga olinadi va natijasi{" "}
+            <strong className="font-semibold text-white">isbot bilan</strong>{" "}
+            tasdiqlanadi.
+          </motion.p>
+
+          <motion.div
+            {...fade(0.34)}
+            className="mt-8 flex w-full flex-col items-center gap-3 sm:mt-10 sm:w-auto sm:flex-row"
+          >
+            <a
+              href={TELEGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#7aa7ff] via-[#4d86ff] to-[#2dd4bf] px-8 text-[15px] font-semibold text-[#030b1f] shadow-[0_20px_60px_-16px_rgba(77,134,255,0.9)] transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto"
+            >
+              <Send className="h-[18px] w-[18px]" aria-hidden />
+              Ariza yuborish
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                aria-hidden
+              />
+            </a>
+            <a
+              href="#qanday"
+              className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#030b1f]/45 px-7 text-[15px] font-semibold text-white backdrop-blur-md transition-colors duration-300 hover:bg-[#030b1f]/70 sm:w-auto"
+            >
+              Qanday ishlaydi
+              <ChevronDown className="h-4 w-4" aria-hidden />
+            </a>
+          </motion.div>
+
+          {/* Faktlar — markazda, chegarasiz, faqat nozik ajratgich */}
+          <motion.dl
+            {...fade(0.46)}
+            className="mt-9 grid w-full grid-cols-2 gap-y-5 sm:mt-16 sm:grid-cols-4 sm:gap-y-7"
+          >
+            {[
+              { v: "70", l: "mahalla va qishloq" },
+              { v: "20", l: "faoliyat sohasi" },
+              { v: "24/7", l: "murojaat qabuli" },
+              { v: "3", l: "til: o'zbek, rus, ingliz" },
+            ].map((f, i) => (
+              <div
+                key={f.l}
+                className={cn(
+                  "px-3 text-center",
+                  i > 0 && "sm:border-l sm:border-white/15",
+                )}
+              >
+                <dt className="sr-only">{f.l}</dt>
+                <dd>
+                  <span className="block text-[24px] font-semibold tracking-tight text-white tabular-nums [text-shadow:0_1px_18px_rgba(3,11,31,0.8)] sm:text-[32px]">
+                    {f.v}
+                  </span>
+                  <span className="mt-1 block text-[11.5px] font-medium leading-5 text-[#bcd0f7] [text-shadow:0_1px_14px_rgba(3,11,31,0.9)]">
+                    {f.l}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </motion.dl>
+
+          {/* Pastga ishora — «suratni ochish» taklifi */}
+          <div
+            className="scroll-hint absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
+            aria-hidden
+          >
+            <span className="text-[11px] font-medium tracking-wide text-white/65">
+              suratni ochish uchun pastga aylantiring
+            </span>
+            <span className="flex h-8 w-5 items-start justify-center rounded-full bg-white/15 pt-1.5 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/85" />
+            </span>
+          </div>
+        </motion.div>
       </div>
     </header>
   )

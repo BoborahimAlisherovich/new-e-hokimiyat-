@@ -1078,33 +1078,55 @@
   --ink-on-dark-2: #a9bde4;
 }
 
-/* Qahramon bo'lim pardasi. Manba rasm kunduzgi va pastki qismi juda
-   yorqin (oq yo'lka), shuning uchun bitta tekis qatlam yetmaydi:
-   chapdan va pastdan kuchli, o'ngdan yengil gradient qo'yiladi. */
-.hero-veil {
+/* Qahramon bo'lim pardalari — IKKI QATLAM.
+   Muhim: rasm KO'RINISHI kerak, shuning uchun umumiy parda YENGIL.
+   Matn o'qilishi esa faqat matn turgan joyga qo'yiladigan alohida
+   "scrim" bilan ta'minlanadi. Ilgari butun rasm quyuqlashtirilgani
+   uchun hokimiyat binosi ko'rinmay qolgan edi.
+
+   Ikkisining shaffofligi aylantirish bilan kamayadi (landing-hero.tsx
+   dagi useScroll), ya'ni pastga tushganda surat to'liq ochiladi. */
+
+/* 1) Umumiy yengil tonlash — navbar va pastki chiziq uchun */
+.hero-tint {
   background-image:
-    radial-gradient(120% 90% at 78% 8%, rgba(45, 212, 191, 0.16), transparent 60%),
+    radial-gradient(120% 80% at 78% 6%, rgba(45, 212, 191, 0.1), transparent 62%),
     linear-gradient(
-      to right,
-      rgba(3, 11, 31, 0.95) 0%,
-      rgba(3, 11, 31, 0.84) 32%,
-      rgba(3, 11, 31, 0.68) 58%,
-      rgba(3, 11, 31, 0.6) 100%
-    ),
-    linear-gradient(to top, rgba(3, 11, 31, 0.97) 0%, rgba(3, 11, 31, 0.1) 58%);
+      to bottom,
+      rgba(3, 11, 31, 0.52) 0%,
+      rgba(3, 11, 31, 0.14) 22%,
+      rgba(3, 11, 31, 0.1) 55%,
+      rgba(3, 11, 31, 0.62) 100%
+    );
 }
-@media (max-width: 767px) {
-  /* Telefonda matn rasm ustida to'liq yotadi — parda quyuqroq */
-  .hero-veil {
-    /* Pastda matn — quyuq; tepada bino ko'rinishi kerak — yengil. */
+
+/* 2) Matn ostidagi scrim — MARKAZIY kompozitsiya uchun.
+      Matn o'rtada turadi, shuning uchun quyuqlik ham markazda:
+      yumshoq radial + pastdan chiziqli (faktlar chizig'i ostida).
+      Rasm chekkalari ochiq qoladi — bino to'liq ko'rinadi. */
+.hero-scrim {
+  background-image:
+    radial-gradient(
+      78% 58% at 50% 58%,
+      rgba(3, 11, 31, 0.88) 0%,
+      rgba(3, 11, 31, 0.7) 38%,
+      rgba(3, 11, 31, 0.34) 62%,
+      rgba(3, 11, 31, 0) 82%
+    ),
+    linear-gradient(to top, rgba(3, 11, 31, 0.72) 0%, rgba(3, 11, 31, 0) 34%);
+}
+@media (max-width: 1023px) {
+  /* Telefonda matn ko'p joyni egallaydi — quyuqlik pastdan yuqoriga */
+  .hero-scrim {
     background-image:
-      linear-gradient(
-        to top,
-        rgba(3, 11, 31, 0.97) 0%,
-        rgba(3, 11, 31, 0.93) 34%,
-        rgba(3, 11, 31, 0.72) 62%,
-        rgba(3, 11, 31, 0.38) 100%
-      );
+      radial-gradient(
+        104% 50% at 50% 60%,
+        rgba(3, 11, 31, 0.8) 0%,
+        rgba(3, 11, 31, 0.64) 48%,
+        rgba(3, 11, 31, 0.24) 76%,
+        rgba(3, 11, 31, 0) 96%
+      ),
+      linear-gradient(to top, rgba(3, 11, 31, 0.76) 0%, rgba(3, 11, 31, 0) 40%);
   }
 }
 
