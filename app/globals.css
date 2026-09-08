@@ -1061,3 +1061,118 @@
     border: 1px solid #ccc;
   }
 }
+
+/* ============================================================ LANDING PAGE
+   Ommaviy sahifa (app/page.tsx) uchun. Dashboard tokenlaridan alohida
+   ko'rinish: to'q navy fon ustida shisha (glassmorphism) elementlar.
+   Bu qiymatlar faqat `.landing` ichida ishlaydi va dashboard'ga tegmaydi.
+   ---------------------------------------------------------------------------*/
+.landing {
+  --nv-950: #030b1f;
+  --nv-900: #061436;
+  --nv-800: #0a2050;
+  --nv-700: #123072;
+  --sky: #4d86ff;
+  --teal: #2dd4bf;
+  --ink-on-dark: #eef3ff;
+  --ink-on-dark-2: #a9bde4;
+}
+
+/* Qahramon bo'lim pardasi. Manba rasm kunduzgi va pastki qismi juda
+   yorqin (oq yo'lka), shuning uchun bitta tekis qatlam yetmaydi:
+   chapdan va pastdan kuchli, o'ngdan yengil gradient qo'yiladi. */
+.hero-veil {
+  background-image:
+    radial-gradient(120% 90% at 78% 8%, rgba(45, 212, 191, 0.16), transparent 60%),
+    linear-gradient(
+      to right,
+      rgba(3, 11, 31, 0.95) 0%,
+      rgba(3, 11, 31, 0.84) 32%,
+      rgba(3, 11, 31, 0.68) 58%,
+      rgba(3, 11, 31, 0.6) 100%
+    ),
+    linear-gradient(to top, rgba(3, 11, 31, 0.97) 0%, rgba(3, 11, 31, 0.1) 58%);
+}
+@media (max-width: 767px) {
+  /* Telefonda matn rasm ustida to'liq yotadi — parda quyuqroq */
+  .hero-veil {
+    /* Pastda matn — quyuq; tepada bino ko'rinishi kerak — yengil. */
+    background-image:
+      linear-gradient(
+        to top,
+        rgba(3, 11, 31, 0.97) 0%,
+        rgba(3, 11, 31, 0.93) 34%,
+        rgba(3, 11, 31, 0.72) 62%,
+        rgba(3, 11, 31, 0.38) 100%
+      );
+  }
+}
+
+/* Nozik don — 1024px manba rasm kattalashtirilganda yumshoqlik
+   "kinematik" ko'rinadi, piksel emas. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.32;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+.glass-strong {
+  background: rgba(6, 20, 54, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+/* Zaif qurilmalarda blur qimmat — tekis fonga tushadi */
+@media (max-width: 767px) {
+  .glass,
+  .glass-strong {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(6, 20, 54, 0.78);
+  }
+}
+
+/* Sarlavhadagi ak\0441ent so'z */
+.text-gradient-sky {
+  background: linear-gradient(100deg, #7aa7ff 0%, #2dd4bf 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Aylanma nur — Telegram bloki uchun */
+@keyframes halo-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -18px, 0) scale(1.06); }
+}
+.halo {
+  animation: halo-drift 11s var(--ease-out) infinite;
+  will-change: transform;
+}
+
+/* Pastga aylantirish ishorasi */
+@keyframes scroll-hint {
+  0% { transform: translateY(0); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: translateY(14px); opacity: 0; }
+}
+.scroll-hint span {
+  animation: scroll-hint 1.9s var(--ease-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo,
+  .scroll-hint span {
+    animation: none;
+  }
+}
