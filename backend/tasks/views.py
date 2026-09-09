@@ -586,11 +586,19 @@ class TaskViewSet(viewsets.ModelViewSet):
         orgs = list(Organization.objects.filter(is_active=True).values('id', 'name', 'short_name', 'sector__name'))
         sectors = list(Sector.objects.filter(is_active=True).values_list('name', flat=True))
         
-        org_list = "\n".join([
-            f"- {o['name']}{f' / {o['short_name']}' if o.get('short_name') else ''} "
-            f"(ID: {o['id']}, Soha: {o['sector__name'] or 'Nomalum'})"
-            for o in orgs
-        ])
+        # PEP 701 (Python 3.12+) ichma-ich bir xil qo'shtirnoqqa ruxsat
+        # beradi, lekin fayl 3.10/3.11 bilan ham tekshirilishi kerak —
+        # shuning uchun qisqartma alohida o'zgaruvchida yig'iladi.
+        org_lines = []
+        for o in orgs:
+            short = o.get('short_name')
+            suffix = ' / ' + short if short else ''
+            sector_name = o['sector__name'] or 'Nomalum'
+            org_lines.append(
+                "- " + str(o['name']) + suffix + " (ID: " + str(o['id'])
+                + ", Soha: " + str(sector_name) + ")"
+            )
+        org_list = "\n".join(org_lines)
         
         prompt = f"""Sen E-Hokimiyat tizimining professional AI yordamchisisan. 
 Quyidagi matn audio yozuvdan olingan bo'lishi mumkin. Unda imloviy, grammatik xatolar bo'lishi tabiiy.
@@ -794,7 +802,63 @@ QOIDALAR:
         if organization_id:
             scoped = scoped.filter(assigned_organizations__organization_id=organization_id).distinct()
 
+        scoped = self._apply_list_filters(scoped, user=user)
+
         return scoped
+
+    def _apply_list_filters(self, queryset: QuerySet[Task], *, user) -> QuerySet[Task]:
+        """Ro'yxat sahifasi filtrlari (hokim, yordamchilari va admin uchun).
+
+        Qo'llanadigan query parametrlar:
+          author=me|<id>       — kim yaratgan
+          deputy=me|<id>       — mas'ul hokim yordamchisi
+          mine=1               — men yaratgan YOKI menga biriktirilgan
+          overdue=1            — muddati o'tgan va hali yopilmagan
+          awaiting=1           — hisobot yuborilgan, tasdiq kutilmoqda
+          deadline_from / deadline_to (YYYY-MM-DD)
+          created_from / created_to (YYYY-MM-DD)
+        """
+        params = self.request.query_params
+        now = timezone.now()
+
+        def _who(value: str):
+            value = (value or '').strip()
+            if not value:
+                return None
+            return user.id if value == 'me' else value
+
+        author = _who(params.get('author'))
+        if author:
+            queryset = queryset.filter(created_by_id=author)
+
+        deputy = _who(params.get('deputy'))
+        if deputy:
+            queryset = queryset.filter(assigned_deputies__id=deputy).distinct()
+
+        if (params.get('mine') or '').strip() in ('1', 'true'):
+            queryset = queryset.filter(
+                Q(created_by=user) | Q(assigned_deputies=user)
+            ).distinct()
+
+        if (params.get('overdue') or '').strip() in ('1', 'true'):
+            queryset = queryset.filter(
+                deadline__lt=now,
+            ).exclude(status__in=TaskStatus.CLOSED_STATUSES).exclude(status=TaskStatus.BAJARILDI)
+
+        if (params.get('awaiting') or '').strip() in ('1', 'true'):
+            queryset = queryset.filter(status=TaskStatus.BAJARILDI)
+
+        for param, lookup in (
+            ('deadline_from', 'deadline__date__gte'),
+            ('deadline_to', 'deadline__date__lte'),
+            ('created_from', 'created_at__date__gte'),
+            ('created_to', 'created_at__date__lte'),
+        ):
+            raw = (params.get(param) or '').strip()
+            if raw:
+                queryset = queryset.filter(**{lookup: raw})
+
+        return queryset
     
     def perform_create(self, serializer):
         """Create task and log the action."""

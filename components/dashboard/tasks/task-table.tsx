@@ -96,9 +96,10 @@ export function TaskTable({
     BOSHQA: t.task.categories.BOSHQA,
   }
 
-  // "Ko'rish" satrni bosish bilan bir xil, shuning uchun menyu faqat
-  // tahrirlash yoki o'chirish mavjud bo'lganda ko'rsatiladi.
-  const hasActions = Boolean((canEdit && onEdit) || (canDelete && onDelete))
+  // Menyu doim ko'rsatiladi: «Ochish» bandi topshiriq sahifasiga olib
+  // boradi (satrni bosish ham shuni qiladi, lekin klaviatura va sensorli
+  // ekranda aniq band kerak).
+  const hasActions = true
 
   if (tasks.length === 0) {
     return (
@@ -155,7 +156,7 @@ export function TaskTable({
                   {hasActions && (
                     <RowActions
                       task={task}
-                      onView={onView}
+                      onOpen={() => open(task)}
                       onEdit={canEdit ? onEdit : undefined}
                       onDelete={canDelete ? onDelete : undefined}
                       labels={t}
@@ -284,7 +285,7 @@ export function TaskTable({
                     <TableCell className="text-right">
                       <RowActions
                         task={task}
-                        onView={onView}
+                        onOpen={() => open(task)}
                         onEdit={canEdit ? onEdit : undefined}
                         onDelete={canDelete ? onDelete : undefined}
                         labels={t}
@@ -343,13 +344,13 @@ function SortableHead({
 
 function RowActions({
   task,
-  onView,
+  onOpen,
   onEdit,
   onDelete,
   labels,
 }: {
   task: Task
-  onView?: (task: Task) => void
+  onOpen: () => void
   onEdit?: (task: Task) => void
   onDelete?: (id: number | string) => void
   labels: any
@@ -364,12 +365,10 @@ function RowActions({
           <MoreHorizontal className="h-4 w-4" aria-hidden />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
-          {onView && (
-            <DropdownMenuItem onSelect={() => onView(task)}>
-              <Eye className="mr-2 h-4 w-4" aria-hidden />
-              {labels.common?.view ?? "Ko'rish"}
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem onSelect={onOpen}>
+            <Eye className="mr-2 h-4 w-4" aria-hidden />
+            Ochish
+          </DropdownMenuItem>
           {onEdit && (
             <DropdownMenuItem onSelect={() => onEdit(task)}>
               <Pencil className="mr-2 h-4 w-4" aria-hidden />

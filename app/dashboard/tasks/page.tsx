@@ -3,42 +3,51 @@
 import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { Plus, ShieldCheck, Sparkles } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowUpDown, Plus, ShieldCheck, Sparkles } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
-import { TaskFilters } from "@/components/dashboard/tasks/task-filters"
+import {
+  EMPTY_TASK_FILTERS,
+  TaskFilters,
+  TaskViewTabs,
+  viewToParams,
+  type PersonOption,
+  type TaskFilterState,
+  type TaskView,
+  type TaskViewCounts,
+} from "@/components/dashboard/tasks/task-filters"
 import { TaskStats } from "@/components/dashboard/tasks/task-stats"
 import { TaskTable } from "@/components/dashboard/tasks/task-table"
-import { TaskDetailDialog } from "@/components/dashboard/tasks/task-detail-dialog"
 import { PremiumTableSkeleton, PremiumStatsSkeleton } from "@/components/dashboard/premium-dashboard-ui"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/i18n/context"
 import { getCurrentUser } from "@/lib/api/auth.api"
-import { getOrganizations } from "@/lib/api/organizations.api"
+import { getAssignableOrganizations, type AssignableOrganization } from "@/lib/api/organizations.api"
 import { getSectors, type Sector } from "@/lib/api/sectors.api"
+import { getUsers } from "@/lib/api/users.api"
 import { deleteTask, getTaskStats, getTasksPage } from "@/lib/api/tasks.api"
 import type { Task } from "@/types"
 
 /**
  * TOPSHIRIQLAR RO'YXATI
  *
- * Tuzatilgan nuqsonlar:
- *  - Har harf bosilganda BESH parallel so'rov ketardi (users, organizations,
- *    tasks, stats, currentUser) — holbuki faqat ikkitasi qidiruvga bog'liq.
- *    Endi ma'lumotnoma (tashkilot, soha, foydalanuvchi) bir marta yuklanadi.
- *  - `setLoading(true)` butun sahifani unmount qilardi: har harfda jadval,
- *    filtrlar va animatsiya qaytadan qurilardi. Endi faqat jadval joyida
- *    skelet ko'rsatiladi.
- *  - Debounce yo'q edi. Endi 400 ms (filtr komponentida).
- *  - Javoblar tartibsiz kelib bir-birini bosib ketishi mumkin edi
- *    (AbortController yo'q). Endi so'rov navbati raqami bilan tekshiriladi.
- *  - Sahifada TO'RT qatlam sarlavha bor edi (Header h1 + DashboardPageFrame
- *    h2 + filtr h3 + jadval h2) va YETTI ta ko'rsatkich plitasi. Endi bitta
- *    sarlavha va bitta KPI qatori.
- *  - Ikkita dekorativ "hujjat" chipi UI matni sifatida chiqarilardi.
- *  - `onEdit`/`onDelete` jadvalga uzatilardi, lekin jadval ularni
- *    e'tiborsiz qoldirardi — endi ishlaydi.
- *  - O'chirishdan keyin `totalCount` va statistika yangilanmasdi.
+ * Bu qadamda tuzatilgani:
+ *  1. Satrni bosganda modal ochilardi (`TaskDetailDialog`) — mazmun,
+ *     isbotlar, chat va tarix telefon ekranida sig'masdi. Endi har bir
+ *     topshiriq O'Z SAHIFASIDA ochiladi: /dashboard/tasks/[id].
+ *  2. «Tahrirlash» ham shu modalni ochardi (ya'ni tahrirlamasdi). Endi
+ *     topshiriq sahifasiga o'tadi — tahrirlash oynasi shu yerda va
+ *     huquq backend bayrog'i (can_edit) bilan tekshiriladi.
+ *  3. Filtrlar: tezkor ko'rinish tablari (Menga tegishli, Tasdiqlashda,
+ *     Kechikkan…), mas'ul yordamchi, muallif va muddat oralig'i qo'shildi.
+ *  4. Tashkilot ro'yxati endi `/organizations/assignable/` dan keladi —
+ *     hokim yordamchisi faqat O'ZIGA biriktirilgan tashkilotlarni
+ *     ko'radi, ilgari esa hamma tashkilot chiqardi.
+ *  5. Jadval sarlavhalari bo'yicha saralash ishlaydi (ilgari `sortKey`
+ *     uzatilmagani uchun sarlavhalar bosilmasdi).
+ *  6. Telefon uchun: tab qatori gorizontal siljiydi, KPI plitalari
+ *     ikki ustun, asosiy harakat pastda qadalgan.
  */
 
 type StatsShape = {
@@ -61,13 +70,34 @@ const EMPTY_STATS: StatsShape = {
   overdue: 0,
 }
 
+type SortKey = "title" | "deadline" | "created_at" | "status" | "priority"
+
+const SORT_FIELD: Record<SortKey, string> = {
+  title: "title",
+  deadline: "deadline",
+  created_at: "created_at",
+  status: "status",
+  priority: "priority",
+}
+
+const SCOPE_NOTE: Record<string, string> = {
+  curated: "Sizga biriktirilgan tashkilotlar",
+  sector: "Sohangizdagi tashkilotlar",
+  own: "O‘z tashkilotingiz",
+  all: "",
+  none: "",
+}
+
 export default function TasksPage() {
   const t = useTranslation()
+  const router = useRouter()
 
   /* --------------------------------------------------------- Ma'lumotnoma */
   const [currentUser, setCurrentUser] = useState<any>(null)
-  const [organizations, setOrganizations] = useState<any[]>([])
+  const [organizations, setOrganizations] = useState<AssignableOrganization[]>([])
+  const [orgScope, setOrgScope] = useState<string>("all")
   const [sectors, setSectors] = useState<Sector[]>([])
+  const [deputies, setDeputies] = useState<PersonOption[]>([])
   const [refLoaded, setRefLoaded] = useState(false)
   const [refError, setRefError] = useState<string | null>(null)
 
@@ -79,15 +109,12 @@ export default function TasksPage() {
   const [listError, setListError] = useState<string | null>(null)
 
   /* ------------------------------------------------------------- Filtrlar */
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
-  const [sectorFilter, setSectorFilter] = useState("all")
-  const [organizationFilter, setOrganizationFilter] = useState("all")
+  const [view, setView] = useState<TaskView>("all")
+  const [filters, setFilters] = useState<TaskFilterState>(EMPTY_TASK_FILTERS)
+  const [sortKey, setSortKey] = useState<SortKey>("deadline")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   const reqIdRef = useRef(0)
 
@@ -97,14 +124,31 @@ export default function TasksPage() {
 
     Promise.all([
       getCurrentUser().catch(() => null),
-      getOrganizations().catch(() => []),
+      getAssignableOrganizations().catch(() => null),
       getSectors().catch(() => [] as Sector[]),
     ])
-      .then(([me, orgs, secs]) => {
+      .then(([me, assignable, secs]) => {
         if (!alive) return
         setCurrentUser(me)
-        setOrganizations(orgs || [])
+        setOrganizations(assignable?.organizations ?? [])
+        setOrgScope(assignable?.scope ?? "all")
         setSectors((secs as Sector[]).filter((s) => s.is_active !== false))
+
+        // Mas'ul yordamchi filtri faqat hokim va admin uchun kerak
+        const role = String((me as any)?.role ?? "")
+        if (role === "HOKIM" || role === "ADMIN") {
+          void getUsers({ role: "HOKIM_YORDAMCHISI" } as any, 1, 200)
+            .then((list) => {
+              if (!alive) return
+              setDeputies(
+                (list || []).map((u: any) => ({
+                  id: u.id,
+                  name: u.full_name || [u.last_name, u.first_name].filter(Boolean).join(" ") || u.username,
+                })),
+              )
+            })
+            .catch(() => undefined)
+        }
       })
       .catch(() => {
         if (alive) setRefError("Ma’lumotnomani yuklab bo‘lmadi.")
@@ -131,42 +175,29 @@ export default function TasksPage() {
   /* ------------------------------------------------------------- Rollar */
   const role = String(currentUser?.role ?? "")
   const canCreateTask = Boolean(currentUser?.permissions?.can_create_tasks)
-  const canApprove = role === "HOKIM"
-  const canEdit = role === "HOKIM" || role === "HOKIM_YORDAMCHISI" || role === "ADMIN"
+  const canApprove = role === "HOKIM" || role === "HOKIM_YORDAMCHISI" || role === "ADMIN"
   const canDelete = role === "HOKIM" || role === "ADMIN"
-  const isDistrictGovernor = role === "HOKIM"
-
-  const visibleOrganizations = useMemo(() => {
-    if (!currentUser) return organizations
-    const idOf = (v: unknown): string => {
-      if (!v) return ""
-      if (typeof v === "string" || typeof v === "number") return String(v)
-      if (typeof v === "object" && v && "id" in (v as any)) return String((v as any).id ?? "")
-      return ""
-    }
-
-    if (role === "TASHKILOT_RAHBARI" || role === "TASHKILOT_MASUL") {
-      const own = idOf(currentUser.organization) || idOf(currentUser.organization_id)
-      return organizations.filter((o) => String(o.id) === own)
-    }
-    if (role === "HOKIM_YORDAMCHISI" || role === "HOKIMLIK_MASUL") {
-      const own = idOf(currentUser.sector) || idOf(currentUser.sector_id)
-      if (!own) return organizations
-      return organizations.filter((o) => (idOf(o.sector) || idOf(o.sector_id)) === own)
-    }
-    return organizations
-  }, [organizations, currentUser, role])
+  const isWideScope = role === "HOKIM" || role === "ADMIN"
 
   /* ------------------------------------------------------ Ro'yxatni yuklash */
-  const filters = useMemo(() => {
-    const f: Record<string, string> = {}
-    if (searchQuery.trim()) f.search = searchQuery.trim()
-    if (statusFilter !== "all") f.status = statusFilter
-    if (priorityFilter !== "all") f.priority = priorityFilter
-    if (sectorFilter !== "all") f.sector = sectorFilter
-    if (organizationFilter !== "all") f.organization = organizationFilter
+  const query = useMemo(() => {
+    const f: Record<string, string> = { ...viewToParams(view) }
+    if (filters.search.trim()) f.search = filters.search.trim()
+    if (filters.status !== "all") f.status = filters.status
+    if (filters.priority !== "all") f.priority = filters.priority
+    if (filters.sector !== "all") f.sector = filters.sector
+    if (filters.organization !== "all") f.organization = filters.organization
+    if (filters.deputy !== "all") f.deputy = filters.deputy
+    if (filters.author !== "all") f.author = filters.author
+    if (filters.deadlineFrom) f.deadline_from = filters.deadlineFrom
+    if (filters.deadlineTo) f.deadline_to = filters.deadlineTo
     return f
-  }, [searchQuery, statusFilter, priorityFilter, sectorFilter, organizationFilter])
+  }, [view, filters])
+
+  const ordering = useMemo(
+    () => `${sortDir === "desc" ? "-" : ""}${SORT_FIELD[sortKey]}`,
+    [sortKey, sortDir],
+  )
 
   const loadList = useCallback(async () => {
     const id = ++reqIdRef.current
@@ -175,8 +206,8 @@ export default function TasksPage() {
 
     try {
       const [tasksPage, statsData] = await Promise.all([
-        getTasksPage(filters, page, pageSize, "-created_at"),
-        getTaskStats(filters),
+        getTasksPage(query as any, page, pageSize, ordering),
+        getTaskStats(query as any),
       ])
 
       // Kechikkan javob yangi natijani bosib ketmasligi uchun
@@ -197,7 +228,7 @@ export default function TasksPage() {
     } finally {
       if (id === reqIdRef.current) setListLoading(false)
     }
-  }, [filters, page, pageSize])
+  }, [query, page, pageSize, ordering])
 
   useEffect(() => {
     void loadList()
@@ -205,7 +236,17 @@ export default function TasksPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [searchQuery, statusFilter, priorityFilter, sectorFilter, organizationFilter])
+  }, [view, filters])
+
+  /* -------------------------------------------------- Tab yonidagi sanoqlar */
+  const viewCounts: TaskViewCounts = useMemo(
+    () => ({
+      awaiting: stats.awaiting_approval,
+      overdue: stats.overdue,
+      active: stats.in_progress,
+    }),
+    [stats],
+  )
 
   /* ----------------------------------------------------------- Harakatlar */
   const handleDelete = useCallback(
@@ -213,7 +254,6 @@ export default function TasksPage() {
       if (!window.confirm(t.pages?.tasks?.deleteConfirm ?? "Topshiriq o‘chirilsinmi?")) return
       try {
         await deleteTask(taskId)
-        // Ilgari faqat satr filtrlanardi, hisoblar esa eskirib qolardi
         await loadList()
       } catch {
         setListError("O‘chirib bo‘lmadi. Huquqingiz yetarli ekanini tekshirib ko‘ring.")
@@ -222,7 +262,23 @@ export default function TasksPage() {
     [loadList, t],
   )
 
+  const handleSort = useCallback((key: SortKey) => {
+    setSortKey((prev) => {
+      if (prev === key) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+        return prev
+      }
+      setSortDir(key === "created_at" || key === "priority" ? "desc" : "asc")
+      return key
+    })
+  }, [])
+
+  const patchFilters = useCallback((patch: Partial<TaskFilterState>) => {
+    setFilters((prev) => ({ ...prev, ...patch }))
+  }, [])
+
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const scopeNote = SCOPE_NOTE[orgScope] || undefined
 
   /* ------------------------------------------------------------------ RENDER */
   return (
@@ -235,14 +291,14 @@ export default function TasksPage() {
             <div className="hidden items-center gap-2 sm:flex">
               <Link
                 href="/dashboard/tasks/new"
-                className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Yangi topshiriq
               </Link>
               <Link
                 href="/dashboard/tasks/new/ai"
-                className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted"
+                className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-card px-4 text-sm font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)] hover:bg-muted"
               >
                 <Sparkles className="h-4 w-4 text-primary" aria-hidden />
                 AI orqali
@@ -254,18 +310,19 @@ export default function TasksPage() {
 
       <div className="space-y-4 p-4 pb-28 sm:p-6 sm:pb-6">
         {refError && (
-          <p role="alert" className="rounded-md bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
+          <p role="alert" className="rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
             {refError}
           </p>
         )}
 
-        {/* Hokim uchun tasdiqlash navbatiga tezkor kirish */}
-        {canApprove && stats.awaiting_approval > 0 && (
-          <Link
-            href="/dashboard/tasks/pending-approval"
-            className="surface surface-interactive flex items-center gap-3 p-3.5"
+        {/* Tasdiqlash navbatiga tezkor kirish */}
+        {canApprove && stats.awaiting_approval > 0 && view !== "awaiting" && (
+          <button
+            type="button"
+            onClick={() => setView("awaiting")}
+            className="surface surface-interactive flex w-full items-center gap-3 p-3.5 text-left"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info-soft-foreground">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info-soft-foreground">
               <ShieldCheck className="h-5 w-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
@@ -277,8 +334,11 @@ export default function TasksPage() {
               </span>
             </span>
             <span className="shrink-0 text-sm font-semibold text-primary">Ko‘rish →</span>
-          </Link>
+          </button>
         )}
+
+        {/* Tezkor ko'rinishlar */}
+        <TaskViewTabs value={view} counts={viewCounts} canApprove={canApprove} onChange={setView} />
 
         {/* KPI */}
         {!refLoaded && listLoading ? (
@@ -298,29 +358,41 @@ export default function TasksPage() {
 
         {/* Filtrlar */}
         <TaskFilters
-          searchQuery={searchQuery}
-          statusFilter={statusFilter}
-          priorityFilter={priorityFilter}
-          sectorFilter={sectorFilter}
-          organizationFilter={organizationFilter}
+          value={filters}
+          onChange={patchFilters}
+          onClear={() => setFilters(EMPTY_TASK_FILTERS)}
           sectors={sectors}
-          organizations={visibleOrganizations}
-          showSectorFilter={isDistrictGovernor || role === "ADMIN"}
-          showCreateButton={false}
+          organizations={organizations}
+          deputies={isWideScope ? deputies : []}
+          showSectorFilter={isWideScope}
           resultCount={totalCount}
-          onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
-          onPriorityChange={setPriorityFilter}
-          onSectorChange={setSectorFilter}
-          onOrganizationChange={setOrganizationFilter}
-          onClear={() => {
-            setSearchQuery("")
-            setStatusFilter("all")
-            setPriorityFilter("all")
-            setSectorFilter("all")
-            setOrganizationFilter("all")
-          }}
+          scopeNote={scopeNote}
         />
+
+        {/* Saralash — telefonda jadval sarlavhalari ko'rinmaydi */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          <label htmlFor="task-sort" className="sr-only">
+            Saralash
+          </label>
+          <select
+            id="task-sort"
+            value={`${sortKey}:${sortDir}`}
+            onChange={(e) => {
+              const [k, d] = e.target.value.split(":")
+              setSortKey(k as SortKey)
+              setSortDir(d as "asc" | "desc")
+            }}
+            className="h-10 flex-1 rounded-xl bg-card px-3 text-sm text-foreground shadow-[inset_0_0_0_1px_var(--border)] focus:outline-none"
+          >
+            <option value="deadline:asc">Muddati yaqinlari birinchi</option>
+            <option value="deadline:desc">Muddati uzoqlari birinchi</option>
+            <option value="created_at:desc">Yangi yaratilganlar birinchi</option>
+            <option value="created_at:asc">Eski yaratilganlar birinchi</option>
+            <option value="priority:desc">Muhimligi bo‘yicha</option>
+            <option value="title:asc">Nomi bo‘yicha (A–Z)</option>
+          </select>
+        </div>
 
         {/* Jadval — faqat shu joy yuklanish holatiga o'tadi */}
         {listError ? (
@@ -330,7 +402,7 @@ export default function TasksPage() {
             <button
               type="button"
               onClick={() => void loadList()}
-              className="mt-4 inline-flex h-11 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              className="mt-4 inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Qayta urinish
             </button>
@@ -342,16 +414,18 @@ export default function TasksPage() {
         ) : (
           <TaskTable
             tasks={tasks}
-            onView={(task) => setSelectedTask(task)}
-            onEdit={canEdit ? (task) => setSelectedTask(task) : undefined}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSortChange={handleSort}
+            onEdit={canCreateTask ? (task) => router.push(`/dashboard/tasks/${task.id}?tahrir=1`) : undefined}
             onDelete={canDelete ? handleDelete : undefined}
-            canEdit={canEdit}
+            canEdit={canCreateTask}
             canDelete={canDelete}
             emptyAction={
               canCreateTask ? (
                 <Link
                   href="/dashboard/tasks/new"
-                  className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                  className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Birinchi topshiriqni yaratish
@@ -372,21 +446,16 @@ export default function TasksPage() {
               <PageBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
                 Oldingi
               </PageBtn>
-              <span className="rounded-md bg-muted px-3 py-1.5 text-sm font-medium tabular-nums text-foreground">
+              <span className="rounded-lg bg-muted px-3 py-1.5 text-sm font-medium tabular-nums text-foreground">
                 {page} / {totalPages}
               </span>
-              <PageBtn
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= totalPages}
-              >
+              <PageBtn onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages}>
                 Keyingi
               </PageBtn>
             </div>
           </div>
         )}
       </div>
-
-      <TaskDetailDialog task={selectedTask} onClose={() => setSelectedTask(null)} />
 
       {/* Mobil: bitta asosiy harakat. Pastki navigatsiya ustida turadi. */}
       {canCreateTask && (
@@ -402,7 +471,7 @@ export default function TasksPage() {
             <Link
               href="/dashboard/tasks/new/ai"
               aria-label="AI orqali yaratish"
-              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-lg"
+              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-card shadow-[0_8px_24px_-8px_rgb(13_21_36_/_0.28),inset_0_0_0_1px_var(--border)]"
             >
               <Sparkles className="h-5 w-5 text-primary" aria-hidden />
             </Link>
@@ -428,7 +497,7 @@ function PageBtn({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-11 items-center rounded-md border border-border px-3 text-sm font-semibold text-foreground",
+        "inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)]",
         disabled ? "opacity-40" : "hover:bg-muted",
       )}
     >

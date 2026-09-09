@@ -351,16 +351,31 @@ export interface TokenRefreshResponse {
 // ==================== Filter & Search Interfaces ====================
 
 export interface TaskFilters {
-  status?: TaskStatus
-  priority?: TaskPriority
-  category?: TaskCategory
-  assigned_to?: number
-  organization?: number
-  created_by?: number
+  status?: TaskStatus | string
+  priority?: TaskPriority | string
+  category?: TaskCategory | string
+  sector?: string
+  assigned_to?: number | string
+  organization?: number | string
+  created_by?: number | string
   due_date_from?: string
   due_date_to?: string
   search?: string
   ordering?: string
+  /** Kim yaratgan: `me` yoki foydalanuvchi ID */
+  author?: string
+  /** Mas'ul hokim yordamchisi: `me` yoki foydalanuvchi ID */
+  deputy?: string
+  /** Men yaratgan YOKI menga biriktirilgan — `1` */
+  mine?: string
+  /** Muddati o'tgan va yopilmagan — `1` */
+  overdue?: string
+  /** Tasdiq kutayotganlar (BAJARILDI) — `1` */
+  awaiting?: string
+  deadline_from?: string
+  deadline_to?: string
+  created_from?: string
+  created_to?: string
 }
 
 export interface UserFilters {

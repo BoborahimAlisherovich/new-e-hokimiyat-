@@ -240,6 +240,18 @@ export default function TaskDetailPage() {
   const myOrgStatus: string = myOrg?.status ?? status
 
   const canEdit = Boolean(task?.can_edit) && !isClosed
+
+  /* Ro'yxatdan «Tahrirlash» bilan kelinganda (?tahrir=1) oynani ochamiz.
+     `useSearchParams` o'rniga `window.location` — sahifa Suspense
+     talab qilmasligi uchun. */
+  const editIntentRef = useRef(false)
+  useEffect(() => {
+    if (editIntentRef.current || !canEdit || typeof window === "undefined") return
+    if (new URLSearchParams(window.location.search).get("tahrir") !== "1") return
+    editIntentRef.current = true
+    setDialog("edit")
+    window.history.replaceState(null, "", window.location.pathname)
+  }, [canEdit])
   const canApprove = Boolean(task?.can_approve) && status === "BAJARILDI"
   const canAccept = isOrgUser && ["YANGI", "TEKSHIRUVDA"].includes(myOrgStatus)
   const canReport = isOrgUser && REPORTABLE.has(myOrgStatus)
