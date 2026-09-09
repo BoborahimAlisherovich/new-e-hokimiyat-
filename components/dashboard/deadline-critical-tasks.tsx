@@ -66,7 +66,7 @@ export default function DeadlineCriticalTasks() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
+    <Card className="bg-card border-border ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
       <CardHeader className="bg-destructive-soft flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
@@ -85,7 +85,7 @@ export default function DeadlineCriticalTasks() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, x: 4 }}
-              className="flex items-start justify-between gap-4 rounded-lg border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:border-destructive hover:shadow-lg"
+              className="flex items-start justify-between gap-4 rounded-lg border border-border bg-card p-4 transition-all duration-300 hover:border-destructive hover:shadow-lg"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">

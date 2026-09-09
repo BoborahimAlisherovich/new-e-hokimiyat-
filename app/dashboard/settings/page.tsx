@@ -205,11 +205,6 @@ export default function SettingsPage() {
     <>
       <Header title={t.settings.title} description={t.settings.description} />
       <div className="p-4 sm:p-6">
-        {/* Modern geometric background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="bg-primary absolute top-0 left-0 w-96 h-96 rounded-full blur-3xl" />
-          <div className="bg-[var(--st-tekshiruvda-bg)] absolute bottom-0 right-0 w-80 h-80 rounded-full blur-2xl" />
-        </div>
         <div ref={pageRef} className="relative z-10 mx-auto max-w-5xl">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <section data-gsap-section>

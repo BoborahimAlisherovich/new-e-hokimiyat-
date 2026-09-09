@@ -171,7 +171,7 @@ export default function OrganizationDetailPage() {
           backHref="/dashboard/organizations"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <LoadingSpinner size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground">Tashkilot ma'lumotlari yuklanmoqda...</p>
           </div>
@@ -191,7 +191,7 @@ export default function OrganizationDetailPage() {
           backHref="/dashboard/organizations"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-6 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-6 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <PremiumEmptyState
               icon={Building2}
               title="Tashkilot topilmadi"
@@ -233,7 +233,7 @@ export default function OrganizationDetailPage() {
                   Tahrirlash
                 </Button>
               </DialogTrigger>
-              <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+              <DialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold text-foreground">Tashkilotni tahrirlash</DialogTitle>
                   <DialogDescription>Tashkilot nomi va faol holatini yagona standartda yangilang.</DialogDescription>
@@ -269,7 +269,7 @@ export default function OrganizationDetailPage() {
                   O'chirish
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+              <AlertDialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Tashkilotni o'chirish</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -294,7 +294,7 @@ export default function OrganizationDetailPage() {
               accentClassName="bg-primary-soft"
             >
               <div className="space-y-6 p-6">
-                <div className="bg-background rounded-[26px] border border-white/70 p-5">
+                <div className="bg-background rounded-[26px] border border-border p-5">
                   <div className="flex items-center gap-4">
                     <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary-soft text-primary-soft-foreground">
                       <Building2 className="h-8 w-8" />
@@ -323,7 +323,7 @@ export default function OrganizationDetailPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-white/70 bg-white/80 p-4">
+                <div className="rounded-[24px] border border-border bg-card p-4">
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Ijro darajasi</span>
                     <span className="font-medium text-foreground">{completedTasks}/{orgTasks.length}</span>

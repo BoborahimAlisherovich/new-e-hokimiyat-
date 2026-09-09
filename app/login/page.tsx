@@ -111,7 +111,7 @@ export default function LoginPage() {
         />
         <div className="relative z-10 p-10">
           <span className="inline-flex items-center gap-2.5 text-primary-foreground">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-card">
               <Shield className="h-5 w-5" aria-hidden />
             </span>
             <span>

@@ -81,7 +81,7 @@ export function UserFilters({
               placeholder="Foydalanuvchilarni qidirish..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
+              className="w-full rounded-xl border-border bg-card pl-9 focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
             />
           </div>
           {showCreateButton && (
@@ -96,7 +96,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground ml-1">Rol bo'yicha</label>
             <Select value={roleFilter} onValueChange={onRoleChange}>
-              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
+              <SelectTrigger className="rounded-xl border-border bg-card focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Rolni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -114,7 +114,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground ml-1">Holat bo'yicha</label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
+              <SelectTrigger className="rounded-xl border-border bg-card focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -128,7 +128,7 @@ export function UserFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground ml-1">Tashkilot bo'yicha</label>
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
+              <SelectTrigger className="rounded-xl border-border bg-card focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
             <SelectContent>

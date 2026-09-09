@@ -585,7 +585,7 @@ function ChatHeader({
   };
 
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-white/80 backdrop-blur-xl shrink-0 z-20">
+    <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card shrink-0 z-20">
       <div className="flex items-center gap-3 sm:gap-4">
         {/* Mobile Menu Toggle */}
         <Button
@@ -724,7 +724,7 @@ function ChatSidebar({
         opacity: isOpen ? 1 : 0,
       }}
       transition={{ duration: 0.22, ease: "easeInOut" }}
-      className="hidden lg:flex flex-col h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-border shrink-0 overflow-hidden"
+      className="hidden lg:flex flex-col h-full min-h-0 bg-card border-r border-border shrink-0 overflow-hidden"
       style={{ borderRightWidth: isOpen ? 1 : 0 }}
       aria-hidden={!isOpen}
     >
@@ -773,7 +773,7 @@ function ChatSidebar({
       </div>
 
       {/* Desktop input zone balance: keeps sidebar from visually running into chat input */}
-      <div className="h-24 shrink-0 border-t border-border bg-white/70" />
+      <div className="h-24 shrink-0 border-t border-border bg-card" />
     </motion.aside>
   );
 }
@@ -820,7 +820,7 @@ function MobileSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-80 max-w-[86vw] min-h-0 bg-white/95 backdrop-blur-xl border-r border-border z-40 lg:hidden flex flex-col pt-16"
+            className="fixed left-0 top-0 bottom-0 w-80 max-w-[86vw] min-h-0 bg-card border-r border-border z-40 lg:hidden flex flex-col pt-16"
           >
             {/* Close Button */}
             <Button
@@ -1071,7 +1071,7 @@ function ChatArea({
                 <p className="text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto px-4">
                   Topshiriqlar, murojaatlar va hisobotlar haqida so'rang.
                 </p>
-                <div className="mb-4 rounded-2xl border border-border bg-white/80 p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
+                <div className="mb-4 rounded-2xl border border-border bg-card p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
                     <Zap className="h-4 w-4" />
                     Tezkor foydalanish
@@ -1116,7 +1116,7 @@ function ChatArea({
                     <div className={`rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 shadow-sm ${
                       message.role === "user"
                         ? "bg-slate-900 text-white"
-                        : "bg-white/90 backdrop-blur-xl border border-border text-foreground"
+                        : "bg-card border border-border text-foreground"
                     }`}>
                       {message.role === "assistant" && (
                         <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
@@ -1187,7 +1187,7 @@ function ChatArea({
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-linear-to-br from-sky-600 to-blue-700 flex items-center justify-center shadow-sm">
                   <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
-                <div className="bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-border shadow-sm">
+                <div className="bg-card rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-border shadow-sm">
                   <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-primary" />
                     <span className="text-xs sm:text-sm font-medium">AI javob yozmoqda...</span>
@@ -1261,7 +1261,7 @@ function ChatInput({
   ];
 
   return (
-    <div className="shrink-0 border-t border-border bg-white/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:p-4">
+    <div className="shrink-0 border-t border-border bg-card p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
           {inlinePrompts.map((shortcut) => (

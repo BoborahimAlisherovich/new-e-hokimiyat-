@@ -69,7 +69,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
   return (
     <section className="animate-slide-up">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+        <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -84,7 +84,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+        <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
@@ -99,7 +99,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+        <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
@@ -115,7 +115,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+        <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -130,7 +130,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
+        <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">

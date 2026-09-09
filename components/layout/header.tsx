@@ -137,7 +137,7 @@ export function Header({ title, description, actions, onMenuClick }: HeaderProps
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 backdrop-blur-sm sm:px-6">
+    <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 sm:px-6">
       <div className="flex h-16 items-center gap-2">
         {/* Mobil menyu — YAGONA hamburger */}
         <button

@@ -253,7 +253,7 @@ export default function UsersPage() {
         onCreated={handleUserCreated}
       />
       <Dialog open={Boolean(createdCredentials)} onOpenChange={(open) => !open && setCreatedCredentials(null)}>
-        <DialogContent className="max-w-md rounded-2xl border-white/60 bg-white/95 backdrop-blur-2xl">
+        <DialogContent className="max-w-md rounded-2xl border-border bg-card">
           <DialogHeader>
             <DialogTitle>Foydalanuvchi yaratildi</DialogTitle>
             <DialogDescription>Login va parolni admin/hokim keyin ham foydalanuvchi profilida ko'ra oladi.</DialogDescription>

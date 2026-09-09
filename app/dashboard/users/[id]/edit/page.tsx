@@ -219,7 +219,7 @@ export default function UserEditPage() {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Personal info */}
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+            <Card className="bg-card/80 border border-border shadow-md rounded-2xl">
               <CardHeader>
                 <CardTitle>Shaxsiy ma'lumotlar</CardTitle>
                 <CardDescription>Foydalanuvchining asosiy ma'lumotlari</CardDescription>
@@ -291,7 +291,7 @@ export default function UserEditPage() {
             </Card>
 
             {/* Contact info */}
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl">
+            <Card className="bg-card/80 border border-border shadow-md rounded-2xl">
               <CardHeader>
                 <CardTitle>Aloqa ma'lumotlari</CardTitle>
                 <CardDescription>Telefon va email</CardDescription>
@@ -321,7 +321,7 @@ export default function UserEditPage() {
             </Card>
 
             {/* Role and organization */}
-            <Card className="bg-card/80 backdrop-blur-xl border border-border shadow-md rounded-2xl lg:col-span-2">
+            <Card className="bg-card/80 border border-border shadow-md rounded-2xl lg:col-span-2">
               <CardHeader>
                 <CardTitle>Rol va tashkilot</CardTitle>
                 <CardDescription>Foydalanuvchining roli va tegishli tashkiloti</CardDescription>

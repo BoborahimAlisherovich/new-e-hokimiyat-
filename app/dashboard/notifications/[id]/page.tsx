@@ -94,7 +94,7 @@ export default function NotificationDetailPage() {
             </div>
 
             {/* Notification Details */}
-            <Card className="bg-card/80 backdrop-blur-xl border border-border/50 shadow-md">
+            <Card className="bg-card/80 border border-border/50 shadow-md">
               <CardHeader>
                 <CardTitle className="text-xl font-bold text-foreground">Билдиришнома тafsilotи</CardTitle>
               </CardHeader>
@@ -147,7 +147,7 @@ export default function NotificationDetailPage() {
                   <div className="space-y-4">
                     <Label className="text-sm font-medium text-foreground">Боғлиқ вазифа</Label>
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-primary/10 text-primary">
+                      <Badge className="bg-primary-soft text-primary-soft-foreground">
                         #{notification.related_task_id}
                       </Badge>
                       <Link href={`/dashboard/tasks/${notification.related_task_id}`}>

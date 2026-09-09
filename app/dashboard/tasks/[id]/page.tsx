@@ -225,7 +225,7 @@ export default function TaskDetailPage() {
           backHref="/dashboard/tasks"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <LoadingSpinner size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground">Topshiriq ma'lumotlari yuklanmoqda...</p>
           </div>
@@ -620,7 +620,7 @@ export default function TaskDetailPage() {
                     Muddat uzaytirish
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+                <DialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-foreground">Muddat uzaytirish so'rovi</DialogTitle>
                     <DialogDescription className="text-muted-foreground">Yangi muddat va sababni aniq kiriting.</DialogDescription>
@@ -663,7 +663,7 @@ export default function TaskDetailPage() {
                     Tahrirlash
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[640px] overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+                <DialogContent className="sm:max-w-[640px] overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-foreground">Topshiriqni tahrirlash</DialogTitle>
                     <DialogDescription className="text-muted-foreground">Asosiy maydonlarni yangilang va topshiriqni bir xil standartda saqlang.</DialogDescription>
@@ -961,7 +961,7 @@ export default function TaskDetailPage() {
                                       />
                                     )}
                                     {attachment.file_type === "VIDEO" && (
-                                      <video src={attachment.file} controls className="max-h-48 w-full rounded-2xl border border-white/60" />
+                                      <video src={attachment.file} controls className="max-h-48 w-full rounded-2xl border border-border" />
                                     )}
                                     {attachment.file_type === "AUDIO" && (
                                       <audio src={attachment.file} controls className="w-full" />

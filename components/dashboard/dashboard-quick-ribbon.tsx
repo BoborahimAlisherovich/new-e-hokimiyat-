@@ -63,10 +63,10 @@ const ribbonText = {
 } as const
 
 const ribbonItems = [
-  { href: "/dashboard/tasks", icon: ClipboardList, tone: "from-cyan-500/18 to-cyan-100/70" },
-  { href: "/dashboard/projects", icon: FolderKanban, tone: "from-emerald-500/18 to-emerald-100/70" },
-  { href: "/dashboard/appeals", icon: BriefcaseBusiness, tone: "from-amber-400/24 to-amber-100/75" },
-  { href: "/dashboard/notifications", icon: BellRing, tone: "from-rose-500/18 to-rose-100/70" },
+  { href: "/dashboard/tasks", icon: ClipboardList, tone: "bg-primary-soft text-primary-soft-foreground" },
+  { href: "/dashboard/projects", icon: FolderKanban, tone: "bg-success-soft text-success-soft-foreground" },
+  { href: "/dashboard/appeals", icon: BriefcaseBusiness, tone: "bg-warning-soft text-warning-soft-foreground" },
+  { href: "/dashboard/notifications", icon: BellRing, tone: "bg-destructive-soft text-destructive-soft-foreground" },
 ]
 
 export function DashboardQuickRibbon() {
@@ -90,10 +90,10 @@ export function DashboardQuickRibbon() {
   }, [content.items, userRole])
 
   return (
-    <section className="overflow-hidden rounded-[32px] border border-white/70 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.16),_transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.94),rgba(248,250,252,0.86))] p-6 shadow-[0_28px_70px_-40px_rgba(14,165,233,0.42)] backdrop-blur-xl">
+    <section className="overflow-hidden rounded-[32px] border border-border bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.16),_transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.94),rgba(248,250,252,0.86))] p-6 shadow-[0_28px_70px_-40px_rgba(14,165,233,0.42)]">
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
             <Sparkles className="h-3.5 w-3.5" />
             {content.eyebrow}
           </div>
@@ -111,10 +111,12 @@ export function DashboardQuickRibbon() {
             <Link
               key={item.title}
               href={item.href}
-              className="group rounded-[26px] border border-white/80 bg-white/80 p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_60px_-36px_rgba(8,145,178,0.35)]"
+              className="group rounded-[26px] border border-border bg-card p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_60px_-36px_rgba(8,145,178,0.35)]"
             >
-              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.tone}`}>
-                <Icon className="h-5 w-5 text-secondary-foreground" />
+              {/* `tone` fon va matn rangini birga beradi, ikonka esa
+                  `text-current` bilan uni meros qilib oladi */}
+              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${item.tone}`}>
+                <Icon className="h-5 w-5 text-current" />
               </div>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="text-base font-semibold text-foreground">{item.title}</h3>

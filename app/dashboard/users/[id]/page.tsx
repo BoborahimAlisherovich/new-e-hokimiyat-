@@ -62,7 +62,7 @@ function DetailItem({
   value: string
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
+    <div className="flex items-start gap-3 rounded-[22px] border border-border bg-card p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)]">
       <div className="rounded-2xl bg-muted p-2.5 text-muted-foreground">
         <Icon className="h-4 w-4" />
       </div>
@@ -193,7 +193,7 @@ export default function UserDetailPage() {
           backHref="/dashboard/users"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <LoadingSpinner size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground">Foydalanuvchi ma'lumotlari yuklanmoqda...</p>
           </div>
@@ -213,7 +213,7 @@ export default function UserDetailPage() {
           backHref="/dashboard/users"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-6 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-6 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <PremiumEmptyState
               icon={AlertTriangle}
               title="Ma'lumot topilmadi"
@@ -271,7 +271,7 @@ export default function UserDetailPage() {
             accentClassName="bg-primary-soft"
           >
             <div className="space-y-6 p-6">
-              <div className="bg-background flex flex-col gap-4 rounded-[26px] border border-white/70 p-5 sm:flex-row sm:items-center">
+              <div className="bg-background flex flex-col gap-4 rounded-[26px] border border-border p-5 sm:flex-row sm:items-center">
                 <UserAvatar
                   firstName={user.first_name}
                   lastName={user.last_name}
@@ -292,7 +292,7 @@ export default function UserDetailPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <DetailItem icon={UserIcon} label="Login" value={user.login || "—"} />
                 {user.visible_password ? (
-                  <div className="rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
+                  <div className="rounded-[22px] border border-border bg-card p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
                         <div className="rounded-2xl bg-muted p-2.5 text-muted-foreground">

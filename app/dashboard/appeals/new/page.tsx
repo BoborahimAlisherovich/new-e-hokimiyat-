@@ -220,7 +220,7 @@ export default function NewAppealPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)]">
-          <Card className="border-border bg-white/95">
+          <Card className="border-border bg-card">
             <CardHeader>
               <CardTitle>Murojaatchi ma&apos;lumotlari</CardTitle>
               <CardDescription>
@@ -281,7 +281,7 @@ export default function NewAppealPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-white/95">
+          <Card className="border-border bg-card">
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Murojaatlar</CardTitle>

@@ -138,7 +138,7 @@ export function OrganizationCreateDialog({
 
  return (
  <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-ring/20 shadow-2xl">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[550px] bg-card rounded-2xl border-border ring-1 ring-ring/20 shadow-2xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
             <div className="bg-[var(--st-tekshiruvda-bg)] p-2 rounded-xl">

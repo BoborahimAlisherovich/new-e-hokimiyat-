@@ -94,7 +94,7 @@ export function ActivityChart() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
+      <Card className="bg-card border-border ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
         <CardHeader className="bg-primary-soft flex flex-row items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
@@ -215,17 +215,17 @@ export function ActivityChart() {
         
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-lg bg-success-soft backdrop-blur-sm border border-border hover:bg-success-soft hover:shadow-md transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-success-soft border border-border hover:bg-success-soft hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-success">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCompleted}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-primary-soft backdrop-blur-sm border border-border hover:bg-primary-soft hover:shadow-md transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-primary-soft border border-border hover:bg-primary-soft hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-primary">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCreated}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-warning-soft backdrop-blur-sm border border-border hover:bg-warning-soft hover:shadow-md transition-all duration-300">
+          <div className="text-center p-3 rounded-lg bg-warning-soft border border-border hover:bg-warning-soft hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-warning">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyTotal}</div>
           </div>

@@ -159,7 +159,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
 
   return (
     <TabsContent value="appeals_routing" className="space-y-6">
-      <Card className="rounded-[28px] border border-white/70 bg-white/80 shadow-[0_24px_60px_-40px_rgba(14,165,233,0.35)] backdrop-blur-xl">
+      <Card className="rounded-[28px] border border-border bg-card shadow-[0_24px_60px_-40px_rgba(14,165,233,0.35)]">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                 return (
                   <div
                     key={category.id}
-                    className="rounded-[22px] border border-border bg-white/80 px-4 py-4 shadow-sm"
+                    className="rounded-[22px] border border-border bg-card px-4 py-4 shadow-sm"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -237,7 +237,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+        <DialogContent className="max-w-2xl overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
           <DialogHeader>
             <DialogTitle>Mas'ul tashkilotlarni belgilash</DialogTitle>
             <DialogDescription>
@@ -275,7 +275,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
             </Button>
           </div>
 
-          <ScrollArea className="h-[360px] rounded-2xl border border-border bg-white/70 p-3">
+          <ScrollArea className="h-[360px] rounded-2xl border border-border bg-card p-3">
             <div className="space-y-2">
               {filteredOrgs.map((org) => {
                 const selected = selectedOrgIds.includes(org.id)

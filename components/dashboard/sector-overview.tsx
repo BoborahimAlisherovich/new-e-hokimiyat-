@@ -78,7 +78,7 @@ export function SectorOverview() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+    <Card className="bg-card border-border ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
       
       <CardHeader className="bg-success-soft relative z-10 border-b border-border">
         <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ export function SectorOverview() {
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, y: -2 }}
               className={cn(
-                "group/sector relative rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:border-success"
+                "group/sector relative rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-lg hover:border-success"
               )}
             >
               

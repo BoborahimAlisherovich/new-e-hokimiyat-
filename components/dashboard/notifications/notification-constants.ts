@@ -11,10 +11,10 @@ export const notificationIcons: Record<NotificationType, typeof Bell> = {
 }
 
 export const notificationColors: Record<NotificationType, string> = {
-  TASK_ASSIGNED: "bg-primary/10 text-primary",
-  TASK_UPDATED: "bg-warning/10 text-warning",
-  TASK_COMPLETED: "bg-accent/10 text-accent",
-  TASK_OVERDUE: "bg-destructive/10 text-destructive",
-  MESSAGE: "bg-primary text-primary",
+  TASK_ASSIGNED: "bg-primary-soft text-primary-soft-foreground",
+  TASK_UPDATED: "bg-warning-soft text-warning-soft-foreground",
+  TASK_COMPLETED: "bg-success-soft text-success-soft-foreground",
+  TASK_OVERDUE: "bg-destructive-soft text-destructive-soft-foreground",
+  MESSAGE: "bg-info-soft text-info-soft-foreground",
   SYSTEM: "bg-muted text-muted-foreground",
 }

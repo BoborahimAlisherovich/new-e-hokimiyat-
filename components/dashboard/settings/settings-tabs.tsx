@@ -13,7 +13,7 @@ interface SettingsTabsProps {
 
 export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
   return (
-    <div className="sticky top-20 z-20 rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.92))] p-3 shadow-[0_24px_60px_-40px_rgba(14,165,233,0.38)] backdrop-blur-xl">
+    <div className="sticky top-20 z-20 rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.92))] p-3 shadow-[0_24px_60px_-40px_rgba(14,165,233,0.38)]">
       <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-[22px] bg-transparent p-0 shadow-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger
           value="profile"

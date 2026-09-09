@@ -14,7 +14,7 @@ export function PremiumActivityCard({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl",
+        "rounded-[28px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]",
         className,
       )}
     >
@@ -91,7 +91,7 @@ export function PremiumTimelineItem({
   tone?: string
 }) {
   return (
-    <div className="flex gap-3 rounded-[22px] border border-border bg-white/70 p-4">
+    <div className="flex gap-3 rounded-[22px] border border-border bg-card p-4">
       <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", tone)}>
         <Icon className="h-4 w-4" />
       </div>
@@ -114,7 +114,7 @@ export function PremiumImagePreview({
   className?: string
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl border border-white/70 bg-muted", className)}>
+    <div className={cn("relative overflow-hidden rounded-2xl border border-border bg-muted", className)}>
       <Image src={src} alt={alt} fill className="object-cover" sizes="(max-width: 768px) 100vw, 320px" unoptimized />
     </div>
   )
@@ -132,10 +132,10 @@ export function PremiumSideCard({
   accent?: string
 }) {
   return (
-    <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+    <div className="overflow-hidden rounded-[26px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
       <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm ring-1 ring-white/80">
+          <div className="rounded-2xl bg-card p-2.5 shadow-sm ring-1 ring-border">
             <Icon className="h-4 w-4 text-secondary-foreground" />
           </div>
           <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
@@ -248,11 +248,11 @@ export function PremiumInfoCard({
   headerExtra?: React.ReactNode
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
       <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm ring-1 ring-white/80">
+            <div className="rounded-2xl bg-card p-2.5 shadow-sm ring-1 ring-border">
               <Icon className="h-5 w-5 text-secondary-foreground" />
             </div>
             <div>

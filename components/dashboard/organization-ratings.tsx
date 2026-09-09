@@ -76,7 +76,7 @@ export function OrganizationRatings() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
+    <Card className="bg-card border-border ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
 
       <CardHeader className="bg-primary-soft relative z-10 border-b border-border rounded-t-2xl">
         <div className="flex items-center justify-between">
@@ -87,9 +87,9 @@ export function OrganizationRatings() {
             <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.organizationRatings}</CardTitle>
           </div>
             <div className="flex items-center gap-2">
-              <div className="bg-success flex items-center gap-1 px-2 py-1 rounded-lg border border-success">
-                <TrendingUp className="w-3 h-3 text-success" />
-                <span className="text-xs font-medium text-success">{t.dashboard.performanceLabel}</span>
+              <div className="flex items-center gap-1 rounded-lg bg-success-soft px-2 py-1">
+                <TrendingUp className="w-3 h-3 text-success-soft-foreground" />
+                <span className="text-xs font-medium text-success-soft-foreground">{t.dashboard.performanceLabel}</span>
               </div>
               <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
             </div>
@@ -105,7 +105,7 @@ export function OrganizationRatings() {
             transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
             whileHover={{ scale: 1.02, y: -2 }}
             className={cn(
-              "group/org relative space-y-3 rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:border-primary"
+              "group/org relative space-y-3 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-lg hover:border-primary"
             )}
           >
             

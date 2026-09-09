@@ -145,12 +145,12 @@ export default function RecurringTasksPage() {
                 placeholder="Qidirish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 rounded-xl border border-border bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
+                className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="rounded-xl border border-border bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
+                className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               >
                 <option value="all">Barchasi</option>
                 <option value="ACTIVE">Faol</option>
@@ -170,7 +170,7 @@ export default function RecurringTasksPage() {
         {/* Tasks List */}
         <section data-gsap-section>
           {filteredTasks.length === 0 ? (
-            <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+            <div className="overflow-hidden rounded-[26px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
               <div className="flex flex-col items-center justify-center gap-4 py-16">
                 <Repeat className="h-16 w-16 text-muted-foreground" />
                 <div className="text-center">
@@ -184,7 +184,7 @@ export default function RecurringTasksPage() {
               {filteredTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl transition-all hover:shadow-[0_28px_60px_-30px_rgba(14,165,233,0.35)]"
+                  className="overflow-hidden rounded-[26px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] transition-all hover:shadow-[0_28px_60px_-30px_rgba(14,165,233,0.35)]"
                 >
                   <div className="bg-[var(--st-tekshiruvda-bg)] border-b border-border px-6 py-4">
                     <div className="flex items-start justify-between">
@@ -353,7 +353,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
         <div className="border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold text-foreground">{t.recurringTasks.createTitle}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t.recurringTasks.createDescription}</p>

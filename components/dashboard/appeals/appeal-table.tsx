@@ -89,7 +89,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
       {appeals.map((appeal) => (
         <article
           key={appeal.id}
-          className="rounded-[22px] border border-border bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]"
+          className="rounded-[22px] border border-border bg-card p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

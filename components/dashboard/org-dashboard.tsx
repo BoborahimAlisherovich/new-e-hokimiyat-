@@ -121,7 +121,7 @@ export default function OrgDashboard() {
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="animate-pulse bg-white/60">
+            <Card key={i} className="animate-pulse bg-card">
               <CardContent className="p-6">
                 <div className="h-4 w-24 bg-secondary rounded mb-3" />
                 <div className="h-8 w-16 bg-secondary rounded" />
@@ -131,7 +131,7 @@ export default function OrgDashboard() {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i} className="animate-pulse bg-white/60">
+            <Card key={i} className="animate-pulse bg-card">
               <CardContent className="p-6">
                 <div className="h-6 w-36 bg-secondary rounded mb-4" />
                 <div className="space-y-3">
@@ -149,7 +149,7 @@ export default function OrgDashboard() {
 
   if (error || !data) {
     return (
-      <Card className="bg-white/80">
+      <Card className="bg-card">
         <CardContent className="p-8 text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
           <p className="text-lg font-medium text-secondary-foreground">
@@ -167,36 +167,32 @@ export default function OrgDashboard() {
       label: "Jami topshiriqlar",
       value: tasks.total,
       icon: ListTodo,
-      gradient: "from-indigo-500 to-violet-500",
-      bgColor: "bg-primary",
-      iconColor: "text-primary",
+      bgColor: "bg-primary-soft",
+      iconColor: "text-primary-soft-foreground",
       sub: `${tasks.completion_rate}% bajarilgan`,
     },
     {
       label: "Faol topshiriqlar",
       value: tasks.new + tasks.in_progress + tasks.resubmitted,
       icon: Clock,
-      gradient: "from-amber-500 to-orange-500",
-      bgColor: "bg-warning",
-      iconColor: "text-warning",
+      bgColor: "bg-warning-soft",
+      iconColor: "text-warning-soft-foreground",
       sub: `${tasks.new} yangi, ${tasks.in_progress} ijroda`,
     },
     {
       label: "Bajarilgan",
       value: tasks.completed,
       icon: CheckCircle,
-      gradient: "from-emerald-500 to-cyan-500",
-      bgColor: "bg-success",
-      iconColor: "text-success",
+      bgColor: "bg-success-soft",
+      iconColor: "text-success-soft-foreground",
       sub: tasks.total > 0 ? `${Math.round((tasks.completed / tasks.total) * 100)}%` : "0%",
     },
     {
       label: "Kechikkan",
       value: tasks.overdue,
       icon: AlertCircle,
-      gradient: "from-rose-500 to-pink-500",
-      bgColor: "bg-destructive",
-      iconColor: "text-destructive",
+      bgColor: "bg-destructive-soft",
+      iconColor: "text-destructive-soft-foreground",
       sub: tasks.overdue > 0 ? "E'tibor talab qiladi!" : "Yo'q",
     },
   ]
@@ -239,10 +235,10 @@ export default function OrgDashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="bg-primary border-border">
+        <Card className="bg-card">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary">
-              <Building2 className="h-7 w-7 text-primary" />
+            <div className="p-3 rounded-xl bg-primary-soft">
+              <Building2 className="h-7 w-7 text-primary-soft-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-bold text-foreground truncate">{organization.name}</h2>
@@ -275,7 +271,7 @@ export default function OrgDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.08 }}
           >
-            <Card className="bg-white/75 backdrop-blur-xl border-white/50 rounded-xl shadow-sm hover:shadow-md transition-all">
+            <Card className="bg-card border-border rounded-xl shadow-sm hover:shadow-md transition-all">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -296,7 +292,7 @@ export default function OrgDashboard() {
       {/* Murojaatlar statistikasi */}
       {appeals.total > 0 && (
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="bg-white/75 backdrop-blur-xl border-white/50">
+          <Card className="bg-card border-border">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -376,7 +372,7 @@ export default function OrgDashboard() {
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {serviceCards.map((item) => (
-            <Card key={item.label} className="border-white/50 bg-white/75 backdrop-blur-xl">
+            <Card key={item.label} className="border-border bg-card">
               <CardContent className="p-5">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
@@ -396,7 +392,7 @@ export default function OrgDashboard() {
 
       {/* Faol topshiriqlar ro'yxati */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-        <Card className="bg-white/75 backdrop-blur-xl border-white/50">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">

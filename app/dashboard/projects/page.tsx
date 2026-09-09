@@ -484,7 +484,7 @@ export default function ProjectsPage() {
           </div>
         </section>
 
-        <section data-gsap-section className="rounded-[26px] border border-white/70 bg-white/78 p-4 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl sm:p-5">
+        <section data-gsap-section className="rounded-[26px] border border-border bg-card p-4 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-2">

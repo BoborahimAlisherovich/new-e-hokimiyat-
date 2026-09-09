@@ -605,7 +605,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
           backHref="/dashboard/appeals"
           stats={[]}
         >
-          <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-border bg-card p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <LoadingSpinner size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground">Murojaat ma'lumotlari yuklanmoqda...</p>
           </div>
@@ -625,7 +625,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
           backHref="/dashboard/appeals"
           stats={[]}
         >
-          <Card className="rounded-[28px] border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <Card className="rounded-[28px] border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <CardContent className="py-12 text-center">
               <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
               <h2 className="mb-2 text-xl font-semibold">Murojaat topilmadi</h2>
@@ -826,7 +826,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                     key={attachment.id}
                                     type="button"
                                     onClick={() => setActiveImageIndex(index)}
-                                    className="group overflow-hidden rounded-[20px] border border-white/80 bg-white text-left shadow-sm transition-all hover:border-border hover:shadow-md"
+                                    className="group overflow-hidden rounded-[20px] border border-border bg-white text-left shadow-sm transition-all hover:border-border hover:shadow-md"
                                   >
                                     <div className="relative aspect-square w-full overflow-hidden bg-muted">
                                       <Image
@@ -1220,7 +1220,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Route Appeal Dialog */}
       <Dialog open={routeDialogOpen} onOpenChange={setRouteDialogOpen}>
-        <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+        <DialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">Murojaatni yo'naltirish</DialogTitle>
             <DialogDescription>
@@ -1333,7 +1333,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Close Appeal Dialog */}
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
-        <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+        <DialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">Murojaatni yopish</DialogTitle>
             <DialogDescription>
@@ -1374,7 +1374,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Reject Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <AlertDialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+        <AlertDialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
           <AlertDialogHeader>
             <AlertDialogTitle>Murojaatni rad etish</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1411,7 +1411,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
       {/* Task Creation Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="max-w-2xl overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
+        <DialogContent className="max-w-2xl overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -1616,7 +1616,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                         }}
                         className={cn(
                           "relative aspect-square overflow-hidden rounded-2xl border transition-all",
-                          isActive ? "border-border-strong ring-2 ring-ring/50" : "border-white/10 opacity-70 hover:opacity-100"
+                          isActive ? "border-border-strong ring-2 ring-ring/50" : "border-border opacity-70 hover:opacity-100"
                         )}
                       >
                         <Image src={fileHref} alt={fileName} fill unoptimized className="object-cover" />
@@ -1631,7 +1631,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       </Dialog>
 
       <Dialog open={!!activeAttachment} onOpenChange={(open) => !open && setActiveAttachment(null)}>
-        <DialogContent className="max-w-4xl border-white/70 bg-white/92 backdrop-blur-2xl">
+        <DialogContent className="max-w-4xl border-border bg-card">
           <DialogHeader>
             <DialogTitle>{activeAttachment?.file_name || "Biriktirilgan fayl"}</DialogTitle>
             <DialogDescription>Fayl platformaning o'zida ko'rsatilmoqda.</DialogDescription>

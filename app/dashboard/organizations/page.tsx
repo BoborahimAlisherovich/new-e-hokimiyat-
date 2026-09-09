@@ -251,12 +251,12 @@ export default function OrganizationsPage() {
             {/* Organizations Table */}
             <section data-gsap-section>
             {loading ? (
-              <div className="flex items-center justify-center rounded-[26px] border border-white/70 bg-white/78 py-16 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+              <div className="flex items-center justify-center rounded-[26px] border border-border bg-card py-16 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ring"></div>
                 <span className="ml-3 text-muted-foreground">{t.pages.organizations.loading}</span>
               </div>
             ) : error ? (
-              <div className="rounded-[26px] border border-white/70 bg-white/78 py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+              <div className="rounded-[26px] border border-border bg-card py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
                 <p className="text-destructive">{error === "load_error" ? t.pages.organizations.loadError : error}</p>
                 <button 
                   onClick={() => window.location.reload()} 

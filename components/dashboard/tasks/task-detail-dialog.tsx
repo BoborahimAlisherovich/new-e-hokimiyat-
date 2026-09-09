@@ -17,7 +17,7 @@ type TaskDetailDialogProps = {
 export function TaskDetailDialog({ task, onClose }: TaskDetailDialogProps) {
   return (
     <Dialog open={!!task} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15)]">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-card rounded-2xl border-border shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15)]">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-foreground">Topshiriq tafsilotlari</DialogTitle>
         </DialogHeader>

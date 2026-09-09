@@ -142,11 +142,11 @@ export function OrganizationFilters({
                 placeholder={tr.search}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)] transition-all"
+                className="rounded-xl border-border bg-card pl-9 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)] transition-all"
               />
             </div>
             <Select value={typeFilter} onValueChange={onTypeChange}>
-              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
+              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-border bg-card focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
                 <Building className="mr-2 h-4 w-4 text-muted-foreground" />
                 <SelectValue placeholder={tr.sector} />
               </SelectTrigger>
@@ -160,7 +160,7 @@ export function OrganizationFilters({
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
+              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-border bg-card focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
                 <SelectValue placeholder={tr.status} />
               </SelectTrigger>
               <SelectContent>

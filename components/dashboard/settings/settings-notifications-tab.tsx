@@ -56,7 +56,7 @@ export function SettingsNotificationsTab({
 
   return (
     <TabsContent value="notifications" className="animate-fade-in">
-      <Card className="overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_26px_60px_-34px_rgba(14,165,233,0.24)] backdrop-blur-xl">
+      <Card className="overflow-hidden rounded-[30px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_26px_60px_-34px_rgba(14,165,233,0.24)]">
         <CardHeader className="relative overflow-hidden border-b border-border pb-6">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.08),transparent_28%),linear-gradient(135deg,rgba(6,182,212,0.10),rgba(59,130,246,0.03)_45%,transparent_80%)]" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -71,7 +71,7 @@ export function SettingsNotificationsTab({
                 {t.settings.notificationDescription}
               </CardDescription>
             </div>
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-white/80 px-3 py-2 text-xs font-medium text-primary shadow-sm">
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-primary shadow-sm">
               <span className="h-2 w-2 rounded-full bg-success" />
               Bildirishnomalar boshqaruvi
             </div>

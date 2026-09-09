@@ -216,7 +216,7 @@ export default function AppealsPage() {
 
         {/* Appeals Table */}
         <section data-gsap-section>
-          <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
+          <div className="overflow-hidden rounded-[26px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
             <div className="bg-primary-soft border-b border-border px-4 py-4 sm:px-6">
               <h2 className="text-base font-semibold text-foreground sm:text-lg">{t.pages.appeals.tableTitle}</h2>
             </div>
