@@ -991,28 +991,70 @@ function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me
 
 /* --------------------------------------------------------------- Tarix */
 
+/**
+ * Har amal turi uchun nom, belgi va rang.
+ *
+ * Ilgari tarixdagi barcha nuqtalar bir xil ko'k rangda edi va amal nomi
+ * ijrochining izohi bilan bitta maydonga tiqilgan edi — ya'ni «hisobot
+ * topshirildi» bilan «qayta ijroga yuborildi» ni bir qarashda ajratish
+ * mumkin emasdi. Nazorat jurnalida bu eng muhim narsa.
+ */
+const ACTION_META: Record<
+  string,
+  { label: string; icon: React.ComponentType<{ className?: string }>; dot: string; chip: string }
+> = {
+  YARATILDI: { label: "Topshiriq yaratildi", icon: FileText, dot: "bg-primary", chip: "bg-primary-soft text-primary-soft-foreground" },
+  KORIB_CHIQILMOQDA: { label: "Ko‘rib chiqilmoqda", icon: Clock, dot: "bg-primary", chip: "bg-primary-soft text-primary-soft-foreground" },
+  IJROGA_OLINDI: { label: "Ijroga olindi", icon: Play, dot: "bg-primary", chip: "bg-primary-soft text-primary-soft-foreground" },
+  HISOBOT_TOPSHIRILDI: { label: "Hisobot topshirildi", icon: Upload, dot: "bg-warning", chip: "bg-warning-soft text-warning-soft-foreground" },
+  QAYTA_YUBORILDI: { label: "Qayta ijroga yuborildi", icon: RotateCcw, dot: "bg-destructive", chip: "bg-destructive-soft text-destructive-soft-foreground" },
+  NAZORATDAN_YECHILDI: { label: "Nazoratdan yechildi", icon: CheckCircle2, dot: "bg-success", chip: "bg-success-soft text-success-soft-foreground" },
+  MUDDAT_UZAYTIRISH_SOROVI: { label: "Muddat uzaytirish so‘rovi", icon: Calendar, dot: "bg-warning", chip: "bg-warning-soft text-warning-soft-foreground" },
+  MUDDAT_UZAYTIRILDI: { label: "Muddat uzaytirildi", icon: Calendar, dot: "bg-warning", chip: "bg-warning-soft text-warning-soft-foreground" },
+  IZOH_QOSHILDI: { label: "Izoh qo‘shildi", icon: MessageSquare, dot: "bg-muted-foreground", chip: "bg-muted text-muted-foreground" },
+  FAYL_YUKLANDI: { label: "Fayl yuklandi", icon: Paperclip, dot: "bg-muted-foreground", chip: "bg-muted text-muted-foreground" },
+  TAHRIRLANDI: { label: "Tahrirlandi", icon: Pencil, dot: "bg-muted-foreground", chip: "bg-muted text-muted-foreground" },
+}
+
 function HistoryPanel({ items, createdAt, creator }: { items: any[]; createdAt?: string; creator: string }) {
   const rows = [
-    { id: "created", timestamp: createdAt, user_name: creator, content: "Topshiriq yaratildi", action_type: "YARATILDI" },
+    { id: "created", timestamp: createdAt, user_name: creator, content: "", action_type: "YARATILDI" },
     ...items,
   ]
   return (
     <ol className="space-y-4">
-      {rows.map((r: any, i) => (
-        <li key={`${r.id}-${i}`} className="flex gap-3">
-          <span className="relative flex flex-col items-center">
-            <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
-            {i < rows.length - 1 && <span className="mt-1 w-px flex-1 bg-border" aria-hidden />}
-          </span>
-          <div className="min-w-0 flex-1 pb-1">
-            <p className="text-sm text-foreground">
-              <span className="font-semibold">{r.user_name || "Tizim"}</span>
-              <span className="text-muted-foreground"> · {fmtDate(r.timestamp, true)}</span>
-            </p>
-            <p className="mt-0.5 text-sm leading-6 text-muted-foreground">{r.content}</p>
-          </div>
-        </li>
-      ))}
+      {rows.map((r: any, i) => {
+        const meta = ACTION_META[r.action_type] ?? {
+          label: r.action_label || "Amal",
+          icon: History,
+          dot: "bg-muted-foreground",
+          chip: "bg-muted text-muted-foreground",
+        }
+        const Icon = meta.icon
+        const comment = String(r.content ?? "").trim()
+
+        return (
+          <li key={`${r.id}-${i}`} className="flex gap-3">
+            <span className="relative flex flex-col items-center">
+              <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", meta.dot)} aria-hidden />
+              {i < rows.length - 1 && <span className="mt-1 w-px flex-1 bg-border" aria-hidden />}
+            </span>
+            <div className="min-w-0 flex-1 pb-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className={cn("inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-semibold", meta.chip)}>
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                  {meta.label}
+                </span>
+                <span className="text-xs text-muted-foreground">{fmtDate(r.timestamp, true)}</span>
+              </div>
+              <p className="mt-1 text-sm text-foreground">
+                <span className="font-semibold">{r.user_name || "Tizim"}</span>
+              </p>
+              {comment && <p className="mt-0.5 whitespace-pre-line text-sm leading-6 text-muted-foreground">{comment}</p>}
+            </div>
+          </li>
+        )
+      })}
     </ol>
   )
 }

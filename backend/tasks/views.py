@@ -1623,8 +1623,15 @@ QOIDALAR:
                     'executed_by': str(exec.executed_by_id) if exec.executed_by_id else None,
                     'user_name': exec.executed_by.full_name,
                     'user_role': exec.executed_by.role,
-                    'content': exec.comment or exec.get_action_type_display(),
-                    'action_type': exec.action_type
+                    # `content` — izoh, `action_label` — amal nomi.
+                    # Ilgari ikkisi bitta maydonga tiqilardi va interfeys
+                    # «Hisobot topshirildi» bilan ijrochining izohini
+                    # ajratib ko'rsata olmasdi.
+                    'content': exec.comment or '',
+                    'action_type': exec.action_type,
+                    'action_label': exec.get_action_type_display(),
+                    'old_status': exec.old_status,
+                    'new_status': exec.new_status,
                 })
             
             # Sort by timestamp
