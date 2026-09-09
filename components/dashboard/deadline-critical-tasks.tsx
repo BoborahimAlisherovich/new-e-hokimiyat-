@@ -66,7 +66,7 @@ export default function DeadlineCriticalTasks() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-red-50 to-orange-50">
         <CardTitle className="text-lg font-semibold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
@@ -89,11 +89,11 @@ export default function DeadlineCriticalTasks() {
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-medium text-slate-900">{task.title}</h4>
+                  <h4 className="font-medium text-foreground">{task.title}</h4>
                   <PriorityBadge priority={task.priority} />
                 </div>
-                <p className="text-sm text-slate-600 line-clamp-2">{task.description}</p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className={`flex items-center gap-1 ${badgeColor(d)}`}>
                     {badgeIcon(d)}
                     {d < 0 ? `${Math.abs(d)} ${t.common.daysOverdue}` : d === 0 ? t.common.today : `${d} ${t.common.daysRemaining}`}
@@ -117,9 +117,9 @@ export default function DeadlineCriticalTasks() {
         })}
         {tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <Clock className="w-8 h-8 text-slate-400 mb-2" />
-            <h3 className="text-base font-semibold text-slate-900 mb-1">{t.dashboard.deadlineEmptyTitle}</h3>
-            <p className="text-xs text-slate-600 max-w-md">
+            <Clock className="w-8 h-8 text-muted-foreground mb-2" />
+            <h3 className="text-base font-semibold text-foreground mb-1">{t.dashboard.deadlineEmptyTitle}</h3>
+            <p className="text-xs text-muted-foreground max-w-md">
               {t.dashboard.deadlineEmptyDescription}
             </p>
           </div>

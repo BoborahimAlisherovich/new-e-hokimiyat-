@@ -1,9 +1,9 @@
 export const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-slate-50 text-slate-600 border-slate-200",
+  LOW: "bg-background text-muted-foreground border-border",
   MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
   HIGH: "bg-rose-50 text-rose-600 border-rose-200",
   // Telegram bot priorities
-  low: "bg-slate-50 text-slate-600 border-slate-200",
+  low: "bg-background text-muted-foreground border-border",
   medium: "bg-amber-50 text-amber-700 border-amber-200",
   high: "bg-orange-50 text-orange-600 border-orange-200",
   urgent: "bg-rose-50 text-rose-600 border-rose-200",
@@ -21,7 +21,7 @@ export const STATUS_COLORS: Record<string, string> = {
   approved: "bg-teal-50 text-teal-600 border-teal-100",
   rejected: "bg-rose-50 text-rose-600 border-rose-100",
   responded: "bg-violet-50 text-violet-600 border-violet-100",
-  forwarded: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  forwarded: "bg-primary-soft text-primary border-border",
   resolved: "bg-emerald-50 text-emerald-600 border-emerald-100",
 }
 

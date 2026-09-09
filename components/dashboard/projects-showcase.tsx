@@ -20,7 +20,7 @@ const groupMeta = {
     title: "Xalqaro loyihalar",
     icon: Globe2,
     accent: "from-sky-500 to-cyan-500",
-    tone: "bg-sky-50 border-sky-100",
+    tone: "bg-primary-soft border-border",
   },
   DRIVER: {
     title: "Driver loyihalar",
@@ -81,8 +81,8 @@ export function ProjectsShowcase() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">Loyihalar portfeli</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Ochiq va vizual loyiha oynasi</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Ochiq va vizual loyiha oynasi</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
               Mahalliy, xalqaro va driver loyihalar real portfel ma'lumotlari asosida ko'rsatiladi. Har bir blokda hajm, holat va joriy progress birinchi ko'rinishda chiqadi.
             </p>
           </div>
@@ -102,7 +102,7 @@ export function ProjectsShowcase() {
             </Button>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span className="rounded-full bg-white/80 px-3 py-1">Ko'rish: barcha dashboard rollari uchun</span>
           <span className="rounded-full bg-white/80 px-3 py-1">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
         </div>
@@ -118,19 +118,19 @@ export function ProjectsShowcase() {
                   <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${group.accent}`}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">{group.title}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{group.title}</h3>
                 </div>
-                <ArrowUpRight className="mt-1 h-4 w-4 text-slate-400" />
+                <ArrowUpRight className="mt-1 h-4 w-4 text-muted-foreground" />
               </div>
 
               <div className="mb-5 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-slate-50 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Hajmi</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{group.total}</p>
+                <div className="rounded-2xl bg-background p-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Hajmi</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{group.total}</p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Resurs</p>
-                  <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <div className="rounded-2xl bg-background p-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Resurs</p>
+                  <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-foreground">
                     <BadgeDollarSign className="h-4 w-4 text-emerald-600" />
                     {group.budget}
                   </p>
@@ -139,26 +139,26 @@ export function ProjectsShowcase() {
 
               <div className="space-y-3">
                 {loading && group.items.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
                     Loyihalar yuklanmoqda...
                   </div>
                 )}
                 {!loading && group.items.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
                     Hozircha bu kategoriyada loyiha yo'q.
                   </div>
                 )}
                 {group.items.map((item) => (
-                  <div key={String(item.id)} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+                  <div key={String(item.id)} className="rounded-2xl border border-border bg-background p-3">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-medium leading-6 text-slate-800">{item.title}</p>
-                      <Badge variant="outline" className="border-slate-200 bg-white text-[10px] uppercase tracking-[0.16em] text-slate-600">
+                      <p className="text-sm font-medium leading-6 text-foreground">{item.title}</p>
+                      <Badge variant="outline" className="border-border bg-white text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                         {item.status_display || item.status}
                       </Badge>
                     </div>
-                    {item.owner && <p className="mt-1 text-xs text-slate-500">{item.owner}</p>}
+                    {item.owner && <p className="mt-1 text-xs text-muted-foreground">{item.owner}</p>}
                     <div className="mt-3">
-                      <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                      <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                         <span>Progress</span>
                         <span>{item.progress}%</span>
                       </div>

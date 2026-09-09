@@ -132,9 +132,9 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-2.5 py-1 text-xs font-mono font-bold text-violet-700 shadow-sm">
                     {formatOrgId(String(org.id))}
                   </code>
-                  <p className="mt-3 text-sm font-semibold leading-snug text-slate-900">{org.name}</p>
+                  <p className="mt-3 text-sm font-semibold leading-snug text-foreground">{org.name}</p>
                   {org.sector_name && (
-                    <p className="mt-1 text-xs text-slate-500">{org.sector_name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{org.sector_name}</p>
                   )}
                 </div>
                 <Badge
@@ -142,21 +142,21 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   className={`shrink-0 font-medium text-[11px] border rounded-lg ${
                     org.is_active
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-indigo-50/30 text-slate-600 border-indigo-100/40"
+                      : "bg-primary-soft text-muted-foreground border-border"
                   }`}
                 >
                   {org.is_active ? tr.active : tr.inactive}
                 </Badge>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-slate-600">
-                <div className="rounded-xl bg-slate-50/80 px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{tr.leader}</p>
-                  <p className="mt-1 truncate text-slate-700">{leader}</p>
+              <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-muted-foreground">
+                <div className="rounded-xl bg-background px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{tr.leader}</p>
+                  <p className="mt-1 truncate text-secondary-foreground">{leader}</p>
                 </div>
-                <div className="rounded-xl bg-slate-50/80 px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{tr.phone}</p>
-                  <p className="mt-1 truncate text-slate-700">{org.phone || "—"}</p>
+                <div className="rounded-xl bg-background px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{tr.phone}</p>
+                  <p className="mt-1 truncate text-secondary-foreground">{org.phone || "—"}</p>
                 </div>
               </div>
 
@@ -171,13 +171,13 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 hover:bg-violet-50">
-                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <Link href={`/dashboard/organizations/${org.id}`}>
                       <DropdownMenuItem className="cursor-pointer">
-                        <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                        <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
                         {tr.edit}
                       </DropdownMenuItem>
                     </Link>
@@ -210,13 +210,13 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
-              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">ID</TableHead>
-              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.name}</TableHead>
-              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.leader}</TableHead>
-              <TableHead className="hidden font-bold text-slate-800 py-4 px-4 text-sm lg:table-cell">{tr.phone}</TableHead>
-              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm">{tr.status}</TableHead>
-              <TableHead className="font-bold text-slate-800 py-4 px-4 text-sm w-[70px]">{tr.actions}</TableHead>
+            <TableRow className="border-b-2 border-border bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
+              <TableHead className="font-bold text-foreground py-4 px-4 text-sm">ID</TableHead>
+              <TableHead className="font-bold text-foreground py-4 px-4 text-sm">{tr.name}</TableHead>
+              <TableHead className="font-bold text-foreground py-4 px-4 text-sm">{tr.leader}</TableHead>
+              <TableHead className="hidden font-bold text-foreground py-4 px-4 text-sm lg:table-cell">{tr.phone}</TableHead>
+              <TableHead className="font-bold text-foreground py-4 px-4 text-sm">{tr.status}</TableHead>
+              <TableHead className="font-bold text-foreground py-4 px-4 text-sm w-[70px]">{tr.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -226,7 +226,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
               return (
                 <TableRow
                   key={org.id}
-                  className="group border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
+                  className="group border-b border-border transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
                   <TableCell className="py-4 px-4">
@@ -236,18 +236,18 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   </TableCell>
                   <TableCell className="py-4 px-4 whitespace-normal">
                     <div>
-                      <p className="font-semibold text-slate-900 text-base leading-snug">
+                      <p className="font-semibold text-foreground text-base leading-snug">
                         {org.name}
                       </p>
                       {org.sector_name && (
-                        <p className="text-sm text-slate-500 mt-0.5 font-medium">{org.sector_name}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 font-medium">{org.sector_name}</p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 px-4 text-sm text-slate-700 font-medium max-w-[220px] whitespace-normal">
+                  <TableCell className="py-4 px-4 text-sm text-secondary-foreground font-medium max-w-[220px] whitespace-normal">
                     <div className="line-clamp-2 leading-snug">{leader}</div>
                   </TableCell>
-                  <TableCell className="hidden py-4 px-4 text-sm text-slate-700 font-medium lg:table-cell">
+                  <TableCell className="hidden py-4 px-4 text-sm text-secondary-foreground font-medium lg:table-cell">
                     {org.phone || "—"}
                   </TableCell>
                   <TableCell className="py-3.5 px-4">
@@ -256,7 +256,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                       className={`font-medium text-xs border rounded-lg ${
                         org.is_active
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-indigo-50/30 text-slate-600 border-indigo-100/40"
+                          : "bg-primary-soft text-muted-foreground border-border"
                       }`}
                     >
                       {org.is_active ? tr.active : tr.inactive}
@@ -266,19 +266,19 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-violet-50 group-hover:bg-violet-100/50 transition-colors">
-                          <MoreHorizontal className="h-4 w-4 text-slate-500 group-hover:text-violet-600" />
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-violet-600" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         <Link href={`/dashboard/organizations/${org.id}`}>
                           <DropdownMenuItem className="cursor-pointer">
-                            <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                            <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
                             {tr.details}
                           </DropdownMenuItem>
                         </Link>
                         <Link href={`/dashboard/organizations/${org.id}`}>
                           <DropdownMenuItem className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                            <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
                             {tr.edit}
                           </DropdownMenuItem>
                         </Link>

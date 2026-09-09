@@ -127,7 +127,7 @@ export function OrganizationFilters({
       }
       clearAction={
         hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-red-600 hover:bg-red-50">
             <X className="mr-1 h-4 w-4" />
             {tr.clear}
           </Button>
@@ -137,17 +137,17 @@ export function OrganizationFilters({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:flex-wrap">
             <div className="relative flex-1 lg:min-w-[260px] lg:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={tr.search}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="rounded-xl border-cyan-100/60 bg-white/90 pl-9 focus:ring-2 focus:ring-violet-200 focus:border-violet-400 transition-all"
+                className="rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-violet-200 focus:border-violet-400 transition-all"
               />
             </div>
             <Select value={typeFilter} onValueChange={onTypeChange}>
-              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
-                <Building className="mr-2 h-4 w-4 text-slate-400" />
+              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+                <Building className="mr-2 h-4 w-4 text-muted-foreground" />
                 <SelectValue placeholder={tr.sector} />
               </SelectTrigger>
               <SelectContent>
@@ -160,7 +160,7 @@ export function OrganizationFilters({
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
                 <SelectValue placeholder={tr.status} />
               </SelectTrigger>
               <SelectContent>

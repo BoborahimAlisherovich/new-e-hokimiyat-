@@ -148,8 +148,8 @@ export default function UsersPage() {
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-              <p className="mt-4 text-slate-500">{t.common.loading}</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ring mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">{t.common.loading}</p>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function UsersPage() {
         ]}
       >
           <section data-gsap-section>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos foydalanuvchi ro'yxati</span>
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, tashkilot rahbari, administrator</span>
             </div>
@@ -259,10 +259,10 @@ export default function UsersPage() {
             <DialogDescription>Login va parolni admin/hokim keyin ham foydalanuvchi profilida ko'ra oladi.</DialogDescription>
           </DialogHeader>
           {createdCredentials && (
-            <div className="space-y-3 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4 text-sm text-slate-700">
-              <p><span className="font-semibold text-slate-900">Foydalanuvchi:</span> {createdCredentials.name}</p>
-              <p><span className="font-semibold text-slate-900">Login:</span> {createdCredentials.login}</p>
-              <p><span className="font-semibold text-slate-900">Parol:</span> {createdCredentials.password}</p>
+            <div className="space-y-3 rounded-2xl border border-border bg-primary-soft p-4 text-sm text-secondary-foreground">
+              <p><span className="font-semibold text-foreground">Foydalanuvchi:</span> {createdCredentials.name}</p>
+              <p><span className="font-semibold text-foreground">Login:</span> {createdCredentials.login}</p>
+              <p><span className="font-semibold text-foreground">Parol:</span> {createdCredentials.password}</p>
             </div>
           )}
         </DialogContent>

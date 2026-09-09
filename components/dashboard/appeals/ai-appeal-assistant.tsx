@@ -122,7 +122,7 @@ export function AIAppealAssistant({
   }
 
   const priorityColors: Record<string, string> = {
-    low: 'bg-gray-100 text-gray-700',
+    low: 'bg-muted text-secondary-foreground',
     medium: 'bg-blue-100 text-blue-700',
     high: 'bg-orange-100 text-orange-700',
     critical: 'bg-red-100 text-red-700'
@@ -213,7 +213,7 @@ export function AIAppealAssistant({
             </div>
             
             {analysis.analysis && (
-              <p className="text-sm text-gray-700">{analysis.analysis}</p>
+              <p className="text-sm text-secondary-foreground">{analysis.analysis}</p>
             )}
             
             {analysis.is_valid === false && (
@@ -237,7 +237,7 @@ export function AIAppealAssistant({
             
             {analysis.suggested_organizations && analysis.suggested_organizations.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-1">Tavsiya etilgan tashkilotlar:</p>
+                <p className="text-xs text-muted-foreground mb-1">Tavsiya etilgan tashkilotlar:</p>
                 <div className="flex flex-wrap gap-1">
                   {analysis.suggested_organizations.map((org, i) => (
                     <Badge key={i} variant="outline" className="text-xs bg-blue-50">
@@ -284,7 +284,7 @@ export function AIAppealAssistant({
                 placeholder="Javobni tahrirlang..."
               />
             ) : (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded">
+              <p className="text-sm text-secondary-foreground whitespace-pre-wrap bg-background p-3 rounded">
                 {editedResponse}
               </p>
             )}
@@ -317,7 +317,7 @@ export function AIAppealAssistant({
         )}
 
         {/* Holat ko'rsatkichi */}
-        <div className="flex items-center justify-between pt-2 text-xs text-gray-500">
+        <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
             <span>Holat: {currentStatus}</span>

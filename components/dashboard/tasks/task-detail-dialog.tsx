@@ -19,7 +19,7 @@ export function TaskDetailDialog({ task, onClose }: TaskDetailDialogProps) {
     <Dialog open={!!task} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-2xl border-white/60 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.15)]">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-slate-900">Topshiriq tafsilotlari</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-foreground">Topshiriq tafsilotlari</DialogTitle>
         </DialogHeader>
         {task && (
           <div className="space-y-6">

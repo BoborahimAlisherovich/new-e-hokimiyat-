@@ -199,10 +199,10 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
 
   return (
     <TabsContent value="profile" className="mt-6">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white border border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">{t.settings.profile}</CardTitle>
-          <CardDescription className="text-gray-600">{t.settings.profileDescription}</CardDescription>
+          <CardTitle className="text-lg font-semibold text-foreground">{t.settings.profile}</CardTitle>
+          <CardDescription className="text-muted-foreground">{t.settings.profileDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-4">
@@ -237,10 +237,10 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-foreground">
                 {lastName} {firstName} {middleName}
               </h3>
-              <p className="text-sm text-gray-600">{getRoleLabel(currentUser.role)}</p>
+              <p className="text-sm text-muted-foreground">{getRoleLabel(currentUser.role)}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
                   <UserCheck className="mr-1 h-3 w-3" />
@@ -266,60 +266,60 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
 
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">{t.settings.lastName}</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">{t.settings.lastName}</Label>
               <Input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">{t.settings.firstName}</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">{t.settings.firstName}</Label>
               <Input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">{t.settings.middleName}</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">{t.settings.middleName}</Label>
               <Input
                 value={middleName}
                 onChange={(e) => setMiddleName(e.target.value)}
-                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">{t.settings.phone}</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">{t.settings.phone}</Label>
               <Input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+998 XX XXX XX XX"
-                className="h-11 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Login</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">Login</Label>
               <Input
                 value={currentUser.login || ""}
                 disabled
-                className="h-11 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                className="h-11 border border-border-strong rounded-md bg-background text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">ПНФЛ (JSHSHIR)</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">ПНФЛ (JSHSHIR)</Label>
               <Input
                 value={currentUser.pnfl || ""}
                 disabled
-                className="h-11 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                className="h-11 border border-border-strong rounded-md bg-background text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Роль</Label>
+              <Label className="text-sm font-medium text-secondary-foreground">Роль</Label>
               <Input
                 value={getRoleLabel(currentUser.role)}
                 disabled
-                className="h-11 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                className="h-11 border border-border-strong rounded-md bg-background text-muted-foreground"
               />
             </div>
           </div>

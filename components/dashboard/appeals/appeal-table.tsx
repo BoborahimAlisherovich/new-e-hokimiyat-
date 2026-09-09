@@ -89,7 +89,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
       {appeals.map((appeal) => (
         <article
           key={appeal.id}
-          className="rounded-[22px] border border-cyan-100/70 bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]"
+          className="rounded-[22px] border border-border bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.32)]"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -109,11 +109,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                     </span>
                   )}
                 </div>
-                <p className="mt-3 break-words text-sm font-semibold text-slate-900">{appeal.citizenName}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{appeal.category || "—"} • {appeal.district || "—"}</p>
+                <p className="mt-3 break-words text-sm font-semibold text-foreground">{appeal.citizenName}</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{appeal.category || "—"} • {appeal.district || "—"}</p>
               </button>
             </div>
-            <Badge className={cn("border-0", PRIORITY_COLORS[appeal.priority] || "bg-slate-100 text-slate-700")}>
+            <Badge className={cn("border-0", PRIORITY_COLORS[appeal.priority] || "bg-muted text-secondary-foreground")}>
               {PRIORITY_LABELS[appeal.priority] || appeal.priority}
             </Badge>
           </div>
@@ -129,7 +129,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
             )}>
               {STATUS_LABELS[appeal.status] || appeal.status}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               {new Date(appeal.createdAt).toLocaleDateString(language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ", {
                 day: "2-digit",
                 month: "2-digit",
@@ -154,21 +154,21 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
     <div className="hidden overflow-x-auto md:block">
       <Table>
         <TableHeader>
-          <TableRow className="border-b-2 border-cyan-100/50 bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">ID</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.citizen}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.district}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.type}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.date}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm">{tr.status}</TableHead>
-            <TableHead className="font-bold text-slate-800 py-4 px-6 text-sm w-[50px]"></TableHead>
+          <TableRow className="border-b-2 border-border bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">ID</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.citizen}</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.district}</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.type}</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.date}</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.status}</TableHead>
+            <TableHead className="font-bold text-foreground py-4 px-6 text-sm w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {appeals.map((appeal) => (
             <TableRow 
               key={appeal.id} 
-              className="cursor-pointer border-b border-cyan-50/70 transition-all duration-200 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
+              className="cursor-pointer border-b border-border transition-all duration-200 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
@@ -178,7 +178,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               </TableCell>
               <TableCell className="py-4 px-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-900 break-words">{appeal.citizenName}</span>
+                  <span className="text-sm font-semibold text-foreground break-words">{appeal.citizenName}</span>
                   {(appeal.newMessagesCount ?? 0) > 0 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm animate-pulse">
                       <MessageCircle className="h-3 w-3" />
@@ -188,13 +188,13 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 </div>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-700 font-medium break-words">{appeal.district || "—"}</span>
+                <span className="text-sm text-secondary-foreground font-medium break-words">{appeal.district || "—"}</span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-700 font-medium break-words">{appeal.category || "—"}</span>
+                <span className="text-sm text-secondary-foreground font-medium break-words">{appeal.category || "—"}</span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <span className="text-sm text-slate-600 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {new Date(appeal.createdAt).toLocaleDateString(language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ", {
                     day: "2-digit",
                     month: "2-digit", 
@@ -217,8 +217,8 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               <TableCell className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-cyan-50/60">
-                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary-soft">
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[150px]">

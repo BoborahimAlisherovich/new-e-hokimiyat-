@@ -566,7 +566,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       in_progress: { label: "Jarayonda", variant: "bg-blue-100 text-blue-700", icon: <Clock className="h-3 w-3" /> },
     }
 
-    return statusMap[key] || { label: status || "—", variant: "bg-gray-100 text-gray-700", icon: null }
+    return statusMap[key] || { label: status || "—", variant: "bg-muted text-secondary-foreground", icon: null }
   }
 
   const getStatusBadge = (status: string) => {
@@ -583,13 +583,13 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const getPriorityBadge = (priority: string) => {
     const key = (priority || "").trim().toLowerCase()
     const priorityMap: Record<string, { label: string; variant: string }> = {
-      'low': { label: 'Past', variant: 'bg-gray-100 text-gray-700' },
+      'low': { label: 'Past', variant: 'bg-muted text-secondary-foreground' },
       'medium': { label: 'O\'rta', variant: 'bg-yellow-100 text-yellow-700' },
       'high': { label: 'Yuqori', variant: 'bg-orange-100 text-orange-700' },
       'urgent': { label: 'Shoshilinch', variant: 'bg-red-100 text-red-700' },
     }
     
-    const info = priorityMap[key] || { label: priority, variant: 'bg-gray-100 text-gray-700' }
+    const info = priorityMap[key] || { label: priority, variant: 'bg-muted text-secondary-foreground' }
     
     return <Badge className={info.variant}>{info.label}</Badge>
   }
@@ -607,7 +607,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
         >
           <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-sm text-slate-500">Murojaat ma'lumotlari yuklanmoqda...</p>
+            <p className="text-sm text-muted-foreground">Murojaat ma'lumotlari yuklanmoqda...</p>
           </div>
         </DashboardDetailFrame>
       </>
@@ -703,7 +703,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   variant="secondary"
                   size="sm"
                   onClick={openTaskDialog}
-                  className="border-cyan-200 bg-cyan-50 text-cyan-700 shadow-none hover:bg-cyan-100"
+                  className="border-border bg-primary-soft text-primary shadow-none hover:bg-primary-soft"
                 >
                   <ClipboardList className="mr-2 h-4 w-4" />
                   Topshiriq yaratish
@@ -713,13 +713,13 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     variant="secondary"
                     size="sm"
                     onClick={openRouteDialog}
-                    className="border-indigo-200 bg-indigo-50 text-indigo-700 shadow-none hover:bg-indigo-100"
+                    className="border-border bg-primary-soft text-primary shadow-none hover:bg-primary-soft"
                   >
                     <Navigation className="mr-2 h-4 w-4" />
                     Yo'naltirish
                   </Button>
                 )}
-                <Button size="sm" onClick={() => setCloseDialogOpen(true)} className="bg-white text-cyan-700 hover:bg-cyan-50">
+                <Button size="sm" onClick={() => setCloseDialogOpen(true)} className="bg-white text-primary hover:bg-primary-soft">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   Yopish va javob berish
                 </Button>
@@ -748,7 +748,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                   <div
                     className={cn(
                       "rounded-[22px] border px-4 py-3",
-                      PRIORITY_BANNER_STYLES[appeal.priority] || "border-slate-200 bg-slate-50 text-slate-700"
+                      PRIORITY_BANNER_STYLES[appeal.priority] || "border-border bg-background text-secondary-foreground"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -780,7 +780,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                             href={locationUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-cyan-700 underline decoration-cyan-200 underline-offset-4"
+                            className="text-primary underline decoration-cyan-200 underline-offset-4"
                           >
                             {appeal.latitude}, {appeal.longitude}
                           </a>
@@ -800,7 +800,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
                   <div>
                     <p className="mb-2 text-sm text-muted-foreground">Murojaat matni</p>
-                    <div className="rounded-[22px] border border-slate-200 bg-slate-50/75 p-4 overflow-hidden">
+                    <div className="rounded-[22px] border border-border bg-background p-4 overflow-hidden">
                       <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{appeal.description}</p>
                     </div>
                   </div>
@@ -810,10 +810,10 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     {appeal.attachments && appeal.attachments.length > 0 ? (
                       <div className="space-y-3">
                         {imageAttachments.length > 0 && (
-                          <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-3">
+                          <div className="rounded-[24px] border border-border bg-background p-3">
                             <div className="mb-3 flex items-center justify-between gap-3">
-                              <p className="text-sm font-medium text-slate-700">Rasmlar</p>
-                              <span className="text-xs text-slate-500">{imageAttachments.length} ta</span>
+                              <p className="text-sm font-medium text-secondary-foreground">Rasmlar</p>
+                              <span className="text-xs text-muted-foreground">{imageAttachments.length} ta</span>
                             </div>
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                               {imageAttachments.map((attachment, index) => {
@@ -826,9 +826,9 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                     key={attachment.id}
                                     type="button"
                                     onClick={() => setActiveImageIndex(index)}
-                                    className="group overflow-hidden rounded-[20px] border border-white/80 bg-white text-left shadow-sm transition-all hover:border-cyan-200 hover:shadow-md"
+                                    className="group overflow-hidden rounded-[20px] border border-white/80 bg-white text-left shadow-sm transition-all hover:border-border hover:shadow-md"
                                   >
-                                    <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
+                                    <div className="relative aspect-square w-full overflow-hidden bg-muted">
                                       <Image
                                         src={fileHref}
                                         alt={fileName}
@@ -838,8 +838,8 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                       />
                                     </div>
                                     <div className="p-2.5">
-                                      <p className="truncate text-xs font-medium text-slate-800">{fileName}</p>
-                                      {fileSize && <p className="mt-0.5 text-[11px] text-slate-500">{fileSize}</p>}
+                                      <p className="truncate text-xs font-medium text-foreground">{fileName}</p>
+                                      {fileSize && <p className="mt-0.5 text-[11px] text-muted-foreground">{fileSize}</p>}
                                     </div>
                                   </button>
                                 )
@@ -907,8 +907,8 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               {/* Tabs for Chat and History */}
               <PremiumActivityCard>
                 <Tabs defaultValue="chat" className="w-full">
-                  <CardHeader className="border-b border-cyan-100/70 bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
-                    <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100/90 p-1">
+                  <CardHeader className="border-b border-border bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
+                    <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1">
                       <TabsTrigger value="chat" className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         Muloqot
@@ -926,7 +926,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                         <ScrollArea className="h-[400px] pr-4">
                           <div className="space-y-4">
                             {messages.length === 0 ? (
-                              <div className="rounded-[24px] border border-dashed border-cyan-200 bg-cyan-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                              <div className="rounded-[24px] border border-dashed border-border bg-primary-soft px-4 py-10 text-center text-sm text-muted-foreground">
                                 Hali xabarlar yo'q
                               </div>
                             ) : (
@@ -990,7 +990,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                             </div>
                           )}
 
-                          <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50/70 p-2">
+                          <div className="flex gap-2 rounded-[24px] border border-border bg-background p-2">
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -1059,7 +1059,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                           </div>
 
                           {chatFile && (
-                            <div className="flex items-center gap-2 rounded-[22px] border border-slate-200 bg-slate-50 p-2.5">
+                            <div className="flex items-center gap-2 rounded-[22px] border border-border bg-background p-2.5">
                               {chatFile.type.startsWith("image/") ? (
                                 <>
                                   <ImageIcon className="h-4 w-4 text-blue-500" />
@@ -1087,17 +1087,17 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                       <ScrollArea className="h-[400px] pr-4">
                         <div className="space-y-4">
                           {history.length === 0 ? (
-                            <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                            <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-muted-foreground">
                               Hali tarix yo'q
                             </div>
                           ) : (
                             history.map((item, index) => {
                               const TimelineIcon = item.type === "ai_analysis" ? Bot : item.type === "admin_review" ? CheckCircle : MessageSquare
                               const tone = item.type === "ai_analysis"
-                                ? "bg-cyan-100 text-cyan-700"
+                                ? "bg-primary-soft text-primary"
                                 : item.type === "admin_review"
                                   ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-slate-100 text-slate-700"
+                                  : "bg-muted text-secondary-foreground"
 
                               return (
                                 <PremiumTimelineItem
@@ -1108,7 +1108,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                                   description={
                                     <>
                                       {item.type === "ai_analysis" && (
-                                        <div className="mt-2 rounded-2xl bg-cyan-50 p-3 text-sm">
+                                        <div className="mt-2 rounded-2xl bg-primary-soft p-3 text-sm">
                                           <p className="text-muted-foreground">{item.description}</p>
                                           <div className="mt-2 flex flex-wrap gap-4">
                                             <span>Ball: <strong>{item.score || 0}</strong></span>
@@ -1154,7 +1154,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     icon={CheckCircle}
                     onClick={() => setCloseDialogOpen(true)}
                     disabled={appeal.status === "resolved" || appeal.status === "rejected"}
-                    className="text-cyan-700"
+                    className="text-primary"
                   >
                     Murojaatni yopish
                   </PremiumActionButton>
@@ -1183,7 +1183,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     {history
                       .filter(h => h.type === 'ai_analysis')
                       .map((item, i) => (
-                        <div key={i} className="space-y-2 rounded-[22px] border border-cyan-100 bg-cyan-50/50 p-4 text-sm">
+                        <div key={i} className="space-y-2 rounded-[22px] border border-border bg-primary-soft p-4 text-sm">
                           <PremiumInsightMetric
                             label="Ball"
                             value={`${item.score || 0}/100`}
@@ -1202,7 +1202,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                             valueClassName={item.is_valid ? "text-emerald-600" : "text-red-600"}
                           />
                           {item.rejection_reason && (
-                            <div className="mt-2 border-t border-cyan-100 pt-2">
+                            <div className="mt-2 border-t border-border pt-2">
                               <p className="text-red-600 text-xs">
                                 <AlertTriangle className="h-3 w-3 inline mr-1" />
                                 {item.rejection_reason}
@@ -1222,7 +1222,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       <Dialog open={routeDialogOpen} onOpenChange={setRouteDialogOpen}>
         <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900">Murojaatni yo'naltirish</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-foreground">Murojaatni yo'naltirish</DialogTitle>
             <DialogDescription>
               Soha va mas'ul tashkilotlarni belgilang. Tashkilot rahbarlari murojaatni shu biriktirish asosida ko'radi.
             </DialogDescription>
@@ -1230,7 +1230,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
           <PremiumFormLayout>
             <PremiumFieldGroup label="Soha (ixtiyoriy)" hint="Agar fuqaro noto'g'ri sohani tanlagan bo'lsa, to'g'rilang.">
               <Select value={routeCategoryId} onValueChange={setRouteCategoryId}>
-                <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
                   <SelectValue placeholder="Sohani tanlang" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[260px]">
@@ -1301,19 +1301,19 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               )}
             </PremiumFieldGroup>
           </PremiumFormLayout>
-          <DialogFooter className="border-t border-slate-100 pt-4">
+          <DialogFooter className="border-t border-border pt-4">
             <Button
               variant="outline"
               onClick={() => setRouteDialogOpen(false)}
               disabled={routingAppeal}
-              className="rounded-2xl border-slate-200 bg-white"
+              className="rounded-2xl border-border bg-white"
             >
               Bekor qilish
             </Button>
             <Button
               onClick={handleRouteAppeal}
               disabled={routingAppeal || (!routeCategoryId && routeSelectedOrganizations.length === 0)}
-              className="rounded-2xl bg-indigo-600 hover:bg-indigo-700"
+              className="rounded-2xl bg-primary hover:bg-primary"
             >
               {routingAppeal ? (
                 <>
@@ -1335,7 +1335,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
         <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900">Murojaatni yopish</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-foreground">Murojaatni yopish</DialogTitle>
             <DialogDescription>
               Foydalanuvchiga javob yozing. Javob yuborilgandan so'ng foydalanuvchidan qoniqish so'raladi.
             </DialogDescription>
@@ -1347,12 +1347,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 placeholder="Javobingizni yozing..."
                 value={closeResponse}
                 onChange={(e) => setCloseResponse(e.target.value)}
-                className="min-h-[220px] rounded-2xl border-slate-200 bg-white text-sm leading-6"
+                className="min-h-[220px] rounded-2xl border-border bg-white text-sm leading-6"
               />
             </PremiumFieldGroup>
           </PremiumFormLayout>
-          <DialogFooter className="border-t border-slate-100 pt-4">
-            <Button variant="outline" onClick={() => setCloseDialogOpen(false)} className="rounded-2xl border-slate-200 bg-white">
+          <DialogFooter className="border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setCloseDialogOpen(false)} className="rounded-2xl border-border bg-white">
               Bekor qilish
             </Button>
             <Button onClick={handleCloseAppeal} disabled={closingAppeal} className="rounded-2xl">
@@ -1386,11 +1386,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               placeholder="Rad etish sababi..."
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
+              className="min-h-[120px] rounded-2xl border-border bg-white"
             />
           </div>
-          <AlertDialogFooter className="border-t border-slate-100 pt-4">
-            <AlertDialogCancel className="rounded-2xl border-slate-200 bg-white">Bekor qilish</AlertDialogCancel>
+          <AlertDialogFooter className="border-t border-border pt-4">
+            <AlertDialogCancel className="rounded-2xl border-border bg-white">Bekor qilish</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleRejectAppeal}
               disabled={rejecting}
@@ -1413,7 +1413,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
         <DialogContent className="max-w-2xl overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
               <ClipboardList className="h-5 w-5 text-blue-600" />
               Topshiriq yaratish
             </DialogTitle>
@@ -1428,7 +1428,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 placeholder="Topshiriq sarlavhasi..."
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
-                className="h-11 rounded-2xl border-slate-200 bg-white"
+                className="h-11 rounded-2xl border-border bg-white"
               />
             </PremiumFieldGroup>
 
@@ -1439,13 +1439,13 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 type="date"
                 value={taskDeadline}
                 onChange={(e) => setTaskDeadline(e.target.value)}
-                className="h-11 rounded-2xl border-slate-200 bg-white"
+                className="h-11 rounded-2xl border-border bg-white"
               />
               </PremiumFieldGroup>
 
               <PremiumFieldGroup label="Muhimlik darajasi">
               <Select value={taskPriority} onValueChange={setTaskPriority}>
-                <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
                   <SelectValue placeholder="Muhimlikni tanlang" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1466,7 +1466,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 placeholder="Masalan: bugunning o'zida joyiga chiqib o'rganilsin, natija bo'yicha alohida axborot kiritilsin..."
                 value={taskComment}
                 onChange={(e) => setTaskComment(e.target.value)}
-                className="min-h-[110px] rounded-2xl border-slate-200 bg-white"
+                className="min-h-[110px] rounded-2xl border-border bg-white"
               />
             </PremiumFieldGroup>
 
@@ -1519,12 +1519,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
               )}
             </PremiumFieldGroup>
           </PremiumFormLayout>
-          <DialogFooter className="border-t border-slate-100 pt-4">
+          <DialogFooter className="border-t border-border pt-4">
             <Button 
               variant="outline" 
               onClick={() => setTaskDialogOpen(false)}
               disabled={creatingTask}
-              className="rounded-2xl border-slate-200 bg-white"
+              className="rounded-2xl border-border bg-white"
             >
               Bekor qilish
             </Button>
@@ -1616,7 +1616,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                         }}
                         className={cn(
                           "relative aspect-square overflow-hidden rounded-2xl border transition-all",
-                          isActive ? "border-cyan-300 ring-2 ring-cyan-300/50" : "border-white/10 opacity-70 hover:opacity-100"
+                          isActive ? "border-border-strong ring-2 ring-ring/50" : "border-white/10 opacity-70 hover:opacity-100"
                         )}
                       >
                         <Image src={fileHref} alt={fileName} fill unoptimized className="object-cover" />
@@ -1638,7 +1638,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
           </DialogHeader>
 
           {activeAttachment ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 p-3">
+            <div className="overflow-hidden rounded-[24px] border border-border bg-background p-3">
               {activeAttachment.file_type === "photo" && getAttachmentUrl(activeAttachment) ? (
                 <div className="relative h-[60vh] w-full overflow-hidden rounded-[20px] bg-white">
                   <Image

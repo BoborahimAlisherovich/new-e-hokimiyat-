@@ -19,10 +19,10 @@ interface SettingsApplicationsTabProps {
 export function SettingsApplicationsTab({ applications }: SettingsApplicationsTabProps) {
   return (
     <TabsContent value="applications">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white border border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Murojatlar</CardTitle>
-          <CardDescription className="text-gray-600">Barcha kelgan murojatlar ro'yxati</CardDescription>
+          <CardTitle className="text-lg font-semibold text-foreground">Murojatlar</CardTitle>
+          <CardDescription className="text-muted-foreground">Barcha kelgan murojatlar ro'yxati</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

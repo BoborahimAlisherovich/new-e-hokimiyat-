@@ -47,7 +47,7 @@ export function AdminOnly({ children, title = "Admin Panel" }: AdminOnlyProps) {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-            <p className="mt-4 text-slate-600">Yuklanmoqda...</p>
+            <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
           </div>
         </div>
       </>
@@ -71,11 +71,11 @@ export function AdminOnly({ children, title = "Admin Panel" }: AdminOnlyProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-slate-900">Ruxsat yo'q</h2>
-              <p className="text-slate-600 max-w-md">
+              <h2 className="text-2xl font-bold text-foreground">Ruxsat yo'q</h2>
+              <p className="text-muted-foreground max-w-md">
                 Bu sahifa faqat Administrator uchun mavjud.
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Sizning rolingiz: <span className="font-semibold">{currentUser?.role || 'Noma\'lum'}</span>
               </p>
             </div>

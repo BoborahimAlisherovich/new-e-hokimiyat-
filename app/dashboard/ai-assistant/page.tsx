@@ -585,14 +585,14 @@ function ChatHeader({
   };
 
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl shrink-0 z-20">
+    <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-white/80 backdrop-blur-xl shrink-0 z-20">
       <div className="flex items-center gap-3 sm:gap-4">
         {/* Mobile Menu Toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggleMobileSidebar}
-          className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+          className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
         >
           {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -606,10 +606,10 @@ function ChatHeader({
           className={`hidden lg:inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold shadow-sm transition-all ${
             isDesktopSidebarOpen
               ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-              : "border-slate-300 bg-white text-slate-700 hover:border-blue-200 hover:bg-slate-50 hover:text-blue-700"
+              : "border-border-strong bg-white text-secondary-foreground hover:border-blue-200 hover:bg-background hover:text-blue-700"
           }`}
         >
-          <History className={`h-4 w-4 ${isDesktopSidebarOpen ? "text-blue-600" : "text-slate-600"}`} />
+          <History className={`h-4 w-4 ${isDesktopSidebarOpen ? "text-blue-600" : "text-muted-foreground"}`} />
           <span>{isDesktopSidebarOpen ? "Tarixni yashirish" : "Tarix"}</span>
         </Button>
 
@@ -636,7 +636,7 @@ function ChatHeader({
                           setIsEditingTitle(false);
                         }
                       }}
-                      className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="h-8 w-full rounded-md border border-border-strong bg-white px-2 text-sm font-semibold text-foreground outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       autoFocus
                       maxLength={120}
                     />
@@ -645,16 +645,16 @@ function ChatHeader({
                       size="icon"
                       onClick={() => void saveTitle()}
                       disabled={isSavingTitle}
-                      className="h-8 w-8 rounded-md hover:bg-slate-100"
+                      className="h-8 w-8 rounded-md hover:bg-muted"
                     >
-                      <Check className="h-4 w-4 text-slate-700" />
+                      <Check className="h-4 w-4 text-secondary-foreground" />
                     </Button>
                   </>
                 ) : (
                   <>
                     <h1
                       title={currentConversation.title}
-                      className="text-lg font-semibold text-slate-900 wrap-break-word"
+                      className="text-lg font-semibold text-foreground wrap-break-word"
                     >
                       {currentConversation.title || "Yangi suhbat"}
                     </h1>
@@ -665,22 +665,22 @@ function ChatHeader({
                         setTitleDraft(currentConversation.title || "");
                         setIsEditingTitle(true);
                       }}
-                      className="h-8 w-8 rounded-md hover:bg-slate-100"
+                      className="h-8 w-8 rounded-md hover:bg-muted"
                     >
-                      <Pencil className="h-4 w-4 text-slate-600" />
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   </>
                 )}
               </div>
             ) : (
-              <h1 className="text-lg font-semibold text-slate-900">AI Yordamchi</h1>
+              <h1 className="text-lg font-semibold text-foreground">AI Yordamchi</h1>
             )}
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {currentConversation ? "Suhbat nomini tahrirlash mumkin" : "Sun'iy intellekt yordamchisi"}
             </p>
           </div>
           <div className="sm:hidden">
-            <h1 className="text-base font-semibold text-slate-900">AI Yordamchi</h1>
+            <h1 className="text-base font-semibold text-foreground">AI Yordamchi</h1>
           </div>
         </div>
       </div>
@@ -690,7 +690,7 @@ function ChatHeader({
         variant="ghost"
         size="icon"
         onClick={onToggleMaximize}
-        className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+        className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
       >
         {isMaximized ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />}
       </Button>
@@ -724,12 +724,12 @@ function ChatSidebar({
         opacity: isOpen ? 1 : 0,
       }}
       transition={{ duration: 0.22, ease: "easeInOut" }}
-      className="hidden lg:flex flex-col h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 shrink-0 overflow-hidden"
+      className="hidden lg:flex flex-col h-full min-h-0 bg-white/80 backdrop-blur-xl border-r border-border shrink-0 overflow-hidden"
       style={{ borderRightWidth: isOpen ? 1 : 0 }}
       aria-hidden={!isOpen}
     >
       {/* New Chat Button */}
-      <div className="p-3 border-b border-slate-200/80 shrink-0">
+      <div className="p-3 border-b border-border shrink-0">
         <Button
           onClick={onCreateConversation}
           disabled={!isOpen}
@@ -748,7 +748,7 @@ function ChatSidebar({
               type="button"
               onClick={() => setIsListVisible((prev) => !prev)}
               disabled={!isOpen}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-muted-foreground"
             >
               <span>Suhbatlar</span>
               {isListVisible ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -773,7 +773,7 @@ function ChatSidebar({
       </div>
 
       {/* Desktop input zone balance: keeps sidebar from visually running into chat input */}
-      <div className="h-24 shrink-0 border-t border-slate-200/80 bg-white/70" />
+      <div className="h-24 shrink-0 border-t border-border bg-white/70" />
     </motion.aside>
   );
 }
@@ -820,7 +820,7 @@ function MobileSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-80 max-w-[86vw] min-h-0 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 lg:hidden flex flex-col pt-16"
+            className="fixed left-0 top-0 bottom-0 w-80 max-w-[86vw] min-h-0 bg-white/95 backdrop-blur-xl border-r border-border z-40 lg:hidden flex flex-col pt-16"
           >
             {/* Close Button */}
             <Button
@@ -833,7 +833,7 @@ function MobileSidebar({
             </Button>
 
             {/* New Chat Button */}
-            <div className="p-3 border-b border-slate-200/80 shrink-0">
+            <div className="p-3 border-b border-border shrink-0">
               <Button
                 onClick={onCreateConversation}
                 className="w-full justify-start gap-2 bg-slate-900 hover:bg-slate-800 text-white border-0 shadow-sm text-sm"
@@ -850,7 +850,7 @@ function MobileSidebar({
                   <button
                     type="button"
                     onClick={() => setIsListVisible((prev) => !prev)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-muted-foreground"
                   >
                     <span>Suhbatlar</span>
                     {isListVisible ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -917,12 +917,12 @@ function ConversationListItem({
   return (
     <div
       className={`group rounded-lg px-2 py-1 ${
-        isActive ? "bg-blue-50/70" : "hover:bg-slate-100/80"
+        isActive ? "bg-blue-50/70" : "hover:bg-muted"
       }`}
     >
       <div
         className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-2 transition-colors ${
-          isActive ? "bg-blue-100 text-blue-900" : "bg-transparent text-slate-700"
+          isActive ? "bg-blue-100 text-blue-900" : "bg-transparent text-secondary-foreground"
         }`}
       >
         <button
@@ -935,7 +935,7 @@ function ConversationListItem({
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
               isActive
                 ? "bg-blue-200 text-blue-700"
-                : "bg-slate-100 text-slate-500"
+                : "bg-muted text-muted-foreground"
             }`}
           >
             <History className="h-4 w-4" />
@@ -943,7 +943,7 @@ function ConversationListItem({
           <div className="min-w-0 flex-1">
             <p
               className={`truncate text-sm ${
-                isActive ? "font-medium text-blue-950" : "font-medium text-slate-800"
+                isActive ? "font-medium text-blue-950" : "font-medium text-foreground"
               }`}
               title={displayTitle}
             >
@@ -951,7 +951,7 @@ function ConversationListItem({
             </p>
             <p
               className={`truncate text-xs ${
-                isActive ? "text-blue-700/80" : "text-slate-500"
+                isActive ? "text-blue-700/80" : "text-muted-foreground"
               }`}
               title={secondaryText}
             >
@@ -966,7 +966,7 @@ function ConversationListItem({
           className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
             isActive
               ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
-              : "border-slate-200 bg-white text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              : "border-border bg-white text-muted-foreground hover:border-red-200 hover:bg-red-50 hover:text-red-600"
           }`}
           aria-label="Suhbatni o'chirish"
           title="Suhbatni o'chirish"
@@ -1067,16 +1067,16 @@ function ChatArea({
                 <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-linear-to-br from-sky-600 to-blue-700 mb-4 sm:mb-6 shadow-[0_16px_30px_-18px_rgba(3,105,161,0.75)]">
                   <Bot className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-3">AI Yordamchi</h2>
-                <p className="text-slate-600 mb-6 sm:mb-8 max-w-md mx-auto px-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">AI Yordamchi</h2>
+                <p className="text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto px-4">
                   Topshiriqlar, murojaatlar va hisobotlar haqida so'rang.
                 </p>
-                <div className="mb-4 rounded-2xl border border-sky-100/80 bg-white/80 p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-700">
+                <div className="mb-4 rounded-2xl border border-border bg-white/80 p-3 text-left shadow-sm sm:mx-auto sm:max-w-xl">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
                     <Zap className="h-4 w-4" />
                     Tezkor foydalanish
                   </div>
-                  <p className="text-xs leading-relaxed text-slate-600">
+                  <p className="text-xs leading-relaxed text-muted-foreground">
                     Mikrofon orqali savol berishingiz yoki tayyor tugmalarni bosib
                     kerakli ma'lumotni tez ochishingiz mumkin. Topshiriq, murojaat va
                     hisobotlar bo'yicha asosiy holat bir necha bosishda olinadi.
@@ -1088,7 +1088,7 @@ function ChatArea({
                       key={i}
                       variant="outline"
                       onClick={() => onQuickChat(item.query)}
-                      className="bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-sm text-xs sm:text-sm"
+                      className="bg-white border-border text-secondary-foreground hover:bg-muted hover:text-foreground shadow-sm text-xs sm:text-sm"
                     >
                       {item.label}
                     </Button>
@@ -1116,7 +1116,7 @@ function ChatArea({
                     <div className={`rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 shadow-sm ${
                       message.role === "user"
                         ? "bg-slate-900 text-white"
-                        : "bg-white/90 backdrop-blur-xl border border-slate-200/80 text-slate-800"
+                        : "bg-white/90 backdrop-blur-xl border border-border text-foreground"
                     }`}>
                       {message.role === "assistant" && (
                         <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
@@ -1125,7 +1125,7 @@ function ChatArea({
                         </div>
                       )}
                       <div className={`prose prose-xs sm:prose-sm max-w-none ${
-                        message.role === "user" ? "text-white prose-invert" : "text-slate-700"
+                        message.role === "user" ? "text-white prose-invert" : "text-secondary-foreground"
                       }`}>
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                           {sanitizeReportContent(message.content)}
@@ -1135,7 +1135,7 @@ function ChatArea({
                         <div className="mt-2 sm:mt-3">
                           <button
                             onClick={() => downloadReportPdfById(extractReportId(message.content)!)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors"
+                            className="inline-flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-xs sm:text-sm font-medium text-secondary-foreground border border-border hover:bg-secondary transition-colors"
                           >
                             <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             PDF
@@ -1164,7 +1164,7 @@ function ChatArea({
                           </div>
                         )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-1.5 px-1">
+                    <p className="text-xs text-muted-foreground mt-1.5 px-1">
                       {new Date(message.created_at).toLocaleTimeString("uz-UZ", { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -1187,8 +1187,8 @@ function ChatArea({
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-linear-to-br from-sky-600 to-blue-700 flex items-center justify-center shadow-sm">
                   <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
-                <div className="bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-slate-200/80 shadow-sm">
-                  <div className="flex items-center gap-2 sm:gap-3 text-slate-600">
+                <div className="bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-border shadow-sm">
+                  <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-blue-600" />
                     <span className="text-xs sm:text-sm font-medium">AI javob yozmoqda...</span>
                   </div>
@@ -1261,7 +1261,7 @@ function ChatInput({
   ];
 
   return (
-    <div className="shrink-0 border-t border-slate-200/80 bg-white/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:p-4">
+    <div className="shrink-0 border-t border-border bg-white/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:p-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
           {inlinePrompts.map((shortcut) => (
@@ -1269,15 +1269,15 @@ function ChatInput({
               key={shortcut}
               type="button"
               onClick={() => onQuickChat(shortcut)}
-              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="shrink-0 rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {shortcut}
             </button>
           ))}
         </div>
 
-        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mb-3">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:mb-3">
+          <span className="rounded-full bg-muted px-2.5 py-1 font-medium text-muted-foreground">
             {currentConversation ? "Suhbat faol" : "Yangi suhbat"}
           </span>
           <span>
@@ -1328,7 +1328,7 @@ function ChatInput({
             className={`shrink-0 h-11 w-11 rounded-xl sm:h-11 sm:w-11 ${
               isRecording 
                 ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100" 
-                : "border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -1347,7 +1347,7 @@ function ChatInput({
               }}
               disabled={isSending || isRecording}
               rows={1}
-              className="w-full bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 resize-none min-h-11 sm:min-h-12 max-h-32 sm:max-h-50 pr-10 sm:pr-12 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 shadow-sm text-sm"
+              className="w-full bg-white border-border text-foreground placeholder:text-muted-foreground resize-none min-h-11 sm:min-h-12 max-h-32 sm:max-h-50 pr-10 sm:pr-12 rounded-xl focus:ring-2 focus:ring-border focus:border-border-strong shadow-sm text-sm"
             />
           </div>
           

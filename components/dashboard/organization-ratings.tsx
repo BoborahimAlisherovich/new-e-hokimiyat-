@@ -76,9 +76,9 @@ export function OrganizationRatings() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
 
-      <CardHeader className="relative z-10 border-b border-indigo-100/40 bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
+      <CardHeader className="relative z-10 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
@@ -130,12 +130,12 @@ export function OrganizationRatings() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-slate-500 group-hover/org:text-blue-600 transition-colors duration-250" />
+                  <Building className="w-4 h-4 text-muted-foreground group-hover/org:text-blue-600 transition-colors duration-250" />
                   <div>
-                    <h3 className="font-semibold text-slate-900 group-hover/org:text-blue-600 transition-colors duration-250">
+                    <h3 className="font-semibold text-foreground group-hover/org:text-blue-600 transition-colors duration-250">
                       {org.name}
                     </h3>
-                    <p className="text-xs text-slate-600 group-hover/org:text-slate-700 transition-colors duration-250">
+                    <p className="text-xs text-muted-foreground group-hover/org:text-secondary-foreground transition-colors duration-250">
                       {t.dashboard.total}: {org.totalTasks} {t.common.itemsShort}, {t.dashboard.completed}: {org.completedTasks} {t.common.itemsShort}
                     </p>
                   </div>
@@ -169,7 +169,7 @@ export function OrganizationRatings() {
             
             {/* Progress Bar */}
             <div className="relative z-10 space-y-2">
-              <div className="flex justify-between text-xs text-slate-600">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t.dashboard.completionLabel}</span>
                 <span className="font-medium">{org.completedTasks}/{org.totalTasks} {t.dashboard.taskUnit}</span>
               </div>
@@ -181,11 +181,11 @@ export function OrganizationRatings() {
           </motion.div>
         )) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-indigo-50/50 rounded-2xl flex items-center justify-center mb-4">
-              <Building className="w-8 h-8 text-slate-400" />
+            <div className="w-16 h-16 bg-primary-soft rounded-2xl flex items-center justify-center mb-4">
+              <Building className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.organizationsEmptyTitle}</h3>
-            <p className="text-sm text-slate-600 max-w-md">
+            <h3 className="text-lg font-semibold text-foreground mb-2">{t.dashboard.organizationsEmptyTitle}</h3>
+            <p className="text-sm text-muted-foreground max-w-md">
               {t.dashboard.organizationsEmptyDescription}
             </p>
           </div>

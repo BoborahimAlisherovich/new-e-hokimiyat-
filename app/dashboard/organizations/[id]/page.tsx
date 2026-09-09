@@ -173,7 +173,7 @@ export default function OrganizationDetailPage() {
         >
           <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-sm text-slate-500">Tashkilot ma'lumotlari yuklanmoqda...</p>
+            <p className="text-sm text-muted-foreground">Tashkilot ma'lumotlari yuklanmoqda...</p>
           </div>
         </DashboardDetailFrame>
       </>
@@ -196,7 +196,7 @@ export default function OrganizationDetailPage() {
               icon={Building2}
               title="Tashkilot topilmadi"
               description="Boshqa tashkilotni tanlang yoki ro'yxatga qayting."
-              tone="from-slate-100 to-cyan-100 text-slate-600"
+              tone="from-slate-100 to-cyan-100 text-muted-foreground"
             />
           </div>
         </DashboardDetailFrame>
@@ -235,23 +235,23 @@ export default function OrganizationDetailPage() {
               </DialogTrigger>
               <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold text-slate-900">Tashkilotni tahrirlash</DialogTitle>
+                  <DialogTitle className="text-xl font-bold text-foreground">Tashkilotni tahrirlash</DialogTitle>
                   <DialogDescription>Tashkilot nomi va faol holatini yagona standartda yangilang.</DialogDescription>
                 </DialogHeader>
                 <PremiumFormLayout>
                   <PremiumFieldGroup label="Tashkilot nomi">
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-11 rounded-2xl border-slate-200 bg-white" />
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-11 rounded-2xl border-border bg-white" />
                   </PremiumFieldGroup>
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between rounded-2xl border border-border bg-background p-4">
                     <div>
-                      <Label className="text-sm font-medium text-slate-800">Faol holat</Label>
-                      <p className="text-sm text-slate-500">Nofaol tashkilotga yangi topshiriq biriktirilmaydi.</p>
+                      <Label className="text-sm font-medium text-foreground">Faol holat</Label>
+                      <p className="text-sm text-muted-foreground">Nofaol tashkilotga yangi topshiriq biriktirilmaydi.</p>
                     </div>
                     <Switch checked={isActive} onCheckedChange={setIsActive} />
                   </div>
                 </PremiumFormLayout>
-                <DialogFooter className="border-t border-slate-100 pt-4">
-                  <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSaving} className="rounded-2xl border-slate-200 bg-white">
+                <DialogFooter className="border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSaving} className="rounded-2xl border-border bg-white">
                     Bekor qilish
                   </Button>
                   <Button onClick={handleSave} disabled={isSaving} className="rounded-2xl">
@@ -276,8 +276,8 @@ export default function OrganizationDetailPage() {
                     {organization.name} ni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="border-t border-slate-100 pt-4">
-                  <AlertDialogCancel className="rounded-2xl border-slate-200 bg-white">Bekor qilish</AlertDialogCancel>
+                <AlertDialogFooter className="border-t border-border pt-4">
+                  <AlertDialogCancel className="rounded-2xl border-border bg-white">Bekor qilish</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete} className="rounded-2xl">O'chirish</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -296,13 +296,13 @@ export default function OrganizationDetailPage() {
               <div className="space-y-6 p-6">
                 <div className="rounded-[26px] border border-white/70 bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-5">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-cyan-100 text-cyan-700">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary-soft text-primary">
                       <Building2 className="h-8 w-8" />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="truncate text-2xl font-semibold tracking-tight text-slate-900">{organization.name}</h2>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Reyting: <span className="font-medium text-slate-700">{organization.rating || 0}%</span>
+                      <h2 className="truncate text-2xl font-semibold tracking-tight text-foreground">{organization.name}</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Reyting: <span className="font-medium text-secondary-foreground">{organization.rating || 0}%</span>
                       </p>
                     </div>
                   </div>
@@ -325,8 +325,8 @@ export default function OrganizationDetailPage() {
 
                 <div className="rounded-[24px] border border-white/70 bg-white/80 p-4">
                   <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Ijro darajasi</span>
-                    <span className="font-medium text-slate-800">{completedTasks}/{orgTasks.length}</span>
+                    <span className="text-muted-foreground">Ijro darajasi</span>
+                    <span className="font-medium text-foreground">{completedTasks}/{orgTasks.length}</span>
                   </div>
                   <Progress value={completionRate} className="h-2.5" />
                 </div>
@@ -341,8 +341,8 @@ export default function OrganizationDetailPage() {
             accentClassName="bg-gradient-to-r from-emerald-50 via-white to-emerald-50/30"
           >
             <Tabs defaultValue="users" className="w-full">
-              <div className="border-b border-slate-100 px-6 pt-6">
-                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100 p-1">
+              <div className="border-b border-border px-6 pt-6">
+                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1">
                   <TabsTrigger value="users" className="gap-2 rounded-xl">
                     <Users className="h-4 w-4" />
                     Xodimlar ({orgUsers.length})
@@ -361,15 +361,15 @@ export default function OrganizationDetailPage() {
                       icon={Users}
                       title="Xodimlar hali biriktirilmagan"
                       description="Ushbu tashkilotga xodim qo'shilsa, ro'yxat shu yerda ko'rinadi."
-                      tone="from-cyan-100 to-cyan-50 text-cyan-700"
+                      tone="from-cyan-100 to-cyan-50 text-primary"
                     />
                   ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border">
                       {orgUsers.map((user) => (
                         <Link
                           key={user.id}
                           href={`/dashboard/users/${user.id}`}
-                          className="flex items-center justify-between gap-3 p-5 transition-colors hover:bg-slate-50/80"
+                          className="flex items-center justify-between gap-3 p-5 transition-colors hover:bg-background"
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <UserAvatar
@@ -379,14 +379,14 @@ export default function OrganizationDetailPage() {
                               size="md"
                             />
                             <div className="min-w-0">
-                              <p className="truncate font-medium text-slate-800">
+                              <p className="truncate font-medium text-foreground">
                                 {user.last_name || user.lastName} {user.first_name || user.firstName}
                               </p>
-                              <p className="truncate text-sm text-slate-500">{user.position || "Lavozim belgilanmagan"}</p>
+                              <p className="truncate text-sm text-muted-foreground">{user.position || "Lavozim belgilanmagan"}</p>
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" className="rounded-full border border-slate-200 bg-white text-slate-600">
+                            <Badge variant="secondary" className="rounded-full border border-border bg-white text-muted-foreground">
                               {(roleLabels as Record<string, string>)[user.role] || user.role || "-"}
                             </Badge>
                             {user.is_active !== undefined ? (
@@ -417,16 +417,16 @@ export default function OrganizationDetailPage() {
                       tone="from-amber-100 to-amber-50 text-amber-700"
                     />
                   ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border">
                       {orgTasks.map((task) => (
                         <Link
                           key={task.id}
                           href={`/dashboard/tasks/${task.id}`}
-                          className="flex items-center justify-between gap-3 p-5 transition-colors hover:bg-slate-50/80"
+                          className="flex items-center justify-between gap-3 p-5 transition-colors hover:bg-background"
                         >
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-800">{task.title}</p>
-                            <p className="text-sm text-slate-500">Muddat: {formatDate(task.deadline)}</p>
+                            <p className="truncate font-medium text-foreground">{task.title}</p>
+                            <p className="text-sm text-muted-foreground">Muddat: {formatDate(task.deadline)}</p>
                           </div>
                           <TaskStatusBadge status={task.status} />
                         </Link>
@@ -438,7 +438,7 @@ export default function OrganizationDetailPage() {
             </Tabs>
 
             {orgUsers.length === 0 && (
-              <div className="border-t border-slate-100 p-6">
+              <div className="border-t border-border p-6">
                 <Button asChild variant="outline" className="rounded-2xl">
                   <Link href="/dashboard/users">
                     <UserPlus className="mr-2 h-4 w-4" />

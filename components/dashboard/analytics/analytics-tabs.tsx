@@ -191,7 +191,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
   return (
     <section className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-indigo-100/40 rounded-xl p-1.5 shadow-sm">
+        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-border rounded-xl p-1.5 shadow-sm">
           <TabsTrigger
             value="status"
             className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
@@ -228,12 +228,12 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
+                  <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl hover:shadow-xl transition-all duration-300">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
-                          <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                          <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+                          <p className="text-3xl font-bold text-foreground">{stat.value}</p>
                         </div>
                         <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br", stat.color, "flex items-center justify-center text-white text-2xl shadow-lg")}>
                           {stat.icon}
@@ -245,8 +245,8 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
               ))}
             </div>
           ) : (
-            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
-              <CardContent className="py-10 text-center text-slate-500">
+            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
+              <CardContent className="py-10 text-center text-muted-foreground">
                 Hozircha topshiriqlar statistikasi mavjud emas. Statuslar bo'yicha tahlil topshiriqlar kelgandan keyin ko'rinadi.
               </CardContent>
             </Card>
@@ -256,15 +256,15 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
         {/* Sector Tab */}
         <TabsContent value="sector" className="mt-6 space-y-6">
           {/* Sector Management */}
-          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-slate-900 flex items-center gap-2">
+                  <CardTitle className="text-foreground flex items-center gap-2">
                     <Building2 className="h-5 w-5 text-blue-600" />
                     Sohalarni boshqarish
                   </CardTitle>
-                  <CardDescription className="text-slate-600">
+                  <CardDescription className="text-muted-foreground">
                     Tashkilotlar sohalari va ularning statistikasi
                   </CardDescription>
                 </div>
@@ -291,7 +291,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                   >
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="name" className="text-slate-900">Soha nomi *</Label>
+                        <Label htmlFor="name" className="text-foreground">Soha nomi *</Label>
                         <Input
                           id="name"
                           value={formData.name}
@@ -301,7 +301,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         />
                       </div>
                       <div>
-                        <Label htmlFor="description" className="text-slate-900">Tavsif</Label>
+                        <Label htmlFor="description" className="text-foreground">Tavsif</Label>
                         <Textarea
                           id="description"
                           value={formData.description}
@@ -341,9 +341,9 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-900 text-lg">{sector.name}</h3>
+                        <h3 className="font-semibold text-foreground text-lg">{sector.name}</h3>
                         {sector.description && (
-                          <p className="text-sm text-slate-600 mt-1">{sector.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{sector.description}</p>
                         )}
                       </div>
                       <div className="flex gap-1">
@@ -380,8 +380,8 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
               </div>
 
               {Array.isArray(sectors) && sectors.length === 0 && (
-                <div className="text-center py-8 text-slate-500">
-                  <Building2 className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                   <p>Hozircha sohalar mavjud emas</p>
                   <p className="text-sm">Yangi soha qo'shish uchun yuqoridagi tugmani bosing</p>
                 </div>
@@ -391,9 +391,9 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
           {/* Sector Statistics */}
           {sectorStats.length > 0 && (
-            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
+            <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-slate-900 flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-blue-600" />
                   Soha bo'yicha statistika
                 </CardTitle>
@@ -407,17 +407,17 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
+                        className="flex items-center justify-between p-3 bg-primary-soft rounded-lg hover:bg-primary-soft transition-colors"
                       >
                         <div className="flex-1">
-                          <h4 className="font-medium text-slate-900">{stat.sector}</h4>
-                          <p className="text-sm text-slate-600">
+                          <h4 className="font-medium text-foreground">{stat.sector}</h4>
+                          <p className="text-sm text-muted-foreground">
                             {stat.organizations} tashkilot • {stat.tasks} topshiriq
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <p className="text-sm text-slate-600">Bajarildi</p>
+                            <p className="text-sm text-muted-foreground">Bajarildi</p>
                             <p className="text-lg font-bold text-green-600">{stat.completed}</p>
                           </div>
                           <TrendingUp className="h-5 w-5 text-green-600" />
@@ -426,7 +426,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8 text-center text-slate-500">
+                  <div className="py-8 text-center text-muted-foreground">
                     Sohalar mavjud, lekin ular bo'yicha hali topshiriq yoki tashkilot statistikasi shakllanmagan.
                   </div>
                 )}
@@ -437,10 +437,10 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
 
         {/* Organizations Tab */}
         <TabsContent value="organizations" className="mt-6">
-          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
+          <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-slate-900">Tashkilotlar statistikasi</CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardTitle className="text-foreground">Tashkilotlar statistikasi</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Barcha tashkilotlar va ularning faoliyati
               </CardDescription>
             </CardHeader>
@@ -483,7 +483,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
               {/* Tashkilotlar ro'yxati */}
               {Array.isArray(organizations) && organizations.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Tashkilotlar ro'yxati</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Tashkilotlar ro'yxati</h3>
                   <div className="space-y-2 max-h-[400px] overflow-y-auto">
                     {organizations.map((org, index) => (
                       <motion.div
@@ -491,15 +491,15 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.02 }}
-                        className="flex items-center justify-between p-3 bg-indigo-50/30 rounded-lg hover:bg-indigo-50/50 transition-colors"
+                        className="flex items-center justify-between p-3 bg-primary-soft rounded-lg hover:bg-primary-soft transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                             <Building2 className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <h4 className="font-medium text-slate-900">{org.name || 'Noma\'lum'}</h4>
-                            <p className="text-sm text-slate-600">
+                            <h4 className="font-medium text-foreground">{org.name || 'Noma\'lum'}</h4>
+                            <p className="text-sm text-muted-foreground">
                               {org.sector_name || org.sector || 'Soha ko\'rsatilmagan'}
                             </p>
                           </div>
@@ -511,7 +511,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                             </Badge>
                           )}
                           {(!org.is_active && !org.isActive && org.status !== 'active') && (
-                            <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                            <Badge variant="secondary" className="bg-muted text-secondary-foreground">
                               Nofaol
                             </Badge>
                           )}
@@ -523,8 +523,8 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
               )}
 
               {(!Array.isArray(organizations) || organizations.length === 0) && (
-                <div className="mt-6 text-center py-8 text-slate-500">
-                  <Building2 className="h-16 w-16 mx-auto mb-3 text-slate-300" />
+                <div className="mt-6 text-center py-8 text-muted-foreground">
+                  <Building2 className="h-16 w-16 mx-auto mb-3 text-muted-foreground" />
                   <p className="text-lg font-medium">Tashkilotlar topilmadi</p>
                   <p className="text-sm">Hozircha tizimda tashkilotlar mavjud emas</p>
                 </div>

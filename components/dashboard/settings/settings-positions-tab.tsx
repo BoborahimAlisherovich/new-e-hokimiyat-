@@ -140,7 +140,7 @@ export function SettingsPositionsTab({ t }: { t: Translation }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {isAdding && (
-            <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-background p-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="position-name">Lavozim nomi</Label>
@@ -174,21 +174,21 @@ export function SettingsPositionsTab({ t }: { t: Translation }) {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-sm text-slate-500">
+            <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Yuklanmoqda...
             </div>
           ) : positions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
               Hozircha lavozimlar yo'q.
             </div>
           ) : (
             <div className="space-y-3">
               {positions.map((position) => (
-                <div key={position.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-start sm:justify-between">
+                <div key={position.id} className="flex flex-col gap-3 rounded-2xl border border-border bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-900">{position.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">{position.description || "Tavsif kiritilmagan"}</p>
+                    <p className="font-medium text-foreground">{position.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{position.description || "Tavsif kiritilmagan"}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" onClick={() => handleEdit(position)}>

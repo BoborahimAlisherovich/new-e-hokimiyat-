@@ -63,12 +63,12 @@ function DetailItem({
 }) {
   return (
     <div className="flex items-start gap-3 rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
-      <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-600">
+      <div className="rounded-2xl bg-muted p-2.5 text-muted-foreground">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{label}</p>
-        <p className="mt-1 break-words text-sm font-medium text-slate-800">{value || "—"}</p>
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <p className="mt-1 break-words text-sm font-medium text-foreground">{value || "—"}</p>
       </div>
     </div>
   )
@@ -195,7 +195,7 @@ export default function UserDetailPage() {
         >
           <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-sm text-slate-500">Foydalanuvchi ma'lumotlari yuklanmoqda...</p>
+            <p className="text-sm text-muted-foreground">Foydalanuvchi ma'lumotlari yuklanmoqda...</p>
           </div>
         </DashboardDetailFrame>
       </>
@@ -279,11 +279,11 @@ export default function UserDetailPage() {
                   size="xl"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                     {user.last_name} {user.first_name} {user.middle_name}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">{user.position || "Lavozim ko'rsatilmagan"}</p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">{user.position || "Lavozim ko'rsatilmagan"}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     Login: {user.login || "—"}
                   </p>
                 </div>
@@ -295,12 +295,12 @@ export default function UserDetailPage() {
                   <div className="rounded-[22px] border border-white/70 bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] backdrop-blur-xl">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-600">
+                        <div className="rounded-2xl bg-muted p-2.5 text-muted-foreground">
                           <Lock className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Parol</p>
-                          <p className="mt-1 break-words text-sm font-medium text-slate-800">
+                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Parol</p>
+                          <p className="mt-1 break-words text-sm font-medium text-foreground">
                             {showPassword ? user.visible_password : "•".repeat(Math.max(8, user.visible_password.length))}
                           </p>
                         </div>
@@ -309,7 +309,7 @@ export default function UserDetailPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                        className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
                         onClick={() => setShowPassword((prev) => !prev)}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -394,7 +394,7 @@ export default function UserDetailPage() {
 
                 <Button
                   variant="ghost"
-                  className="h-11 w-full justify-start rounded-2xl text-slate-600 hover:bg-slate-100"
+                  className="h-11 w-full justify-start rounded-2xl text-muted-foreground hover:bg-muted"
                   onClick={() => router.back()}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />

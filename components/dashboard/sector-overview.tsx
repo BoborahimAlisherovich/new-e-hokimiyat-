@@ -78,9 +78,9 @@ export function SectorOverview() {
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+    <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
       
-      <CardHeader className="relative z-10 border-b border-indigo-100/40 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <CardHeader className="relative z-10 border-b border-border bg-gradient-to-r from-emerald-50 to-teal-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
@@ -126,7 +126,7 @@ export function SectorOverview() {
                   )}>
                     {sector.label && sector.label.charAt ? sector.label.charAt(0) : "?"}
                   </div>
-                  <h3 className="font-semibold text-slate-900 group-hover/sector:text-emerald-600 transition-colors duration-250">
+                  <h3 className="font-semibold text-foreground group-hover/sector:text-emerald-600 transition-colors duration-250">
                     {sector.label}
                   </h3>
                 </div>
@@ -167,26 +167,26 @@ export function SectorOverview() {
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <BarChart4 className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.total}</div>
-                    <div className="text-xs text-slate-600">{t.dashboard.total}</div>
+                    <div className="text-xs text-muted-foreground">{t.dashboard.total}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 transition-all duration-300 hover:scale-105 hover:bg-emerald-100 hover:shadow-md">
                     <PieChart className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-emerald-600">{sector.completed}</div>
-                    <div className="text-xs text-slate-600">{t.dashboard.completed}</div>
+                    <div className="text-xs text-muted-foreground">{t.dashboard.completed}</div>
                   </div>
                   
                   <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 transition-all duration-300 hover:scale-105 hover:bg-amber-100 hover:shadow-md">
                     <TrendingUp className="w-4 h-4 text-amber-600 mx-auto mb-1" />
                     <div className="text-lg font-bold text-amber-600">{sector.inProgress}</div>
-                    <div className="text-xs text-slate-600">{t.dashboard.inProgress}</div>
+                    <div className="text-xs text-muted-foreground">{t.dashboard.inProgress}</div>
                   </div>
                 </div>
                 
                 {sector.late > 0 && (
                   <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border border-red-200 transition-all duration-300 hover:bg-red-100 hover:shadow-md">
                     <span className="text-sm font-medium text-red-600">{t.dashboard.overdue}: {sector.late}</span>
-                    <span className="text-xs text-slate-600">{t.dashboard.taskUnit}</span>
+                    <span className="text-xs text-muted-foreground">{t.dashboard.taskUnit}</span>
                   </div>
                 )}
               </div>
@@ -197,11 +197,11 @@ export function SectorOverview() {
         
         {sectorStats.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-indigo-50/50 rounded-2xl flex items-center justify-center mb-4">
-              <Grid3X3 className="w-8 h-8 text-slate-400" />
+            <div className="w-16 h-16 bg-primary-soft rounded-2xl flex items-center justify-center mb-4">
+              <Grid3X3 className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t.dashboard.sectorsEmptyTitle}</h3>
-            <p className="text-sm text-slate-600 max-w-md">
+            <h3 className="text-lg font-semibold text-foreground mb-2">{t.dashboard.sectorsEmptyTitle}</h3>
+            <p className="text-sm text-muted-foreground max-w-md">
               {t.dashboard.sectorsEmptyDescription}
             </p>
           </div>

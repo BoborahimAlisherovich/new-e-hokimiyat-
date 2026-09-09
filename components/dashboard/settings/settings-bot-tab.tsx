@@ -119,7 +119,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
   if (isLoading) {
     return (
       <TabsContent value="telegram-bot" className="space-y-6">
-        <div className="text-center py-8 text-slate-500">Yuklanmoqda...</div>
+        <div className="text-center py-8 text-muted-foreground">Yuklanmoqda...</div>
       </TabsContent>
     )
   }
@@ -147,7 +147,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
                 onChange={(e) => setSettings({ ...settings, bot_token: e.target.value })}
                 placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
               />
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 @BotFather dan olingan bot token
               </p>
             </div>
@@ -170,7 +170,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
                 onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })}
                 placeholder="https://example.com/api/telegram-webhook"
               />
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Telegram webhooklari uchun URL
               </p>
             </div>
@@ -181,7 +181,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
                 id="is_active"
                 checked={settings.is_active}
                 onChange={(e) => setSettings({ ...settings, is_active: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border-strong"
               />
               <Label htmlFor="is_active" className="cursor-pointer">
                 Bot faol
@@ -275,7 +275,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
                 </span>
               </div>
               {botStatus.last_check && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   Oxirgi tekshirilgan: {new Date(botStatus.last_check).toLocaleString("uz-UZ")}
                 </p>
               )}

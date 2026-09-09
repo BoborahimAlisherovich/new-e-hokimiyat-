@@ -64,7 +64,7 @@ interface AnalyticsChartsProps {
 
 function ChartEmptyState({ message }: { message: string }) {
   return (
-    <div className="flex h-full items-center justify-center text-center text-sm text-slate-500">
+    <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
       <div className="max-w-xs">{message}</div>
     </div>
   )
@@ -450,7 +450,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
   return (
     <section className="animate-slide-up" style={{ animationDelay: "300ms" }}>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{tr.statusBy}</CardTitle>
           </CardHeader>
@@ -477,7 +477,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{tr.priorityBy}</CardTitle>
           </CardHeader>
@@ -508,7 +508,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">{tr.categorySlice}</CardTitle>
           </CardHeader>
@@ -535,7 +535,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
+        <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tr.trend}</CardTitle>
           </CardHeader>
@@ -560,7 +560,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
+        <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
             <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{tr.orgLoadTop6}</CardTitle>
           </CardHeader>

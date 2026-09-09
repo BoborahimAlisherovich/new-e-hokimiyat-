@@ -163,7 +163,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
-              <Route className="h-5 w-5 text-indigo-600" />
+              <Route className="h-5 w-5 text-primary" />
               {t.settings.appealsRouting}
             </CardTitle>
             <CardDescription>{t.settings.appealsRoutingDesc}</CardDescription>
@@ -174,12 +174,12 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-sm text-slate-500">
+            <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t.common.loading}
             </div>
           ) : sortedCategories.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500">Sohalar topilmadi.</div>
+            <div className="py-10 text-center text-sm text-muted-foreground">Sohalar topilmadi.</div>
           ) : (
             <div className="space-y-3">
               {sortedCategories.map((category) => {
@@ -188,13 +188,13 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                 return (
                   <div
                     key={category.id}
-                    className="rounded-[22px] border border-slate-100 bg-white/80 px-4 py-4 shadow-sm"
+                    className="rounded-[22px] border border-border bg-white/80 px-4 py-4 shadow-sm"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-lg">{category.icon || "📌"}</span>
-                          <p className="truncate text-sm font-semibold text-slate-900">{category.name_uz}</p>
+                          <p className="truncate text-sm font-semibold text-foreground">{category.name_uz}</p>
                           {category.code && (
                             <Badge variant="outline" className="rounded-full">
                               {category.code}
@@ -208,10 +208,10 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {count === 0 ? (
-                            <span className="text-xs text-slate-500">Mas'ul tashkilot belgilanmagan</span>
+                            <span className="text-xs text-muted-foreground">Mas'ul tashkilot belgilanmagan</span>
                           ) : (
                             orgs.slice(0, 6).map((org) => (
-                              <Badge key={org.id} className="rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                              <Badge key={org.id} className="rounded-full bg-primary-soft text-primary hover:bg-primary-soft">
                                 <Building2 className="mr-1 h-3 w-3" />
                                 {org.short_name ? `${org.short_name}` : org.name}
                               </Badge>
@@ -247,12 +247,12 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={orgSearch}
                 onChange={(e) => setOrgSearch(e.target.value)}
                 placeholder={`${t.common.search}...`}
-                className="h-11 rounded-2xl border-slate-200 bg-white pl-10"
+                className="h-11 rounded-2xl border-border bg-white pl-10"
               />
             </div>
             <Button
@@ -275,7 +275,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
             </Button>
           </div>
 
-          <ScrollArea className="h-[360px] rounded-2xl border border-slate-100 bg-white/70 p-3">
+          <ScrollArea className="h-[360px] rounded-2xl border border-border bg-white/70 p-3">
             <div className="space-y-2">
               {filteredOrgs.map((org) => {
                 const selected = selectedOrgIds.includes(org.id)
@@ -286,22 +286,22 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                     onClick={() => toggleOrg(org.id)}
                     className={[
                       "w-full rounded-2xl border px-4 py-3 text-left text-sm transition-colors",
-                      selected ? "border-indigo-200 bg-indigo-50 text-indigo-900" : "border-slate-100 bg-white hover:bg-slate-50",
+                      selected ? "border-border bg-primary-soft text-primary" : "border-border bg-white hover:bg-background",
                     ].join(" ")}
                   >
                     <span className="font-medium">{org.short_name ? `${org.name} (${org.short_name})` : org.name}</span>
                   </button>
                 )
               })}
-              {filteredOrgs.length === 0 && <div className="py-10 text-center text-sm text-slate-500">Topilmadi</div>}
+              {filteredOrgs.length === 0 && <div className="py-10 text-center text-sm text-muted-foreground">Topilmadi</div>}
             </div>
           </ScrollArea>
 
-          <DialogFooter className="border-t border-slate-100 pt-4">
+          <DialogFooter className="border-t border-border pt-4">
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-2xl">
               {t.common.cancel}
             </Button>
-            <Button onClick={saveCategory} disabled={saving} className="rounded-2xl bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={saveCategory} disabled={saving} className="rounded-2xl bg-primary hover:bg-primary">
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

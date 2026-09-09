@@ -58,7 +58,7 @@ export function UserFilters({
       accentClassName="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50"
       badge={
         hasActiveFilters ? (
-          <PremiumCountBadge className="border-indigo-200 bg-indigo-100 text-indigo-700">
+          <PremiumCountBadge className="border-border bg-primary-soft text-primary">
             <Sparkles className="mr-1 h-3 w-3" />
             {filteredCount} / {totalCount} ta
           </PremiumCountBadge>
@@ -66,7 +66,7 @@ export function UserFilters({
       }
       clearAction={
         hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-red-600 hover:bg-red-50">
             <X className="mr-1 h-4 w-4" />
             Tozalash
           </Button>
@@ -76,12 +76,12 @@ export function UserFilters({
       <div className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Foydalanuvchilarni qidirish..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border-cyan-100/60 bg-white/90 pl-9 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+              className="w-full rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
             />
           </div>
           {showCreateButton && (
@@ -94,9 +94,9 @@ export function UserFilters({
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 ml-1">Rol bo'yicha</label>
+            <label className="text-xs font-medium text-muted-foreground ml-1">Rol bo'yicha</label>
             <Select value={roleFilter} onValueChange={onRoleChange}>
-              <SelectTrigger className="rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Rolni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -112,9 +112,9 @@ export function UserFilters({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 ml-1">Holat bo'yicha</label>
+            <label className="text-xs font-medium text-muted-foreground ml-1">Holat bo'yicha</label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -126,9 +126,9 @@ export function UserFilters({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 ml-1">Tashkilot bo'yicha</label>
+            <label className="text-xs font-medium text-muted-foreground ml-1">Tashkilot bo'yicha</label>
             <Select value={organizationFilter} onValueChange={onOrganizationChange}>
-              <SelectTrigger className="rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+              <SelectTrigger className="rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/30 focus:border-ring">
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
             <SelectContent>

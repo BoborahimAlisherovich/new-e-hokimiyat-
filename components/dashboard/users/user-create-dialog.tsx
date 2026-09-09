@@ -279,7 +279,7 @@ export function UserCreateDialog({
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-secondary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                   aria-label={showPassword ? "Parolni yashirish" : "Parolni ko‘rsatish"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

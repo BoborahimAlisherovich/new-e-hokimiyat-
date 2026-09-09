@@ -113,8 +113,8 @@ export default function RecurringTasksPage() {
         <Header title={t.recurringTasks.title} description={t.recurringTasks.description} />
         <div className="p-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-500 text-sm">{t.common.loading}</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-ring border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-muted-foreground text-sm">{t.common.loading}</p>
           </div>
         </div>
       </>
@@ -145,12 +145,12 @@ export default function RecurringTasksPage() {
                 placeholder="Qidirish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="flex-1 rounded-xl border border-border bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="rounded-xl border border-border bg-white/70 px-4 py-2.5 text-sm backdrop-blur-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               >
                 <option value="all">Barchasi</option>
                 <option value="ACTIVE">Faol</option>
@@ -172,10 +172,10 @@ export default function RecurringTasksPage() {
           {filteredTasks.length === 0 ? (
             <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
               <div className="flex flex-col items-center justify-center gap-4 py-16">
-                <Repeat className="h-16 w-16 text-slate-300" />
+                <Repeat className="h-16 w-16 text-muted-foreground" />
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-slate-700">{t.recurringTasks.emptyTitle}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{t.recurringTasks.emptyDescription}</p>
+                  <h3 className="text-lg font-semibold text-secondary-foreground">{t.recurringTasks.emptyTitle}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{t.recurringTasks.emptyDescription}</p>
                 </div>
               </div>
             </div>
@@ -186,11 +186,11 @@ export default function RecurringTasksPage() {
                   key={task.id}
                   className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl transition-all hover:shadow-[0_28px_60px_-30px_rgba(14,165,233,0.35)]"
                 >
-                  <div className="border-b border-cyan-100/60 bg-gradient-to-r from-violet-50/55 via-white/30 to-transparent px-6 py-4">
+                  <div className="border-b border-border bg-gradient-to-r from-violet-50/55 via-white/30 to-transparent px-6 py-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-slate-800">{task.title}</h3>
-                        <p className="mt-1 text-sm text-slate-600">{task.description}</p>
+                        <h3 className="text-lg font-semibold text-foreground">{task.title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{task.description}</p>
                       </div>
                       <span
                         className={`ml-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
@@ -205,26 +205,26 @@ export default function RecurringTasksPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-4">
                     <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase">{t.recurringTasks.frequency}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{frequencyLabels[task.frequency] || task.frequency}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase">{t.recurringTasks.frequency}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">{frequencyLabels[task.frequency] || task.frequency}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase">{t.recurringTasks.nextRun}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{task.next_run_date ? new Date(task.next_run_date).toLocaleDateString('uz-UZ') : '-'}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase">{t.recurringTasks.nextRun}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">{task.next_run_date ? new Date(task.next_run_date).toLocaleDateString('uz-UZ') : '-'}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase">{t.recurringTasks.totalCreated}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{task.total_created} {t.common.itemsShort}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase">{t.recurringTasks.totalCreated}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">{task.total_created} {t.common.itemsShort}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase">{t.recurringTasks.deadlineDays}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{task.deadline_days} {t.common.daysRemaining}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase">{t.recurringTasks.deadlineDays}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">{task.deadline_days} {t.common.daysRemaining}</p>
                     </div>
                   </div>
-                  <div className="border-t border-slate-100/60 bg-slate-50/40 px-6 py-3">
+                  <div className="border-t border-border bg-background px-6 py-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Tashkilotlar: {task.organizations_count}</span>
+                        <span className="text-xs text-muted-foreground">Tashkilotlar: {task.organizations_count}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {task.status === 'ACTIVE' ? (
@@ -354,38 +354,38 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-800">{t.recurringTasks.createTitle}</h2>
-          <p className="mt-1 text-sm text-slate-600">{t.recurringTasks.createDescription}</p>
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-foreground">{t.recurringTasks.createTitle}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t.recurringTasks.createDescription}</p>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.title}</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.title}</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               placeholder="Masalan: Har dushanba obodonlashtirish holati"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.description}</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.description}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               rows={3}
               placeholder="Topshiriq tavsifi..."
             />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.frequency}</label>
+              <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.frequency}</label>
               <select
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               >
                 <option value="DAILY">{t.recurringTasks.frequencyDaily}</option>
                 <option value="WEEKLY">{t.recurringTasks.frequencyWeekly}</option>
@@ -396,11 +396,11 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.priority}</label>
+              <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.priority}</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               >
                 <option value="PAST">{t.task.priorities.PAST}</option>
                 <option value="ODDIY">{t.task.priorities.ODDIY}</option>
@@ -411,52 +411,52 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.startDate}</label>
+              <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.startDate}</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.endDate}</label>
+              <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.endDate}</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t.recurringTasks.deadlineDays}</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.deadlineDays}</label>
             <input
               type="number"
               value={deadlineDays}
               onChange={(e) => setDeadlineDays(e.target.value)}
               min="1"
               max="365"
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">{t.recurringTasks.organizations}</label>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-40 overflow-y-auto rounded-xl border border-slate-200 p-3">
+            <label className="block text-sm font-medium text-secondary-foreground mb-2">{t.recurringTasks.organizations}</label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-40 overflow-y-auto rounded-xl border border-border p-3">
               {organizations.map((org) => (
                 <label
                   key={org.id}
                   className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                     selectedOrgs.includes(String(org.id))
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'hover:bg-slate-50'
+                      ? 'bg-primary-soft text-primary'
+                      : 'hover:bg-background'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={selectedOrgs.includes(String(org.id))}
                     onChange={() => toggleOrg(String(org.id))}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-border-strong text-primary focus:ring-ring"
                   />
                   <span className="truncate">{org.name}</span>
                 </label>
@@ -464,7 +464,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
             </div>
           </div>
         </div>
-        <div className="border-t border-slate-200 px-6 py-4 flex justify-end gap-3">
+        <div className="border-t border-border px-6 py-4 flex justify-end gap-3">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

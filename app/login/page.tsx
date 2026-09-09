@@ -19,7 +19,7 @@ import { login } from "@/lib/api/auth.api"
  *     va brauzer/parol menejeri avtomatik to'ldirishi buzilgan edi.
  *     Davlat portalining kirish nuqtasida bu jiddiy nuqson.
  *  2. Login maydoni `text-center text-xl` edi — erkin matnli hisob nomi
- *     uchun noto'g'ri; `placeholder:text-gray-300` kontrasti 1.50:1.
+ *     uchun noto'g'ri; `placeholder:text-muted-foreground` kontrasti 1.50:1.
  *  3. Login uzunligini `length / 12` bo'yicha to'ldiradigan "progress"
  *     chizig'i bor edi — ma'nosiz vizual signal.
  *  4. Xato matni `role="alert"` siz edi — ekran o'quvchi e'lon qilmasdi.

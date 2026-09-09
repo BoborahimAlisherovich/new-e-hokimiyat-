@@ -43,16 +43,16 @@ export function PremiumMessageBubble({
       <div className="min-w-0 max-w-[78%] space-y-1.5">
         {(title || meta) && (
           <div className={cn("flex items-center gap-2", isRight && "justify-end")}>
-            {title && <span className="text-sm font-medium text-slate-800">{title}</span>}
-            {meta && <span className="text-xs text-slate-500">{meta}</span>}
+            {title && <span className="text-sm font-medium text-foreground">{title}</span>}
+            {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
           </div>
         )}
         <div
           className={cn(
             "rounded-[22px] border px-4 py-3 shadow-sm",
             isRight
-              ? "border-cyan-200 bg-gradient-to-br from-cyan-500 to-teal-500 text-white"
-              : "border-slate-200 bg-gradient-to-br from-slate-50 to-white text-slate-700",
+              ? "border-border bg-gradient-to-br from-cyan-500 to-teal-500 text-white"
+              : "border-border bg-gradient-to-br from-slate-50 to-white text-secondary-foreground",
           )}
         >
           {children}
@@ -70,7 +70,7 @@ export function PremiumSystemNote({
 }) {
   return (
     <div className="flex justify-center">
-      <div className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+      <div className="rounded-full border border-border bg-primary-soft px-3 py-1 text-xs font-medium text-primary">
         {children}
       </div>
     </div>
@@ -82,7 +82,7 @@ export function PremiumTimelineItem({
   title,
   description,
   meta,
-  tone = "bg-cyan-100 text-cyan-700",
+  tone = "bg-primary-soft text-primary",
 }: {
   icon: LucideIcon
   title: React.ReactNode
@@ -91,14 +91,14 @@ export function PremiumTimelineItem({
   tone?: string
 }) {
   return (
-    <div className="flex gap-3 rounded-[22px] border border-slate-100 bg-white/70 p-4">
+    <div className="flex gap-3 rounded-[22px] border border-border bg-white/70 p-4">
       <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", tone)}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="text-sm font-semibold text-slate-800">{title}</div>
-        {description && <div className="text-sm leading-6 text-slate-500">{description}</div>}
-        {meta && <div className="text-xs text-slate-400">{meta}</div>}
+        <div className="text-sm font-semibold text-foreground">{title}</div>
+        {description && <div className="text-sm leading-6 text-muted-foreground">{description}</div>}
+        {meta && <div className="text-xs text-muted-foreground">{meta}</div>}
       </div>
     </div>
   )
@@ -114,7 +114,7 @@ export function PremiumImagePreview({
   className?: string
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl border border-white/70 bg-slate-100", className)}>
+    <div className={cn("relative overflow-hidden rounded-2xl border border-white/70 bg-muted", className)}>
       <Image src={src} alt={alt} fill className="object-cover" sizes="(max-width: 768px) 100vw, 320px" unoptimized />
     </div>
   )
@@ -133,12 +133,12 @@ export function PremiumSideCard({
 }) {
   return (
     <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-      <div className={cn("border-b border-cyan-100/70 bg-gradient-to-r px-5 py-4", accent)}>
+      <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm ring-1 ring-white/80">
-            <Icon className="h-4 w-4 text-slate-700" />
+            <Icon className="h-4 w-4 text-secondary-foreground" />
           </div>
-          <h3 className="text-sm font-semibold tracking-tight text-slate-800">{title}</h3>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
         </div>
       </div>
       <div className="p-5">{children}</div>
@@ -157,12 +157,12 @@ export function PremiumActionButton({
   return (
     <button
       className={cn(
-        "flex w-full items-center gap-3 rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60",
+        "flex w-full items-center gap-3 rounded-[20px] border border-border bg-background px-4 py-3 text-left text-sm font-medium text-secondary-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
         className,
       )}
       {...props}
     >
-      <span className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-slate-100">
+      <span className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-border">
         <Icon className="h-4 w-4" />
       </span>
       <span>{children}</span>
@@ -186,15 +186,15 @@ export function PremiumAttachmentItem({
   actionLabel?: string
 }) {
   const content = (
-    <div className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-slate-50/80 p-3 transition hover:bg-slate-100/90">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-100">
+    <div className="flex items-center gap-3 rounded-[20px] border border-border bg-background p-3 transition hover:bg-muted">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-muted-foreground shadow-sm ring-1 ring-border">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-slate-800">{title}</p>
-        {meta && <p className="truncate text-xs text-slate-500">{meta}</p>}
+        <p className="truncate text-sm font-medium text-foreground">{title}</p>
+        {meta && <p className="truncate text-xs text-muted-foreground">{meta}</p>}
       </div>
-      <span className="text-xs font-medium text-cyan-700">{actionLabel}</span>
+      <span className="text-xs font-medium text-primary">{actionLabel}</span>
     </div>
   )
 
@@ -225,9 +225,9 @@ export function PremiumInsightMetric({
   valueClassName?: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[18px] bg-slate-50 px-3 py-2.5 text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className={cn("font-semibold text-slate-800", valueClassName)}>{value}</span>
+    <div className="flex items-center justify-between gap-3 rounded-[18px] bg-background px-3 py-2.5 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-semibold text-foreground", valueClassName)}>{value}</span>
     </div>
   )
 }
@@ -249,15 +249,15 @@ export function PremiumInfoCard({
 }) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-      <div className={cn("border-b border-cyan-100/70 bg-gradient-to-r px-5 py-4", accent)}>
+      <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm ring-1 ring-white/80">
-              <Icon className="h-5 w-5 text-slate-700" />
+              <Icon className="h-5 w-5 text-secondary-foreground" />
             </div>
             <div>
-              <h3 className="text-base font-semibold tracking-tight text-slate-800">{title}</h3>
-              {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+              <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+              {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
             </div>
           </div>
           {headerExtra}
@@ -280,13 +280,13 @@ export function PremiumInfoItem({
   valueClassName?: string
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-[22px] border border-slate-200 bg-slate-50/75 p-4">
-      <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm ring-1 ring-slate-100">
+    <div className="flex items-start gap-3 rounded-[22px] border border-border bg-background p-4">
+      <div className="rounded-2xl bg-white p-2.5 text-muted-foreground shadow-sm ring-1 ring-border">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{label}</p>
-        <div className={cn("mt-1 text-sm font-medium text-slate-800", valueClassName)}>{value}</div>
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <div className={cn("mt-1 text-sm font-medium text-foreground", valueClassName)}>{value}</div>
       </div>
     </div>
   )
@@ -308,7 +308,7 @@ export function PremiumCallout({
   return (
     <div className={cn("rounded-[24px] border p-4", tone)}>
       <p className={cn("text-sm font-semibold", titleClassName)}>{title}</p>
-      {description && <div className="mt-1 text-sm text-slate-600">{description}</div>}
+      {description && <div className="mt-1 text-sm text-muted-foreground">{description}</div>}
       {children && <div className="mt-3">{children}</div>}
     </div>
   )
@@ -336,8 +336,8 @@ export function PremiumFieldGroup({
   return (
     <div className="space-y-2">
       <div>
-        <div className="text-sm font-medium text-slate-800">{label}</div>
-        {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+        <div className="text-sm font-medium text-foreground">{label}</div>
+        {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
       </div>
       {children}
     </div>
@@ -352,7 +352,7 @@ export function PremiumFieldSurface({
   className?: string
 }) {
   return (
-    <div className={cn("rounded-[20px] border border-slate-200 bg-slate-50/80 p-3", className)}>
+    <div className={cn("rounded-[20px] border border-border bg-background p-3", className)}>
       {children}
     </div>
   )
@@ -374,14 +374,14 @@ export function PremiumChoiceItem({
       className={cn(
         "flex w-full items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition",
         selected
-          ? "border-cyan-300 bg-cyan-50 text-cyan-800"
-          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+          ? "border-border-strong bg-primary-soft text-primary"
+          : "border-border bg-white text-secondary-foreground hover:bg-background",
       )}
     >
       <span
         className={cn(
           "flex h-4 w-4 items-center justify-center rounded border text-[10px] font-bold",
-          selected ? "border-cyan-600 bg-cyan-600 text-white" : "border-slate-300 text-transparent",
+          selected ? "border-ring bg-primary text-white" : "border-border-strong text-transparent",
         )}
       >
         ✓

@@ -123,9 +123,9 @@ export default function ProjectDetailPage() {
               icon: UserCircle2,
               gradient: "from-cyan-500 to-sky-500",
               bgGradient: "from-cyan-50 to-white",
-              iconBg: "bg-cyan-100",
-              textColor: "text-cyan-700",
-              borderColor: "border-cyan-100",
+              iconBg: "bg-primary-soft",
+              textColor: "text-primary",
+              borderColor: "border-border",
             },
             {
               label: "Resurs",
@@ -153,27 +153,27 @@ export default function ProjectDetailPage() {
         <PremiumTableShell icon={History} title="Timeline / History" countLabel={`${history.length} ta yozuv`} accentClassName="bg-gradient-to-r from-slate-50 via-white to-slate-50">
           <div className="space-y-4 p-4">
             {loading && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
                 Timeline yuklanmoqda...
               </div>
             )}
             {!loading && history.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
                 Hozircha loyiha bo'yicha tarix yozuvlari yo'q.
               </div>
             )}
             {history.map((entry) => (
-              <article key={String(entry.id)} className="rounded-[22px] border border-slate-100 bg-white p-4 shadow-[0_16px_35px_-30px_rgba(15,23,42,0.22)]">
+              <article key={String(entry.id)} className="rounded-[22px] border border-border bg-white p-4 shadow-[0_16px_35px_-30px_rgba(15,23,42,0.22)]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-900">{entry.title}</h3>
-                      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+                      <h3 className="text-sm font-semibold text-foreground">{entry.title}</h3>
+                      <Badge variant="outline" className="border-border bg-background text-muted-foreground">
                         {entry.action_display || entry.action_type}
                       </Badge>
                     </div>
-                    {entry.description && <p className="mt-2 text-sm leading-6 text-slate-600">{entry.description}</p>}
-                    <p className="mt-2 text-xs text-slate-500">
+                    {entry.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{entry.description}</p>}
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {entry.actor_name || "Tizim"} • {new Date(entry.created_at).toLocaleString("uz-UZ")}
                     </p>
                   </div>
@@ -209,11 +209,11 @@ export default function ProjectDetailPage() {
                   {uploading ? "Yuklanmoqda..." : "Yuklash"}
                 </Button>
               </div>
-              {attachments.length === 0 && <p className="text-sm text-slate-500">Hozircha fayl biriktirilmagan.</p>}
+              {attachments.length === 0 && <p className="text-sm text-muted-foreground">Hozircha fayl biriktirilmagan.</p>}
               {attachments.map((item) => (
-                <a key={String(item.id)} href={item.file_url || "#"} target="_blank" rel="noreferrer" className="block rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.2)]">
-                  <p className="text-sm font-medium text-slate-800">{item.file_name}</p>
-                  <p className="mt-1 text-xs text-slate-500">{item.uploaded_by_name || "Tizim"} • {new Date(item.created_at).toLocaleString("uz-UZ")}</p>
+                <a key={String(item.id)} href={item.file_url || "#"} target="_blank" rel="noreferrer" className="block rounded-2xl border border-border bg-white p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.2)]">
+                  <p className="text-sm font-medium text-foreground">{item.file_name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.uploaded_by_name || "Tizim"} • {new Date(item.created_at).toLocaleString("uz-UZ")}</p>
                 </a>
               ))}
             </div>
@@ -234,11 +234,11 @@ export default function ProjectDetailPage() {
                   </Button>
                 </div>
               </div>
-              {comments.length === 0 && <p className="text-sm text-slate-500">Hozircha kommentariya yo'q.</p>}
+              {comments.length === 0 && <p className="text-sm text-muted-foreground">Hozircha kommentariya yo'q.</p>}
               {comments.map((item) => (
-                <article key={String(item.id)} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.2)]">
-                  <p className="text-sm leading-6 text-slate-700">{item.message}</p>
-                  <p className="mt-2 text-xs text-slate-500">{item.author_name || "Tizim"} • {new Date(item.created_at).toLocaleString("uz-UZ")}</p>
+                <article key={String(item.id)} className="rounded-2xl border border-border bg-white p-4 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.2)]">
+                  <p className="text-sm leading-6 text-secondary-foreground">{item.message}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{item.author_name || "Tizim"} • {new Date(item.created_at).toLocaleString("uz-UZ")}</p>
                 </article>
               ))}
             </div>

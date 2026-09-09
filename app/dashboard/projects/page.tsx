@@ -63,7 +63,7 @@ import {
 
 const CATEGORY_META = {
   MAHALLIY: { label: "Mahalliy", icon: Landmark, badge: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  XALQARO: { label: "Xalqaro", icon: Globe2, badge: "bg-sky-50 text-sky-700 border-sky-100" },
+  XALQARO: { label: "Xalqaro", icon: Globe2, badge: "bg-primary-soft text-primary border-border" },
   DRIVER: { label: "Driver", icon: Rocket, badge: "bg-amber-50 text-amber-700 border-amber-100" },
 } as const
 
@@ -416,9 +416,9 @@ export default function ProjectsPage() {
               icon: BarChart3,
               gradient: "from-cyan-500 to-sky-500",
               bgGradient: "from-cyan-50 to-white",
-              iconBg: "bg-cyan-100",
-              textColor: "text-cyan-700",
-              borderColor: "border-cyan-100",
+              iconBg: "bg-primary-soft",
+              textColor: "text-primary",
+              borderColor: "border-border",
               hint: "Barcha loyihalar kesimida",
             },
             {
@@ -438,9 +438,9 @@ export default function ProjectsPage() {
               icon: FolderKanban,
               gradient: "from-indigo-500 to-blue-500",
               bgGradient: "from-indigo-50 to-white",
-              iconBg: "bg-indigo-100",
-              textColor: "text-indigo-700",
-              borderColor: "border-indigo-100",
+              iconBg: "bg-primary-soft",
+              textColor: "text-primary",
+              borderColor: "border-border",
               hint: "To'liq yopilgan loyihalar",
             },
             {
@@ -457,14 +457,14 @@ export default function ProjectsPage() {
           ]}
         />
 
-        <section data-gsap-section className="rounded-[26px] border border-cyan-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.96),rgba(255,255,255,0.92))] p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
+        <section data-gsap-section className="rounded-[26px] border border-border bg-[linear-gradient(135deg,rgba(236,254,255,0.96),rgba(255,255,255,0.92))] p-5 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Portfel boshqaruvi shu sahifada ishlaydi</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="text-sm font-semibold text-foreground">Portfel boshqaruvi shu sahifada ishlaydi</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Yangi loyiha qo'shish, mavjudini tahrirlash, arxivlash va qayta tiklash shu bo'limdan amalga oshiriladi. Sahifadagi barcha ko'rsatkichlar real API ma'lumotiga ulangan.
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: barcha tegishli rollar uchun</span>
                 <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
               </div>
@@ -478,7 +478,7 @@ export default function ProjectsPage() {
                   <Plus className="h-4 w-4" />
                   Yangi loyiha
                 </Button>
-                <p className="text-xs text-slate-500">Yaratish, tahrirlash, arxivlash va qayta tiklash shu bo'limda.</p>
+                <p className="text-xs text-muted-foreground">Yaratish, tahrirlash, arxivlash va qayta tiklash shu bo'limda.</p>
               </div>
             )}
           </div>
@@ -539,12 +539,12 @@ export default function ProjectsPage() {
         >
           <div className="grid gap-4 p-4">
             {loading && sortedProjects.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
                 Loyihalar yuklanmoqda...
               </div>
             )}
             {!loading && sortedProjects.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
                 Hozircha loyiha topilmadi.
               </div>
             )}
@@ -552,35 +552,35 @@ export default function ProjectsPage() {
             {sortedProjects.map((project) => {
               const meta = CATEGORY_META[project.category]
               return (
-                <article key={project.id} className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] sm:p-5">
+                <article key={project.id} className="rounded-[24px] border border-border bg-white p-4 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.22)] sm:p-5">
                   <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-semibold text-slate-900">{project.title}</h3>
+                      <h3 className="truncate text-lg font-semibold text-foreground">{project.title}</h3>
                     </div>
                     <div className="flex sm:justify-center">
                       <Badge className={meta.badge}>{project.category_display || meta.label}</Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                      <Badge variant="outline" className="border-border bg-background text-secondary-foreground">
                         {project.status_display || project.status}
                       </Badge>
-                      <span className="text-sm font-medium text-slate-700">{project.progress}%</span>
+                      <span className="text-sm font-medium text-secondary-foreground">{project.progress}%</span>
                     </div>
                   </div>
 
-                  {project.summary && <p className="mt-3 text-sm leading-6 text-slate-600">{project.summary}</p>}
+                  {project.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{project.summary}</p>}
 
-                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                    <span>Mas'ul: <span className="font-medium text-slate-700">{project.owner || "Belgilanmagan"}</span></span>
-                    <span>Resurs: <span className="font-medium text-slate-700">{project.budget || "Belgilanmagan"}</span></span>
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <span>Mas'ul: <span className="font-medium text-secondary-foreground">{project.owner || "Belgilanmagan"}</span></span>
+                    <span>Resurs: <span className="font-medium text-secondary-foreground">{project.budget || "Belgilanmagan"}</span></span>
                   </div>
 
-                  <div className="mt-4 h-2 rounded-full bg-slate-100">
+                  <div className="mt-4 h-2 rounded-full bg-muted">
                     <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500" style={{ width: `${project.progress}%` }} />
                   </div>
 
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <Button asChild variant="link" className="h-auto px-0 text-cyan-700">
+                    <Button asChild variant="link" className="h-auto px-0 text-primary">
                       <Link href={`/dashboard/projects/${project.id}`}>Batafsil ko'rish</Link>
                     </Button>
 

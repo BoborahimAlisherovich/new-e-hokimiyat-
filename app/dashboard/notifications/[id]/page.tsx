@@ -179,7 +179,7 @@ export default function NotificationDetailPage() {
                   <div className="flex items-center gap-3">
                     <Badge className={cn(
                       "px-4 py-2 text-sm font-medium",
-                      notification.is_read ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800"
+                      notification.is_read ? "bg-muted text-foreground" : "bg-blue-100 text-blue-800"
                     )}>
                       {notification.is_read ? "Ўқилган" : "Ўқилмаган"}
                     </Badge>

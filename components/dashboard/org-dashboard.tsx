@@ -54,9 +54,9 @@ const STATUS_COLORS: Record<string, string> = {
   BAJARILDI: "bg-emerald-100 text-emerald-700",
   NAZORATDAN_YECHILDI: "bg-teal-100 text-teal-700",
   pending_review: "bg-yellow-100 text-yellow-700",
-  pending_ai: "bg-indigo-100 text-indigo-700",
+  pending_ai: "bg-primary-soft text-primary",
   approved: "bg-green-100 text-green-700",
-  responded: "bg-cyan-100 text-cyan-700",
+  responded: "bg-primary-soft text-primary",
   resolved: "bg-emerald-100 text-emerald-700",
 }
 
@@ -64,7 +64,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   FAVQULODDA: "bg-red-100 text-red-700 border-red-200",
   YUQORI: "bg-orange-100 text-orange-700 border-orange-200",
   ODDIY: "bg-blue-100 text-blue-700 border-blue-200",
-  PAST: "bg-slate-100 text-slate-600 border-slate-200",
+  PAST: "bg-muted text-muted-foreground border-border",
   high: "bg-red-100 text-red-700 border-red-200",
   medium: "bg-orange-100 text-orange-700 border-orange-200",
   low: "bg-blue-100 text-blue-700 border-blue-200",
@@ -123,8 +123,8 @@ export default function OrgDashboard() {
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="animate-pulse bg-white/60">
               <CardContent className="p-6">
-                <div className="h-4 w-24 bg-slate-200 rounded mb-3" />
-                <div className="h-8 w-16 bg-slate-200 rounded" />
+                <div className="h-4 w-24 bg-secondary rounded mb-3" />
+                <div className="h-8 w-16 bg-secondary rounded" />
               </CardContent>
             </Card>
           ))}
@@ -133,10 +133,10 @@ export default function OrgDashboard() {
           {Array.from({ length: 2 }).map((_, i) => (
             <Card key={i} className="animate-pulse bg-white/60">
               <CardContent className="p-6">
-                <div className="h-6 w-36 bg-slate-200 rounded mb-4" />
+                <div className="h-6 w-36 bg-secondary rounded mb-4" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, j) => (
-                    <div key={j} className="h-12 bg-slate-200 rounded" />
+                    <div key={j} className="h-12 bg-secondary rounded" />
                   ))}
                 </div>
               </CardContent>
@@ -152,7 +152,7 @@ export default function OrgDashboard() {
       <Card className="bg-white/80">
         <CardContent className="p-8 text-center">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-          <p className="text-lg font-medium text-slate-700">
+          <p className="text-lg font-medium text-secondary-foreground">
             {error || "Ma'lumotlar yuklanmadi"}
           </p>
         </CardContent>
@@ -169,7 +169,7 @@ export default function OrgDashboard() {
       icon: ListTodo,
       gradient: "from-indigo-500 to-violet-500",
       bgColor: "bg-gradient-to-br from-indigo-500/12 to-violet-500/12",
-      iconColor: "text-indigo-600",
+      iconColor: "text-primary",
       sub: `${tasks.completion_rate}% bajarilgan`,
     },
     {
@@ -207,7 +207,7 @@ export default function OrgDashboard() {
       value: `${data.service.target_review_days} kun`,
       sub: "Yangi murojaatni dastlabki ko'rish muddati",
       icon: ShieldCheck,
-      tone: "bg-cyan-50 text-cyan-700",
+      tone: "bg-primary-soft text-primary",
     },
     {
       label: "Javob berish standarti",
@@ -239,14 +239,14 @@ export default function OrgDashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="bg-gradient-to-r from-indigo-500/5 via-violet-500/5 to-purple-500/5 border-indigo-100/50">
+        <Card className="bg-gradient-to-r from-indigo-500/5 via-violet-500/5 to-purple-500/5 border-border">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-indigo-500/10">
-              <Building2 className="h-7 w-7 text-indigo-600" />
+            <div className="p-3 rounded-xl bg-primary">
+              <Building2 className="h-7 w-7 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-slate-800 truncate">{organization.name}</h2>
-              <div className="flex items-center gap-3 text-sm text-slate-600 mt-0.5">
+              <h2 className="text-lg font-bold text-foreground truncate">{organization.name}</h2>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
                 {organization.sector && (
                   <span className="flex items-center gap-1">
                     <FileText className="h-3.5 w-3.5" />
@@ -279,14 +279,14 @@ export default function OrgDashboard() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="text-sm text-slate-600">{stat.label}</p>
-                    <h3 className="text-3xl font-bold text-slate-900 mt-1">{stat.value}</h3>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    <h3 className="text-3xl font-bold text-foreground mt-1">{stat.value}</h3>
                   </div>
                   <div className={cn("p-2.5 rounded-xl", stat.bgColor)}>
                     <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">{stat.sub}</p>
+                <p className="text-xs text-muted-foreground">{stat.sub}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -300,11 +300,11 @@ export default function OrgDashboard() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-indigo-500" />
+                  <MessageSquare className="h-5 w-5 text-primary" />
                   Murojaatlar
                 </CardTitle>
                 <Link href="/dashboard/appeals">
-                  <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
                     Barchasi <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </Link>
@@ -333,19 +333,19 @@ export default function OrgDashboard() {
               {/* Oxirgi murojaatlar */}
               {appeals.recent.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600 mb-2">Oxirgi murojaatlar</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Oxirgi murojaatlar</p>
                   {appeals.recent.map((appeal) => (
                     <Link
                       key={appeal.id}
                       href={`/dashboard/appeals?id=${appeal.id}`}
-                      className="block p-3 rounded-lg bg-slate-50/80 hover:bg-slate-100/80 transition-colors"
+                      className="block p-3 rounded-lg bg-background hover:bg-muted transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-800 line-clamp-1">{appeal.text}</p>
+                          <p className="text-sm text-foreground line-clamp-1">{appeal.text}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-500">{appeal.user_name}</span>
-                            <span className="text-xs text-slate-400">{formatDate(appeal.created_at)}</span>
+                            <span className="text-xs text-muted-foreground">{appeal.user_name}</span>
+                            <span className="text-xs text-muted-foreground">{formatDate(appeal.created_at)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -358,7 +358,7 @@ export default function OrgDashboard() {
                             </Badge>
                           )}
                           <Badge
-                            className={cn("text-[10px] px-1.5", STATUS_COLORS[appeal.status] || "bg-slate-100 text-slate-600")}
+                            className={cn("text-[10px] px-1.5", STATUS_COLORS[appeal.status] || "bg-muted text-muted-foreground")}
                           >
                             {STATUS_LABELS[appeal.status] || appeal.status}
                           </Badge>
@@ -380,14 +380,14 @@ export default function OrgDashboard() {
               <CardContent className="p-5">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm text-slate-600">{item.label}</p>
-                    <h3 className="mt-1 text-2xl font-bold text-slate-900">{item.value}</h3>
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                    <h3 className="mt-1 text-2xl font-bold text-foreground">{item.value}</h3>
                   </div>
                   <div className={cn("rounded-2xl p-2.5", item.tone)}>
                     <item.icon className="h-5 w-5" />
                   </div>
                 </div>
-                <p className="text-xs leading-5 text-slate-500">{item.sub}</p>
+                <p className="text-xs leading-5 text-muted-foreground">{item.sub}</p>
               </CardContent>
             </Card>
           ))}
@@ -400,11 +400,11 @@ export default function OrgDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <ListTodo className="h-5 w-5 text-indigo-500" />
+                <ListTodo className="h-5 w-5 text-primary" />
                 Faol topshiriqlar
               </CardTitle>
               <Link href="/dashboard/tasks">
-                <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
+                <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
                   Barcha topshiriqlar <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </Link>
@@ -414,7 +414,7 @@ export default function OrgDashboard() {
             {tasks.recent.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle className="h-10 w-10 text-emerald-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">Faol topshiriq yo'q</p>
+                <p className="text-sm text-muted-foreground">Faol topshiriq yo'q</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -422,14 +422,14 @@ export default function OrgDashboard() {
                   <Link
                     key={task.id}
                     href={`/dashboard/tasks/${task.id}`}
-                    className="block p-3 rounded-lg bg-slate-50/80 hover:bg-slate-100/80 transition-colors"
+                    className="block p-3 rounded-lg bg-background hover:bg-muted transition-colors"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 line-clamp-1">{task.title}</p>
+                        <p className="text-sm font-medium text-foreground line-clamp-1">{task.title}</p>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           {task.assigned_to && (
-                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Users className="h-3 w-3" />
                               {task.assigned_to}
                             </span>
@@ -437,7 +437,7 @@ export default function OrgDashboard() {
                           {task.deadline && (
                             <span className={cn(
                               "text-xs flex items-center gap-1",
-                              isOverdue(task.deadline) ? "text-red-600 font-medium" : "text-slate-500"
+                              isOverdue(task.deadline) ? "text-red-600 font-medium" : "text-muted-foreground"
                             )}>
                               <CalendarClock className="h-3 w-3" />
                               {formatDate(task.deadline)}
@@ -454,7 +454,7 @@ export default function OrgDashboard() {
                           {PRIORITY_LABELS[task.priority] || task.priority}
                         </Badge>
                         <Badge
-                          className={cn("text-[10px] px-1.5", STATUS_COLORS[task.status] || "bg-slate-100 text-slate-600")}
+                          className={cn("text-[10px] px-1.5", STATUS_COLORS[task.status] || "bg-muted text-muted-foreground")}
                         >
                           {STATUS_LABELS[task.status] || task.status}
                         </Badge>

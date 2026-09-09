@@ -94,7 +94,7 @@ export function ActivityChart() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-indigo-50/30 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
+      <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between rounded-t-2xl bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
@@ -217,17 +217,17 @@ export function ActivityChart() {
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="text-center p-3 rounded-lg bg-green-50 backdrop-blur-sm border border-green-200 hover:bg-green-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
-            <div className="text-xs text-slate-600">{t.dashboard.monthlyCompleted}</div>
+            <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCompleted}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-blue-50 backdrop-blur-sm border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
-            <div className="text-xs text-slate-600">{t.dashboard.monthlyCreated}</div>
+            <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCreated}</div>
           </div>
           
           <div className="text-center p-3 rounded-lg bg-amber-50 backdrop-blur-sm border border-amber-200 hover:bg-amber-100 hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
-            <div className="text-xs text-slate-600">{t.dashboard.monthlyTotal}</div>
+            <div className="text-xs text-muted-foreground">{t.dashboard.monthlyTotal}</div>
           </div>
         </div>
       </CardContent>

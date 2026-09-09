@@ -116,7 +116,7 @@ export function AppealFilters({
       }
       clearAction={
         hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-slate-500 hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-red-600 hover:bg-red-50">
             <X className="mr-1 h-4 w-4" />
             {tr.clear}
           </Button>
@@ -126,21 +126,21 @@ export function AppealFilters({
       <div className="space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={tr.search}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-11 rounded-xl border-cyan-100/60 bg-white/90 pl-10 focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all"
+            className="h-11 rounded-xl border-border bg-white/90 pl-10 focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all"
           />
         </div>
 
         {/* Filters */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">{tr.status}</Label>
+            <Label className="text-xs text-muted-foreground">{tr.status}</Label>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+              <SelectTrigger className="h-11 rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
                 <SelectValue placeholder={tr.status} />
               </SelectTrigger>
               <SelectContent>
@@ -154,9 +154,9 @@ export function AppealFilters({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">{tr.priority}</Label>
+            <Label className="text-xs text-muted-foreground">{tr.priority}</Label>
             <Select value={priorityFilter} onValueChange={onPriorityChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+              <SelectTrigger className="h-11 rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
                 <SelectValue placeholder={tr.priority} />
               </SelectTrigger>
               <SelectContent>
@@ -170,9 +170,9 @@ export function AppealFilters({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">{tr.category}</Label>
+            <Label className="text-xs text-muted-foreground">{tr.category}</Label>
             <Select value={categoryFilter} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+              <SelectTrigger className="h-11 rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
                 <SelectValue placeholder={tr.category} />
               </SelectTrigger>
               <SelectContent>
@@ -186,9 +186,9 @@ export function AppealFilters({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">{tr.district}</Label>
+            <Label className="text-xs text-muted-foreground">{tr.district}</Label>
             <Select value={districtFilter} onValueChange={onDistrictChange}>
-              <SelectTrigger className="h-11 rounded-xl border-cyan-100/60 bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
+              <SelectTrigger className="h-11 rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-teal-200 focus:border-teal-400">
                 <SelectValue placeholder={tr.district} />
               </SelectTrigger>
               <SelectContent>

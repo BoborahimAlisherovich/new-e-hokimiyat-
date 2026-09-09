@@ -57,21 +57,21 @@ export function SettingsNotificationsTab({
   return (
     <TabsContent value="notifications" className="animate-fade-in">
       <Card className="overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_26px_60px_-34px_rgba(14,165,233,0.24)] backdrop-blur-xl">
-        <CardHeader className="relative overflow-hidden border-b border-cyan-100/50 pb-6">
+        <CardHeader className="relative overflow-hidden border-b border-border pb-6">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.08),transparent_28%),linear-gradient(135deg,rgba(6,182,212,0.10),rgba(59,130,246,0.03)_45%,transparent_80%)]" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <CardTitle className="flex items-center gap-3 text-xl font-semibold text-slate-900 sm:text-2xl">
+              <CardTitle className="flex items-center gap-3 text-xl font-semibold text-foreground sm:text-2xl">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_16px_30px_-18px_rgba(14,165,233,0.65)]">
                   <Bell className="h-5 w-5" />
                 </div>
                 {t.settings.notificationSettings}
               </CardTitle>
-              <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+              <CardDescription className="max-w-2xl text-sm leading-6 text-muted-foreground">
                 {t.settings.notificationDescription}
               </CardDescription>
             </div>
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-cyan-100 bg-white/80 px-3 py-2 text-xs font-medium text-cyan-700 shadow-sm">
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-white/80 px-3 py-2 text-xs font-medium text-primary shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               Bildirishnomalar boshqaruvi
             </div>
@@ -79,7 +79,7 @@ export function SettingsNotificationsTab({
         </CardHeader>
         <CardContent className="space-y-8 p-5 sm:p-8">
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700/80">
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               {t.settings.notificationChannels}
             </h4>
 
@@ -113,10 +113,10 @@ export function SettingsNotificationsTab({
             ) : null}
           </div>
 
-          <Separator className="my-2 bg-cyan-100/70" />
+          <Separator className="my-2 bg-primary-soft" />
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700/80">{t.settings.notificationTypes}</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{t.settings.notificationTypes}</h4>
             <NotificationSettingRow
               icon={AlertCircle}
               title={t.settings.newTasks}
@@ -176,7 +176,7 @@ function NotificationSettingRow({
         icon: "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
       }
     : {
-        wrapper: "border-cyan-100/80 bg-gradient-to-r from-cyan-50/90 to-blue-50/65 hover:border-cyan-200 hover:bg-cyan-50",
+        wrapper: "border-border bg-gradient-to-r from-cyan-50/90 to-blue-50/65 hover:border-border hover:bg-primary-soft",
         icon: "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
       }
 
@@ -187,8 +187,8 @@ function NotificationSettingRow({
           <Icon className="h-5 w-5" />
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
-          <p className="text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-sm font-semibold text-foreground sm:text-base">{title}</p>
+          <p className="text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
       </div>
       <div className="flex justify-end sm:block">

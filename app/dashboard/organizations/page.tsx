@@ -218,7 +218,7 @@ export default function OrganizationsPage() {
         ]}
       >
             <section data-gsap-section>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rolga mos tashkilotlar kesimi</span>
                 <span className="rounded-full bg-white px-3 py-1 shadow-sm">Boshqaruv: hokim, hokim o'rinbosari, administrator</span>
               </div>
@@ -252,8 +252,8 @@ export default function OrganizationsPage() {
             <section data-gsap-section>
             {loading ? (
               <div className="flex items-center justify-center rounded-[26px] border border-white/70 bg-white/78 py-16 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-                <span className="ml-3 text-slate-500">{t.pages.organizations.loading}</span>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ring"></div>
+                <span className="ml-3 text-muted-foreground">{t.pages.organizations.loading}</span>
               </div>
             ) : error ? (
               <div className="rounded-[26px] border border-white/70 bg-white/78 py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">

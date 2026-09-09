@@ -28,7 +28,7 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
           <div className="space-y-2">
             <Label>{t.settings.language}</Label>
             <Select value={language} onValueChange={onLanguageChange}>
-              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-border rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                 <Globe className="mr-2 h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>

@@ -227,7 +227,7 @@ export default function TaskDetailPage() {
         >
           <div className="rounded-[28px] border border-white/70 bg-white/78 p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
             <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-sm text-slate-500">Topshiriq ma'lumotlari yuklanmoqda...</p>
+            <p className="text-sm text-muted-foreground">Topshiriq ma'lumotlari yuklanmoqda...</p>
           </div>
         </DashboardDetailFrame>
       </>
@@ -622,8 +622,8 @@ export default function TaskDetailPage() {
                 </DialogTrigger>
                 <DialogContent className="overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-slate-900">Muddat uzaytirish so'rovi</DialogTitle>
-                    <DialogDescription className="text-slate-500">Yangi muddat va sababni aniq kiriting.</DialogDescription>
+                    <DialogTitle className="text-xl font-bold text-foreground">Muddat uzaytirish so'rovi</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">Yangi muddat va sababni aniq kiriting.</DialogDescription>
                   </DialogHeader>
                   <PremiumFormLayout>
                     <PremiumFieldGroup label="Yangi muddat" hint="Joriy muddatdan keyingi sanani tanlang.">
@@ -632,7 +632,7 @@ export default function TaskDetailPage() {
                         value={extendDeadline ? extendDeadline.split('T')[0] : ''} 
                         onChange={(e) => setExtendDeadline(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="h-11 rounded-2xl border-slate-200 bg-white" 
+                        className="h-11 rounded-2xl border-border bg-white" 
                       />
                     </PremiumFieldGroup>
                     <PremiumFieldGroup label="Sabab" hint="Uzatirish zaruratini qisqa va ravshan yozing.">
@@ -640,12 +640,12 @@ export default function TaskDetailPage() {
                         placeholder="Sababni kiriting..." 
                         value={extendReason}
                         onChange={(e) => setExtendReason(e.target.value)}
-                        className="min-h-[120px] rounded-2xl border-slate-200 bg-white" 
+                        className="min-h-[120px] rounded-2xl border-border bg-white" 
                       />
                     </PremiumFieldGroup>
                   </PremiumFormLayout>
-                  <DialogFooter className="border-t border-slate-100 pt-4">
-                    <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="rounded-2xl border-slate-200 bg-white">
+                  <DialogFooter className="border-t border-border pt-4">
+                    <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="rounded-2xl border-border bg-white">
                       Bekor qilish
                     </Button>
                     <Button onClick={handleExtendDeadline} disabled={isSaving} className="rounded-2xl">
@@ -665,15 +665,15 @@ export default function TaskDetailPage() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[640px] overflow-hidden border-white/70 bg-white/88 shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)] backdrop-blur-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-slate-900">Topshiriqni tahrirlash</DialogTitle>
-                    <DialogDescription className="text-slate-500">Asosiy maydonlarni yangilang va topshiriqni bir xil standartda saqlang.</DialogDescription>
+                    <DialogTitle className="text-xl font-bold text-foreground">Topshiriqni tahrirlash</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">Asosiy maydonlarni yangilang va topshiriqni bir xil standartda saqlang.</DialogDescription>
                   </DialogHeader>
                   <PremiumFormLayout>
                     <PremiumFieldGroup label="Sarlavha">
                       <Input 
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="h-11 rounded-2xl border-slate-200 bg-white" 
+                        className="h-11 rounded-2xl border-border bg-white" 
                       />
                     </PremiumFieldGroup>
                     <PremiumFieldGroup label="Tavsif">
@@ -681,13 +681,13 @@ export default function TaskDetailPage() {
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
                         rows={3}
-                        className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
+                        className="min-h-[120px] rounded-2xl border-border bg-white"
                       />
                     </PremiumFieldGroup>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <PremiumFieldGroup label="Ustuvorlik">
                         <Select value={editPriority} onValueChange={setEditPriority}>
-                          <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                          <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -704,13 +704,13 @@ export default function TaskDetailPage() {
                           type="date" 
                           value={editDeadline ? editDeadline.split('T')[0] : ''} 
                           onChange={(e) => setEditDeadline(e.target.value)}
-                          className="h-11 rounded-2xl border-slate-200 bg-white"
+                          className="h-11 rounded-2xl border-border bg-white"
                         />
                       </PremiumFieldGroup>
                     </div>
                     <PremiumFieldGroup label="Soha">
                       <Select value={editCategory} onValueChange={setEditCategory}>
-                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                        <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -723,8 +723,8 @@ export default function TaskDetailPage() {
                       </Select>
                     </PremiumFieldGroup>
                   </PremiumFormLayout>
-                  <DialogFooter className="border-t border-slate-100 pt-4">
-                    <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-2xl border-slate-200 bg-white">
+                  <DialogFooter className="border-t border-border pt-4">
+                    <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-2xl border-border bg-white">
                       Bekor qilish
                     </Button>
                     <Button onClick={handleSaveTask} disabled={isSaving} className="rounded-2xl">
@@ -874,8 +874,8 @@ export default function TaskDetailPage() {
             {/* Chat / Timeline */}
             <PremiumActivityCard>
               <Tabs defaultValue="chat" className="w-full">
-                <CardHeader className="border-b border-cyan-100/70 bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
-                  <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100/90 p-1">
+                <CardHeader className="border-b border-border bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
+                  <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1">
                     <TabsTrigger value="chat" className="gap-2">
                       <MessageSquare className="h-4 w-4" />
                       Muloqot
@@ -890,7 +890,7 @@ export default function TaskDetailPage() {
                   <ScrollArea className="h-[400px] p-4">
                     <div className="space-y-4">
                       {chatMessages.length === 0 && (
-                        <div className="rounded-[24px] border border-dashed border-cyan-200 bg-cyan-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                        <div className="rounded-[24px] border border-dashed border-border bg-primary-soft px-4 py-10 text-center text-sm text-muted-foreground">
                           Hozircha muloqot boshlanmagan
                         </div>
                       )}
@@ -973,7 +973,7 @@ export default function TaskDetailPage() {
                                         rel="noreferrer"
                                         className={cn(
                                           "flex items-center gap-2 text-xs underline",
-                                          isCurrentUser ? "text-white/80" : "text-slate-500",
+                                          isCurrentUser ? "text-white/80" : "text-muted-foreground",
                                         )}
                                       >
                                         <FileText className="h-3 w-3" />
@@ -1026,7 +1026,7 @@ export default function TaskDetailPage() {
                         </div>
                       )}
                       
-                      <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50/70 p-2">
+                      <div className="flex gap-2 rounded-[24px] border border-border bg-background p-2">
                         {/* Hidden file input */}
                         <input
                           ref={fileInputRef}
@@ -1089,7 +1089,7 @@ export default function TaskDetailPage() {
                         </Button>
                       </div>
                       {chatFile && (
-                        <div className="flex items-center gap-2 rounded-[22px] border border-slate-200 bg-slate-50 p-2.5">
+                        <div className="flex items-center gap-2 rounded-[22px] border border-border bg-background p-2.5">
                           {chatFile.type.startsWith('image/') ? (
                             <>
                               <ImageIcon className="h-4 w-4 text-blue-500" />
@@ -1134,7 +1134,7 @@ export default function TaskDetailPage() {
                   <ScrollArea className="h-[450px] p-4">
                     <div className="space-y-4">
                       {taskExecutions.length === 0 ? (
-                        <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-slate-500">
+                        <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-muted-foreground">
                           Hozircha tarix yo'q
                         </div>
                       ) : (
@@ -1165,10 +1165,10 @@ export default function TaskDetailPage() {
                 {(task.organizations || []).map((orgId: string) => {
                   const org = orgsMap[orgId]
                   return (
-                    <div key={orgId} className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-slate-50/70 p-3">
+                    <div key={orgId} className="flex items-center justify-between rounded-[20px] border border-border bg-background p-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                          <Building2 className="h-4 w-4 text-cyan-700" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-border">
+                          <Building2 className="h-4 w-4 text-primary" />
                         </div>
                         <div>
                           <span className="text-sm font-medium">{org?.name}</span>
@@ -1226,7 +1226,7 @@ export default function TaskDetailPage() {
                   </PremiumActionButton>
                 )}
                 {canClose && (
-                  <PremiumActionButton icon={CheckCircle2} onClick={handleApproveTask} disabled={isSaving} className="text-cyan-700">
+                  <PremiumActionButton icon={CheckCircle2} onClick={handleApproveTask} disabled={isSaving} className="text-primary">
                     Nazoratdan yechish
                   </PremiumActionButton>
                 )}

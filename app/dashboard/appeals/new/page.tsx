@@ -194,7 +194,7 @@ export default function NewAppealPage() {
       <>
         <Header title="Yangi murojaat" description="Qo'lda murojaat qo'shish" />
         <div className="p-6">
-          <div className="flex items-center gap-2 text-slate-600">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Tekshirilmoqda...
           </div>
@@ -213,14 +213,14 @@ export default function NewAppealPage() {
         stats={[]}
       >
         <div className="mb-4">
-          <Link href="/dashboard/appeals" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+          <Link href="/dashboard/appeals" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
             Orqaga
           </Link>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)]">
-          <Card className="border-slate-200 bg-white/95">
+          <Card className="border-border bg-white/95">
             <CardHeader>
               <CardTitle>Murojaatchi ma&apos;lumotlari</CardTitle>
               <CardDescription>
@@ -281,7 +281,7 @@ export default function NewAppealPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 bg-white/95">
+          <Card className="border-border bg-white/95">
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Murojaatlar</CardTitle>
@@ -296,15 +296,15 @@ export default function NewAppealPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {tasks.map((task, index) => (
-                <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                <div key={task.id} className="rounded-2xl border border-border bg-background p-4 shadow-sm">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <div className="rounded-xl bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">Murojaat #{index + 1}</p>
-                        <p className="text-sm text-slate-500">Murojaat bo&apos;yicha zarur ma&apos;lumotlarni to&apos;ldiring.</p>
+                        <p className="font-semibold text-foreground">Murojaat #{index + 1}</p>
+                        <p className="text-sm text-muted-foreground">Murojaat bo&apos;yicha zarur ma&apos;lumotlarni to&apos;ldiring.</p>
                       </div>
                     </div>
                     <Button
@@ -314,7 +314,7 @@ export default function NewAppealPage() {
                       onClick={() => removeTask(task.id)}
                       disabled={tasks.length === 1}
                     >
-                      <Trash2 className="h-4 w-4 text-slate-500" />
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   </div>
 
@@ -388,11 +388,11 @@ export default function NewAppealPage() {
                       onChange={(e) => updateTask(task.id, { files: Array.from(e.target.files || []) })}
                     />
                     {task.files.length > 0 && (
-                      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                        <div className="space-y-1 text-sm text-slate-600">
+                      <div className="rounded-xl border border-border bg-white px-3 py-2">
+                        <div className="space-y-1 text-sm text-muted-foreground">
                           {task.files.map((file, fileIndex) => (
                             <div key={`${file.name}-${fileIndex}`} className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-slate-400" />
+                              <FileText className="h-4 w-4 text-muted-foreground" />
                               <span className="truncate">{file.name}</span>
                             </div>
                           ))}

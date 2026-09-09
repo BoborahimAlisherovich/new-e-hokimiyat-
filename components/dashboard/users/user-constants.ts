@@ -2,11 +2,11 @@ import { UserRole } from "@/types"
 
 export const ROLE_COLORS: Record<string, string> = {
   HOKIM: "bg-purple-100 text-purple-800 border-purple-200",
-  HOKIM_YORDAMCHISI: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  HOKIM_YORDAMCHISI: "bg-primary-soft text-primary border-border",
   HOKIMLIK_MASUL: "bg-blue-100 text-blue-800 border-blue-200",
   TASHKILOT_RAHBARI: "bg-green-100 text-green-800 border-green-200",
   TASHKILOT_RAHBAR: "bg-green-100 text-green-800 border-green-200", // legacy
-  TASHKILOT_MASUL: "bg-gray-100 text-gray-800 border-gray-200",
+  TASHKILOT_MASUL: "bg-muted text-foreground border-border",
   ADMIN: "bg-red-100 text-red-800 border-red-200",
 }
 

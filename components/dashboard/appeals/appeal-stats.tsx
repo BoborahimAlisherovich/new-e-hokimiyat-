@@ -14,9 +14,9 @@ export function AppealStats({ stats }: AppealStatsProps) {
       icon: MessageSquare,
       gradient: "from-slate-500 to-slate-700",
       bgGradient: "from-slate-50 to-slate-100",
-      iconBg: "bg-indigo-50/50",
-      textColor: "text-slate-700",
-      borderColor: "border-indigo-100/40"
+      iconBg: "bg-primary-soft",
+      textColor: "text-secondary-foreground",
+      borderColor: "border-border"
     },
     {
       label: "Kutilmoqda",

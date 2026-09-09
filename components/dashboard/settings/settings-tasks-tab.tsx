@@ -19,10 +19,10 @@ interface SettingsTasksTabProps {
 export function SettingsTasksTab({ tasks }: SettingsTasksTabProps) {
   return (
     <TabsContent value="tasks">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white border border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Topshiriqlar</CardTitle>
-          <CardDescription className="text-gray-600">Barcha topshiriqlar ro'yxati</CardDescription>
+          <CardTitle className="text-lg font-semibold text-foreground">Topshiriqlar</CardTitle>
+          <CardDescription className="text-muted-foreground">Barcha topshiriqlar ro'yxati</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

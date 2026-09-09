@@ -277,7 +277,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {isAdding && (
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-indigo-50/30">
+            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-primary-soft">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">{tr.name}</Label>
@@ -311,9 +311,9 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
           )}
 
           {isLoading ? (
-            <div className="text-center py-8 text-slate-500">{tr.loading}</div>
+            <div className="text-center py-8 text-muted-foreground">{tr.loading}</div>
           ) : sectors.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               {tr.empty}
             </div>
           ) : (
@@ -321,12 +321,12 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
               {sectors.map((sector) => (
                 <div
                   key={sector.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-indigo-50/30 transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-primary-soft transition-colors"
                 >
                   <div className="flex-1">
                     <div className="font-medium">{sector.name}</div>
                     {sector.description && (
-                      <div className="text-sm text-slate-500">{sector.description}</div>
+                      <div className="text-sm text-muted-foreground">{sector.description}</div>
                     )}
                   </div>
                   <div className="flex gap-2">

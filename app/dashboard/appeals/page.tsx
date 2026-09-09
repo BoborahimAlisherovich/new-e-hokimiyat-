@@ -154,8 +154,8 @@ export default function AppealsPage() {
         <Header title={t.pages.appeals.title} description={t.pages.appeals.description} />
         <div className="px-3 py-4 sm:px-4 lg:px-6 min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-500 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-slate-500 text-sm">{t.pages.appeals.loading}</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-ring border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-muted-foreground text-sm">{t.pages.appeals.loading}</p>
           </div>
         </div>
       </>
@@ -193,7 +193,7 @@ export default function AppealsPage() {
               </Button>
             </div>
           )}
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 sm:mb-4">
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:mb-4">
             <span className="rounded-full bg-white px-3 py-1 shadow-sm">Ko'rish: rol va biriktirish asosida</span>
             <span className="rounded-full bg-white px-3 py-1 shadow-sm">Jarayon boshqaruvi: hokimlik va tashkilot mas'ullari oqimida</span>
           </div>
@@ -217,8 +217,8 @@ export default function AppealsPage() {
         {/* Appeals Table */}
         <section data-gsap-section>
           <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-            <div className="border-b border-cyan-100/60 bg-gradient-to-r from-cyan-50/55 via-white/30 to-transparent px-4 py-4 sm:px-6">
-              <h2 className="text-base font-semibold text-slate-800 sm:text-lg">{t.pages.appeals.tableTitle}</h2>
+            <div className="border-b border-border bg-gradient-to-r from-cyan-50/55 via-white/30 to-transparent px-4 py-4 sm:px-6">
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">{t.pages.appeals.tableTitle}</h2>
             </div>
             <AppealTable
               appeals={filteredAppeals}
