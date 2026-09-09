@@ -43,9 +43,20 @@ export const GEOMETRY_URL = '/geo/xatirchi-villages.paths.json'
  */
 let geometryPromise: Promise<VillageGeometry | null> | null = null
 
-export function loadGeometry(signal?: AbortSignal): Promise<VillageGeometry | null> {
+/**
+ * DIQQAT: bu funksiyaga ATAYLAB `AbortSignal` berilmaydi.
+ *
+ * Ilgari `loadGeometry(signal)` chaqirilardi va natija modul darajasida
+ * keshlanardi. React StrictMode dev'da effektni ikki marta ishga
+ * tushiradi: mount → unmount → mount. Birinchi mount'ning cleanup'i
+ * signalni bekor qilardi va SHU BITTA umumiy promise hammaga rejected
+ * bo'lib qaytardi — natijada `geometry` null qolib, xarita o'rniga
+ * "ma'lumot yo'q" kartasi chiqardi. Fayl 60 KB va bir marta yuklanadi,
+ * uni bekor qilishdan foyda yo'q.
+ */
+export function loadGeometry(): Promise<VillageGeometry | null> {
   if (!geometryPromise) {
-    geometryPromise = fetch(GEOMETRY_URL, { signal })
+    geometryPromise = fetch(GEOMETRY_URL)
       .then((response) => (response.ok ? response.json() : null))
       .then((json: unknown) => {
         if (!json || typeof json !== 'object') return null

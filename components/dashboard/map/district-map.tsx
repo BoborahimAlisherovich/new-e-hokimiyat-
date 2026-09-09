@@ -12,6 +12,7 @@ import {
   availableMetrics,
   getVillageStats,
   type VillageMetric,
+  type VillageStats,
   type VillageStatsMap,
 } from "@/lib/api/map.api"
 import {
@@ -89,18 +90,29 @@ export function DistrictMap({
     const ac = new AbortController()
     let alive = true
 
-    Promise.all([loadGeometry(ac.signal), getVillageStats(ac.signal)])
-      .then(([geo, st]) => {
+    /* Geometriya va statistika ALOHIDA yuklanadi.
+     *
+     * Ilgari ikkisi `Promise.all` da edi: statistika bo'lmasa yoki so'rov
+     * bekor qilinsa, xarita ham chizilmasdi. Talab esa aniq — xarita
+     * murojaat bo'lsa ham, bo'lmasa ham chizilishi kerak. Endi geometriya
+     * kelishi bilan xarita chiziladi; statistika keyin kelib faqat rang
+     * va raqamlarni qo'shadi. */
+    loadGeometry()
+      .then((geo) => {
+        if (alive) setGeometry(geo)
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+
+    getVillageStats(ac.signal)
+      .then((st) => {
         if (!alive) return
-        setGeometry(geo)
         setStats(st)
         setStatsMissing(st === null)
       })
       .catch(() => {
         if (alive) setStatsMissing(true)
-      })
-      .finally(() => {
-        if (alive) setLoading(false)
       })
 
     return () => {
@@ -387,9 +399,12 @@ export function DistrictMap({
         </div>
       </div>
 
-      {/* --------------------------------------------------------------- XARITA */}
+      {/* --------------------------------------------------------------- XARITA
+          Chapda xarita, o'ngda tanlangan mahalla statistikasi. Kichik
+          ekranda panel xarita ostiga tushadi. */}
       {view === "map" && (
-        <div className="relative p-3 sm:p-4">
+        <div className="grid gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_312px]">
+          <div className="min-w-0">
           <div className="relative">
             <svg
               ref={svgRef}
@@ -479,6 +494,18 @@ export function DistrictMap({
               <span className="text-2xs text-muted-foreground">{L.legendNoData}</span>
             </div>
           </div>
+          </div>
+
+          {/* ------------------------------------------------ YON PANEL
+              Talab: mahalla bosilganda o'ng tomonda maydon, aholi soni,
+              murojaatlar va hal etilganlar soni chiqadi. */}
+          <VillagePanel
+            L={L}
+            nf={nf}
+            name={selectedVillage ? villageName(selectedVillage, locale) : null}
+            stats={selectedStats}
+            onClose={() => setSelected(null)}
+          />
         </div>
       )}
 
@@ -556,58 +583,138 @@ export function DistrictMap({
         </div>
       )}
 
-      {/* ------------------------------------------------- Tanlangan qishloq
-          Mobilda pastdan chiqadigan panel, desktopda oddiy blok. */}
-      {selectedVillage && (
-        <div
-          className={cn(
-            "border-t border-border bg-card p-4",
-            "fixed inset-x-0 bottom-0 z-40 rounded-t-xl border shadow-lg pb-safe md:static md:z-auto md:rounded-none md:border-x-0 md:border-b-0 md:shadow-none",
-          )}
-          role="region"
-          aria-label={L.selectedVillage}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {L.selectedVillage}
-              </p>
-              <h3 className="truncate text-lg font-semibold text-foreground">
-                {villageName(selectedVillage, locale)}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              aria-label={L.close}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              <X className="h-4.5 w-4.5" aria-hidden />
-            </button>
-          </div>
-
-          {selectedStats ? (
-            <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {metrics.map((m) => (
-                <div key={m} className="rounded-md bg-muted px-3 py-2">
-                  <dt className="truncate text-2xs text-muted-foreground">{metricLabel(L, m)}</dt>
-                  <dd className="text-lg font-bold tabular-nums text-foreground">
-                    {typeof selectedStats[m] === "number"
-                      ? nf.format(selectedStats[m] as number)
-                      : "—"}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">{L.noData}</p>
-          )}
+      {/* Ro'yxat ko'rinishida tanlangan qishloq uchun ham shu panel */}
+      {view === "list" && selectedVillage && (
+        <div className="border-t border-border p-3 sm:p-4">
+          <VillagePanel
+            L={L}
+            nf={nf}
+            name={villageName(selectedVillage, locale)}
+            stats={selectedStats}
+            onClose={() => setSelected(null)}
+          />
         </div>
       )}
 
       {/* .map-shape uslublari app/globals.css da (@layer components) —
           styled-jsx ishlatilmadi: u har renderda uslub inject qiladi. */}
     </section>
+  )
+}
+
+/* ------------------------------------------------------------- YON PANEL */
+
+/**
+ * Tanlangan mahalla statistikasi.
+ *
+ * To'rt ko'rsatkich: maydoni, aholi soni, murojaatlar soni va hal
+ * etilganlar soni. Maydon/aholi `BotRegion` da saqlanadi va to'ldirilmagan
+ * bo'lishi mumkin — bunda "—" chiqadi va pastda izoh beriladi. Nol
+ * ko'rsatish xato bo'lardi: u "aholi yo'q" degan ma'noni beradi.
+ */
+function VillagePanel({
+  L,
+  nf,
+  name,
+  stats,
+  onClose,
+}: {
+  L: ReturnType<typeof getMapLabels>
+  nf: Intl.NumberFormat
+  name: string | null
+  stats: VillageStats | undefined
+  onClose: () => void
+}) {
+  if (!name) {
+    return (
+      <aside className="flex flex-col items-center justify-center gap-3 rounded-lg bg-background px-5 py-10 text-center lg:min-h-[420px]">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+          <MapIcon className="h-5 w-5" aria-hidden />
+        </span>
+        <p className="text-sm font-medium text-foreground">{L.selectVillage}</p>
+        <p className="max-w-[220px] text-xs leading-5 text-muted-foreground">{L.clickHint}</p>
+      </aside>
+    )
+  }
+
+  const appealsTotal = stats?.appeals_total
+  const appealsClosed = stats?.appeals_closed
+  const area = stats?.area_km2
+  const population = stats?.population
+
+  const rows: { label: string; value: string; hint?: string }[] = [
+    {
+      label: L.area,
+      value: typeof area === "number" ? `${nf.format(area)} km²` : "—",
+    },
+    {
+      label: L.population,
+      value:
+        typeof population === "number" ? `${nf.format(population)} ${L.people}` : "—",
+    },
+    {
+      label: L.appealsTotal,
+      value: typeof appealsTotal === "number" ? nf.format(appealsTotal) : "0",
+    },
+    {
+      label: L.appealsResolved,
+      value: typeof appealsClosed === "number" ? nf.format(appealsClosed) : "0",
+      hint:
+        typeof appealsTotal === "number" && appealsTotal > 0 && typeof appealsClosed === "number"
+          ? `${Math.round((appealsClosed / appealsTotal) * 100)}%`
+          : undefined,
+    },
+  ]
+
+  const passportEmpty = typeof area !== "number" && typeof population !== "number"
+
+  return (
+    <aside
+      className="rounded-lg bg-background p-4 lg:min-h-[420px]"
+      role="region"
+      aria-label={L.selectedVillage}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {L.selectedVillage}
+          </p>
+          <h3 className="mt-1 text-lg font-semibold leading-tight text-foreground">{name}</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={L.close}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3">
+        {rows.map((r) => (
+          <div key={r.label} className="rounded-lg bg-card p-3 shadow-xs">
+            <dt className="truncate text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+              {r.label}
+            </dt>
+            <dd className="mt-1.5 flex items-baseline gap-1.5">
+              <span className="text-xl font-bold leading-none tabular-nums text-foreground">
+                {r.value}
+              </span>
+              {r.hint && (
+                <span className="text-2xs font-semibold text-success">{r.hint}</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {passportEmpty && (
+        <p className="mt-3 rounded-lg bg-info-soft px-3 py-2 text-2xs leading-5 text-info-soft-foreground">
+          {L.passportEmpty}
+        </p>
+      )}
+    </aside>
   )
 }
 

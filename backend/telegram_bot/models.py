@@ -226,6 +226,18 @@ class BotRegion(models.Model):
     code = models.CharField(max_length=20, unique=True, verbose_name="Kod")
     is_active = models.BooleanField(default=True, verbose_name="Faol")
     order = models.PositiveIntegerField(default=0, verbose_name="Tartib")
+
+    # Passport ma'lumotlari — interaktiv xaritadagi yon panel uchun.
+    # ATAYLAB null: raqamni o'ylab chiqarish mumkin emas, shuning uchun
+    # to'ldirilmagan maydon xaritada "—" bo'lib ko'rinadi. Hokimlik
+    # admin panelidan (Hududlar) haqiqiy qiymatni kiritadi.
+    population = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Aholi soni"
+    )
+    area_km2 = models.DecimalField(
+        max_digits=9, decimal_places=2, null=True, blank=True,
+        verbose_name="Maydoni (km²)"
+    )
     
     class Meta:
         verbose_name = "Hudud"

@@ -20,7 +20,7 @@ from reportlab.pdfgen import canvas
 from tasks.models import Task, TaskOrganization
 from organizations.models import Organization
 from users.models import User
-from telegram_bot.models import TelegramAppeal
+from telegram_bot.models import BotRegion, TelegramAppeal
 
 def _organization_stats():
     """
@@ -601,8 +601,22 @@ class AnalyticsExportView(views.APIView):
                 )
             )
             .order_by('-completed_tasks')
-            .values('full_name', 'role', 'completed_tasks')[:10]
+            # `full_name` — property, DB maydoni emas: uni values() ga berish
+            # FieldError beradi. Haqiqiy maydonlarni olib, ismni Python
+            # tomonida yig'amiz (javob shakli o'zgarmaydi).
+            .values('last_name', 'first_name', 'middle_name', 'role', 'completed_tasks')[:10]
         )
+        top_performers = [
+            {
+                'full_name': ' '.join(
+                    part for part in (row['last_name'], row['first_name'], row['middle_name'])
+                    if part
+                ),
+                'role': row['role'],
+                'completed_tasks': row['completed_tasks'],
+            }
+            for row in top_performers
+        ]
 
         return {
             'summary': summary,
@@ -791,5 +805,30 @@ class VillageAnalyticsView(views.APIView):
         )
         for row in manual_rows:
             merge(row['citizen_region__code'], row['total'], row['closed'])
+
+        # ------------------------------------------------------------------
+        # Hudud passporti: maydon va aholi soni.
+        #
+        # Xaritada qishloq bosilganda yon panelda to'rt ko'rsatkich chiqadi:
+        # maydoni, aholi soni, murojaatlar soni, hal etilganlar soni.
+        # Birinchi ikkitasi BotRegion da saqlanadi va TO'LDIRILMAGAN
+        # bo'lishi mumkin — bunda maydon umuman yuborilmaydi va frontend
+        # "—" ko'rsatadi. Nol yuborish xato bo'lardi.
+        #
+        # MUHIM: bu yerda barcha hududlar aylanib chiqiladi, shuning uchun
+        # murojaati yo'q qishloq ham javobda bo'ladi — xarita ular uchun
+        # ham nom va passportni ko'rsatadi.
+        for region in BotRegion.objects.filter(is_active=True).only(
+            'code', 'name_uz', 'name_ru', 'name_en', 'population', 'area_km2'
+        ):
+            row = result.setdefault(
+                str(region.code),
+                {'appeals_total': 0, 'appeals_open': 0, 'appeals_closed': 0},
+            )
+            row['name'] = region.name_uz
+            if region.population is not None:
+                row['population'] = int(region.population)
+            if region.area_km2 is not None:
+                row['area_km2'] = float(region.area_km2)
 
         return Response(result)

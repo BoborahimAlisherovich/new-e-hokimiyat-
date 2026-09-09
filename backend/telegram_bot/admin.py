@@ -40,8 +40,11 @@ class BotAdminAdmin(admin.ModelAdmin):
 
 @admin.register(BotRegion)
 class BotRegionAdmin(admin.ModelAdmin):
-    list_display = ['name_uz', 'code', 'is_active', 'order']
-    list_editable = ['order', 'is_active']
+    # Maydon va aholi soni ro'yxatning o'zida tahrirlanadi: xaritadagi
+    # yon panel shu ikki qiymatni ko'rsatadi, to'ldirilmagani "—" bo'ladi.
+    list_display = ['name_uz', 'code', 'area_km2', 'population', 'is_active', 'order']
+    list_editable = ['area_km2', 'population', 'order', 'is_active']
+    search_fields = ['name_uz', 'name_ru', 'name_en', 'code']
     ordering = ['order']
 
 

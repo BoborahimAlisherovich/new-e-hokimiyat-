@@ -39,6 +39,12 @@ import { API_BASE, getAccessToken } from './client'
 
 /** Bitta qishloq uchun agregat raqamlar (backend maydon nomlari bilan) */
 export interface VillageStats {
+  /** Hudud nomi (backend `BotRegion.name_uz`) — yon panel sarlavhasi */
+  name?: string
+  /** Aholi soni — BotRegion da to'ldirilgan bo'lsa keladi */
+  population?: number
+  /** Maydoni, km² — BotRegion da to'ldirilgan bo'lsa keladi */
+  area_km2?: number
   total?: number
   in_progress?: number
   awaiting_approval?: number
@@ -128,6 +134,8 @@ function normalize(raw: unknown): VillageStatsMap | null {
     const row: Partial<VillageStats> = {}
     for (const [key, num] of Object.entries(value as Record<string, unknown>)) {
       if (isFiniteNumber(num)) (row as Record<string, number>)[key] = num
+      // `name` — yagona matnli maydon: yon panel sarlavhasi uchun kerak.
+      else if (key === 'name' && typeof num === 'string' && num.trim()) row.name = num.trim()
     }
     if (Object.keys(row).length) out[String(code)] = row as VillageStats
   }

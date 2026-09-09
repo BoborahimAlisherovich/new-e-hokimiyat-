@@ -819,7 +819,10 @@ QOIDALAR:
                 'priority': task.priority,
                 'deadline': str(task.deadline),
                 'organizations': list(task.assigned_organizations.values_list('organization__name', flat=True)),
-                'deputies': list(task.assigned_deputies.values_list('full_name', flat=True)),
+                # `full_name` — model xossasi (property), DB maydoni EMAS.
+                # `values_list('full_name')` FieldError beradi va topshiriq
+                # saqlangandan keyin 500 qaytaradi. Python tomonida yig'amiz.
+                'deputies': [d.full_name for d in task.assigned_deputies.all()],
             },
             ip_address=getattr(self.request, 'client_ip', None)
         )

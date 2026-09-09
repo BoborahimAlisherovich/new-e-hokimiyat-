@@ -78,9 +78,26 @@ const toneStyles: Record<Tone, { chip: string; value: string; bar: string }> = {
  * uzatadi. Ularni o'zgartirmasdan to'g'ri rangga solish uchun tonni
  * shu satrlardan aniqlaymiz.
  */
-function inferTone(item: { tone?: Tone; textColor?: string; gradient?: string }): Tone {
+function inferTone(item: {
+  tone?: Tone
+  textColor?: string
+  iconBg?: string
+  gradient?: string
+}): Tone {
   if (item.tone) return item.tone
-  const s = `${item.textColor ?? ""} ${item.gradient ?? ""}`
+
+  const s = `${item.textColor ?? ""} ${item.iconBg ?? ""} ${item.gradient ?? ""}`
+
+  // 1) Dizayn tizimi tokenlari (palitra migratsiyasidan keyin asosiy yo'l)
+  if (/\bsuccess\b/.test(s)) return "success"
+  if (/\bwarning\b/.test(s)) return "warning"
+  if (/\bdestructive\b/.test(s)) return "danger"
+  if (/st-tekshiruvda/.test(s)) return "violet"
+  if (/\binfo\b/.test(s)) return "info"
+  if (/\bprimary\b/.test(s)) return "primary"
+  if (/\bmuted\b|\bsecondary\b/.test(s)) return "neutral"
+
+  // 2) Eski xom Tailwind oilalari (hali qolgan chaqiruv joylari uchun)
   if (/emerald|green|teal/.test(s)) return "success"
   if (/amber|yellow|orange/.test(s)) return "warning"
   if (/red|rose|pink/.test(s)) return "danger"

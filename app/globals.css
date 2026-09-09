@@ -650,13 +650,20 @@
     cursor: pointer;
     outline: none;
   }
+  /* Hover va tanlanganda shakl "yonadi": faqat chegara emas, fon ham
+     o'zgaradi — 70 ta mahallaning ko'pchiligida murojaat bo'lmaydi va
+     ular bir xil rangda turadi, shunda chegara yolg'iz yetarli emas.
+     `filter` ATAYLAB ishlatilmadi: bitta yo'l 18 KB geometriya, filter
+     har kadrda uni qayta rasterlaydi. */
   .map-shape[data-hover="1"] {
     stroke: var(--primary);
-    stroke-width: 1.6;
+    stroke-width: 1.8;
+    fill: color-mix(in srgb, var(--primary) 22%, var(--card));
   }
   .map-shape[data-selected="1"] {
     stroke: var(--primary);
-    stroke-width: 2.2;
+    stroke-width: 2.4;
+    fill: color-mix(in srgb, var(--primary) 34%, var(--card));
   }
   .map-shape[data-dimmed="1"] {
     opacity: 0.28;

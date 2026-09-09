@@ -38,6 +38,13 @@ export interface MapLabels {
   overdue: string
   appealsTotal: string
   appealsOpen: string
+  /** Hudud passporti — xaritadagi yon panel */
+  area: string
+  population: string
+  appealsResolved: string
+  passportEmpty: string
+  clickHint: string
+  people: string
 }
 
 const uz: MapLabels = {
@@ -66,6 +73,12 @@ const uz: MapLabels = {
   overdue: 'Muddati kechikkan',
   appealsTotal: 'Jami murojaat',
   appealsOpen: 'Ochiq murojaat',
+  area: 'Maydoni',
+  population: 'Aholi soni',
+  appealsResolved: 'Hal etilgan',
+  passportEmpty: 'Maydon va aholi soni hali kiritilmagan — hokimlik admin panelidan (Hududlar) to‘ldiradi.',
+  clickHint: 'Xaritadan mahallani tanlang — statistikasi shu yerda chiqadi.',
+  people: 'kishi',
 }
 
 const uzCyrl: MapLabels = {
@@ -94,6 +107,12 @@ const uzCyrl: MapLabels = {
   overdue: 'Муддати кечиккан',
   appealsTotal: 'Жами мурожаат',
   appealsOpen: 'Очиқ мурожаат',
+  area: 'Майдони',
+  population: 'Аҳоли сони',
+  appealsResolved: 'Ҳал этилган',
+  passportEmpty: 'Майдон ва аҳоли сони ҳали киритилмаган — ҳокимлик админ панелидан (Ҳудудлар) тўлдиради.',
+  clickHint: 'Харитадан маҳаллани танланг — статистикаси шу ерда чиқади.',
+  people: 'киши',
 }
 
 const ru: MapLabels = {
@@ -122,6 +141,12 @@ const ru: MapLabels = {
   overdue: 'Просрочено',
   appealsTotal: 'Всего обращений',
   appealsOpen: 'Открытые обращения',
+  area: 'Площадь',
+  population: 'Население',
+  appealsResolved: 'Решено',
+  passportEmpty: 'Площадь и население ещё не заполнены — хокимият вносит их в админ-панели (Регионы).',
+  clickHint: 'Выберите махаллю на карте — статистика появится здесь.',
+  people: 'чел.',
 }
 
 const en: MapLabels = {
@@ -150,6 +175,12 @@ const en: MapLabels = {
   overdue: 'Overdue',
   appealsTotal: 'Appeals total',
   appealsOpen: 'Open appeals',
+  area: 'Area',
+  population: 'Population',
+  appealsResolved: 'Resolved',
+  passportEmpty: 'Area and population are not filled in yet — the hokimiyat adds them in the admin panel (Regions).',
+  clickHint: 'Pick a mahalla on the map — its statistics appear here.',
+  people: 'people',
 }
 
 const MAP_LABELS: Record<Language, MapLabels> = {

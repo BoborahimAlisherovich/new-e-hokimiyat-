@@ -43,8 +43,6 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       label: labels.total,
       value: total,
       icon: Users,
-      gradient: "from-blue-500 to-indigo-600",
-      bgGradient: "from-blue-50 to-indigo-50",
       iconBg: "bg-primary-soft",
       textColor: "text-primary",
       borderColor: "border-border"
@@ -53,8 +51,6 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       label: labels.active,
       value: active,
       icon: UserCheck,
-      gradient: "from-emerald-500 to-teal-600",
-      bgGradient: "from-emerald-50 to-teal-50",
       iconBg: "bg-success-soft",
       textColor: "text-success",
       borderColor: "border-border"
@@ -63,8 +59,6 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       label: labels.inactive,
       value: inactive,
       icon: AlertCircle,
-      gradient: "from-red-500 to-rose-600",
-      bgGradient: "from-red-50 to-rose-50",
       iconBg: "bg-destructive-soft",
       textColor: "text-destructive",
       borderColor: "border-border"
@@ -73,8 +67,6 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       label: labels.organizations,
       value: organizations,
       icon: Building,
-      gradient: "from-violet-500 to-purple-600",
-      bgGradient: "from-violet-50 to-purple-50",
       iconBg: "bg-[var(--st-tekshiruvda-bg)]",
       textColor: "text-[var(--st-tekshiruvda-fg)]",
       borderColor: "border-border"
