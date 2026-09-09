@@ -15,6 +15,6 @@ export const notificationColors: Record<NotificationType, string> = {
   TASK_UPDATED: "bg-warning/10 text-warning",
   TASK_COMPLETED: "bg-accent/10 text-accent",
   TASK_OVERDUE: "bg-destructive/10 text-destructive",
-  MESSAGE: "bg-blue-500/10 text-blue-500",
+  MESSAGE: "bg-primary text-primary",
   SYSTEM: "bg-muted text-muted-foreground",
 }

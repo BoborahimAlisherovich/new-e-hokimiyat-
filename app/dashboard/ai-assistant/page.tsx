@@ -393,7 +393,7 @@ export default function AIAssistantPage() {
 
     const label = intentLabels[intent] || intent;
     return (
-      <Badge className="bg-blue-50 text-blue-600 text-xs border-blue-100 ml-2">
+      <Badge className="bg-primary-soft text-primary-soft-foreground text-xs border-border ml-2">
         {label}
       </Badge>
     );
@@ -605,11 +605,11 @@ function ChatHeader({
           title={isDesktopSidebarOpen ? "Suhbatlar tarixini yashirish" : "Suhbatlar tarixini ko'rsatish"}
           className={`hidden lg:inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold shadow-sm transition-all ${
             isDesktopSidebarOpen
-              ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-              : "border-border-strong bg-white text-secondary-foreground hover:border-blue-200 hover:bg-background hover:text-blue-700"
+              ? "border-border bg-primary-soft text-primary-soft-foreground hover:bg-primary-soft"
+              : "border-border-strong bg-white text-secondary-foreground hover:border-border hover:bg-background hover:text-primary"
           }`}
         >
-          <History className={`h-4 w-4 ${isDesktopSidebarOpen ? "text-blue-600" : "text-muted-foreground"}`} />
+          <History className={`h-4 w-4 ${isDesktopSidebarOpen ? "text-primary" : "text-muted-foreground"}`} />
           <span>{isDesktopSidebarOpen ? "Tarixni yashirish" : "Tarix"}</span>
         </Button>
 
@@ -636,7 +636,7 @@ function ChatHeader({
                           setIsEditingTitle(false);
                         }
                       }}
-                      className="h-8 w-full rounded-md border border-border-strong bg-white px-2 text-sm font-semibold text-foreground outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="h-8 w-full rounded-md border border-border-strong bg-white px-2 text-sm font-semibold text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/25"
                       autoFocus
                       maxLength={120}
                     />
@@ -917,12 +917,12 @@ function ConversationListItem({
   return (
     <div
       className={`group rounded-lg px-2 py-1 ${
-        isActive ? "bg-blue-50/70" : "hover:bg-muted"
+        isActive ? "bg-primary-soft" : "hover:bg-muted"
       }`}
     >
       <div
         className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-2 transition-colors ${
-          isActive ? "bg-blue-100 text-blue-900" : "bg-transparent text-secondary-foreground"
+          isActive ? "bg-primary-soft text-primary-soft-foreground" : "bg-transparent text-secondary-foreground"
         }`}
       >
         <button
@@ -934,7 +934,7 @@ function ConversationListItem({
           <div
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
               isActive
-                ? "bg-blue-200 text-blue-700"
+                ? "bg-primary-soft text-primary-soft-foreground"
                 : "bg-muted text-muted-foreground"
             }`}
           >
@@ -943,7 +943,7 @@ function ConversationListItem({
           <div className="min-w-0 flex-1">
             <p
               className={`truncate text-sm ${
-                isActive ? "font-medium text-blue-950" : "font-medium text-foreground"
+                isActive ? "font-medium text-primary" : "font-medium text-foreground"
               }`}
               title={displayTitle}
             >
@@ -951,7 +951,7 @@ function ConversationListItem({
             </p>
             <p
               className={`truncate text-xs ${
-                isActive ? "text-blue-700/80" : "text-muted-foreground"
+                isActive ? "text-primary" : "text-muted-foreground"
               }`}
               title={secondaryText}
             >
@@ -965,8 +965,8 @@ function ConversationListItem({
           onClick={onDelete}
           className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
             isActive
-              ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
-              : "border-border bg-white text-muted-foreground hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              ? "border-border bg-white text-primary-soft-foreground hover:bg-primary-soft"
+              : "border-border bg-white text-muted-foreground hover:border-border hover:bg-destructive-soft hover:text-destructive-soft-foreground"
           }`}
           aria-label="Suhbatni o'chirish"
           title="Suhbatni o'chirish"
@@ -1043,17 +1043,17 @@ function ChatArea({
         <ScrollArea className="h-full">
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
             {error && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left shadow-sm">
+              <div className="rounded-2xl border border-border bg-warning-soft px-4 py-3 text-left shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-amber-900">AI yordamchi bilan ulanishda uzilish bor</p>
-                    <p className="text-xs text-amber-800/80">{error}</p>
+                    <p className="text-sm font-semibold text-warning">AI yordamchi bilan ulanishda uzilish bor</p>
+                    <p className="text-xs text-warning">{error}</p>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={onRetry}
-                    className="border-amber-200 bg-white text-amber-900 hover:bg-amber-100"
+                    className="border-border bg-white text-warning-soft-foreground hover:bg-warning-soft"
                   >
                     Qayta yuklash
                   </Button>
@@ -1120,7 +1120,7 @@ function ChatArea({
                     }`}>
                       {message.role === "assistant" && (
                         <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
-                          <span className="text-xs sm:text-sm font-semibold text-blue-600">AI Yordamchi</span>
+                          <span className="text-xs sm:text-sm font-semibold text-primary">AI Yordamchi</span>
                           {getIntentBadge(message.detected_intent)}
                         </div>
                       )}
@@ -1148,7 +1148,7 @@ function ChatArea({
                             <button
                               type="button"
                               onClick={() => onQuickAction("ha")}
-                              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                              className="inline-flex items-center gap-2 rounded-lg bg-success px-3 py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-success"
                             >
                               <Check className="h-4 w-4" />
                               Tasdiqlash
@@ -1156,7 +1156,7 @@ function ChatArea({
                             <button
                               type="button"
                               onClick={() => onQuickAction("yo'q")}
-                              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs sm:text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100"
+                              className="inline-flex items-center gap-2 rounded-lg border border-border bg-destructive-soft px-3 py-2 text-xs sm:text-sm font-medium text-destructive-soft-foreground transition-colors hover:bg-destructive-soft"
                             >
                               <X className="h-4 w-4" />
                               Bekor qilish
@@ -1189,7 +1189,7 @@ function ChatArea({
                 </div>
                 <div className="bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-border shadow-sm">
                   <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
-                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-blue-600" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-primary" />
                     <span className="text-xs sm:text-sm font-medium">AI javob yozmoqda...</span>
                   </div>
                 </div>
@@ -1289,9 +1289,9 @@ function ChatInput({
 
         {/* Recording Indicator */}
         {isRecording && (
-          <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-red-50 border border-red-200">
-            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-xs sm:text-sm text-red-600 font-medium">
+          <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-destructive-soft border border-border">
+            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 bg-destructive rounded-full animate-pulse" />
+            <span className="text-xs sm:text-sm text-destructive font-medium">
               Yozib olinmoqda: {formatTime(recordingTime)}
             </span>
           </div>
@@ -1299,14 +1299,14 @@ function ChatInput({
 
         {/* Audio Preview */}
         {audioBlob && !isRecording && (
-          <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-blue-50 border border-blue-200">
-            <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
+          <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-primary-soft border border-border">
+            <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
             <audio src={audioUrl || undefined} controls className="flex-1 h-7 sm:h-8" />
             <Button 
               size="sm" 
               onClick={sendMessageWithAudio} 
               disabled={isSending} 
-              className="h-10 bg-blue-600 text-xs hover:bg-blue-700 sm:text-sm"
+              className="h-10 bg-primary text-xs hover:bg-primary sm:text-sm"
             >
               <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
               <span className="hidden sm:inline">Yuborish</span>
@@ -1327,7 +1327,7 @@ function ChatInput({
             disabled={isSending}
             className={`shrink-0 h-11 w-11 rounded-xl sm:h-11 sm:w-11 ${
               isRecording 
-                ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100" 
+                ? "bg-destructive-soft border-border text-destructive-soft-foreground hover:bg-destructive-soft" 
                 : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
@@ -1354,7 +1354,7 @@ function ChatInput({
           <Button
             onClick={onSendMessage}
             disabled={!inputMessage.trim() || isSending || isRecording}
-            className="shrink-0 h-11 w-11 sm:h-11 sm:px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm"
+            className="shrink-0 h-11 w-11 sm:h-11 sm:px-4 bg-primary hover:bg-primary disabled:opacity-50 rounded-xl shadow-sm"
           >
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -24,9 +24,9 @@ export function AppealStats({ stats }: AppealStatsProps) {
       icon: Calendar,
       gradient: "from-blue-500 to-indigo-600",
       bgGradient: "from-blue-50 to-indigo-50",
-      iconBg: "bg-blue-100",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-200/50"
+      iconBg: "bg-primary-soft",
+      textColor: "text-primary",
+      borderColor: "border-border"
     },
     {
       label: "Jarayonda",
@@ -34,9 +34,9 @@ export function AppealStats({ stats }: AppealStatsProps) {
       icon: TrendingUp,
       gradient: "from-emerald-500 to-teal-600",
       bgGradient: "from-emerald-50 to-teal-50",
-      iconBg: "bg-emerald-100",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-200/50"
+      iconBg: "bg-success-soft",
+      textColor: "text-success",
+      borderColor: "border-border"
     },
     {
       label: "Hal etilgan",
@@ -44,9 +44,9 @@ export function AppealStats({ stats }: AppealStatsProps) {
       icon: Archive,
       gradient: "from-teal-500 to-cyan-600",
       bgGradient: "from-teal-50 to-cyan-50",
-      iconBg: "bg-teal-100",
-      textColor: "text-teal-600",
-      borderColor: "border-teal-200/50"
+      iconBg: "bg-success-soft",
+      textColor: "text-success",
+      borderColor: "border-border"
     }
   ]
 

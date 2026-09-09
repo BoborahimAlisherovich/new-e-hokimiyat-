@@ -62,7 +62,7 @@ export function SettingsNotificationsTab({
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <CardTitle className="flex items-center gap-3 text-xl font-semibold text-foreground sm:text-2xl">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_16px_30px_-18px_rgba(14,165,233,0.65)]">
+                <div className="bg-primary flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-[0_16px_30px_-18px_rgba(14,165,233,0.65)]">
                   <Bell className="h-5 w-5" />
                 </div>
                 {t.settings.notificationSettings}
@@ -72,7 +72,7 @@ export function SettingsNotificationsTab({
               </CardDescription>
             </div>
             <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-white/80 px-3 py-2 text-xs font-medium text-primary shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="h-2 w-2 rounded-full bg-success" />
               Bildirishnomalar boshqaruvi
             </div>
           </div>
@@ -107,7 +107,7 @@ export function SettingsNotificationsTab({
               disabled={!pushSupported || !pushConfigured}
             />
             {pushWarning ? (
-              <div className="rounded-[20px] border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm leading-6 text-amber-900">
+              <div className="rounded-[20px] border border-border bg-warning-soft px-4 py-3 text-sm leading-6 text-warning-soft-foreground">
                 {pushWarning}
               </div>
             ) : null}
@@ -137,7 +137,7 @@ export function SettingsNotificationsTab({
             <Button
               onClick={onSave}
               disabled={saving}
-              className="h-11 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 px-6 text-sm font-semibold text-white shadow-[0_16px_32px_-18px_rgba(37,99,235,0.7)] transition hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50"
+              className="bg-primary h-11 rounded-xl px-6 text-sm font-semibold text-white shadow-[0_16px_32px_-18px_rgba(37,99,235,0.7)] transition hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -172,12 +172,12 @@ function NotificationSettingRow({
 }) {
   const toneClasses = tone === "amber"
     ? {
-        wrapper: "border-amber-100/80 bg-gradient-to-r from-amber-50/90 to-orange-50/70 hover:border-amber-200 hover:bg-amber-50",
-        icon: "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
+        wrapper: "bg-warning-soft border-border hover:border-border hover:bg-warning-soft",
+        icon: "bg-warning text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
       }
     : {
-        wrapper: "border-border bg-gradient-to-r from-cyan-50/90 to-blue-50/65 hover:border-border hover:bg-primary-soft",
-        icon: "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
+        wrapper: "bg-primary-soft border-border hover:border-border hover:bg-primary-soft",
+        icon: "bg-primary text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
       }
 
   return (

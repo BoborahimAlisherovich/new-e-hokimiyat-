@@ -53,11 +53,11 @@ export default function DeadlineCriticalTasks() {
   }
 
   const badgeColor = (d: number) => {
-    if (d < 0) return "text-red-500"
-    if (d <= 1) return "text-red-500"
-    if (d <= 3) return "text-orange-500"
-    if (d <= 7) return "text-yellow-500"
-    return "text-green-500"
+    if (d < 0) return "text-destructive"
+    if (d <= 1) return "text-destructive"
+    if (d <= 3) return "text-warning"
+    if (d <= 7) return "text-warning"
+    return "text-success"
   }
 
   const badgeIcon = (d: number) => {
@@ -67,8 +67,8 @@ export default function DeadlineCriticalTasks() {
 
   return (
     <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
-      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-red-50 to-orange-50">
-        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
+      <CardHeader className="bg-destructive-soft flex flex-row items-center justify-between">
+        <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/tasks" className="flex items-center gap-1">
             {t.common.all} <ArrowRight className="h-4 w-4" />
@@ -85,7 +85,7 @@ export default function DeadlineCriticalTasks() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, x: 4 }}
-              className="flex items-start justify-between gap-4 rounded-lg border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:border-red-300 hover:shadow-lg"
+              className="flex items-start justify-between gap-4 rounded-lg border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:border-destructive hover:shadow-lg"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between gap-2">

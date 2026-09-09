@@ -1,21 +1,21 @@
 import { UserRole } from "@/types"
 
 export const ROLE_COLORS: Record<string, string> = {
-  HOKIM: "bg-purple-100 text-purple-800 border-purple-200",
-  HOKIM_YORDAMCHISI: "bg-primary-soft text-primary border-border",
-  HOKIMLIK_MASUL: "bg-blue-100 text-blue-800 border-blue-200",
-  TASHKILOT_RAHBARI: "bg-green-100 text-green-800 border-green-200",
-  TASHKILOT_RAHBAR: "bg-green-100 text-green-800 border-green-200", // legacy
+  HOKIM: "bg-[var(--st-tekshiruvda-bg)] text-[var(--st-tekshiruvda-fg)] border-border",
+  HOKIM_YORDAMCHISI: "bg-primary-soft text-primary-soft-foreground border-border",
+  HOKIMLIK_MASUL: "bg-primary-soft text-primary-soft-foreground border-border",
+  TASHKILOT_RAHBARI: "bg-success-soft text-success-soft-foreground border-border",
+  TASHKILOT_RAHBAR: "bg-success-soft text-success-soft-foreground border-border", // legacy
   TASHKILOT_MASUL: "bg-muted text-foreground border-border",
-  ADMIN: "bg-red-100 text-red-800 border-red-200",
+  ADMIN: "bg-destructive-soft text-destructive-soft-foreground border-border",
 }
 
 // Users page shows a simplified 2-state "holat":
 // - ACTIVE: user has logged in at least once (first_login_at exists) and not blocked/archived
 // - INACTIVE: never logged in yet, or blocked/archived
 export const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800 border-green-200",
-  INACTIVE: "bg-red-100 text-red-800 border-red-200",
+  ACTIVE: "bg-success-soft text-success-soft-foreground border-border",
+  INACTIVE: "bg-destructive-soft text-destructive-soft-foreground border-border",
 }
 
 export const ROLE_LABELS: Record<string, string> = {

@@ -261,7 +261,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-foreground flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-blue-600" />
+                    <Building2 className="h-5 w-5 text-primary" />
                     Sohalarni boshqarish
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -271,7 +271,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 {!isCreating && !editingSector && (
                   <Button 
                     onClick={() => setIsCreating(true)}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md"
+                    className="bg-primary hover:from-blue-600 hover:to-blue-700 shadow-md"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Soha qo'shish
@@ -287,7 +287,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-blue-50 rounded-xl border border-blue-200"
+                    className="p-4 bg-primary-soft rounded-xl border border-border"
                   >
                     <div className="space-y-4">
                       <div>
@@ -315,7 +315,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         <Button
                           onClick={editingSector ? handleUpdateSector : handleCreateSector}
                           disabled={loading || !formData.name.trim()}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                          className="bg-primary hover:from-blue-600 hover:to-blue-700"
                         >
                           <Save className="h-4 w-4 mr-2" />
                           {editingSector ? "Yangilash" : "Saqlash"}
@@ -337,7 +337,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                     key={sector.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl border border-white/50 hover:shadow-[0_4px_16px_-4px_rgba(99,102,241,0.1)] transition-all duration-200"
+                    className="bg-background p-4 rounded-xl border border-white/50 hover:shadow-[0_4px_16px_-4px_rgba(99,102,241,0.1)] transition-all duration-200"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -351,7 +351,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                           size="sm"
                           variant="ghost"
                           onClick={() => startEdit(sector)}
-                          className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                          className="h-8 w-8 p-0 hover:bg-primary-soft hover:text-primary-soft-foreground"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -359,18 +359,18 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDeleteSector(sector.id)}
-                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          className="h-8 w-8 p-0 hover:bg-destructive-soft hover:text-destructive-soft-foreground"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                     <div className="flex gap-4 text-sm">
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge variant="secondary" className="bg-primary-soft text-primary-soft-foreground border-border">
                         {sector.organization_count} ta tashkilot
                       </Badge>
                       {sector.is_active && (
-                        <Badge className="bg-green-50 text-green-700 border-green-200">
+                        <Badge className="bg-success-soft text-success-soft-foreground border-border">
                           Faol
                         </Badge>
                       )}
@@ -394,7 +394,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
             <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-foreground flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  <BarChart3 className="h-5 w-5 text-primary" />
                   Soha bo'yicha statistika
                 </CardTitle>
               </CardHeader>
@@ -418,9 +418,9 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Bajarildi</p>
-                            <p className="text-lg font-bold text-green-600">{stat.completed}</p>
+                            <p className="text-lg font-bold text-success">{stat.completed}</p>
                           </div>
-                          <TrendingUp className="h-5 w-5 text-green-600" />
+                          <TrendingUp className="h-5 w-5 text-success" />
                         </div>
                       </motion.div>
                     ))}
@@ -446,35 +446,35 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <Card className="bg-primary-soft border-border">
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-900">
+                      <p className="text-3xl font-bold text-primary">
                         {Array.isArray(organizations) ? organizations.length : 0}
                       </p>
-                      <p className="text-sm text-blue-700 mt-1">Jami tashkilotlar</p>
+                      <p className="text-sm text-primary mt-1">Jami tashkilotlar</p>
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <Card className="bg-success-soft border-border">
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-green-900">
+                      <p className="text-3xl font-bold text-success">
                         {Array.isArray(organizations) 
                           ? organizations.filter(o => o.is_active || o.isActive || o.status === 'active').length 
                           : 0}
                       </p>
-                      <p className="text-sm text-green-700 mt-1">Faol tashkilotlar</p>
+                      <p className="text-sm text-success mt-1">Faol tashkilotlar</p>
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <Card className="bg-[var(--st-tekshiruvda-bg)] border-border">
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-purple-900">
+                      <p className="text-3xl font-bold text-[var(--st-tekshiruvda-fg)]">
                         {Array.isArray(sectors) ? sectors.length : 0}
                       </p>
-                      <p className="text-sm text-purple-700 mt-1">Sohalar soni</p>
+                      <p className="text-sm text-[var(--st-tekshiruvda-fg)] mt-1">Sohalar soni</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -494,8 +494,8 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         className="flex items-center justify-between p-3 bg-primary-soft rounded-lg hover:bg-primary-soft transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-blue-600" />
+                          <div className="w-10 h-10 rounded-lg bg-primary-soft flex items-center justify-center">
+                            <Building2 className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <h4 className="font-medium text-foreground">{org.name || 'Noma\'lum'}</h4>
@@ -506,7 +506,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         </div>
                         <div className="flex items-center gap-2">
                           {(org.is_active || org.isActive || org.status === 'active') && (
-                            <Badge className="bg-green-100 text-green-700 border-green-200">
+                            <Badge className="bg-success-soft text-success-soft-foreground border-border">
                               Faol
                             </Badge>
                           )}

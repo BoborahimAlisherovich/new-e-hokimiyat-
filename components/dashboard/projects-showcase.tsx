@@ -14,7 +14,7 @@ const groupMeta = {
     title: "Mahalliy loyihalar",
     icon: Landmark,
     accent: "from-emerald-500 to-teal-500",
-    tone: "bg-emerald-50 border-emerald-100",
+    tone: "bg-success-soft border-border",
   },
   XALQARO: {
     title: "Xalqaro loyihalar",
@@ -26,7 +26,7 @@ const groupMeta = {
     title: "Driver loyihalar",
     icon: Rocket,
     accent: "from-amber-500 to-orange-500",
-    tone: "bg-amber-50 border-amber-100",
+    tone: "bg-warning-soft border-border",
   },
 } as const
 
@@ -80,22 +80,22 @@ export function ProjectsShowcase() {
       <div className="border-b border-[#d9efe4] bg-[linear-gradient(90deg,rgba(3,105,161,0.06),rgba(16,185,129,0.12),rgba(245,158,11,0.08))] px-6 py-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">Loyihalar portfeli</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-success">Loyihalar portfeli</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Ochiq va vizual loyiha oynasi</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
               Mahalliy, xalqaro va driver loyihalar real portfel ma'lumotlari asosida ko'rsatiladi. Har bir blokda hajm, holat va joriy progress birinchi ko'rinishda chiqadi.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge className="rounded-full bg-white px-3 py-1 text-emerald-700 shadow-sm">{projects.length} ta loyiha</Badge>
+            <Badge className="rounded-full bg-white px-3 py-1 text-success shadow-sm">{projects.length} ta loyiha</Badge>
             {canManage && (
-              <Button asChild className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
+              <Button asChild className="rounded-full bg-success text-white hover:bg-success">
                 <Link href="/dashboard/projects?action=create">
                   Yangi loyiha
                 </Link>
               </Button>
             )}
-            <Button asChild variant="outline" className="rounded-full border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50">
+            <Button asChild variant="outline" className="rounded-full border-border bg-white text-success-soft-foreground hover:bg-success-soft">
               <Link href="/dashboard/projects">
                 {canManage ? "Portfel boshqaruvi" : "Portfelni ochish"}
               </Link>
@@ -131,7 +131,7 @@ export function ProjectsShowcase() {
                 <div className="rounded-2xl bg-background p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Resurs</p>
                   <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-foreground">
-                    <BadgeDollarSign className="h-4 w-4 text-emerald-600" />
+                    <BadgeDollarSign className="h-4 w-4 text-success" />
                     {group.budget}
                   </p>
                 </div>
@@ -163,7 +163,7 @@ export function ProjectsShowcase() {
                         <span>{item.progress}%</span>
                       </div>
                       <div className="h-2 rounded-full bg-white">
-                        <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500" style={{ width: `${item.progress}%` }} />
+                        <div className="bg-success h-2 rounded-full" style={{ width: `${item.progress}%` }} />
                       </div>
                     </div>
                   </div>

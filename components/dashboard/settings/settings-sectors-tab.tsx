@@ -341,7 +341,7 @@ export function SettingsSectorsTab({ t }: SettingsSectorsTabProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => handleDelete(sector.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-destructive-soft-foreground hover:text-destructive-soft-foreground hover:bg-destructive-soft"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

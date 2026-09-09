@@ -264,7 +264,7 @@ export default function OrganizationDetailPage() {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="secondary" className="border-red-200 bg-red-50 text-red-700 shadow-none hover:bg-red-100" disabled={isDeleting}>
+                <Button variant="secondary" className="border-border bg-destructive-soft text-destructive-soft-foreground shadow-none hover:bg-destructive-soft" disabled={isDeleting}>
                   {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                   O'chirish
                 </Button>
@@ -291,12 +291,12 @@ export default function OrganizationDetailPage() {
               icon={Building2}
               title="Asosiy ko'rsatkichlar"
               countLabel="Tashkilot holati"
-              accentClassName="bg-gradient-to-r from-cyan-50 via-white to-cyan-50/30"
+              accentClassName="bg-primary-soft"
             >
               <div className="space-y-6 p-6">
-                <div className="rounded-[26px] border border-white/70 bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-5">
+                <div className="bg-background rounded-[26px] border border-white/70 p-5">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary-soft text-primary">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary-soft text-primary-soft-foreground">
                       <Building2 className="h-8 w-8" />
                     </div>
                     <div className="min-w-0">
@@ -309,17 +309,17 @@ export default function OrganizationDetailPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[22px] border border-emerald-100 bg-emerald-50 p-4 text-center">
-                    <p className="text-2xl font-semibold text-emerald-700">{completedTasks}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-emerald-600">Bajarilgan</p>
+                  <div className="rounded-[22px] border border-border bg-success-soft p-4 text-center">
+                    <p className="text-2xl font-semibold text-success">{completedTasks}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-success">Bajarilgan</p>
                   </div>
-                  <div className="rounded-[22px] border border-amber-100 bg-amber-50 p-4 text-center">
-                    <p className="text-2xl font-semibold text-amber-700">{pendingTasks}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-amber-600">Jarayonda</p>
+                  <div className="rounded-[22px] border border-border bg-warning-soft p-4 text-center">
+                    <p className="text-2xl font-semibold text-warning">{pendingTasks}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-warning">Jarayonda</p>
                   </div>
-                  <div className="rounded-[22px] border border-rose-100 bg-rose-50 p-4 text-center">
-                    <p className="text-2xl font-semibold text-rose-700">{overdueTasks}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-rose-600">Kechikkan</p>
+                  <div className="rounded-[22px] border border-border bg-destructive-soft p-4 text-center">
+                    <p className="text-2xl font-semibold text-destructive">{overdueTasks}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-destructive">Kechikkan</p>
                   </div>
                 </div>
 
@@ -338,7 +338,7 @@ export default function OrganizationDetailPage() {
             icon={Users}
             title="Tarkib va topshiriqlar"
             countLabel="Jamoa va yuklama"
-            accentClassName="bg-gradient-to-r from-emerald-50 via-white to-emerald-50/30"
+            accentClassName="bg-success-soft"
           >
             <Tabs defaultValue="users" className="w-full">
               <div className="border-b border-border px-6 pt-6">
@@ -392,7 +392,7 @@ export default function OrganizationDetailPage() {
                             {user.is_active !== undefined ? (
                               <Badge
                                 variant="outline"
-                                className={user.is_active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}
+                                className={user.is_active ? "border-border bg-success-soft text-success-soft-foreground" : "border-border bg-destructive-soft text-destructive-soft-foreground"}
                               >
                                 {user.is_active ? "Faol" : "Nofaol"}
                               </Badge>
@@ -414,7 +414,7 @@ export default function OrganizationDetailPage() {
                       icon={ClipboardList}
                       title="Topshiriqlar mavjud emas"
                       description="Yangi topshiriqlar biriktirilganda ular shu bo'limda ko'rinadi."
-                      tone="from-amber-100 to-amber-50 text-amber-700"
+                      tone="from-amber-100 to-amber-50 text-warning"
                     />
                   ) : (
                     <div className="divide-y divide-border">

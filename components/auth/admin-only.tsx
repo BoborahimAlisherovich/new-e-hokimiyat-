@@ -46,7 +46,7 @@ export function AdminOnly({ children, title = "Admin Panel" }: AdminOnlyProps) {
         <Header title={title} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
+            <RefreshCw className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-muted-foreground">Yuklanmoqda...</p>
           </div>
         </div>
@@ -66,8 +66,8 @@ export function AdminOnly({ children, title = "Admin Panel" }: AdminOnlyProps) {
             className="text-center space-y-4"
           >
             <div className="flex justify-center">
-              <div className="rounded-full bg-red-100 p-6">
-                <ShieldAlert className="h-16 w-16 text-red-600" />
+              <div className="rounded-full bg-destructive-soft p-6">
+                <ShieldAlert className="h-16 w-16 text-destructive" />
               </div>
             </div>
             <div className="space-y-2">

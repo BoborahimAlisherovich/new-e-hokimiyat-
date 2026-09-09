@@ -107,10 +107,10 @@ export default function NotificationsPage() {
       <div className="p-6">
         {/* Modern geometric background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-gradient-to-bl from-indigo-200/15 to-transparent rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-tr from-purple-200/10 to-transparent rounded-full blur-xl" />
-          <div className="absolute top-1/3 left-1/2 w-48 h-48 bg-gradient-to-br from-cyan-200/8 to-transparent rounded-full blur-lg" />
+          <div className="bg-primary-soft absolute top-0 left-0 w-96 h-96 rounded-full blur-3xl" />
+          <div className="bg-primary-soft absolute top-1/2 right-0 w-80 h-80 rounded-full blur-2xl" />
+          <div className="bg-[var(--st-tekshiruvda-bg)] absolute bottom-0 left-1/4 w-64 h-64 rounded-full blur-xl" />
+          <div className="bg-primary-soft absolute top-1/3 left-1/2 w-48 h-48 rounded-full blur-lg" />
         </div>
         
         <div ref={pageRef} className="relative z-10 p-6 space-y-6">
@@ -135,10 +135,10 @@ export default function NotificationsPage() {
             </div>
           ) : error ? (
             <div className="text-center py-16">
-              <p className="text-red-500">{error}</p>
+              <p className="text-destructive">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
               >
                 {t.pages.notifications.retry}
               </button>

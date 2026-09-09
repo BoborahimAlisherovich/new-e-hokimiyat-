@@ -275,7 +275,7 @@ export default function NewAppealPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <div className="rounded-2xl border border-border bg-primary-soft px-4 py-3 text-sm text-primary-soft-foreground">
                 Murojaatchi ma&apos;lumotlari bir marta kiritiladi va quyidagi murojaatlar uchun umumiy tartibda saqlanadi.
               </div>
             </CardContent>

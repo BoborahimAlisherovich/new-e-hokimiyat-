@@ -185,7 +185,7 @@ export default function OrganizationsPage() {
             <Button
               data-gsap-action
               onClick={() => setIsCreateOpen(true)}
-              className="h-9 w-9 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-0 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md md:w-auto md:px-4"
+              className="bg-[var(--st-tekshiruvda-bg)] h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md md:w-auto md:px-4"
               aria-label={{
                 uz: "Yangi tashkilot",
                 "uz-cyrl": "Янги ташкилот",
@@ -257,10 +257,10 @@ export default function OrganizationsPage() {
               </div>
             ) : error ? (
               <div className="rounded-[26px] border border-white/70 bg-white/78 py-16 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl">
-                <p className="text-red-500">{error === "load_error" ? t.pages.organizations.loadError : error}</p>
+                <p className="text-destructive">{error === "load_error" ? t.pages.organizations.loadError : error}</p>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
                 >
                   {t.pages.organizations.retry}
                 </button>

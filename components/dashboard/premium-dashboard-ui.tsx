@@ -74,7 +74,7 @@ const toneStyles: Record<Tone, { chip: string; value: string; bar: string }> = {
 }
 
 /**
- * Eski chaqiruv joylari `textColor: "text-emerald-600"` kabi xom class
+ * Eski chaqiruv joylari `textColor: "text-success"` kabi xom class
  * uzatadi. Ularni o'zgartirmasdan to'g'ri rangga solish uchun tonni
  * shu satrlardan aniqlaymiz.
  */

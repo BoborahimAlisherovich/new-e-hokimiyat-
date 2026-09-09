@@ -51,8 +51,8 @@ export function PremiumMessageBubble({
           className={cn(
             "rounded-[22px] border px-4 py-3 shadow-sm",
             isRight
-              ? "border-border bg-gradient-to-br from-cyan-500 to-teal-500 text-white"
-              : "border-border bg-gradient-to-br from-slate-50 to-white text-secondary-foreground",
+              ? "bg-primary border-border text-white"
+              : "bg-background border-border text-secondary-foreground",
           )}
         >
           {children}
@@ -70,7 +70,7 @@ export function PremiumSystemNote({
 }) {
   return (
     <div className="flex justify-center">
-      <div className="rounded-full border border-border bg-primary-soft px-3 py-1 text-xs font-medium text-primary">
+      <div className="rounded-full border border-border bg-primary-soft px-3 py-1 text-xs font-medium text-primary-soft-foreground">
         {children}
       </div>
     </div>
@@ -82,7 +82,7 @@ export function PremiumTimelineItem({
   title,
   description,
   meta,
-  tone = "bg-primary-soft text-primary",
+  tone = "bg-primary-soft text-primary-soft-foreground",
 }: {
   icon: LucideIcon
   title: React.ReactNode
@@ -295,8 +295,8 @@ export function PremiumInfoItem({
 export function PremiumCallout({
   title,
   description,
-  tone = "border-emerald-200 bg-emerald-50",
-  titleClassName = "text-emerald-700",
+  tone = "border-border bg-success-soft",
+  titleClassName = "text-success",
   children,
 }: {
   title: string
@@ -374,7 +374,7 @@ export function PremiumChoiceItem({
       className={cn(
         "flex w-full items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition",
         selected
-          ? "border-border-strong bg-primary-soft text-primary"
+          ? "border-border-strong bg-primary-soft text-primary-soft-foreground"
           : "border-border bg-white text-secondary-foreground hover:bg-background",
       )}
     >

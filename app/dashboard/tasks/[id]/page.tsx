@@ -604,7 +604,7 @@ export default function TaskDetailPage() {
             {canMarkComplete && (
               <Button
                 variant="secondary"
-                className="border-white/20 bg-emerald-500/20 text-white shadow-none hover:bg-emerald-500/30"
+                className="border-white/20 bg-success text-white shadow-none hover:bg-success"
                 onClick={handleMarkComplete}
                 disabled={isSaving}
               >
@@ -738,7 +738,7 @@ export default function TaskDetailPage() {
             {canReassign && (
               <Button
                 variant="secondary"
-                className="border-orange-200 bg-orange-50 text-orange-700 shadow-none hover:bg-orange-100"
+                className="border-border bg-warning-soft text-warning-soft-foreground shadow-none hover:bg-warning-soft"
                 onClick={handleRejectTask}
                 disabled={isSaving}
               >
@@ -749,7 +749,7 @@ export default function TaskDetailPage() {
 
             {canClose && (
               <Button 
-                className="bg-white text-emerald-700 hover:bg-emerald-50"
+                className="bg-white text-success-soft-foreground hover:bg-success-soft"
                 onClick={handleApproveTask}
                 disabled={isSaving}
               >
@@ -791,7 +791,7 @@ export default function TaskDetailPage() {
                       {isOverdue && " (kechiktirilgan)"}
                     </>
                   }
-                  valueClassName={isOverdue ? "text-red-600" : undefined}
+                  valueClassName={isOverdue ? "text-destructive" : undefined}
                 />
                 <PremiumInfoItem
                   icon={User}
@@ -874,7 +874,7 @@ export default function TaskDetailPage() {
             {/* Chat / Timeline */}
             <PremiumActivityCard>
               <Tabs defaultValue="chat" className="w-full">
-                <CardHeader className="border-b border-border bg-gradient-to-r from-cyan-50 via-white to-emerald-50/40">
+                <CardHeader className="bg-primary-soft border-b border-border">
                   <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1">
                     <TabsTrigger value="chat" className="gap-2">
                       <MessageSquare className="h-4 w-4" />
@@ -999,14 +999,14 @@ export default function TaskDetailPage() {
                     <div className="flex flex-col gap-2">
                       {/* Audio Recording UI */}
                       {isRecording && (
-                        <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
-                          <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                          <span className="text-sm text-red-600 font-medium">Yozib olinmoqda...</span>
+                        <div className="flex items-center gap-2 p-2 bg-destructive-soft rounded-lg border border-border">
+                          <div className="h-3 w-3 bg-destructive rounded-full animate-pulse" />
+                          <span className="text-sm text-destructive font-medium">Yozib olinmoqda...</span>
                           <div className="flex-1" />
-                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-emerald-600 border-emerald-300">
+                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-success border-success">
                             Tugatish
                           </Button>
-                          <Button variant="outline" size="sm" onClick={cancelRecording} className="text-red-600 border-red-300">
+                          <Button variant="outline" size="sm" onClick={cancelRecording} className="text-destructive border-destructive">
                             Bekor qilish
                           </Button>
                         </div>
@@ -1014,10 +1014,10 @@ export default function TaskDetailPage() {
                       
                       {/* Audio Preview */}
                       {audioBlob && !isRecording && (
-                        <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                          <Mic className="h-4 w-4 text-blue-600" />
+                        <div className="flex items-center gap-2 p-2 bg-primary-soft rounded-lg border border-border">
+                          <Mic className="h-4 w-4 text-primary" />
                           <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
-                          <Button size="sm" onClick={sendAudio} className="bg-blue-600 hover:bg-blue-700">
+                          <Button size="sm" onClick={sendAudio} className="bg-primary hover:bg-primary">
                             <Send className="h-3 w-3 mr-1" /> Yuborish
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
@@ -1055,7 +1055,7 @@ export default function TaskDetailPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className={cn("shrink-0", isRecording && "text-red-500")}
+                          className={cn("shrink-0", isRecording && "text-destructive")}
                           type="button"
                           onClick={isRecording ? stopRecording : startRecording}
                           title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
@@ -1092,7 +1092,7 @@ export default function TaskDetailPage() {
                         <div className="flex items-center gap-2 rounded-[22px] border border-border bg-background p-2.5">
                           {chatFile.type.startsWith('image/') ? (
                             <>
-                              <ImageIcon className="h-4 w-4 text-blue-500" />
+                              <ImageIcon className="h-4 w-4 text-primary" />
                               <PremiumImagePreview src={URL.createObjectURL(chatFile)} alt="Tanlangan rasm" className="h-12 w-12" />
                             </>
                           ) : (
@@ -1134,7 +1134,7 @@ export default function TaskDetailPage() {
                   <ScrollArea className="h-[450px] p-4">
                     <div className="space-y-4">
                       {taskExecutions.length === 0 ? (
-                        <div className="rounded-[24px] border border-dashed border-amber-200 bg-amber-50/60 px-4 py-10 text-center text-sm text-muted-foreground">
+                        <div className="rounded-[24px] border border-dashed border-border bg-warning-soft px-4 py-10 text-center text-sm text-muted-foreground">
                           Hozircha tarix yo'q
                         </div>
                       ) : (
@@ -1146,7 +1146,7 @@ export default function TaskDetailPage() {
                               title={(exec.actionType || "ACTION").replace(/_/g, " ")}
                               description={exec.comment || "Izoh yo'q"}
                               meta={`${exec.executedByName || "Tizim"} • ${formatDateTime(exec.createdAt)}`}
-                              tone="bg-amber-100 text-amber-700"
+                              tone="bg-warning-soft text-warning-soft-foreground"
                             />
                           )
                         })
@@ -1206,7 +1206,7 @@ export default function TaskDetailPage() {
             <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="from-cyan-50 via-white to-emerald-50/30">
               <div className="space-y-3">
                 {canMarkComplete && (
-                  <PremiumActionButton icon={CheckCircle2} onClick={handleMarkComplete} disabled={isSaving} className="text-emerald-700">
+                  <PremiumActionButton icon={CheckCircle2} onClick={handleMarkComplete} disabled={isSaving} className="text-success">
                     {isSaving ? "Saqlanmoqda..." : "Bajarildi deb belgilash"}
                   </PremiumActionButton>
                 )}
@@ -1221,7 +1221,7 @@ export default function TaskDetailPage() {
                   </PremiumActionButton>
                 )}
                 {canReassign && (
-                  <PremiumActionButton icon={RotateCcw} onClick={handleRejectTask} disabled={isSaving} className="text-amber-700">
+                  <PremiumActionButton icon={RotateCcw} onClick={handleRejectTask} disabled={isSaving} className="text-warning">
                     Qayta ijroga yuborish
                   </PremiumActionButton>
                 )}

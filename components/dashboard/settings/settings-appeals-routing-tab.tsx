@@ -211,7 +211,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                             <span className="text-xs text-muted-foreground">Mas'ul tashkilot belgilanmagan</span>
                           ) : (
                             orgs.slice(0, 6).map((org) => (
-                              <Badge key={org.id} className="rounded-full bg-primary-soft text-primary hover:bg-primary-soft">
+                              <Badge key={org.id} className="rounded-full bg-primary-soft text-primary-soft-foreground hover:bg-primary-soft">
                                 <Building2 className="mr-1 h-3 w-3" />
                                 {org.short_name ? `${org.short_name}` : org.name}
                               </Badge>
@@ -286,7 +286,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
                     onClick={() => toggleOrg(org.id)}
                     className={[
                       "w-full rounded-2xl border px-4 py-3 text-left text-sm transition-colors",
-                      selected ? "border-border bg-primary-soft text-primary" : "border-border bg-white hover:bg-background",
+                      selected ? "border-border bg-primary-soft text-primary-soft-foreground" : "border-border bg-white hover:bg-background",
                     ].join(" ")}
                   >
                     <span className="font-medium">{org.short_name ? `${org.name} (${org.short_name})` : org.name}</span>

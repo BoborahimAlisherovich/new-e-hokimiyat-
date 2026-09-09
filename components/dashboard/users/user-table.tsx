@@ -111,7 +111,7 @@ export function UserTable({ users }: UserTableProps) {
       icon={Users}
       title={tr.listTitle}
       countLabel={`${users.length} ${tr.usersCount}`}
-      accentClassName="bg-gradient-to-r from-blue-50/55 via-white/30 to-indigo-50/40"
+      accentClassName="bg-primary-soft"
     >
       <div className="grid gap-3 p-3 md:hidden">
         {users.map((user, index) => {
@@ -190,7 +190,7 @@ export function UserTable({ users }: UserTableProps) {
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-2 border-border bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
+            <TableRow className="bg-primary-soft border-b-2 border-border">
               <TableHead className="font-bold text-foreground py-4 text-sm">FIO</TableHead>
               <TableHead className="font-bold text-foreground py-4 text-sm">Login</TableHead>
               <TableHead className="hidden font-bold text-foreground py-4 text-sm xl:table-cell">{tr.position}</TableHead>
@@ -209,7 +209,7 @@ export function UserTable({ users }: UserTableProps) {
               return (
                 <TableRow
                   key={user.id}
-                  className="group cursor-pointer border-b border-border transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-cyan-50/35"
+                  className="hover:bg-primary-soft group cursor-pointer border-b border-border transition-all duration-200"
                   onClick={() => handleRowClick(user)}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
@@ -231,7 +231,7 @@ export function UserTable({ users }: UserTableProps) {
                   </TableCell>
                   <TableCell className="py-4 whitespace-normal">
                     <div className="space-y-1 min-w-0">
-                      <code className="max-w-full truncate rounded-lg bg-gradient-to-r from-indigo-50/30 to-indigo-50/20 border border-border px-3 py-1.5 text-sm font-mono font-medium text-secondary-foreground inline-block">
+                      <code className="bg-primary-soft max-w-full truncate rounded-lg border border-border px-3 py-1.5 text-sm font-mono font-medium text-secondary-foreground inline-block">
                         {user.login || "—"}
                       </code>
                       <div className="text-xs text-muted-foreground whitespace-normal break-all">

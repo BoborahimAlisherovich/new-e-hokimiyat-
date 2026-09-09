@@ -159,7 +159,7 @@ export default function RecurringTasksPage() {
             </div>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:from-indigo-700 hover:to-violet-700"
+              className="bg-primary rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:from-indigo-700 hover:to-violet-700"
             >
               <Plus className="mr-2 h-4 w-4" />
               {t.recurringTasks.createNew}
@@ -186,7 +186,7 @@ export default function RecurringTasksPage() {
                   key={task.id}
                   className="overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)] backdrop-blur-xl transition-all hover:shadow-[0_28px_60px_-30px_rgba(14,165,233,0.35)]"
                 >
-                  <div className="border-b border-border bg-gradient-to-r from-violet-50/55 via-white/30 to-transparent px-6 py-4">
+                  <div className="bg-[var(--st-tekshiruvda-bg)] border-b border-border px-6 py-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-foreground">{task.title}</h3>
@@ -195,8 +195,8 @@ export default function RecurringTasksPage() {
                       <span
                         className={`ml-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                           task.status === 'ACTIVE'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-amber-100 text-amber-700'
+                            ? 'bg-success-soft text-success'
+                            : 'bg-warning-soft text-warning'
                         }`}
                       >
                         {task.status === 'ACTIVE' ? t.recurringTasks.statusActive : t.recurringTasks.statusPaused}
@@ -232,7 +232,7 @@ export default function RecurringTasksPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handlePause(task.id as number)}
-                            className="h-8 rounded-lg border-amber-200 text-amber-600 hover:bg-amber-50"
+                            className="h-8 rounded-lg border-border text-warning-soft-foreground hover:bg-warning-soft"
                           >
                             <Pause className="mr-1.5 h-3.5 w-3.5" />
                             {t.recurringTasks.pause}
@@ -242,7 +242,7 @@ export default function RecurringTasksPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleResume(task.id as number)}
-                            className="h-8 rounded-lg border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                            className="h-8 rounded-lg border-border text-success-soft-foreground hover:bg-success-soft"
                           >
                             <Play className="mr-1.5 h-3.5 w-3.5" />
                             {t.recurringTasks.resume}
@@ -252,7 +252,7 @@ export default function RecurringTasksPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleRunNow(task.id as number)}
-                          className="h-8 rounded-lg border-blue-200 text-blue-600 hover:bg-blue-50"
+                          className="h-8 rounded-lg border-border text-primary-soft-foreground hover:bg-primary-soft"
                         >
                           <Zap className="mr-1.5 h-3.5 w-3.5" />
                           {t.recurringTasks.runNow}
@@ -261,7 +261,7 @@ export default function RecurringTasksPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDelete(task.id as number)}
-                          className="h-8 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                          className="h-8 rounded-lg border-border text-destructive-soft-foreground hover:bg-destructive-soft"
                         >
                           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                         </Button>
@@ -475,7 +475,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+            className="bg-primary rounded-xl hover:from-indigo-700 hover:to-violet-700"
           >
             {loading ? t.common.saving : t.common.save}
           </Button>

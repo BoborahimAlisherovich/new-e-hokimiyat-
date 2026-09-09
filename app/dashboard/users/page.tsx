@@ -167,7 +167,7 @@ export default function UsersPage() {
             <Button
               data-gsap-action
               onClick={handleCreateUser}
-              className="h-9 w-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
+              className="bg-primary h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
               aria-label={{
                 uz: "Yangi foydalanuvchi",
                 "uz-cyrl": "Янги фойдаланувчи",

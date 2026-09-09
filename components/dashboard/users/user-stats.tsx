@@ -45,9 +45,9 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       icon: Users,
       gradient: "from-blue-500 to-indigo-600",
       bgGradient: "from-blue-50 to-indigo-50",
-      iconBg: "bg-blue-100",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-200/50"
+      iconBg: "bg-primary-soft",
+      textColor: "text-primary",
+      borderColor: "border-border"
     },
     {
       label: labels.active,
@@ -55,9 +55,9 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       icon: UserCheck,
       gradient: "from-emerald-500 to-teal-600",
       bgGradient: "from-emerald-50 to-teal-50",
-      iconBg: "bg-emerald-100",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-200/50"
+      iconBg: "bg-success-soft",
+      textColor: "text-success",
+      borderColor: "border-border"
     },
     {
       label: labels.inactive,
@@ -65,9 +65,9 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       icon: AlertCircle,
       gradient: "from-red-500 to-rose-600",
       bgGradient: "from-red-50 to-rose-50",
-      iconBg: "bg-red-100",
-      textColor: "text-red-600",
-      borderColor: "border-red-200/50"
+      iconBg: "bg-destructive-soft",
+      textColor: "text-destructive",
+      borderColor: "border-border"
     },
     {
       label: labels.organizations,
@@ -75,9 +75,9 @@ export function UserStats({ total, active, inactive, organizations }: UserStatsP
       icon: Building,
       gradient: "from-violet-500 to-purple-600",
       bgGradient: "from-violet-50 to-purple-50",
-      iconBg: "bg-violet-100",
-      textColor: "text-violet-600",
-      borderColor: "border-violet-200/50"
+      iconBg: "bg-[var(--st-tekshiruvda-bg)]",
+      textColor: "text-[var(--st-tekshiruvda-fg)]",
+      borderColor: "border-border"
     }
   ]
 

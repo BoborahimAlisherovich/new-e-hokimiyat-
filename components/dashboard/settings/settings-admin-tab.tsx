@@ -13,9 +13,9 @@ export function SettingsAdminTab({ t }: SettingsAdminTabProps) {
   return (
     <TabsContent value="admin">
       <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b border-border pb-6">
+        <CardHeader className="bg-background border-b border-border pb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-lg shadow-slate-500/25">
+            <div className="bg-secondary p-2.5 rounded-xl shadow-lg shadow-slate-500/25">
               <Settings className="h-5 w-5 text-white" />
             </div>
             <div>

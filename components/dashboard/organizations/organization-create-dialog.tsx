@@ -141,7 +141,7 @@ export function OrganizationCreateDialog({
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[550px] bg-white/95 backdrop-blur-xl rounded-2xl border-white/50 ring-1 ring-ring/20 shadow-2xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
+            <div className="bg-[var(--st-tekshiruvda-bg)] p-2 rounded-xl">
               <Building2 className="h-5 w-5 text-white" />
             </div>
             {tr.title}
@@ -152,7 +152,7 @@ export function OrganizationCreateDialog({
         <div className="grid gap-5 py-4">
           <div className="space-y-2">
             <Label htmlFor="orgName" className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-violet-500" />
+              <Building2 className="h-4 w-4 text-[var(--st-tekshiruvda-fg)]" />
               {tr.name}
             </Label>
             <Input 
@@ -160,20 +160,20 @@ export function OrganizationCreateDialog({
               value={formData.name}
               onChange={(e) => onChange("name", e.target.value)}
               placeholder={tr.namePlaceholder}
-              className="h-11 rounded-xl border-border focus:border-violet-500 focus:ring-violet-500/20"
+              className="h-11 rounded-xl border-border focus:border-[var(--st-tekshiruvda-bd)] focus:ring-ring/25"
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="orgSector" className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-              <Layers className="h-4 w-4 text-violet-500" />
+              <Layers className="h-4 w-4 text-[var(--st-tekshiruvda-fg)]" />
               {tr.sector}
             </Label>
             <Select
               value={formData.sector_id || "none"}
               onValueChange={(value) => onChange("sector_id", value === "none" ? "" : value)}
             >
-              <SelectTrigger className="h-11 rounded-xl border-border focus:border-violet-500 focus:ring-violet-500/20">
+              <SelectTrigger className="h-11 rounded-xl border-border focus:border-[var(--st-tekshiruvda-bd)] focus:ring-ring/25">
                 <SelectValue placeholder={loadingSectors ? tr.loading : tr.selectSector} />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -186,7 +186,7 @@ export function OrganizationCreateDialog({
               </SelectContent>
             </Select>
             {!loadingSectors && sectors.length === 0 && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <div className="rounded-xl border border-border bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
                 {tr.noSectors}
                 <button
                   type="button"
@@ -202,7 +202,7 @@ export function OrganizationCreateDialog({
           
           <div className="space-y-2">
             <Label htmlFor="orgServicePhone" className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-              <Phone className="h-4 w-4 text-violet-500" />
+              <Phone className="h-4 w-4 text-[var(--st-tekshiruvda-fg)]" />
               {tr.servicePhone}
             </Label>
             <Input 
@@ -211,13 +211,13 @@ export function OrganizationCreateDialog({
               onChange={(e) => onChange("servicePhone", e.target.value.replace(/[^\d+\s()-]/g, ""))}
               placeholder="+998 XX XXX XX XX" 
               inputMode="tel"
-              className="h-11 rounded-xl border-border focus:border-violet-500 focus:ring-violet-500/20"
+              className="h-11 rounded-xl border-border focus:border-[var(--st-tekshiruvda-bd)] focus:ring-ring/25"
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="orgAddress" className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-violet-500" />
+              <MapPin className="h-4 w-4 text-[var(--st-tekshiruvda-fg)]" />
               {tr.address}
             </Label>
             <Textarea 
@@ -226,7 +226,7 @@ export function OrganizationCreateDialog({
               onChange={(e) => onChange("address", e.target.value)}
               placeholder={tr.addressPlaceholder}
               rows={3}
-              className="rounded-xl border-border focus:border-violet-500 focus:ring-violet-500/20 resize-none"
+              className="rounded-xl border-border focus:border-[var(--st-tekshiruvda-bd)] focus:ring-ring/25 resize-none"
             />
           </div>
         </div>
@@ -242,7 +242,7 @@ export function OrganizationCreateDialog({
           <Button 
             onClick={onSubmit} 
             disabled={loading}
-            className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25"
+            className="bg-[var(--st-tekshiruvda-bg)] rounded-xl hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25"
           >
             {loading ? tr.loading : tr.add}
           </Button>

@@ -206,7 +206,7 @@ export default function TelegramBotRegionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-orange-500" />
+            <MapPin className="h-6 w-6 text-warning" />
             Hududlar
           </h1>
           <p className="text-muted-foreground">
@@ -273,7 +273,7 @@ export default function TelegramBotRegionsPage() {
                           <Button 
                             size="sm" 
                             variant="ghost"
-                            className="text-red-500 hover:text-red-600"
+                            className="text-destructive hover:text-destructive"
                             onClick={() => openDeleteDialog(region)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -372,7 +372,7 @@ export default function TelegramBotRegionsPage() {
             <AlertDialogCancel disabled={deleting}>Bekor qilish</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-destructive hover:bg-destructive"
               disabled={deleting}
             >
               {deleting ? "O'chirilmoqda..." : "O'chirish"}

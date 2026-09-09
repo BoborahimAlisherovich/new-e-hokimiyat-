@@ -1,28 +1,28 @@
 export const PRIORITY_COLORS: Record<string, string> = {
   LOW: "bg-background text-muted-foreground border-border",
-  MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
-  HIGH: "bg-rose-50 text-rose-600 border-rose-200",
+  MEDIUM: "bg-warning-soft text-warning-soft-foreground border-border",
+  HIGH: "bg-destructive-soft text-destructive-soft-foreground border-border",
   // Telegram bot priorities
   low: "bg-background text-muted-foreground border-border",
-  medium: "bg-amber-50 text-amber-700 border-amber-200",
-  high: "bg-orange-50 text-orange-600 border-orange-200",
-  urgent: "bg-rose-50 text-rose-600 border-rose-200",
+  medium: "bg-warning-soft text-warning-soft-foreground border-border",
+  high: "bg-warning-soft text-warning-soft-foreground border-border",
+  urgent: "bg-destructive-soft text-destructive-soft-foreground border-border",
 }
 
 export const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-blue-50 text-blue-600 border-blue-100",
-  IN_PROGRESS: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  RESOLVED: "bg-teal-50 text-teal-600 border-teal-100",
-  REJECTED: "bg-rose-50 text-rose-600 border-rose-100",
-  OVERDUE: "bg-red-50 text-red-600 border-red-100",
+  PENDING: "bg-primary-soft text-primary-soft-foreground border-border",
+  IN_PROGRESS: "bg-success-soft text-success-soft-foreground border-border",
+  RESOLVED: "bg-success-soft text-success-soft-foreground border-border",
+  REJECTED: "bg-destructive-soft text-destructive-soft-foreground border-border",
+  OVERDUE: "bg-destructive-soft text-destructive-soft-foreground border-border",
   // Telegram bot statuses
-  pending_ai: "bg-blue-50 text-blue-600 border-blue-100",
-  pending_review: "bg-amber-50 text-amber-600 border-amber-100",
-  approved: "bg-teal-50 text-teal-600 border-teal-100",
-  rejected: "bg-rose-50 text-rose-600 border-rose-100",
-  responded: "bg-violet-50 text-violet-600 border-violet-100",
-  forwarded: "bg-primary-soft text-primary border-border",
-  resolved: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  pending_ai: "bg-primary-soft text-primary-soft-foreground border-border",
+  pending_review: "bg-warning-soft text-warning-soft-foreground border-border",
+  approved: "bg-success-soft text-success-soft-foreground border-border",
+  rejected: "bg-destructive-soft text-destructive-soft-foreground border-border",
+  responded: "bg-[var(--st-tekshiruvda-bg)] text-[var(--st-tekshiruvda-fg)] border-border",
+  forwarded: "bg-primary-soft text-primary-soft-foreground border-border",
+  resolved: "bg-success-soft text-success-soft-foreground border-border",
 }
 
 export const PRIORITY_LABELS: Record<string, string> = {

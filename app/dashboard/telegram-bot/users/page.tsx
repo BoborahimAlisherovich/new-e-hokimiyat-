@@ -336,7 +336,7 @@ export default function TelegramBotUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-blue-500" />
+            <Users className="h-6 w-6 text-primary" />
             Telegram Foydalanuvchilar
             <Badge variant="secondary" className="ml-2">{totalUsers}</Badge>
           </h1>
@@ -347,7 +347,7 @@ export default function TelegramBotUsersPage() {
         <div className="flex gap-2">
           <Button 
             onClick={() => setShowBroadcastDialog(true)} 
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-[var(--st-tekshiruvda-bg)] hover:bg-[var(--st-tekshiruvda-bg)] text-white"
           >
             <Megaphone className="h-4 w-4 mr-2" />
             Barchaga xabar
@@ -458,7 +458,7 @@ export default function TelegramBotUsersPage() {
                           <Button 
                             size="sm" 
                             variant="ghost"
-                            className="text-blue-500"
+                            className="text-primary"
                             onClick={() => openMessageDialog(user)}
                             title="Xabar yuborish"
                           >
@@ -467,7 +467,7 @@ export default function TelegramBotUsersPage() {
                           <Button 
                             size="sm" 
                             variant="ghost"
-                            className={user.is_blocked ? "text-emerald-500" : "text-red-500"}
+                            className={user.is_blocked ? "text-success" : "text-destructive"}
                             onClick={() => toggleBlock(user)}
                             title={user.is_blocked ? "Blokdan chiqarish" : "Bloklash"}
                           >
@@ -622,7 +622,7 @@ export default function TelegramBotUsersPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-500" />
+              <MessageSquare className="h-5 w-5 text-primary" />
               Xabar yuborish
             </DialogTitle>
             <DialogDescription>
@@ -770,7 +770,7 @@ export default function TelegramBotUsersPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-purple-500" />
+              <Megaphone className="h-5 w-5 text-[var(--st-tekshiruvda-fg)]" />
               Barchaga xabar yuborish
             </DialogTitle>
             <DialogDescription>
@@ -779,8 +779,8 @@ export default function TelegramBotUsersPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <div className="p-3 bg-warning-soft border border-border rounded-lg">
+              <p className="text-sm text-warning">
                 ⚠️ Diqqat! Bu xabar barcha {totalUsers} ta bloklanmagan foydalanuvchiga yuboriladi.
               </p>
             </div>
@@ -911,7 +911,7 @@ export default function TelegramBotUsersPage() {
               Bekor qilish
             </Button>
             <Button 
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[var(--st-tekshiruvda-bg)] hover:bg-[var(--st-tekshiruvda-bg)]"
               onClick={sendBroadcast}
               disabled={sendingBroadcast || (!broadcastText && !broadcastFileUrl && !broadcastFile)}
             >

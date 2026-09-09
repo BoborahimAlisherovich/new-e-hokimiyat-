@@ -116,10 +116,10 @@ export function OrganizationFilters({
       icon={Building}
       title={tr.title}
       description={tr.desc}
-      accentClassName="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50"
+      accentClassName="bg-[var(--st-tekshiruvda-bg)]"
       badge={
         hasActiveFilters ? (
-          <PremiumCountBadge className="border-violet-200 bg-violet-100 text-violet-700">
+          <PremiumCountBadge className="border-border bg-[var(--st-tekshiruvda-bg)] text-[var(--st-tekshiruvda-fg)]">
             <Sparkles className="mr-1 h-3 w-3" />
             {filteredCount} / {totalCount} {tr.itemShort}
           </PremiumCountBadge>
@@ -127,7 +127,7 @@ export function OrganizationFilters({
       }
       clearAction={
         hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-destructive-soft-foreground hover:bg-destructive-soft">
             <X className="mr-1 h-4 w-4" />
             {tr.clear}
           </Button>
@@ -142,11 +142,11 @@ export function OrganizationFilters({
                 placeholder={tr.search}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-violet-200 focus:border-violet-400 transition-all"
+                className="rounded-xl border-border bg-white/90 pl-9 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)] transition-all"
               />
             </div>
             <Select value={typeFilter} onValueChange={onTypeChange}>
-              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+              <SelectTrigger className="w-full lg:w-[220px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
                 <Building className="mr-2 h-4 w-4 text-muted-foreground" />
                 <SelectValue placeholder={tr.sector} />
               </SelectTrigger>
@@ -160,7 +160,7 @@ export function OrganizationFilters({
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-violet-200 focus:border-violet-400">
+              <SelectTrigger className="w-full lg:w-[150px] rounded-xl border-border bg-white/90 focus:ring-2 focus:ring-ring/25 focus:border-[var(--st-tekshiruvda-bd)]">
                 <SelectValue placeholder={tr.status} />
               </SelectTrigger>
               <SelectContent>
@@ -173,7 +173,7 @@ export function OrganizationFilters({
           {showCreateButton && (
             <Button 
               onClick={onCreate}
-              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md sm:w-auto"
+              className="bg-[var(--st-tekshiruvda-bg)] w-full rounded-xl text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md sm:w-auto"
             >
               <Plus className="mr-2 h-4 w-4" />
               {tr.create}

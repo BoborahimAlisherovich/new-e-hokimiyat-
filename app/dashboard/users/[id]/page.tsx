@@ -218,7 +218,7 @@ export default function UserDetailPage() {
               icon={AlertTriangle}
               title="Ma'lumot topilmadi"
               description="Ro'yxatga qayting yoki boshqa foydalanuvchini tanlang."
-              tone="from-amber-100 to-orange-100 text-amber-600"
+              tone="from-amber-100 to-orange-100 text-warning"
             />
           </div>
         </DashboardDetailFrame>
@@ -268,10 +268,10 @@ export default function UserDetailPage() {
             icon={UserIcon}
             title="Asosiy ma'lumotlar"
             countLabel="Shaxsiy va tizim ma'lumotlari"
-            accentClassName="bg-gradient-to-r from-cyan-50 via-white to-cyan-50/40"
+            accentClassName="bg-primary-soft"
           >
             <div className="space-y-6 p-6">
-              <div className="flex flex-col gap-4 rounded-[26px] border border-white/70 bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 p-5 sm:flex-row sm:items-center">
+              <div className="bg-background flex flex-col gap-4 rounded-[26px] border border-white/70 p-5 sm:flex-row sm:items-center">
                 <UserAvatar
                   firstName={user.first_name}
                   lastName={user.last_name}
@@ -345,7 +345,7 @@ export default function UserDetailPage() {
               icon={Shield}
               title="Holat boshqaruvi"
               countLabel="Tezkor amallar"
-              accentClassName="bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40"
+              accentClassName="bg-success-soft"
             >
               <div className="space-y-3 p-6">
                 <Button
@@ -360,7 +360,7 @@ export default function UserDetailPage() {
 
                 {user.status === "BLOKLANGAN" ? (
                   <Button
-                    className="h-11 w-full justify-start rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    className="h-11 w-full justify-start rounded-2xl border-border bg-success-soft text-success-soft-foreground hover:bg-success-soft"
                     variant="outline"
                     onClick={handleUnblock}
                     disabled={actionLoading}
@@ -370,7 +370,7 @@ export default function UserDetailPage() {
                   </Button>
                 ) : (
                   <Button
-                    className="h-11 w-full justify-start rounded-2xl border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    className="h-11 w-full justify-start rounded-2xl border-border bg-destructive-soft text-destructive-soft-foreground hover:bg-destructive-soft"
                     variant="outline"
                     onClick={handleBlock}
                     disabled={actionLoading || user.status === "ARXIV"}
@@ -382,7 +382,7 @@ export default function UserDetailPage() {
 
                 {user.status !== "ARXIV" && (
                   <Button
-                    className="h-11 w-full justify-start rounded-2xl border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    className="h-11 w-full justify-start rounded-2xl border-border bg-warning-soft text-warning-soft-foreground hover:bg-warning-soft"
                     variant="outline"
                     onClick={handleArchive}
                     disabled={actionLoading}

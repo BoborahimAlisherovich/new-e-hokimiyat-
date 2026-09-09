@@ -46,28 +46,28 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  YANGI: "bg-blue-100 text-blue-700",
-  IJRODA: "bg-amber-100 text-amber-700",
-  TEKSHIRUVDA: "bg-purple-100 text-purple-700",
-  QAYTA_IJROGA_YUBORILDI: "bg-orange-100 text-orange-700",
-  MUDDATI_KECH: "bg-red-100 text-red-700",
-  BAJARILDI: "bg-emerald-100 text-emerald-700",
-  NAZORATDAN_YECHILDI: "bg-teal-100 text-teal-700",
-  pending_review: "bg-yellow-100 text-yellow-700",
-  pending_ai: "bg-primary-soft text-primary",
-  approved: "bg-green-100 text-green-700",
-  responded: "bg-primary-soft text-primary",
-  resolved: "bg-emerald-100 text-emerald-700",
+  YANGI: "bg-primary-soft text-primary-soft-foreground",
+  IJRODA: "bg-warning-soft text-warning-soft-foreground",
+  TEKSHIRUVDA: "bg-[var(--st-tekshiruvda-bg)] text-[var(--st-tekshiruvda-fg)]",
+  QAYTA_IJROGA_YUBORILDI: "bg-warning-soft text-warning-soft-foreground",
+  MUDDATI_KECH: "bg-destructive-soft text-destructive-soft-foreground",
+  BAJARILDI: "bg-success-soft text-success-soft-foreground",
+  NAZORATDAN_YECHILDI: "bg-success-soft text-success-soft-foreground",
+  pending_review: "bg-warning-soft text-warning-soft-foreground",
+  pending_ai: "bg-primary-soft text-primary-soft-foreground",
+  approved: "bg-success-soft text-success-soft-foreground",
+  responded: "bg-primary-soft text-primary-soft-foreground",
+  resolved: "bg-success-soft text-success-soft-foreground",
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  FAVQULODDA: "bg-red-100 text-red-700 border-red-200",
-  YUQORI: "bg-orange-100 text-orange-700 border-orange-200",
-  ODDIY: "bg-blue-100 text-blue-700 border-blue-200",
+  FAVQULODDA: "bg-destructive-soft text-destructive-soft-foreground border-border",
+  YUQORI: "bg-warning-soft text-warning-soft-foreground border-border",
+  ODDIY: "bg-primary-soft text-primary-soft-foreground border-border",
   PAST: "bg-muted text-muted-foreground border-border",
-  high: "bg-red-100 text-red-700 border-red-200",
-  medium: "bg-orange-100 text-orange-700 border-orange-200",
-  low: "bg-blue-100 text-blue-700 border-blue-200",
+  high: "bg-destructive-soft text-destructive-soft-foreground border-border",
+  medium: "bg-warning-soft text-warning-soft-foreground border-border",
+  low: "bg-primary-soft text-primary-soft-foreground border-border",
 }
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -151,7 +151,7 @@ export default function OrgDashboard() {
     return (
       <Card className="bg-white/80">
         <CardContent className="p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
           <p className="text-lg font-medium text-secondary-foreground">
             {error || "Ma'lumotlar yuklanmadi"}
           </p>
@@ -168,7 +168,7 @@ export default function OrgDashboard() {
       value: tasks.total,
       icon: ListTodo,
       gradient: "from-indigo-500 to-violet-500",
-      bgColor: "bg-gradient-to-br from-indigo-500/12 to-violet-500/12",
+      bgColor: "bg-primary",
       iconColor: "text-primary",
       sub: `${tasks.completion_rate}% bajarilgan`,
     },
@@ -177,8 +177,8 @@ export default function OrgDashboard() {
       value: tasks.new + tasks.in_progress + tasks.resubmitted,
       icon: Clock,
       gradient: "from-amber-500 to-orange-500",
-      bgColor: "bg-gradient-to-br from-amber-500/10 to-orange-500/10",
-      iconColor: "text-amber-600",
+      bgColor: "bg-warning",
+      iconColor: "text-warning",
       sub: `${tasks.new} yangi, ${tasks.in_progress} ijroda`,
     },
     {
@@ -186,8 +186,8 @@ export default function OrgDashboard() {
       value: tasks.completed,
       icon: CheckCircle,
       gradient: "from-emerald-500 to-cyan-500",
-      bgColor: "bg-gradient-to-br from-emerald-500/12 to-cyan-500/12",
-      iconColor: "text-emerald-600",
+      bgColor: "bg-success",
+      iconColor: "text-success",
       sub: tasks.total > 0 ? `${Math.round((tasks.completed / tasks.total) * 100)}%` : "0%",
     },
     {
@@ -195,8 +195,8 @@ export default function OrgDashboard() {
       value: tasks.overdue,
       icon: AlertCircle,
       gradient: "from-rose-500 to-pink-500",
-      bgColor: "bg-gradient-to-br from-rose-500/12 to-pink-500/12",
-      iconColor: "text-rose-600",
+      bgColor: "bg-destructive",
+      iconColor: "text-destructive",
       sub: tasks.overdue > 0 ? "E'tibor talab qiladi!" : "Yo'q",
     },
   ]
@@ -207,28 +207,28 @@ export default function OrgDashboard() {
       value: `${data.service.target_review_days} kun`,
       sub: "Yangi murojaatni dastlabki ko'rish muddati",
       icon: ShieldCheck,
-      tone: "bg-primary-soft text-primary",
+      tone: "bg-primary-soft text-primary-soft-foreground",
     },
     {
       label: "Javob berish standarti",
       value: `${data.service.target_response_days} kun`,
       sub: "Fuqaroga rasmiy javob yuborish muddati",
       icon: Clock,
-      tone: "bg-amber-50 text-amber-700",
+      tone: "bg-warning-soft text-warning-soft-foreground",
     },
     {
       label: "O'rtacha yechim vaqti",
       value: appeals.avg_resolution_days ? `${appeals.avg_resolution_days} kun` : "—",
       sub: "Yopilgan murojaatlar asosida hisoblandi",
       icon: TrendingUp,
-      tone: "bg-emerald-50 text-emerald-700",
+      tone: "bg-success-soft text-success-soft-foreground",
     },
     {
       label: "Fuqarolar bahosi",
       value: appeals.average_rating ? `${appeals.average_rating}/5` : "Baholanmagan",
       sub: appeals.rated_count > 0 ? `${appeals.rated_count} ta baholangan murojaat` : "Hali baho kelmagan",
       icon: Star,
-      tone: "bg-rose-50 text-rose-700",
+      tone: "bg-destructive-soft text-destructive-soft-foreground",
     },
   ]
 
@@ -239,7 +239,7 @@ export default function OrgDashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="bg-gradient-to-r from-indigo-500/5 via-violet-500/5 to-purple-500/5 border-border">
+        <Card className="bg-primary border-border">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="p-3 rounded-xl bg-primary">
               <Building2 className="h-7 w-7 text-primary" />
@@ -312,21 +312,21 @@ export default function OrgDashboard() {
             </CardHeader>
             <CardContent className="pb-5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-blue-50/80 text-center">
-                  <p className="text-2xl font-bold text-blue-700">{appeals.total}</p>
-                  <p className="text-xs text-blue-600 mt-0.5">Jami</p>
+                <div className="p-3 rounded-lg bg-primary-soft text-center">
+                  <p className="text-2xl font-bold text-primary">{appeals.total}</p>
+                  <p className="text-xs text-primary mt-0.5">Jami</p>
                 </div>
-                <div className="p-3 rounded-lg bg-yellow-50/80 text-center">
-                  <p className="text-2xl font-bold text-yellow-700">{appeals.pending}</p>
-                  <p className="text-xs text-yellow-600 mt-0.5">Kutilmoqda</p>
+                <div className="p-3 rounded-lg bg-warning-soft text-center">
+                  <p className="text-2xl font-bold text-warning">{appeals.pending}</p>
+                  <p className="text-xs text-warning mt-0.5">Kutilmoqda</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-50/80 text-center">
-                  <p className="text-2xl font-bold text-green-700">{appeals.responded}</p>
-                  <p className="text-xs text-green-600 mt-0.5">Javob berilgan</p>
+                <div className="p-3 rounded-lg bg-success-soft text-center">
+                  <p className="text-2xl font-bold text-success">{appeals.responded}</p>
+                  <p className="text-xs text-success mt-0.5">Javob berilgan</p>
                 </div>
-                <div className="p-3 rounded-lg bg-emerald-50/80 text-center">
-                  <p className="text-2xl font-bold text-emerald-700">{appeals.resolved}</p>
-                  <p className="text-xs text-emerald-600 mt-0.5">Hal qilingan</p>
+                <div className="p-3 rounded-lg bg-success-soft text-center">
+                  <p className="text-2xl font-bold text-success">{appeals.resolved}</p>
+                  <p className="text-xs text-success mt-0.5">Hal qilingan</p>
                 </div>
               </div>
 
@@ -413,7 +413,7 @@ export default function OrgDashboard() {
           <CardContent className="pb-5">
             {tasks.recent.length === 0 ? (
               <div className="text-center py-8">
-                <CheckCircle className="h-10 w-10 text-emerald-300 mx-auto mb-2" />
+                <CheckCircle className="h-10 w-10 text-success mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Faol topshiriq yo'q</p>
               </div>
             ) : (
@@ -437,7 +437,7 @@ export default function OrgDashboard() {
                           {task.deadline && (
                             <span className={cn(
                               "text-xs flex items-center gap-1",
-                              isOverdue(task.deadline) ? "text-red-600 font-medium" : "text-muted-foreground"
+                              isOverdue(task.deadline) ? "text-destructive font-medium" : "text-muted-foreground"
                             )}>
                               <CalendarClock className="h-3 w-3" />
                               {formatDate(task.deadline)}

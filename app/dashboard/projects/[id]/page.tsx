@@ -133,9 +133,9 @@ export default function ProjectDetailPage() {
               icon: Activity,
               gradient: "from-emerald-500 to-teal-500",
               bgGradient: "from-emerald-50 to-white",
-              iconBg: "bg-emerald-100",
-              textColor: "text-emerald-700",
-              borderColor: "border-emerald-100",
+              iconBg: "bg-success-soft",
+              textColor: "text-success",
+              borderColor: "border-border",
             },
             {
               label: "Davr",
@@ -143,14 +143,14 @@ export default function ProjectDetailPage() {
               icon: CalendarRange,
               gradient: "from-amber-500 to-orange-500",
               bgGradient: "from-amber-50 to-white",
-              iconBg: "bg-amber-100",
-              textColor: "text-amber-700",
-              borderColor: "border-amber-100",
+              iconBg: "bg-warning-soft",
+              textColor: "text-warning",
+              borderColor: "border-border",
             },
           ]}
         />
 
-        <PremiumTableShell icon={History} title="Timeline / History" countLabel={`${history.length} ta yozuv`} accentClassName="bg-gradient-to-r from-slate-50 via-white to-slate-50">
+        <PremiumTableShell icon={History} title="Timeline / History" countLabel={`${history.length} ta yozuv`} accentClassName="bg-background">
           <div className="space-y-4 p-4">
             {loading && (
               <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
@@ -183,7 +183,7 @@ export default function ProjectDetailPage() {
           </div>
         </PremiumTableShell>
 
-        <PremiumTableShell icon={BarChart3} title="Loyiha KPI grafigi" countLabel={`${kpi.length} nuqta`} accentClassName="bg-gradient-to-r from-sky-50 via-white to-cyan-50">
+        <PremiumTableShell icon={BarChart3} title="Loyiha KPI grafigi" countLabel={`${kpi.length} nuqta`} accentClassName="bg-primary-soft">
           <div className="p-4">
             <ChartContainer
               config={chartConfig}
@@ -200,7 +200,7 @@ export default function ProjectDetailPage() {
         </PremiumTableShell>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <PremiumTableShell icon={Paperclip} title="Loyiha fayllari" countLabel={`${attachments.length} ta`} accentClassName="bg-gradient-to-r from-amber-50 via-white to-orange-50">
+          <PremiumTableShell icon={Paperclip} title="Loyiha fayllari" countLabel={`${attachments.length} ta`} accentClassName="bg-warning-soft">
             <div className="space-y-4 p-4">
               <div className="flex items-center gap-3">
                 <Input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} disabled={uploading} />
@@ -219,7 +219,7 @@ export default function ProjectDetailPage() {
             </div>
           </PremiumTableShell>
 
-          <PremiumTableShell icon={MessageSquare} title="Kommentariya / Chat" countLabel={`${comments.length} ta`} accentClassName="bg-gradient-to-r from-emerald-50 via-white to-teal-50">
+          <PremiumTableShell icon={MessageSquare} title="Kommentariya / Chat" countLabel={`${comments.length} ta`} accentClassName="bg-success-soft">
             <div className="space-y-4 p-4">
               <div className="space-y-3">
                 <Textarea

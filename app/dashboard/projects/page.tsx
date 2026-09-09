@@ -62,9 +62,9 @@ import {
 } from "lucide-react"
 
 const CATEGORY_META = {
-  MAHALLIY: { label: "Mahalliy", icon: Landmark, badge: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  XALQARO: { label: "Xalqaro", icon: Globe2, badge: "bg-primary-soft text-primary border-border" },
-  DRIVER: { label: "Driver", icon: Rocket, badge: "bg-amber-50 text-amber-700 border-amber-100" },
+  MAHALLIY: { label: "Mahalliy", icon: Landmark, badge: "bg-success-soft text-success-soft-foreground border-border" },
+  XALQARO: { label: "Xalqaro", icon: Globe2, badge: "bg-primary-soft text-primary-soft-foreground border-border" },
+  DRIVER: { label: "Driver", icon: Rocket, badge: "bg-warning-soft text-warning-soft-foreground border-border" },
 } as const
 
 const STATUS_OPTIONS = [
@@ -427,9 +427,9 @@ export default function ProjectsPage() {
               icon: TrendingUp,
               gradient: "from-emerald-500 to-teal-500",
               bgGradient: "from-emerald-50 to-white",
-              iconBg: "bg-emerald-100",
-              textColor: "text-emerald-700",
-              borderColor: "border-emerald-100",
+              iconBg: "bg-success-soft",
+              textColor: "text-success",
+              borderColor: "border-border",
               hint: "Ijroda va monitoringda",
             },
             {
@@ -449,9 +449,9 @@ export default function ProjectsPage() {
               icon: Rocket,
               gradient: "from-amber-500 to-orange-500",
               bgGradient: "from-amber-50 to-white",
-              iconBg: "bg-amber-100",
-              textColor: "text-amber-700",
-              borderColor: "border-amber-100",
+              iconBg: "bg-warning-soft",
+              textColor: "text-warning",
+              borderColor: "border-border",
               hint: "Arxivga olingan loyihalar",
             },
           ]}
@@ -473,7 +473,7 @@ export default function ProjectsPage() {
               <div className="flex w-full flex-col items-start gap-2 lg:w-auto">
                 <Button
                   onClick={openCreate}
-                  className="w-full gap-2 rounded-full bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 sm:w-auto"
+                  className="w-full gap-2 rounded-full bg-success text-white shadow-sm hover:bg-success sm:w-auto"
                 >
                   <Plus className="h-4 w-4" />
                   Yangi loyiha
@@ -535,7 +535,7 @@ export default function ProjectsPage() {
           icon={FolderKanban}
           title="Loyihalar ro'yxati"
           countLabel={`${sortedProjects.length} ta`}
-          accentClassName="bg-gradient-to-r from-slate-50 via-white to-slate-50"
+          accentClassName="bg-background"
         >
           <div className="grid gap-4 p-4">
             {loading && sortedProjects.length === 0 && (
@@ -576,7 +576,7 @@ export default function ProjectsPage() {
                   </div>
 
                   <div className="mt-4 h-2 rounded-full bg-muted">
-                    <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500" style={{ width: `${project.progress}%` }} />
+                    <div className="bg-success h-2 rounded-full" style={{ width: `${project.progress}%` }} />
                   </div>
 
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -592,7 +592,7 @@ export default function ProjectsPage() {
                               <Pencil className="mr-2 h-4 w-4" />
                               Tahrirlash
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto">
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(project)} className="w-full text-destructive-soft-foreground hover:bg-destructive-soft hover:text-destructive-soft-foreground sm:w-auto">
                               <Trash2 className="mr-2 h-4 w-4" />
                               Arxivlash
                             </Button>
@@ -632,7 +632,7 @@ export default function ProjectsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={saving}>Bekor qilish</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={saving} className="bg-rose-600 hover:bg-rose-700">
+            <AlertDialogAction onClick={handleDelete} disabled={saving} className="bg-destructive hover:bg-destructive">
               Arxivlash
             </AlertDialogAction>
           </AlertDialogFooter>

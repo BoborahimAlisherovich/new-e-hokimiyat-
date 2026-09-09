@@ -175,43 +175,43 @@ export function UserCreateDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           {errors.submit && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+            <div className="p-3 text-sm text-destructive-soft-foreground bg-destructive-soft rounded-lg">
               {errors.submit}
             </div>
           )}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="login">Login <span className="text-red-500">*</span></Label>
+              <Label htmlFor="login">Login <span className="text-destructive">*</span></Label>
               <Input
                 id="login"
                 value={formData.login}
                 onChange={(e) => onChange("login", e.target.value)}
                 placeholder="Masalan: admin-user"
-                className={errors.login ? "border-red-500" : ""}
+                className={errors.login ? "border-destructive" : ""}
               />
-              {errors.login && <p className="text-xs text-red-500">{errors.login}</p>}
+              {errors.login && <p className="text-xs text-destructive">{errors.login}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Familiya <span className="text-red-500">*</span></Label>
+              <Label htmlFor="lastName">Familiya <span className="text-destructive">*</span></Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => onChange("lastName", e.target.value)}
                 placeholder="Familiyani kiriting"
-                className={errors.lastName ? "border-red-500" : ""}
+                className={errors.lastName ? "border-destructive" : ""}
               />
-              {errors.lastName && <p className="text-xs text-red-500">{errors.lastName}</p>}
+              {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="firstName">Ism <span className="text-red-500">*</span></Label>
+              <Label htmlFor="firstName">Ism <span className="text-destructive">*</span></Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
                 onChange={(e) => onChange("firstName", e.target.value)}
                 placeholder="Ismni kiriting"
-                className={errors.firstName ? "border-red-500" : ""}
+                className={errors.firstName ? "border-destructive" : ""}
               />
-              {errors.firstName && <p className="text-xs text-red-500">{errors.firstName}</p>}
+              {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="middleName">Sharifi</Label>
@@ -223,7 +223,7 @@ export function UserCreateDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefon <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phone">Telefon <span className="text-destructive">*</span></Label>
               <Input
                 id="phone"
                 value={formData.phone}
@@ -236,9 +236,9 @@ export function UserCreateDialog({
                 }}
                 placeholder="+998 XX XXX XX XX"
                 inputMode="tel"
-                className={errors.phone ? "border-red-500" : ""}
+                className={errors.phone ? "border-destructive" : ""}
               />
-              {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -248,24 +248,24 @@ export function UserCreateDialog({
                 value={formData.email}
                 onChange={(e) => onChange("email", e.target.value)}
                 placeholder="email@manzil.uz"
-                className={errors.email ? "border-red-500" : ""}
+                className={errors.email ? "border-destructive" : ""}
               />
-              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pnfl">PNFL <span className="text-red-500">*</span></Label>
+              <Label htmlFor="pnfl">PNFL <span className="text-destructive">*</span></Label>
               <Input
                 id="pnfl"
                 value={formData.pnfl}
                 onChange={(e) => onChange("pnfl", e.target.value.replace(/\D/g, ''))}
                 placeholder="14 ta raqam"
                 maxLength={14}
-                className={errors.pnfl ? "border-red-500" : ""}
+                className={errors.pnfl ? "border-destructive" : ""}
               />
-              {errors.pnfl && <p className="text-xs text-red-500">{errors.pnfl}</p>}
+              {errors.pnfl && <p className="text-xs text-destructive">{errors.pnfl}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Parol <span className="text-red-500">*</span></Label>
+              <Label htmlFor="password">Parol <span className="text-destructive">*</span></Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -274,7 +274,7 @@ export function UserCreateDialog({
                   onChange={(e) => onChange("password", e.target.value)}
                   placeholder="Kamida 6 ta belgi"
                   autoComplete="new-password"
-                  className={`${errors.password ? "border-red-500" : ""} pr-10`}
+                  className={`${errors.password ? "border-destructive" : ""} pr-10`}
                 />
                 <button
                   type="button"
@@ -285,7 +285,7 @@ export function UserCreateDialog({
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Lavozim</Label>
@@ -304,7 +304,7 @@ export function UserCreateDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Rol <span className="text-red-500">*</span></Label>
+              <Label htmlFor="role">Rol <span className="text-destructive">*</span></Label>
               <Select
                 value={formData.role}
                 onValueChange={(value) => {
@@ -314,7 +314,7 @@ export function UserCreateDialog({
                   }
                 }}
               >
-                <SelectTrigger className={errors.role ? "border-red-500" : ""}>
+                <SelectTrigger className={errors.role ? "border-destructive" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,14 +326,14 @@ export function UserCreateDialog({
                   <SelectItem value="ADMIN">Administrator</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.role && <p className="text-xs text-red-500">{errors.role}</p>}
+              {errors.role && <p className="text-xs text-destructive">{errors.role}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="sectorId">
-                Soha / kompleks {isHokimlikRole && <span className="text-red-500">*</span>}
+                Soha / kompleks {isHokimlikRole && <span className="text-destructive">*</span>}
               </Label>
               <Select value={formData.sectorId || "none"} onValueChange={(value) => onChange("sectorId", value === "none" ? "" : value)}>
-                <SelectTrigger className={errors.sectorId ? "border-red-500" : ""}>
+                <SelectTrigger className={errors.sectorId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Sohani tanlang" />
                 </SelectTrigger>
                 <SelectContent>
@@ -345,15 +345,15 @@ export function UserCreateDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.sectorId && <p className="text-xs text-red-500">{errors.sectorId}</p>}
+              {errors.sectorId && <p className="text-xs text-destructive">{errors.sectorId}</p>}
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="organizationId">
-              Tashkilot {isOrganizationRole && <span className="text-red-500">*</span>}
+              Tashkilot {isOrganizationRole && <span className="text-destructive">*</span>}
             </Label>
             <Select value={formData.organizationId || "none"} onValueChange={(value) => onChange("organizationId", value === "none" ? "" : value)}>
-              <SelectTrigger className={errors.organizationId ? "border-red-500" : ""}>
+              <SelectTrigger className={errors.organizationId ? "border-destructive" : ""}>
                 <SelectValue placeholder="Tashkilotni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -365,15 +365,15 @@ export function UserCreateDialog({
                 ))}
               </SelectContent>
             </Select>
-            {errors.organizationId && <p className="text-xs text-red-500">{errors.organizationId}</p>}
+            {errors.organizationId && <p className="text-xs text-destructive">{errors.organizationId}</p>}
           </div>
           {requiresSupervisor && (
             <div className="space-y-2">
               <Label htmlFor="supervisorId">
-                Bevosita rahbar <span className="text-red-500">*</span>
+                Bevosita rahbar <span className="text-destructive">*</span>
               </Label>
               <Select value={formData.supervisorId || "none"} onValueChange={(value) => onChange("supervisorId", value === "none" ? "" : value)}>
-                <SelectTrigger className={errors.supervisorId ? "border-red-500" : ""}>
+                <SelectTrigger className={errors.supervisorId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Rahbarni tanlang" />
                 </SelectTrigger>
                 <SelectContent>
@@ -385,7 +385,7 @@ export function UserCreateDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.supervisorId && <p className="text-xs text-red-500">{errors.supervisorId}</p>}
+              {errors.supervisorId && <p className="text-xs text-destructive">{errors.supervisorId}</p>}
             </div>
           )}
         </div>

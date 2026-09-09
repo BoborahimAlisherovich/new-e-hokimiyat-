@@ -106,7 +106,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
 
   if (organizations.length === 0) {
     return (
-      <PremiumEmptyState icon={Building2} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-violet-100 to-purple-200 text-violet-600" />
+      <PremiumEmptyState icon={Building2} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-violet-100 to-purple-200 text-[var(--st-tekshiruvda-fg)]" />
     )
   }
 
@@ -115,7 +115,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       icon={Building2}
       title={tr.list}
       countLabel={`${organizations.length} ${tr.count}`}
-      accentClassName="bg-gradient-to-r from-violet-50/55 via-white/30 to-purple-50/40"
+      accentClassName="bg-[var(--st-tekshiruvda-bg)]"
     >
       <div className="grid gap-3 p-3 md:hidden">
         {organizations.map((org, index) => {
@@ -124,12 +124,12 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
           return (
             <div
               key={org.id}
-              className="rounded-[22px] border border-violet-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,245,255,0.92))] p-4 shadow-[0_16px_34px_-28px_rgba(139,92,246,0.28)]"
+              className="rounded-[22px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,245,255,0.92))] p-4 shadow-[0_16px_34px_-28px_rgba(139,92,246,0.28)]"
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-2.5 py-1 text-xs font-mono font-bold text-violet-700 shadow-sm">
+                  <code className="bg-[var(--st-tekshiruvda-bg)] rounded-lg border border-border px-2.5 py-1 text-xs font-mono font-bold text-[var(--st-tekshiruvda-fg)] shadow-sm">
                     {formatOrgId(String(org.id))}
                   </code>
                   <p className="mt-3 text-sm font-semibold leading-snug text-foreground">{org.name}</p>
@@ -141,7 +141,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   variant="outline"
                   className={`shrink-0 font-medium text-[11px] border rounded-lg ${
                     org.is_active
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      ? "bg-success-soft text-success-soft-foreground border-border"
                       : "bg-primary-soft text-muted-foreground border-border"
                   }`}
                 >
@@ -170,7 +170,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 hover:bg-violet-50">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 hover:bg-[var(--st-tekshiruvda-bg)]">
                       <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -187,14 +187,14 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                       className="cursor-pointer"
                     >
                       {org.is_active ? (
-                        <><Lock className="mr-2 h-4 w-4 text-amber-500" /> {tr.deactivate}</>
+                        <><Lock className="mr-2 h-4 w-4 text-warning" /> {tr.deactivate}</>
                       ) : (
-                        <><Unlock className="mr-2 h-4 w-4 text-emerald-500" /> {tr.activate}</>
+                        <><Unlock className="mr-2 h-4 w-4 text-success" /> {tr.activate}</>
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onDelete?.(org.id)}
-                      className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                      className="text-destructive-soft-foreground cursor-pointer focus:text-destructive-soft-foreground focus:bg-destructive-soft"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       {tr.delete}
@@ -210,7 +210,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-2 border-border bg-gradient-to-r from-cyan-50/50 to-violet-50/25">
+            <TableRow className="bg-primary-soft border-b-2 border-border">
               <TableHead className="font-bold text-foreground py-4 px-4 text-sm">ID</TableHead>
               <TableHead className="font-bold text-foreground py-4 px-4 text-sm">{tr.name}</TableHead>
               <TableHead className="font-bold text-foreground py-4 px-4 text-sm">{tr.leader}</TableHead>
@@ -226,11 +226,11 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
               return (
                 <TableRow
                   key={org.id}
-                  className="group border-b border-border transition-all duration-200 hover:bg-gradient-to-r hover:from-violet-50/45 hover:to-cyan-50/35"
+                  className="hover:bg-[var(--st-tekshiruvda-bg)] group border-b border-border transition-all duration-200"
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
                   <TableCell className="py-4 px-4">
-                    <code className="rounded-lg bg-gradient-to-r from-violet-100 to-purple-100 border border-violet-200 px-3 py-1.5 text-sm font-mono font-bold text-violet-700 shadow-sm">
+                    <code className="bg-[var(--st-tekshiruvda-bg)] rounded-lg border border-border px-3 py-1.5 text-sm font-mono font-bold text-[var(--st-tekshiruvda-fg)] shadow-sm">
                       {formatOrgId(String(org.id))}
                     </code>
                   </TableCell>
@@ -255,7 +255,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                       variant="outline"
                       className={`font-medium text-xs border rounded-lg ${
                         org.is_active
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          ? "bg-success-soft text-success-soft-foreground border-border"
                           : "bg-primary-soft text-muted-foreground border-border"
                       }`}
                     >
@@ -265,8 +265,8 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                   <TableCell className="py-3.5 px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-violet-50 group-hover:bg-violet-100/50 transition-colors">
-                          <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-violet-600" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[var(--st-tekshiruvda-bg)] group-hover:bg-[var(--st-tekshiruvda-bg)] transition-colors">
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-[var(--st-tekshiruvda-fg)]" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
@@ -288,14 +288,14 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
                           className="cursor-pointer"
                         >
                           {org.is_active ? (
-                            <><Lock className="mr-2 h-4 w-4 text-amber-500" /> {tr.deactivate}</>
+                            <><Lock className="mr-2 h-4 w-4 text-warning" /> {tr.deactivate}</>
                           ) : (
-                            <><Unlock className="mr-2 h-4 w-4 text-emerald-500" /> {tr.activate}</>
+                            <><Unlock className="mr-2 h-4 w-4 text-success" /> {tr.activate}</>
                           )}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onDelete?.(org.id)}
-                          className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                          className="text-destructive-soft-foreground cursor-pointer focus:text-destructive-soft-foreground focus:bg-destructive-soft"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           {tr.delete}

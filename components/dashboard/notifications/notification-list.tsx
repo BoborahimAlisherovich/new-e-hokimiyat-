@@ -22,8 +22,8 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
       <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] rounded-2xl">
         <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <div className="rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 p-5 mb-4">
-              <Bell className="h-10 w-10 text-blue-500" />
+            <div className="bg-primary-soft rounded-full p-5 mb-4">
+              <Bell className="h-10 w-10 text-primary" />
             </div>
             <p className="text-lg font-medium">{t.notifications.emptyTitle}</p>
           </div>
@@ -41,14 +41,14 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
             <div
               key={notification.id}
               className={cn(
-                "flex items-start gap-4 p-5 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50",
-                !notification.is_read && "bg-gradient-to-r from-blue-50/30 to-indigo-50/30",
+                "hover:bg-primary-soft flex items-start gap-4 p-5 transition-all duration-200",
+                !notification.is_read && "bg-primary-soft",
               )}
             >
               <div
                 className={cn(
                   "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-md",
-                  notificationColors[notification.type] || "bg-gradient-to-br from-slate-100 to-slate-200 text-muted-foreground",
+                  notificationColors[notification.type] || "bg-background text-muted-foreground",
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -59,12 +59,12 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                   <p
                     className={cn(
                       "font-semibold text-foreground",
-                      notification.type === "TASK_OVERDUE" && "text-red-600",
+                      notification.type === "TASK_OVERDUE" && "text-destructive",
                     )}
                   >
                     {notification.title}
                   </p>
-                  {!notification.is_read && <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 shrink-0 animate-pulse" />}
+                  {!notification.is_read && <span className="bg-primary h-2.5 w-2.5 rounded-full shrink-0 animate-pulse" />}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1 font-medium">{notification.message}</p>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">
@@ -75,7 +75,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
               <div className="flex items-center gap-2 shrink-0">
                 {notification.related_task_id && (
                   <Link href={`/dashboard/tasks/${notification.related_task_id}`}>
-                    <Button variant="ghost" size="sm" className="font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                    <Button variant="ghost" size="sm" className="font-medium text-primary-soft-foreground hover:text-primary-soft-foreground hover:bg-primary-soft">
                       {t.notifications.view}
                     </Button>
                   </Link>
@@ -84,7 +84,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                    className="h-9 w-9 text-success-soft-foreground hover:bg-success-soft hover:text-success-soft-foreground"
                     onClick={() => onMarkAsRead(notification.id)}
                   >
                     <Check className="h-4 w-4" />
@@ -93,7 +93,7 @@ export function NotificationList({ notifications, onMarkAsRead, onDelete }: Noti
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                  className="h-9 w-9 text-muted-foreground hover:text-destructive-soft-foreground hover:bg-destructive-soft"
                   onClick={() => onDelete(notification.id)}
                 >
                   <Trash2 className="h-4 w-4" />

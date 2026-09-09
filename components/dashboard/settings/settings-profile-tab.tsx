@@ -212,7 +212,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                 lastName={lastName}
                 avatarUrl={avatarUrl}
                 size="xl"
-                className="ring-4 ring-blue-100"
+                className="ring-4 ring-primary/25"
               />
               <input
                 ref={fileInputRef}
@@ -242,7 +242,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               </h3>
               <p className="text-sm text-muted-foreground">{getRoleLabel(currentUser.role)}</p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+                <Badge variant="outline" className="bg-primary-soft text-primary-soft-foreground border-border">
                   <UserCheck className="mr-1 h-3 w-3" />
                   Login faollashtirilgan
                 </Badge>
@@ -252,7 +252,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                     size="sm"
                     onClick={handleAvatarDelete}
                     disabled={uploadingAvatar}
-                    className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="h-7 px-2 text-xs text-destructive-soft-foreground hover:text-destructive-soft-foreground hover:bg-destructive-soft"
                   >
                     <Trash2 className="h-3 w-3 mr-1" />
                     Rasmni o'chirish
@@ -270,7 +270,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-primary focus:ring-1 focus:ring-primary/25"
               />
             </div>
             <div className="space-y-2">
@@ -278,7 +278,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-primary focus:ring-1 focus:ring-primary/25"
               />
             </div>
             <div className="space-y-2">
@@ -286,7 +286,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
               <Input
                 value={middleName}
                 onChange={(e) => setMiddleName(e.target.value)}
-                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-primary focus:ring-1 focus:ring-primary/25"
               />
             </div>
             <div className="space-y-2">
@@ -295,7 +295,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+998 XX XXX XX XX"
-                className="h-11 border border-border-strong rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-11 border border-border-strong rounded-md focus:border-primary focus:ring-1 focus:ring-primary/25"
               />
             </div>
             <div className="space-y-2">
@@ -328,7 +328,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
+              className="h-11 px-6 bg-primary hover:bg-primary text-white font-medium disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

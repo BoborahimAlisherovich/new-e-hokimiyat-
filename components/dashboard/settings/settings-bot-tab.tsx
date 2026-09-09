@@ -129,7 +129,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-blue-600" />
+            <Bot className="h-5 w-5 text-primary" />
             Telegram Bot sozlamalari
           </CardTitle>
           <CardDescription>
@@ -267,7 +267,7 @@ export function SettingsBotTab({ t }: SettingsBotTabProps) {
               <div className="flex items-center gap-2">
                 <div
                   className={`h-3 w-3 rounded-full ${
-                    botStatus.is_running ? "bg-green-500" : "bg-red-500"
+                    botStatus.is_running ? "bg-success" : "bg-destructive"
                   }`}
                 />
                 <span className="font-medium">

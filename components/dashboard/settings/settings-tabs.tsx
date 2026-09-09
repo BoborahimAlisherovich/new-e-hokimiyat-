@@ -17,7 +17,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
       <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-[22px] bg-transparent p-0 shadow-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger
           value="profile"
-          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary-soft-foreground data-[state=active]:shadow-none"
         >
           <User className="mr-2 h-4 w-4" />
           {t.settings.profile}
@@ -25,7 +25,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
 
         <TabsTrigger
           value="notifications"
-          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary-soft-foreground data-[state=active]:shadow-none"
         >
           <Bell className="mr-2 h-4 w-4" />
           {t.settings.notifications}
@@ -33,7 +33,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
 
         <TabsTrigger
           value="security"
-          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary-soft-foreground data-[state=active]:shadow-none"
         >
           <Shield className="mr-2 h-4 w-4" />
           {t.settings.security}
@@ -41,7 +41,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
 
         <TabsTrigger
           value="appearance"
-          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+          className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary-soft-foreground data-[state=active]:shadow-none"
         >
           <Globe className="mr-2 h-4 w-4" />
           {t.settings.appearance}
@@ -50,7 +50,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
         {canAccessSettingsTab(userRole, "sectors") && (
           <TabsTrigger
             value="sectors"
-            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-violet-200 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-700 data-[state=active]:shadow-none"
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-[var(--st-tekshiruvda-bg)] data-[state=active]:text-[var(--st-tekshiruvda-fg)] data-[state=active]:shadow-none"
           >
             <Layers className="mr-2 h-4 w-4" />
             {t.settings.sectors}
@@ -60,7 +60,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
         {canAccessSettingsTab(userRole, "positions") && (
           <TabsTrigger
             value="positions"
-            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-amber-200 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:shadow-none"
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-warning-soft data-[state=active]:text-warning-soft-foreground data-[state=active]:shadow-none"
           >
             <BriefcaseBusiness className="mr-2 h-4 w-4" />
             {t.settings.positions}
@@ -70,7 +70,7 @@ export function SettingsTabs({ t, userRole }: SettingsTabsProps) {
         {canAccessSettingsTab(userRole, "appeals_routing") && (
           <TabsTrigger
             value="appeals_routing"
-            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-2xl border border-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-primary-soft data-[state=active]:text-primary-soft-foreground data-[state=active]:shadow-none"
           >
             <Route className="mr-2 h-4 w-4" />
             {t.settings.appealsRouting}

@@ -95,12 +95,12 @@ export function ActivityChart() {
       transition={{ duration: 0.3 }}
     >
       <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
-        <CardHeader className="flex flex-row items-center justify-between rounded-t-2xl bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader className="bg-primary-soft flex flex-row items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
               <BarChart4 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{t.dashboard.taskDynamics}</CardTitle>
+            <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.taskDynamics}</CardTitle>
           </div>
         </CardHeader>
       
@@ -195,19 +195,19 @@ export function ActivityChart() {
         {/* Legend */}
         <div className="mt-6 flex flex-wrap justify-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <div className="w-3 h-3 rounded-full bg-success" />
             <span className="text-sm text-foreground">{t.dashboard.completed}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.bajarildi, 0)})</span>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="w-3 h-3 rounded-full bg-primary" />
             <span className="text-sm text-foreground">{t.dashboard.createdTasks}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.yaratildi, 0)})</span>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500" />
+            <div className="w-3 h-3 rounded-full bg-warning" />
             <span className="text-sm text-foreground">{t.dashboard.total}</span>
             <span className="text-xs text-muted-foreground">({data.reduce((sum, item) => sum + item.jami, 0)})</span>
           </div>
@@ -215,18 +215,18 @@ export function ActivityChart() {
         
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-lg bg-green-50 backdrop-blur-sm border border-green-200 hover:bg-green-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-green-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-success-soft backdrop-blur-sm border border-border hover:bg-success-soft hover:shadow-md transition-all duration-300">
+            <div className="text-2xl font-bold text-success">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCompleted}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-blue-50 backdrop-blur-sm border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-blue-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-primary-soft backdrop-blur-sm border border-border hover:bg-primary-soft hover:shadow-md transition-all duration-300">
+            <div className="text-2xl font-bold text-primary">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCreated}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-amber-50 backdrop-blur-sm border border-amber-200 hover:bg-amber-100 hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-amber-600">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-warning-soft backdrop-blur-sm border border-border hover:bg-warning-soft hover:shadow-md transition-all duration-300">
+            <div className="text-2xl font-bold text-warning">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyTotal}</div>
           </div>
         </div>

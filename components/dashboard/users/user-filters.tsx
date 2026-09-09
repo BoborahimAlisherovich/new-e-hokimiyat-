@@ -55,10 +55,10 @@ export function UserFilters({
       icon={Filter}
       title="Filtrlash va qidiruv"
       description="Foydalanuvchilarni qidiring, saralang va tez boshqaring"
-      accentClassName="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50"
+      accentClassName="bg-primary-soft"
       badge={
         hasActiveFilters ? (
-          <PremiumCountBadge className="border-border bg-primary-soft text-primary">
+          <PremiumCountBadge className="border-border bg-primary-soft text-primary-soft-foreground">
             <Sparkles className="mr-1 h-3 w-3" />
             {filteredCount} / {totalCount} ta
           </PremiumCountBadge>
@@ -66,7 +66,7 @@ export function UserFilters({
       }
       clearAction={
         hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-destructive-soft-foreground hover:bg-destructive-soft">
             <X className="mr-1 h-4 w-4" />
             Tozalash
           </Button>
@@ -85,7 +85,7 @@ export function UserFilters({
             />
           </div>
           {showCreateButton && (
-            <Button onClick={onCreate} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md">
+            <Button onClick={onCreate} className="bg-primary rounded-xl text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md">
               <Plus className="h-4 w-4 mr-1" />
               Yangi foydalanuvchi
             </Button>

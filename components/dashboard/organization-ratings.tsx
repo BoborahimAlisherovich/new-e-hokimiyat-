@@ -64,9 +64,9 @@ export function OrganizationRatings() {
   }
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 90) return "text-emerald-600"
-    if (rating >= 70) return "text-amber-600"
-    return "text-red-600"
+    if (rating >= 90) return "text-success"
+    if (rating >= 70) return "text-warning"
+    return "text-destructive"
   }
 
   const getRatingGradient = (rating: number) => {
@@ -78,7 +78,7 @@ export function OrganizationRatings() {
   return (
     <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 group relative overflow-hidden rounded-2xl">
 
-      <CardHeader className="relative z-10 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
+      <CardHeader className="bg-primary-soft relative z-10 border-b border-border rounded-t-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
@@ -87,11 +87,11 @@ export function OrganizationRatings() {
             <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.organizationRatings}</CardTitle>
           </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/30">
-                <TrendingUp className="w-3 h-3 text-emerald-600" />
-                <span className="text-xs font-medium text-emerald-700">{t.dashboard.performanceLabel}</span>
+              <div className="bg-success flex items-center gap-1 px-2 py-1 rounded-lg border border-success">
+                <TrendingUp className="w-3 h-3 text-success" />
+                <span className="text-xs font-medium text-success">{t.dashboard.performanceLabel}</span>
               </div>
-              <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
             </div>
         </div>
       </CardHeader>
@@ -105,7 +105,7 @@ export function OrganizationRatings() {
             transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
             whileHover={{ scale: 1.02, y: -2 }}
             className={cn(
-              "group/org relative space-y-3 rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:border-blue-300"
+              "group/org relative space-y-3 rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-lg hover:border-primary"
             )}
           >
             
@@ -130,9 +130,9 @@ export function OrganizationRatings() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-muted-foreground group-hover/org:text-blue-600 transition-colors duration-250" />
+                  <Building className="w-4 h-4 text-muted-foreground group-hover/org:text-primary transition-colors duration-250" />
                   <div>
-                    <h3 className="font-semibold text-foreground group-hover/org:text-blue-600 transition-colors duration-250">
+                    <h3 className="font-semibold text-foreground group-hover/org:text-primary transition-colors duration-250">
                       {org.name}
                     </h3>
                     <p className="text-xs text-muted-foreground group-hover/org:text-secondary-foreground transition-colors duration-250">
@@ -146,7 +146,7 @@ export function OrganizationRatings() {
               <div className="relative">
                 <div className={cn(
                   "flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-250",
-                  "bg-emerald-50 text-emerald-700"
+                  "bg-success-soft text-success-soft-foreground"
                 )}>
                   <Star className={cn(
                     "w-4 h-4 transition-all duration-250",

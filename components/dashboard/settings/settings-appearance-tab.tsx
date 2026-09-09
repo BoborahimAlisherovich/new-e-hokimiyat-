@@ -28,7 +28,7 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
           <div className="space-y-2">
             <Label>{t.settings.language}</Label>
             <Select value={language} onValueChange={onLanguageChange}>
-              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-border rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+              <SelectTrigger className="w-full sm:w-[200px] bg-white border border-border rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20">
                 <Globe className="mr-2 h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>
@@ -45,7 +45,7 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
             <Button 
               onClick={onSave} 
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              className="bg-primary hover:bg-primary text-white disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

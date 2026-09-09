@@ -128,7 +128,7 @@ export function SettingsPositionsTab({ t }: { t: Translation }) {
         <CardHeader>
           <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="inline-flex items-center gap-2">
-              <BriefcaseBusiness className="h-5 w-5 text-amber-600" />
+              <BriefcaseBusiness className="h-5 w-5 text-warning" />
               {t.settings.positions}
             </span>
             <Button onClick={() => setIsAdding((prev) => !prev)} variant="outline">

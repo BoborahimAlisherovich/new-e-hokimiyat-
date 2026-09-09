@@ -69,9 +69,9 @@ export default function AnalyticsPage() {
       <Header title={t.pages.analytics.title} description={t.pages.analytics.description} />
       <div className="relative px-2 py-3 sm:px-3 lg:px-4">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-0 hidden h-96 w-96 rounded-full bg-gradient-to-br from-cyan-200/26 to-transparent blur-3xl md:block" />
-          <div className="absolute top-1/2 right-0 hidden h-80 w-80 rounded-full bg-gradient-to-bl from-emerald-200/20 to-transparent blur-3xl lg:block" />
-          <div className="absolute bottom-0 left-1/4 hidden h-72 w-72 rounded-full bg-gradient-to-tr from-amber-200/16 to-transparent blur-3xl xl:block" />
+          <div className="bg-primary-soft absolute top-0 left-0 hidden h-96 w-96 rounded-full blur-3xl md:block" />
+          <div className="bg-success-soft absolute top-1/2 right-0 hidden h-80 w-80 rounded-full blur-3xl lg:block" />
+          <div className="bg-warning-soft absolute bottom-0 left-1/4 hidden h-72 w-72 rounded-full blur-3xl xl:block" />
         </div>
         
         <div ref={pageRef} className="relative z-10 mx-auto max-w-7xl">

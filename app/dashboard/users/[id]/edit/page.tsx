@@ -180,7 +180,7 @@ export default function UserEditPage() {
         <Header title="Foydalanuvchi topilmadi" description="So'ralgan foydalanuvchi mavjud emas" />
         <div className="p-6">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertTriangle className="h-16 w-16 text-yellow-500" />
+            <AlertTriangle className="h-16 w-16 text-warning" />
             <p className="text-muted-foreground">Foydalanuvchi topilmadi</p>
             <Button onClick={() => router.back()} variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -428,7 +428,7 @@ export default function UserEditPage() {
                 </div>
                 
                 {error && (
-                  <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+                  <div className="p-3 rounded-lg bg-destructive-soft text-destructive-soft-foreground text-sm">
                     {error}
                   </div>
                 )}

@@ -123,9 +123,9 @@ export function AIAppealAssistant({
 
   const priorityColors: Record<string, string> = {
     low: 'bg-muted text-secondary-foreground',
-    medium: 'bg-blue-100 text-blue-700',
-    high: 'bg-orange-100 text-orange-700',
-    critical: 'bg-red-100 text-red-700'
+    medium: 'bg-primary-soft text-primary',
+    high: 'bg-warning-soft text-warning',
+    critical: 'bg-destructive-soft text-destructive'
   }
 
   const priorityLabels: Record<string, string> = {
@@ -136,14 +136,14 @@ export function AIAppealAssistant({
   }
 
   return (
-    <Card className={cn("border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50", className)}>
+    <Card className={cn("bg-[var(--st-tekshiruvda-bg)] border-border", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
+            <Sparkles className="h-5 w-5 text-[var(--st-tekshiruvda-fg)]" />
             <CardTitle className="text-lg">AI Yordamchi</CardTitle>
           </div>
-          <Badge variant="outline" className="bg-purple-100 text-purple-700">
+          <Badge variant="outline" className="bg-[var(--st-tekshiruvda-bg)] text-[var(--st-tekshiruvda-fg)]">
             #{appealNumber}
           </Badge>
         </div>
@@ -168,7 +168,7 @@ export function AIAppealAssistant({
             size="sm"
             onClick={fetchAIAnalysis}
             disabled={loading}
-            className="border-purple-300 hover:bg-purple-100"
+            className="border-[var(--st-tekshiruvda-bd)] hover:bg-[var(--st-tekshiruvda-bg)]"
           >
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -182,7 +182,7 @@ export function AIAppealAssistant({
             size="sm"
             onClick={fetchSuggestedResponse}
             disabled={loading}
-            className="border-blue-300 hover:bg-blue-100"
+            className="border-primary hover:bg-primary-soft"
           >
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -195,12 +195,12 @@ export function AIAppealAssistant({
 
         {/* AI Tahlil natijasi */}
         {analysis && (
-          <div className="space-y-3 rounded-lg border border-purple-200 bg-white p-4">
+          <div className="space-y-3 rounded-lg border border-border bg-white p-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-purple-800">AI Tahlili</h4>
+              <h4 className="font-semibold text-[var(--st-tekshiruvda-fg)]">AI Tahlili</h4>
               <div className="flex items-center gap-2">
                 {analysis.score !== undefined && (
-                  <Badge variant="outline" className="bg-purple-100">
+                  <Badge variant="outline" className="bg-[var(--st-tekshiruvda-bg)]">
                     Ball: {analysis.score}/100
                   </Badge>
                 )}
@@ -240,7 +240,7 @@ export function AIAppealAssistant({
                 <p className="text-xs text-muted-foreground mb-1">Tavsiya etilgan tashkilotlar:</p>
                 <div className="flex flex-wrap gap-1">
                   {analysis.suggested_organizations.map((org, i) => (
-                    <Badge key={i} variant="outline" className="text-xs bg-blue-50">
+                    <Badge key={i} variant="outline" className="text-xs bg-primary-soft">
                       {org}
                     </Badge>
                   ))}
@@ -252,9 +252,9 @@ export function AIAppealAssistant({
 
         {/* AI Javob taklifi */}
         {suggestedResponse && (
-          <div className="space-y-3 rounded-lg border border-blue-200 bg-white p-4">
+          <div className="space-y-3 rounded-lg border border-border bg-white p-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-blue-800">AI Javob Taklifi</h4>
+              <h4 className="font-semibold text-primary">AI Javob Taklifi</h4>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
@@ -291,11 +291,11 @@ export function AIAppealAssistant({
             
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-50">
+                <Button variant="ghost" size="sm" className="text-success-soft-foreground hover:bg-success-soft">
                   <ThumbsUp className="mr-1 h-4 w-4" />
                   Yaxshi
                 </Button>
-                <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50">
+                <Button variant="ghost" size="sm" className="text-destructive-soft-foreground hover:bg-destructive-soft">
                   <ThumbsDown className="mr-1 h-4 w-4" />
                   Yaxshilash kerak
                 </Button>
@@ -303,7 +303,7 @@ export function AIAppealAssistant({
               <Button
                 onClick={sendAIResponse}
                 disabled={loading || !editedResponse.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary"
               >
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -323,7 +323,7 @@ export function AIAppealAssistant({
             <span>Holat: {currentStatus}</span>
           </div>
           <span className="flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3 text-green-500" />
+            <CheckCircle2 className="h-3 w-3 text-success" />
             AI tayyor
           </span>
         </div>

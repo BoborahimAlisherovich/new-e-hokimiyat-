@@ -452,7 +452,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{tr.statusBy}</CardTitle>
+            <CardTitle className="text-lg bg-clip-text text-transparent">{tr.statusBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             {hasChartValues(statusData) ? (
@@ -479,7 +479,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{tr.priorityBy}</CardTitle>
+            <CardTitle className="text-lg bg-clip-text text-transparent">{tr.priorityBy}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             {hasChartValues(priorityData) ? (
@@ -510,7 +510,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">{tr.categorySlice}</CardTitle>
+            <CardTitle className="text-lg bg-clip-text text-transparent">{tr.categorySlice}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             {hasChartValues(categoryData) ? (
@@ -537,7 +537,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tr.trend}</CardTitle>
+            <CardTitle className="text-lg bg-clip-text text-transparent">{tr.trend}</CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
             {hasChartValues(trendData) ? (
@@ -562,7 +562,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
 
         <Card className="lg:col-span-2 bg-white/95 backdrop-blur-xl border-white/50 ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)]">
           <CardHeader>
-            <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{tr.orgLoadTop6}</CardTitle>
+            <CardTitle className="text-lg bg-clip-text text-transparent">{tr.orgLoadTop6}</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             {hasChartValues(orgData) ? (

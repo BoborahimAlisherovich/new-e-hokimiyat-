@@ -74,7 +74,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
 
   if (appeals.length === 0) {
     return (
-      <PremiumEmptyState icon={MessageSquare} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-cyan-50 to-teal-100 text-teal-600" />
+      <PremiumEmptyState icon={MessageSquare} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-cyan-50 to-teal-100 text-success" />
     )
   }
 
@@ -83,7 +83,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
       icon={MessageSquare}
       title="Murojaatlar ro'yxati"
       countLabel={`${appeals.length} ta`}
-      accentClassName="bg-gradient-to-r from-cyan-50/60 via-white/30 to-teal-50/45"
+      accentClassName="bg-primary-soft"
     >
     <div className="grid gap-3 p-4 md:hidden">
       {appeals.map((appeal) => (
@@ -99,11 +99,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 className="text-left"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <code className="rounded-lg bg-gradient-to-r from-teal-100 to-cyan-100 border border-teal-200 px-2.5 py-1 text-xs font-mono font-bold text-teal-700 shadow-sm">
+                  <code className="bg-success-soft rounded-lg border border-border px-2.5 py-1 text-xs font-mono font-bold text-success shadow-sm">
                     {appeal.id}
                   </code>
                   {(appeal.newMessagesCount ?? 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                    <span className="bg-destructive inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                       <MessageCircle className="h-3 w-3" />
                       {appeal.newMessagesCount}
                     </span>
@@ -121,11 +121,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className={cn(
               "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm",
-              appeal.status === "PENDING" && "bg-blue-100 text-blue-700",
-              appeal.status === "IN_PROGRESS" && "bg-emerald-100 text-emerald-700",
-              appeal.status === "RESOLVED" && "bg-teal-100 text-teal-700",
-              appeal.status === "REJECTED" && "bg-rose-100 text-rose-700",
-              (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-red-100 text-red-700"
+              appeal.status === "PENDING" && "bg-primary-soft text-primary-soft-foreground",
+              appeal.status === "IN_PROGRESS" && "bg-success-soft text-success-soft-foreground",
+              appeal.status === "RESOLVED" && "bg-success-soft text-success-soft-foreground",
+              appeal.status === "REJECTED" && "bg-destructive-soft text-destructive-soft-foreground",
+              (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-destructive-soft text-destructive-soft-foreground"
             )}>
               {STATUS_LABELS[appeal.status] || appeal.status}
             </span>
@@ -154,7 +154,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
     <div className="hidden overflow-x-auto md:block">
       <Table>
         <TableHeader>
-          <TableRow className="border-b-2 border-border bg-gradient-to-r from-cyan-50/60 to-cyan-50/20">
+          <TableRow className="bg-primary-soft border-b-2 border-border">
             <TableHead className="font-bold text-foreground py-4 px-6 text-sm">ID</TableHead>
             <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.citizen}</TableHead>
             <TableHead className="font-bold text-foreground py-4 px-6 text-sm">{tr.district}</TableHead>
@@ -168,11 +168,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
           {appeals.map((appeal) => (
             <TableRow 
               key={appeal.id} 
-              className="cursor-pointer border-b border-border transition-all duration-200 hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50"
+              className="hover:bg-success-soft cursor-pointer border-b border-border transition-all duration-200"
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
-                <code className="rounded-lg bg-gradient-to-r from-teal-100 to-cyan-100 border border-teal-200 px-3 py-1.5 text-sm font-mono font-bold text-teal-700 shadow-sm">
+                <code className="bg-success-soft rounded-lg border border-border px-3 py-1.5 text-sm font-mono font-bold text-success shadow-sm">
                   {appeal.id}
                 </code>
               </TableCell>
@@ -180,7 +180,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-foreground break-words">{appeal.citizenName}</span>
                   {(appeal.newMessagesCount ?? 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                    <span className="bg-destructive inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm animate-pulse">
                       <MessageCircle className="h-3 w-3" />
                       {appeal.newMessagesCount}
                     </span>
@@ -205,11 +205,11 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               <TableCell className="py-4 px-6">
                 <span className={cn(
                   "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold min-w-[90px] shadow-sm",
-                  appeal.status === "PENDING" && "bg-blue-100 text-blue-700",
-                  appeal.status === "IN_PROGRESS" && "bg-emerald-100 text-emerald-700",
-                  appeal.status === "RESOLVED" && "bg-teal-100 text-teal-700",
-                  appeal.status === "REJECTED" && "bg-rose-100 text-rose-700",
-                  (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-red-100 text-red-700"
+                  appeal.status === "PENDING" && "bg-primary-soft text-primary-soft-foreground",
+                  appeal.status === "IN_PROGRESS" && "bg-success-soft text-success-soft-foreground",
+                  appeal.status === "RESOLVED" && "bg-success-soft text-success-soft-foreground",
+                  appeal.status === "REJECTED" && "bg-destructive-soft text-destructive-soft-foreground",
+                  (appeal.status === "OVERDUE" || appeal.status === "overdue") && "bg-destructive-soft text-destructive-soft-foreground"
                 )}>
                   {STATUS_LABELS[appeal.status] || appeal.status}
                 </span>
