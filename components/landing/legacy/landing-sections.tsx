@@ -152,22 +152,27 @@ export function HowItWorks() {
 
         <ol className="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {STEPS.map((s, i) => (
-            <Reveal key={s.n} delay={i * 0.07}>
-              <li className={cn(CARD, CARD_HOVER, "flex h-full flex-col p-8")}>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-soft text-primary-soft-foreground">
-                    <s.icon className="h-[22px] w-[22px]" aria-hidden />
-                  </span>
-                  <span className="text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/70 tabular-nums">
-                    {s.n}
-                  </span>
+            /* <li> to'g'ridan-to'g'ri <ol> ichida turishi kerak — aks holda
+               ekran o'quvchi buni ro'yxat deb tanimaydi. Animatsiya <li>
+               ichida. */
+            <li key={s.n} className="h-full">
+              <Reveal delay={i * 0.07} className="h-full">
+                <div className={cn(CARD, CARD_HOVER, "flex h-full flex-col p-8")}>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-soft text-primary-soft-foreground">
+                      <s.icon className="h-[22px] w-[22px]" aria-hidden />
+                    </span>
+                    <span className="text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/70 tabular-nums">
+                      {s.n}
+                    </span>
+                  </div>
+                  <h3 className="mt-7 text-lg font-semibold tracking-[-0.01em] text-foreground">
+                    {s.t}
+                  </h3>
+                  <p className="mt-3 text-[15px] leading-7 text-muted-foreground">{s.d}</p>
                 </div>
-                <h3 className="mt-7 text-lg font-semibold tracking-[-0.01em] text-foreground">
-                  {s.t}
-                </h3>
-                <p className="mt-3 text-[15px] leading-7 text-muted-foreground">{s.d}</p>
-              </li>
-            </Reveal>
+              </Reveal>
+            </li>
           ))}
         </ol>
 
@@ -185,7 +190,7 @@ export function HowItWorks() {
               № XT-2026-000412
             </p>
             <p className="mt-1.5 text-[15px] leading-7 text-muted-foreground">
-              «Buğirdoq MFY — ko&apos;cha yorug&apos;ligi ishlamaydi»
+              «Ko&apos;cha yorug&apos;ligi ishlamaydi — mahalla markazi»
             </p>
 
             <ol className="mt-7 space-y-5">

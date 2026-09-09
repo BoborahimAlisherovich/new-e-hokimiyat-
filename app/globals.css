@@ -1148,6 +1148,14 @@
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
+/* Suratning ustidagi statistika kartasi: shisha, lekin ozgina quyuq —
+   yorqin fasad ustida ham matn o'qiladi. */
+.glass-card {
+  background: rgba(6, 20, 54, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
 .glass-strong {
   background: rgba(6, 20, 54, 0.62);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1157,6 +1165,7 @@
 /* Zaif qurilmalarda blur qimmat — tekis fonga tushadi */
 @media (max-width: 767px) {
   .glass,
+  .glass-card,
   .glass-strong {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1164,7 +1173,7 @@
   }
 }
 
-/* Sarlavhadagi ak\0441ent so'z */
+/* Sarlavhadagi aksent soz */
 .text-gradient-sky {
   background: linear-gradient(100deg, #7aa7ff 0%, #2dd4bf 92%);
   -webkit-background-clip: text;
@@ -1188,13 +1197,45 @@
   35% { opacity: 1; }
   100% { transform: translateY(14px); opacity: 0; }
 }
-.scroll-hint span {
+/* Faqat "sichqoncha g'ildiragi" nuqtasi harakatlanadi — yozuv emas.
+   Ilgari `.scroll-hint span` barcha ichki span'larga tegib, matnni ham
+   so'ndirardi. */
+.scroll-hint .dot {
   animation: scroll-hint 1.9s var(--ease-out) infinite;
+}
+
+/* Qahramon bo'limdagi suzuvchi shisha kartalar.
+   Faqat transform — layout qayta hisoblanmaydi, shuning uchun arzon. */
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+}
+.float-soft {
+  animation: float-soft 7.5s var(--ease-out) infinite;
+  will-change: transform;
+}
+.float-soft-2 {
+  animation-duration: 9s;
+  animation-delay: -2.5s;
+}
+.float-soft-3 {
+  animation-duration: 8.2s;
+  animation-delay: -4s;
+}
+.float-soft-4 {
+  animation-duration: 10s;
+  animation-delay: -1.2s;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .halo,
-  .scroll-hint span {
+  .scroll-hint .dot,
+  .float-soft {
     animation: none;
   }
 }

@@ -10,6 +10,7 @@ import {
   Mic,
   Pencil,
   Send,
+  Sparkles,
   Square,
 } from "lucide-react"
 
@@ -26,9 +27,18 @@ import { addDays, putAiPrefill, type AiPrefill } from "./wizard-types"
  * ochiladi. Hech narsa AI'ning o'zi tomonidan yuborilmaydi: yaratishdan
  * oldin odam ko'rib chiqadi.
  *
+ * DIZAYN — 2-tahrir.
+ * Ilgari bu ekran quyuq siyoh rangli panel edi va butun sayt yorug'
+ * bo'lgani uchun undan «boshqa mahsulot» kabi ajralib turardi. Endi
+ * ekran saytning o'z dizayn tizimida:
+ *   · faqat token ranglar (bg-card / bg-background / text-muted-foreground),
+ *     shuning uchun dark tema ham avtomatik ishlaydi;
+ *   · chegara yo'q — sirt kontrasti va yumshoq soya ajratadi;
+ *   · robot ranglari `--robot-*` orqali yorug' palitraga o'tkazildi
+ *     (robot komponentining o'zi o'zgarmadi — u shu o'zgaruvchilarni oladi).
+ *
  * Mikrofon: `MediaRecorder` oqimi HAR HOLATDA to'xtatiladi — komponent
- * unmount bo'lganda ham. (Loyihaning chat qismida shu qilinmagani uchun
- * sahifadan chiqib ketilsa mikrofon yoniq qolardi.)
+ * unmount bo'lganda ham.
  */
 
 type Suggestion = {
@@ -72,6 +82,20 @@ const QUICK_PROMPTS: { title: string; hint: string; text: string }[] = [
       "Muhimlik favqulodda, muddati besh kun.",
   },
 ]
+
+/** Robot ranglari — yorug' palitra, saytning ko'k aksenti bilan */
+const ROBOT_VARS = {
+  "--robot-body-1": "#dde7fb",
+  "--robot-body-2": "#bccfef",
+  "--robot-face-1": "#16224a",
+  "--robot-face-2": "#243766",
+  "--robot-accent": "#3366ff",
+  "--robot-shadow": "#7f95c4",
+} as React.CSSProperties
+
+/** Yumshoq soyali oq karta — butun saytdagi kabi */
+const CARD =
+  "rounded-3xl bg-card shadow-[0_1px_2px_rgba(13,21,36,0.04),0_14px_40px_-18px_rgba(13,21,36,0.14)]"
 
 export function AiTaskCreator() {
   const router = useRouter()
@@ -127,7 +151,10 @@ export function AiTaskCreator() {
   }, [stopStream])
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    })
   }, [turns, busy])
 
   function announce(t: string) {
@@ -254,55 +281,28 @@ export function AiTaskCreator() {
 
   /* ------------------------------------------------------------------ RENDER */
   return (
-    <div
-      className="ai-panel overflow-hidden rounded-xl border"
-      style={
-        {
-          // Robot va panel ranglari — saytning ko'k akцentiga moslangan
-          "--robot-body-1": "#2c3c67",
-          "--robot-body-2": "#1b2748",
-          "--robot-face-1": "#0c1630",
-          "--robot-face-2": "#17244d",
-          "--robot-accent": "#7098ff",
-          "--robot-shadow": "#5b84ff",
-          "--ai-bg": "#070c18",
-          "--ai-card": "#101a30",
-          "--ai-border": "#1e2b45",
-          "--ai-fg": "#eaf0fc",
-          "--ai-mut": "#93a5c4",
-          "--ai-accent": "#6d92ff",
-          background:
-            "radial-gradient(620px 340px at 78% -10%, rgba(91,132,255,0.20), transparent 70%)," +
-            "radial-gradient(440px 300px at 6% 110%, rgba(34,211,238,0.12), transparent 70%)," +
-            "var(--ai-bg)",
-          borderColor: "var(--ai-border)",
-          color: "var(--ai-fg)",
-        } as React.CSSProperties
-      }
-    >
+    <div className={cn(CARD, "overflow-hidden")} style={ROBOT_VARS}>
       <div ref={liveRef} role="status" aria-live="polite" className="sr-only" />
 
-      <div className="grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-        {/* ------------------------------------------------------- CHAP PANEL */}
-        <div
-          className="flex flex-col items-center px-5 py-6 lg:border-r"
-          style={{ borderColor: "var(--ai-border)" }}
-        >
+      <div className="grid lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+        {/* ------------------------------------------------------- CHAP PANEL
+            Cho'kkan sirt (bg-background) — chegara emas, kontrast ajratadi */}
+        <div className="flex flex-col items-center bg-background px-6 py-8">
           <AiRobot
             state={state}
-            className="h-44 w-44 sm:h-52 sm:w-52"
+            className="h-40 w-40 sm:h-48 sm:w-48"
             label={`AI yordamchi — ${statusText}`}
           />
 
-          <p className="mt-3 text-center text-lg font-bold tracking-tight text-balance">
+          <p className="mt-4 text-center text-[17px] font-semibold leading-6 tracking-[-0.01em] text-foreground text-balance">
             {statusText}
           </p>
-          <p className="mt-1 text-center text-xs" style={{ color: "var(--ai-mut)" }}>
-            Masalan: «Buğirdoq mahallasidagi maktab yo‘lini ta’mirlash bo‘yicha
-            qurilish bo‘limiga favqulodda topshiriq bering, muddati 5 sentabr»
+          <p className="mt-2 text-center text-[13px] leading-6 text-muted-foreground text-pretty">
+            Masalan: «Mahalla markazidagi maktab yo‘lini ta’mirlash bo‘yicha
+            qurilish bo‘limiga favqulodda topshiriq bering, muddati besh kun»
           </p>
 
-          <VoiceWave active={recording} className="mt-4 w-full max-w-[280px]" />
+          <VoiceWave active={recording} className="mt-5 w-full max-w-[280px]" />
 
           {/* Mikrofon */}
           <button
@@ -311,66 +311,57 @@ export function AiTaskCreator() {
             disabled={busy}
             aria-pressed={recording}
             className={cn(
-              "mt-2 flex h-16 w-16 items-center justify-center rounded-full transition-transform focus-visible:outline-2 focus-visible:outline-offset-4",
+              "flex h-16 w-16 items-center justify-center rounded-full text-white transition-transform duration-300",
+              "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
               "disabled:opacity-50",
-              !recording && "hover:scale-105",
+              recording
+                ? "bg-destructive shadow-[0_16px_40px_-14px_var(--destructive)]"
+                : "bg-primary shadow-[0_16px_40px_-14px_var(--primary)] hover:-translate-y-0.5",
             )}
-            style={{
-              background: recording
-                ? "linear-gradient(140deg,#f0526a,#d93a55)"
-                : "linear-gradient(140deg,#6d92ff,#3f6bff)",
-              boxShadow: recording
-                ? "0 10px 30px -10px rgba(240,82,106,0.65)"
-                : "0 10px 30px -10px rgba(91,132,255,0.7)",
-              outlineColor: "var(--ai-accent)",
-            }}
           >
             {busy ? (
-              <Loader2 className="h-6 w-6 animate-spin text-white" aria-hidden />
+              <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
             ) : recording ? (
-              <Square className="h-5 w-5 text-white" aria-hidden />
+              <Square className="h-5 w-5" aria-hidden />
             ) : (
-              <Mic className="h-6 w-6 text-white" aria-hidden />
+              <Mic className="h-6 w-6" aria-hidden />
             )}
             <span className="sr-only">
               {recording ? "Yozuvni to‘xtatish" : "Ovoz bilan aytish"}
             </span>
           </button>
-          <p className="mt-2 text-2xs" style={{ color: "var(--ai-mut)" }}>
+          <p className="mt-2.5 text-[12px] font-medium text-muted-foreground">
             {recording ? "To‘xtatish uchun bosing" : "Bosib gapiring"}
           </p>
 
           {micError && (
             <p
               role="alert"
-              className="mt-3 flex items-start gap-1.5 rounded-md px-3 py-2 text-xs"
-              style={{ background: "rgba(240,82,106,0.14)", color: "#ffb4bf" }}
+              className="mt-4 flex items-start gap-2 rounded-2xl bg-destructive-soft px-3.5 py-2.5 text-[13px] leading-6 text-destructive-soft-foreground"
             >
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {micError}
             </p>
           )}
 
           {/* Tez shablonlar */}
-          <div className="mt-6 w-full">
-            <p
-              className="mb-2 text-2xs font-semibold uppercase tracking-[0.09em]"
-              style={{ color: "var(--ai-mut)" }}
-            >
+          <div className="mt-8 w-full">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Tez shablonlar
             </p>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {QUICK_PROMPTS.map((p) => (
                 <button
                   key={p.title}
                   type="button"
                   disabled={busy || recording}
                   onClick={() => void analyze({ text: p.text }, p.text)}
-                  className="block w-full rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-50"
-                  style={{ background: "var(--ai-card)", borderColor: "var(--ai-border)" }}
+                  className="block w-full rounded-2xl bg-card px-4 py-3.5 text-left shadow-[0_1px_2px_rgba(13,21,36,0.04),0_8px_24px_-14px_rgba(13,21,36,0.16)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(13,21,36,0.05),0_18px_40px_-18px_rgba(13,21,36,0.22)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
                 >
-                  <span className="block text-sm font-semibold">{p.title}</span>
-                  <span className="block text-xs" style={{ color: "var(--ai-mut)" }}>
+                  <span className="block text-sm font-semibold text-foreground">
+                    {p.title}
+                  </span>
+                  <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
                     {p.hint}
                   </span>
                 </button>
@@ -380,24 +371,24 @@ export function AiTaskCreator() {
         </div>
 
         {/* ------------------------------------------------------- O'NG PANEL */}
-        <div className="flex min-h-[460px] flex-col px-5 py-6">
-          <p
-            className="mb-3 text-2xs font-semibold uppercase tracking-[0.09em]"
-            style={{ color: "var(--ai-mut)" }}
-          >
-            Suhbat
-          </p>
+        <div className="flex min-h-[480px] flex-col px-6 py-8">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </span>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Suhbat
+              </p>
+              <p className="text-[13px] text-muted-foreground">
+                Aytganingizni maydonlarga ajratib beraman
+              </p>
+            </div>
+          </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-2.5 overflow-y-auto pr-1">
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto pr-1">
             {turns.length === 0 && !busy && (
-              <div
-                className="rounded-xl border px-4 py-6 text-center text-sm"
-                style={{
-                  background: "var(--ai-card)",
-                  borderColor: "var(--ai-border)",
-                  color: "var(--ai-mut)",
-                }}
-              >
+              <div className="rounded-2xl bg-background px-5 py-8 text-center text-[14px] leading-7 text-muted-foreground">
                 Hozircha bo‘sh. Mikrofonni bosib gapiring, shablon tanlang yoki
                 pastdagi maydonga yozing.
               </div>
@@ -408,8 +399,7 @@ export function AiTaskCreator() {
                 return (
                   <div
                     key={i}
-                    className="ml-auto max-w-[88%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-sm leading-relaxed text-white"
-                    style={{ background: "linear-gradient(140deg,#3f6bff,#5b84ff)" }}
+                    className="ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm leading-6 text-primary-foreground"
                   >
                     {t.text}
                   </div>
@@ -421,12 +411,7 @@ export function AiTaskCreator() {
                   <div
                     key={i}
                     role="alert"
-                    className="max-w-[88%] rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm"
-                    style={{
-                      background: "rgba(240,82,106,0.12)",
-                      borderColor: "rgba(240,82,106,0.35)",
-                      color: "#ffc2ca",
-                    }}
+                    className="max-w-[88%] rounded-2xl rounded-bl-md bg-destructive-soft px-4 py-2.5 text-sm leading-6 text-destructive-soft-foreground"
                   >
                     {t.text}
                   </div>
@@ -443,10 +428,7 @@ export function AiTaskCreator() {
             })}
 
             {busy && (
-              <div
-                className="inline-flex items-center gap-2 rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm"
-                style={{ background: "var(--ai-card)", borderColor: "var(--ai-border)" }}
-              >
+              <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-md bg-background px-4 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Tahlil qilinmoqda…
               </div>
@@ -462,7 +444,7 @@ export function AiTaskCreator() {
               setText("")
               void analyze({ text: value }, value)
             }}
-            className="mt-3 flex items-end gap-2"
+            className="mt-4 flex items-end gap-2.5"
           >
             <label htmlFor="ai-text" className="sr-only">
               Topshiriqni yozing
@@ -480,21 +462,14 @@ export function AiTaskCreator() {
               rows={2}
               placeholder="Yoki shu yerga yozing…"
               disabled={busy}
-              className="min-h-11 flex-1 resize-y rounded-lg border px-3 py-2.5 text-sm outline-none placeholder:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{
-                background: "var(--ai-card)",
-                borderColor: "var(--ai-border)",
-                color: "var(--ai-fg)",
-                outlineColor: "var(--ai-accent)",
-              }}
+              className="min-h-11 flex-1 resize-y rounded-2xl bg-background px-4 py-3 text-sm leading-6 text-foreground shadow-[inset_0_0_0_1px_var(--border)] outline-none transition-shadow placeholder:text-muted-foreground focus:shadow-[inset_0_0_0_1.5px_var(--primary)] disabled:opacity-60"
             />
             <button
               type="submit"
               disabled={busy || !text.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white disabled:opacity-40"
-              style={{ background: "var(--ai-accent)" }}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:translate-y-0 disabled:opacity-40"
             >
-              <Send className="h-4.5 w-4.5" aria-hidden />
+              <Send className="h-4 w-4" aria-hidden />
               <span className="sr-only">Yuborish</span>
             </button>
           </form>
@@ -533,43 +508,38 @@ function SuggestionCard({
   const empty = rows.length === 0
 
   return (
-    <div
-      className="max-w-full rounded-2xl rounded-bl-md border px-3.5 py-3 text-sm"
-      style={{ background: "var(--ai-card)", borderColor: "var(--ai-border)" }}
-    >
+    <div className="max-w-full rounded-2xl rounded-bl-md bg-background p-5 text-sm">
       {empty ? (
-        <p style={{ color: "var(--ai-mut)" }}>
+        <p className="leading-7 text-muted-foreground">
           AI topshiriqni ajratib olmadi. Iltimos, aniqroq aytib ko‘ring: nima
           qilinishi kerak, qaysi tashkilot va qanday muddatda.
         </p>
       ) : (
         <>
-          <p className="mb-2">Topshiriqni shunday tushundim — tekshirib tasdiqlang:</p>
+          <p className="text-[14px] font-medium leading-6 text-foreground">
+            Topshiriqni shunday tushundim — tekshirib tasdiqlang:
+          </p>
 
           {suggestion.description && (
-            <p
-              className="mb-2 whitespace-pre-wrap rounded-lg px-3 py-2 text-xs leading-relaxed"
-              style={{ background: "rgba(255,255,255,0.04)", color: "var(--ai-fg)" }}
-            >
+            <p className="mt-3 whitespace-pre-wrap rounded-xl bg-card px-3.5 py-3 text-[13px] leading-6 text-muted-foreground">
               {suggestion.description}
             </p>
           )}
 
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+          <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[13px]">
             {rows.map(([k, v]) => (
               <div key={k} className="contents">
-                <dt style={{ color: "var(--ai-mut)" }}>{k}</dt>
-                <dd className="min-w-0 font-semibold">{v}</dd>
+                <dt className="text-muted-foreground">{k}</dt>
+                <dd className="min-w-0 font-semibold text-foreground">{v}</dd>
               </div>
             ))}
           </dl>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2.5">
             <button
               type="button"
               onClick={() => onUse(suggestion)}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg px-3.5 text-xs font-bold text-[#04122b]"
-              style={{ background: "var(--ai-accent)" }}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Topshiriqni yaratish
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -577,14 +547,13 @@ function SuggestionCard({
             <button
               type="button"
               onClick={() => onUse(suggestion)}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold"
-              style={{ borderColor: "var(--ai-border)", color: "var(--ai-fg)" }}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgba(13,21,36,0.04),0_8px_24px_-14px_rgba(13,21,36,0.16)] transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />
               Tahrirlash
             </button>
           </div>
-          <p className="mt-2 text-2xs" style={{ color: "var(--ai-mut)" }}>
+          <p className="mt-3 text-[12px] leading-5 text-muted-foreground">
             Ikkisi ham formani to‘ldirilgan holda ochadi — topshiriq siz
             tasdiqlaguningizcha yuborilmaydi.
           </p>

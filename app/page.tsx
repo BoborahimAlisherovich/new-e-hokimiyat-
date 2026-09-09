@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { LandingPage } from "@/components/landing/landing-page"
+import EHokimiyatLanding from "@/components/landing/e-hokimiyat-landing"
 
 /**
  * / — OMMAVIY SAHIFA
@@ -8,10 +8,12 @@ import { LandingPage } from "@/components/landing/landing-page"
  * Ilgari bu fayl `redirect("/dashboard")` dan iborat edi: saytning
  * ommaviy yuzi bo'lmagan, fuqaro esa to'g'ridan-to'g'ri login ekraniga
  * tushib qolardi. Endi ildiz manzil landing sahifani ko'rsatadi.
+ *
+ * Landing butunlay bitta faylda: `components/landing/e-hokimiyat-landing.tsx`.
  */
 
 export const metadata: Metadata = {
-  title: "Xalq dardi — davlat e'tiborida",
+  title: "Xalq dardi – davlat e'tiborida",
   description:
     "Xatirchi tumani hokimligining raqamli platformasi. Murojaatingizni Telegram bot orqali yuboring: raqam oladi, mas'ul tashkilotga yo'naltiriladi, muddati nazoratga olinadi va natijasi isbot bilan tasdiqlanadi.",
   keywords: [
@@ -33,5 +35,5 @@ export const metadata: Metadata = {
 }
 
 export default function HomePage() {
-  return <LandingPage />
+  return <EHokimiyatLanding />
 }
