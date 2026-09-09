@@ -55,7 +55,6 @@ import {
   Bot,
   Camera,
   Check,
-  ChevronDown,
   ClipboardCheck,
   Eye,
   EyeOff,
@@ -106,9 +105,6 @@ const CARD_HOVER =
   "transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(13,21,36,0.05),0_26px_60px_-22px_rgba(13,21,36,0.22)]"
 /** Och fonli, chegarasiz ichki blok (oq bo'lim ustida) */
 const TILE = "rounded-3xl bg-background"
-/** Suratning ustidagi shisha panel */
-const GLASS =
-  "glass-card rounded-2xl shadow-[0_24px_70px_-28px_rgba(3,11,31,0.85)]"
 
 /* ==========================================================================
    KICHIK YORDAMCHILAR
@@ -357,43 +353,11 @@ function GlassNav({
    Buning uchun bo'lim balandligi ekrandan katta, ichida `sticky` qatlam.
    ========================================================================== */
 
-/** Suratning ustida suzib turuvchi shisha statistika kartasi */
-function FloatingStat({
-  icon: Icon,
-  value,
-  label,
-  className,
-  floatClass,
-}: {
-  icon: React.ElementType
-  value: string
-  label: string
-  className?: string
-  floatClass?: string
-}) {
-  return (
-    <div className={cn("pointer-events-none absolute z-10", className)} aria-hidden>
-      <div className={cn(GLASS, "float-soft w-[210px] p-5 2xl:w-[228px]", floatClass)}>
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/14 text-[#bfe9e2]">
-          <Icon className="h-[18px] w-[18px]" />
-        </span>
-        <p className="mt-4 text-[26px] font-semibold leading-none tracking-tight text-white tabular-nums">
-          {value}
-        </p>
-        <p className="mt-2 text-[12.5px] font-medium leading-5 text-[#e8effc]">
-          {label}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-const FACTS = [
-  { v: "70", l: "mahalla va qishloq" },
-  { v: "20", l: "faoliyat sohasi" },
-  { v: "24/7", l: "murojaat qabuli" },
-  { v: "3", l: "til: o‘zbek, rus, ingliz" },
-]
+/* Ilgari bu yerda suratning ustida suzib turadigan to'rtta shisha karta
+   (24/7, 70 mahalla, 3 til, Isbot) va pastda faktlar qatori bor edi.
+   Foydalanuvchi talabi bilan olib tashlandi: qahramon bo'limda faqat
+   sarlavha va harakat tugmalari qoladi, bino to'sib qo'yilmaydi.
+   O'sha to'rt fakt endi «Faktlar» bo'limida (HowItWorks dan keyin). */
 
 function Hero({
   onLogin,
@@ -460,39 +424,6 @@ function Hero({
 
         {/* ---- MARKAZIY KOMPOZITSIYA + SUZUVCHI SHISHA KARTALAR ---- */}
         <motion.div style={scrollStyle} className="relative h-[100dvh]">
-          {/* Suzuvchi kartalar faqat 1400px dan keng ekranda.
-              Sabab: markazdagi matn ustuni max-w-4xl (896px) — undan tor
-              ekranda kartalar matn ustiga chiqib ketardi. */}
-          <div className="hidden min-[1400px]:block">
-            <FloatingStat
-              icon={Timer}
-              value="24/7"
-              label="Murojaat qabuli to‘xtamaydi — bot kechasi ham javob beradi"
-              className="left-[2.5%] top-[23%] 2xl:left-[6.5%]"
-            />
-            <FloatingStat
-              icon={MapIcon}
-              value="70"
-              label="Mahalla va qishloq bitta xaritada nazoratda"
-              className="bottom-[15%] left-[4.5%] 2xl:left-[9.5%]"
-              floatClass="float-soft-2"
-            />
-            <FloatingStat
-              icon={Camera}
-              value="Isbot"
-              label="Ish foto va hujjat bilan tasdiqlanadi, keyin yopiladi"
-              className="right-[2.5%] top-[23%] 2xl:right-[6.5%]"
-              floatClass="float-soft-3"
-            />
-            <FloatingStat
-              icon={Globe2}
-              value="3 til"
-              label="O‘zbek, rus va ingliz tillarida ishlaydi"
-              className="bottom-[15%] right-[4.5%] 2xl:right-[9.5%]"
-              floatClass="float-soft-4"
-            />
-          </div>
-
           <div className="mx-auto flex h-full max-w-3xl flex-col items-center justify-center px-6 pb-10 pt-20 text-center sm:pb-8 sm:pt-24 lg:max-w-4xl">
             <motion.p
               {...fade(0.05)}
@@ -544,31 +475,6 @@ function Hero({
                 Xodimlar uchun kirish
               </button>
             </motion.div>
-
-            {/* Faktlar — markazda, chegarasiz, faqat nozik ajratgich */}
-            <motion.dl
-              {...fade(0.46)}
-              /* 1400px dan keng ekranda bu raqamlar suzuvchi kartalarda
-                 takrorlanadi — shuning uchun u yerda yashiriladi. */
-              className="mt-9 grid w-full grid-cols-2 gap-y-5 sm:mt-16 sm:grid-cols-4 sm:gap-y-7 min-[1400px]:hidden"
-            >
-              {FACTS.map((f, i) => (
-                <div
-                  key={f.l}
-                  className={cn("px-3 text-center", i > 0 && "sm:border-l sm:border-white/15")}
-                >
-                  <dt className="sr-only">{f.l}</dt>
-                  <dd>
-                    <span className="block text-[24px] font-semibold tracking-tight text-white tabular-nums [text-shadow:0_1px_18px_rgba(3,11,31,0.8)] sm:text-[32px]">
-                      {f.v}
-                    </span>
-                    <span className="mt-1 block text-[11.5px] font-medium leading-5 text-[#bcd0f7] [text-shadow:0_1px_14px_rgba(3,11,31,0.9)]">
-                      {f.l}
-                    </span>
-                  </dd>
-                </div>
-              ))}
-            </motion.dl>
 
             {/* Pastga ishora — «suratni ochish» taklifi */}
             <div
@@ -1028,6 +934,47 @@ function HowItWorks() {
 }
 
 /* ==========================================================================
+   4b. FAKTLAR — ilgari qahramon bo'limdagi shisha kartalarda edi
+   ========================================================================== */
+
+const FACTS = [
+  { icon: Timer, v: "24/7", l: "Murojaat qabuli", d: "Bot kechasi ham javob beradi" },
+  { icon: MapIcon, v: "70", l: "Mahalla va qishloq", d: "Bitta interaktiv xaritada" },
+  { icon: Camera, v: "Isbot", l: "Bilan yopiladi", d: "Foto va hujjat, keyin hokim tasdig'i" },
+  { icon: Globe2, v: "3 til", l: "O'zbek, rus, ingliz", d: "Bot ham, tizim ham bir tilda" },
+]
+
+function Facts() {
+  return (
+    <section className="bg-card py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <dl className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {FACTS.map((f, i) => (
+            <Reveal key={f.v} delay={i * 0.06}>
+              <div className={cn(TILE, "flex h-full items-start gap-4 p-6")}>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary-soft-foreground">
+                  <f.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <dt className="sr-only">{f.l}</dt>
+                  <dd>
+                    <span className="block text-[26px] font-semibold leading-none tracking-tight text-foreground tabular-nums">
+                      {f.v}
+                    </span>
+                    <span className="mt-1.5 block text-[14px] font-medium text-foreground">{f.l}</span>
+                    <span className="mt-0.5 block text-[13px] leading-5 text-muted-foreground">{f.d}</span>
+                  </dd>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+/* ==========================================================================
    5. IMKONIYATLAR VA TAHLIL
    ========================================================================== */
 
@@ -1087,8 +1034,8 @@ function Features() {
           <SectionHead
             center
             label="Tizim imkoniyatlari"
-            title="Qog'oz va messenjerlar o'rniga — bitta tizim"
-            lead="Ilgari topshiriqlar daftarda va guruhlarda yurar, kim nima qilayotgani aniq bilinmasdi. Endi hamma narsa bir joyda va nazorat ostida."
+            title="Murojaatdan natijagacha — bitta tizimda"
+            lead="Qabul, yo'naltirish, muddat nazorati va isbot bilan tasdiqlash — har bir bosqich ko'rinib turadi va vaqti bilan qayd etiladi."
           />
         </Reveal>
 
@@ -1389,14 +1336,15 @@ function Trust() {
     <section id="ishonch" className="scroll-mt-24 bg-background py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <Reveal>
-          <SectionHead
-            label="Xavfsizlik va ishonch"
-            title="Ma'lumot himoyalangan, jarayon qaytarib bo'lmaydigan"
-            lead="Davlat tizimi uchun ishonch bezak emas — talab. Har bir amal iz qoldiradi va har bir foydalanuvchi faqat o'z vakolatidagi ma'lumotga ega."
-          />
+          <div className="max-w-2xl">
+            <MicroLabel>Xavfsizlik</MicroLabel>
+            <p className="mt-3 text-[17px] leading-8 text-muted-foreground">
+              Tizim ma&apos;lumotni qanday himoya qiladi — qisqacha:
+            </p>
+          </div>
         </Reveal>
 
-        <div className="mt-16 grid gap-x-12 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {TRUST.map((item, i) => (
             <Reveal key={item.t} delay={(i % 3) * 0.06}>
               <div>
@@ -1559,6 +1507,7 @@ export default function EHokimiyatLanding() {
 
       <main>
         <HowItWorks />
+        <Facts />
         <Features />
         <TelegramCta />
         <OneIdSection />
