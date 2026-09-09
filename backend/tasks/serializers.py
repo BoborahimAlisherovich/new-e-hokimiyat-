@@ -93,14 +93,19 @@ class TaskOrganizationSerializer(serializers.ModelSerializer):
     organization = OrganizationMinimalSerializer(read_only=True)
     organization_id = serializers.UUIDField(write_only=True)
     assigned_to = UserMinimalSerializer(read_only=True)
-    
+    viewed_by = UserMinimalSerializer(read_only=True)
+
     class Meta:
         model = TaskOrganization
         fields = [
             'id', 'organization', 'organization_id', 'status',
-            'assigned_to', 'accepted_at', 'completed_at', 'created_at'
+            'assigned_to', 'viewed_at', 'viewed_by',
+            'accepted_at', 'completed_at', 'created_at'
         ]
-        read_only_fields = ['id', 'status', 'assigned_to', 'accepted_at', 'completed_at']
+        read_only_fields = [
+            'id', 'status', 'assigned_to', 'viewed_at', 'viewed_by',
+            'accepted_at', 'completed_at',
+        ]
 
 
 class TaskMinimalSerializer(serializers.ModelSerializer):

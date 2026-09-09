@@ -267,6 +267,19 @@ class TaskOrganization(BaseModel):
         verbose_name='Ijrochi'
     )
     
+    # Tashkilot topshiriqni BIRINCHI MARTA ochgan payt. Ilgari bunday
+    # ma'lumot yo'q edi: topshiriq yuborilgandan keyin tashkilot uni
+    # ko'rdimi yoki yo'qmi — bilishning imkoni bo'lmagan.
+    viewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ko'rilgan vaqt")
+    viewed_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='viewed_task_assignments',
+        verbose_name="Kim ko'rdi"
+    )
+
     accepted_at = models.DateTimeField(null=True, blank=True, verbose_name='Qabul qilingan vaqt')
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Bajarilgan vaqt')
     
@@ -278,11 +291,40 @@ class TaskOrganization(BaseModel):
     def __str__(self):
         return f"{self.task.title[:30]} -> {self.organization.name}"
     
+    def mark_viewed(self, user):
+        """Tashkilot topshiriqni ochdi — «Ko'rib chiqilmoqda» ga o'tadi.
+
+        Faqat `YANGI` dan o'tadi: ijroga olingan yoki hisobot berilgan
+        qatorni orqaga qaytarmaydi. Idempotent — ikkinchi chaqiruvda
+        hech narsa o'zgarmaydi va `False` qaytadi.
+        """
+        fields = []
+        if self.viewed_at is None:
+            self.viewed_at = timezone.now()
+            self.viewed_by = user
+            fields += ['viewed_at', 'viewed_by']
+
+        changed_status = False
+        if self.status == 'YANGI':
+            self.status = 'TEKSHIRUVDA'
+            fields.append('status')
+            changed_status = True
+
+        if not fields:
+            return False
+
+        fields.append('updated_at')
+        self.save(update_fields=fields)
+        return changed_status
+
     def accept(self, user):
         """Accept task for execution."""
         self.status = 'IJRODA'
         self.assigned_to = user
         self.accepted_at = timezone.now()
+        if self.viewed_at is None:
+            self.viewed_at = timezone.now()
+            self.viewed_by = user
         self.save()
     
     def complete(self):
@@ -301,6 +343,7 @@ class TaskExecution(BaseModel):
     """
     
     ACTION_CHOICES = [
+        ('KORIB_CHIQILMOQDA', "Ko'rib chiqilmoqda"),
         ('IJROGA_OLINDI', 'Ijroga olindi'),
         ('HISOBOT_TOPSHIRILDI', 'Hisobot topshirildi'),
         ('QAYTA_YUBORILDI', 'Qayta yuborildi'),

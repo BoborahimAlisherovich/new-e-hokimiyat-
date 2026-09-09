@@ -833,6 +833,14 @@ class AppealMessage(models.Model):
         default=False,
         verbose_name="AI tomonidan yaratilgan"
     )
+    # Tizim tomonidan avtomatik yuborilgan xabar (masalan holat
+    # o'zgarishi haqida fuqaroga bildirish). Operator kabinetda bunday
+    # xabar odam yozgan xabardan ajratib ko'rsatiladi — aks holda
+    # avtomatik matn admin nomidan yozilganday ko'rinadi.
+    is_system = models.BooleanField(
+        default=False,
+        verbose_name="Tizim xabari"
+    )
     telegram_message_id = models.BigIntegerField(
         null=True,
         blank=True,

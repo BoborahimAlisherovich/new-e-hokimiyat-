@@ -1842,10 +1842,17 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                 # Fuqaro xabari
                 sender_name = citizen_name
             
+            # Tizim xabari (holat o'zgarishi haqida avtomatik bildirish)
+            # odam yozgan xabarday ko'rinmasligi kerak.
+            if getattr(msg, 'is_system', False):
+                sender_name = 'Tizim'
+                sender_avatar_url = None
+
             data.append({
                 'id': msg.id,  # type: ignore[attr-defined]
                 'text': msg.text,
                 'is_from_admin': msg.is_from_admin,
+                'is_system': getattr(msg, 'is_system', False),
                 'admin_name': sender_name,
                 'sender_name': sender_name,
                 'sender_avatar_url': sender_avatar_url,

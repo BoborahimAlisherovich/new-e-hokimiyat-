@@ -169,7 +169,7 @@ class AppealMessageSerializer(serializers.ModelSerializer):
         model = AppealMessage
         fields = [
             'id', 'is_from_admin', 'admin', 'admin_name', 'text',
-            'is_ai_generated', 'telegram_message_id', 'created_at'
+            'is_ai_generated', 'is_system', 'telegram_message_id', 'created_at'
         ]
 
 

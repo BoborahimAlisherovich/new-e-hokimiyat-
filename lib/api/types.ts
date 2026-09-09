@@ -181,12 +181,16 @@ export interface TelegramAppeal {
 export interface TelegramUser {
   id: number
   telegram_id: number
+  username?: string
   first_name?: string
   last_name?: string
   full_name?: string
   gender?: string
   phone?: string
   region_name?: string
+  language?: string
+  is_registered?: boolean
+  is_blocked?: boolean
 }
 
 /** Murojaat ko'rib chiqish so'rovi */

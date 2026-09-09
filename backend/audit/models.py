@@ -43,6 +43,7 @@ class AuditLog(BaseModel):
         # Task actions
         ('TASK_CREATED', "Topshiriq yaratildi"),
         ('TASK_UPDATED', "Topshiriq yangilandi"),
+        ('TASK_VIEWED', "Topshiriq ko'rib chiqishga olindi"),
         ('TASK_ACCEPTED', "Topshiriq qabul qilindi"),
         ('TASK_COMPLETED', "Topshiriq bajarildi"),
         ('TASK_REASSIGNED', "Topshiriq qayta yuborildi"),

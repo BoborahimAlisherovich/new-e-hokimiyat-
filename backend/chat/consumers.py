@@ -3,6 +3,8 @@ WebSocket consumers for real-time chat and notifications.
 """
 
 import json
+
+from core import realtime
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
@@ -33,10 +35,7 @@ class TaskChatConsumer(AsyncWebsocketConsumer):
             return
         
         # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await realtime.group_add(self.room_group_name, self.channel_name)
         
         await self.accept()
         
@@ -48,10 +47,7 @@ class TaskChatConsumer(AsyncWebsocketConsumer):
         }))
     
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        await realtime.group_discard(self.room_group_name, self.channel_name)
     
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -65,7 +61,7 @@ class TaskChatConsumer(AsyncWebsocketConsumer):
         message = await self.save_message(content, message_type)
         
         # Broadcast to room group
-        await self.channel_layer.group_send(
+        await realtime.emit_async(
             self.room_group_name,
             {
                 'type': 'chat_message',
@@ -184,10 +180,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         
         self.room_group_name = f'notifications_{self.user.id}'
         
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await realtime.group_add(self.room_group_name, self.channel_name)
         
         await self.accept()
         
@@ -200,10 +193,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
-            await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name
-            )
+            await realtime.group_discard(self.room_group_name, self.channel_name)
     
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -298,7 +288,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             return
 
         self.room_group_name = f'direct_chat_{self.user.id}'
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await realtime.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
         # Klient socket tayyor bo'lganini bilishi kerak (reconnect mantiqi uchun)
@@ -313,7 +303,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+            await realtime.group_discard(self.room_group_name, self.channel_name)
         if getattr(self, 'user', None) and self.user.is_authenticated:
             await self._set_presence(False)
 

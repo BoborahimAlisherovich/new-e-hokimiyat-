@@ -48,6 +48,7 @@ import {
 import {
   acceptTaskExecution,
   approveTaskExecution,
+  markTaskViewed,
   returnTaskForRework,
   requestExtension,
   formatFileSize,
@@ -252,6 +253,30 @@ export default function TaskDetailPage() {
     setDialog("edit")
     window.history.replaceState(null, "", window.location.pathname)
   }, [canEdit])
+  /* IJROCHI TOPSHIRIQNI OCHDI -> «Ko'rib chiqilmoqda».
+
+     Nima uchun alohida POST: holat o'zgarishi mutatsiya, GET ichida
+     bo'lmasligi kerak. Backend idempotent — ikkinchi chaqiruvda
+     `changed: false` qaytaradi, shuning uchun sahifa qayta yuklansa
+     ham tarixda dublikat yozuv paydo bo'lmaydi. */
+  const viewedRef = useRef(false)
+  useEffect(() => {
+    if (viewedRef.current || !task || !isOrgUser) return
+    if (myOrgStatus !== "YANGI") return
+    viewedRef.current = true
+    void markTaskViewed(id)
+      .then((res) => {
+        if (!res?.changed) return
+        // Holat o'zgardi — kartani va tarixni yangilaymiz.
+        void getTaskById(id).then(setTask).catch(() => undefined)
+        void reloadTimeline()
+      })
+      .catch(() => {
+        // Signal yuborilmasa sahifa baribir ishlaydi.
+        viewedRef.current = false
+      })
+  }, [id, task, isOrgUser, myOrgStatus, reloadTimeline])
+
   const canApprove = Boolean(task?.can_approve) && status === "BAJARILDI"
   const canAccept = isOrgUser && ["YANGI", "TEKSHIRUVDA"].includes(myOrgStatus)
   const canReport = isOrgUser && REPORTABLE.has(myOrgStatus)
@@ -379,6 +404,9 @@ export default function TaskDetailPage() {
         <div className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-0">
           {/* ================================================== CHAP USTUN */}
           <div className="min-w-0 space-y-6">
+            {/* Ijro yo'li — topshiriq qaysi bosqichda turgani bir qarashda */}
+            <FlowRail status={isOrgUser ? myOrgStatus : status} />
+
             {/* Holat banneri — hozir nima bo'lyapti, kim nima qilishi kerak */}
             <StatusBanner
               status={status}
@@ -438,6 +466,7 @@ export default function TaskDetailPage() {
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {o.assigned_to ? `Mas’ul: ${personName(o.assigned_to)}` : "Mas’ul hali belgilanmagan"}
+                            {o.viewed_at ? ` · ko‘rdi ${fmtDate(o.viewed_at, true)}` : " · hali ko‘rmagan"}
                             {o.accepted_at ? ` · ijroga olingan ${fmtDate(o.accepted_at)}` : ""}
                             {o.completed_at ? ` · hisobot ${fmtDate(o.completed_at)}` : ""}
                           </p>
@@ -659,6 +688,91 @@ export default function TaskDetailPage() {
 }
 
 /* ============================================================ BO'LAKLAR */
+
+/**
+ * IJRO YO'LI — topshiriq qaysi bosqichda turgani.
+ *
+ * Nima uchun kerak: ilgari sahifada faqat bitta status nishoni bor edi va
+ * odam «bundan keyin nima bo'ladi» ni bilmasdi. Bu rail butun yo'lni
+ * ko'rsatadi: yuborildi -> ko'rib chiqilmoqda -> ijroda -> tasdiqlashda ->
+ * nazoratdan yechildi.
+ *
+ * Telefon uchun: 5 ta yorliqni yonma-yon qo'yish 320px ga sig'maydi,
+ * shuning uchun segmentli chiziq + joriy bosqich nomi ishlatiladi.
+ */
+const FLOW_STEPS = [
+  { key: "YANGI", label: "Yuborildi" },
+  { key: "TEKSHIRUVDA", label: "Ko‘rib chiqilmoqda" },
+  { key: "IJRODA", label: "Ijroda" },
+  { key: "BAJARILDI", label: "Tasdiqlashda" },
+  { key: "NAZORATDAN_YECHILDI", label: "Nazoratdan yechildi" },
+] as const
+
+function FlowRail({ status }: { status: string }) {
+  // Qaytarilgan va bajarilmagan holatlar yo'lda emas — ular chetlanish.
+  const returned = status === "QAYTA_IJROGA_YUBORILDI"
+  const failed = status === "BAJARILMADI"
+  const overdue = status === "MUDDATI_KECH"
+
+  let index = FLOW_STEPS.findIndex((s) => s.key === status)
+  if (returned || overdue) index = 2 // ijro bosqichiga qaytadi
+  if (failed) index = FLOW_STEPS.length - 1
+  if (index < 0) index = 0
+
+  const tone = returned || failed || overdue ? "bg-destructive" : "bg-primary"
+  const done = status === "NAZORATDAN_YECHILDI"
+  const fillTone = done ? "bg-success" : tone
+
+  const current = returned
+    ? "Qayta ijroga yuborildi"
+    : failed
+      ? "Bajarilmadi"
+      : overdue
+        ? "Muddati kechikkan"
+        : FLOW_STEPS[index].label
+
+  return (
+    <section aria-label="Ijro yo‘li" className="rounded-2xl bg-card p-4 shadow-[0_1px_2px_rgba(13,21,36,0.04),0_10px_28px_-20px_rgba(13,21,36,0.16)]">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Bosqich {index + 1}/{FLOW_STEPS.length}
+        </p>
+        <p className="truncate text-sm font-semibold text-foreground">{current}</p>
+      </div>
+
+      {/* Segmentli chiziq — har bosqich bitta segment */}
+      <ol className="mt-3 flex gap-1.5" role="list">
+        {FLOW_STEPS.map((step, i) => (
+          <li
+            key={step.key}
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken"
+            title={step.label}
+          >
+            <span
+              className={cn("block h-full rounded-full transition-colors", i <= index ? fillTone : "bg-transparent")}
+              aria-hidden
+            />
+          </li>
+        ))}
+      </ol>
+
+      {/* Yorliqlar — faqat keng ekranda, telefonda joriy nom yetarli */}
+      <ol className="mt-2 hidden justify-between gap-2 sm:flex" role="list">
+        {FLOW_STEPS.map((step, i) => (
+          <li
+            key={step.key}
+            className={cn(
+              "flex-1 text-center text-[11px] leading-4",
+              i === index ? "font-semibold text-foreground" : i < index ? "text-muted-foreground" : "text-muted-foreground/70",
+            )}
+          >
+            {step.label}
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
 
 function SectionTitle({ icon: Icon, title, count }: { icon: React.ComponentType<{ className?: string }>; title: string; count?: number }) {
   return (

@@ -484,6 +484,22 @@ export interface Appeal {
   attachments?: AppealAttachment[]
   newMessagesCount?: number
   lastMessageAt?: string | null
+
+  /* --- Murojaatchi kimligi: botdan kelgan murojaatda kim yozganini
+     aniq ko'rsatish uchun. Ilgari faqat ismi bor edi, ya'ni ikki xil
+     odam bir xil ismda bo'lsa ajratishning imkoni yo'q edi. --- */
+  /** Telegram @username (bo'lsa) */
+  citizenTelegramUsername?: string
+  /** Telegram raqami — ismlar takrorlansa yagona identifikator */
+  citizenTelegramId?: number
+  /** Murojaat qaysi kanaldan keldi */
+  source?: 'telegram' | 'web' | 'manual' | string
+  /** Fuqaro tanlagan til — javob shu tilda yuborilishi kerak */
+  citizenLanguage?: string
+  /** Rasmiy murojaat raqami (№) */
+  appealNumber?: string
+  /** Botdan kelgan murojaatda foydalanuvchi ro'yxatdan o'tganmi */
+  citizenRegistered?: boolean
 }
 
 export interface AppealAttachment {

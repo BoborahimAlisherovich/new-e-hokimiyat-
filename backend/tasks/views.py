@@ -20,8 +20,7 @@ import logging
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
+from core.realtime import emit_sync
 from datetime import timedelta
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
@@ -965,7 +964,82 @@ QOIDALAR:
         )
         
         return Response(TaskDetailSerializer(task, context={"request": request}).data)
-    
+
+    @action(detail=True, methods=['post'], url_path='mark-viewed',
+            permission_classes=[IsAuthenticated])
+    def mark_viewed(self, request, pk=None):
+        """Ijrochi topshiriqni ochdi — holat «Ko'rib chiqilmoqda» ga o'tadi.
+
+        POST /api/tasks/{id}/mark-viewed/
+
+        Nima uchun POST, GET emas: holat o'zgarishi — mutatsiya. Ilgari
+        topshiriqni ochish GET so'rovi ichida holatni o'zgartirardi, bu
+        esa har qanday oldindan yuklash (prefetch), qidiruv boti yoki
+        takroriy so'rov holatni o'zgartirib qo'yishi mumkin degani.
+
+        Idempotent: birinchi chaqiruv «Ko'rib chiqilmoqda» ga o'tkazadi,
+        keyingilari hech narsa qilmaydi.
+        """
+        task = self.get_object()
+        user = request.user
+
+        organization_id = getattr(user, 'organization_id', None)
+        if not organization_id:
+            # Hokimlik xodimi topshiriqni ochsa holat o'zgarmaydi — bu
+            # faqat IJROCHI tashkilot uchun ma'noli signal.
+            return Response({'changed': False, 'reason': 'not_executor'})
+
+        try:
+            task_org = task.assigned_organizations.get(organization_id=organization_id)
+        except TaskOrganization.DoesNotExist:
+            return Response({'changed': False, 'reason': 'not_assigned'})
+
+        old_status = task_org.status
+        changed = task_org.mark_viewed(user)
+
+        if changed:
+            task.sync_status_from_assignments()
+
+            TaskExecution.objects.create(
+                task=task,
+                task_organization=task_org,
+                executed_by=user,
+                action_type='KORIB_CHIQILMOQDA',
+                comment='Ijrochi topshiriqni ochdi',
+                old_status=old_status,
+                new_status=task_org.status,
+            )
+
+            # Topshiriq bergan odam buni bilishi kerak.
+            org_name = getattr(task_org.organization, 'short_name', '') or task_org.organization.name
+            if task.created_by_id and task.created_by_id != user.id:
+                create_notification(
+                    user=task.created_by,
+                    title='Topshiriq ko‘rib chiqilmoqda',
+                    message=f'{org_name} topshiriqni ochdi: {task.title}',
+                    notification_type='TASK',
+                    related_task=task,
+                    link=f'/dashboard/tasks/{task.id}',
+                )
+
+            AuditLog.log(
+                user=user,
+                action='TASK_VIEWED',
+                entity_type='TASK',
+                entity_id=task.id,
+                description=f'{user.full_name} topshiriqni ko‘rib chiqishga oldi: {task.title}',
+                old_values={'status': old_status},
+                new_values={'status': task_org.status},
+                ip_address=getattr(request, 'client_ip', None),
+            )
+
+        return Response({
+            'changed': changed,
+            'organization_status': task_org.status,
+            'task_status': task.status,
+            'viewed_at': task_org.viewed_at,
+        })
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, CanExecuteTasks])
     def report(self, request, pk=None):
         """
@@ -1600,22 +1674,19 @@ QOIDALAR:
             )
 
             # Broadcast to WS clients
-            channel_layer = get_channel_layer()
-            if channel_layer:
-                async_to_sync(channel_layer.group_send)(
-                    f"task_chat_{task.id}",
-                    {"type": "chat_message", "message": TaskMessageSerializer(message).data}
-                )
+            # Redis o'chgan bo'lsa ham xabar saqlanadi: emit_sync
+            # istisno ko'tarmaydi (core/realtime.py).
+            emit_sync(f"task_chat_{task.id}", {"type": "chat_message", "message": TaskMessageSerializer(message).data})
 
             # AI tahlil va action bajarish
-            ai_response = self._process_chat_with_ai(task, message, request.user, channel_layer)
+            ai_response = self._process_chat_with_ai(task, message, request.user)
 
             return Response({
                 **TaskMessageSerializer(message).data,
                 'ai_response': ai_response
             }, status=status.HTTP_201_CREATED)
     
-    def _process_chat_with_ai(self, task, message, user, channel_layer):
+    def _process_chat_with_ai(self, task, message, user):
         """
         Chat xabarini AI bilan tahlil qilish va kerak bo'lsa action bajarish.
         
@@ -1751,12 +1822,11 @@ Xabar matni: {message.content}
                     content=ai_message
                 )
                 
-                # WS orqali broadcast
-                if channel_layer:
-                    async_to_sync(channel_layer.group_send)(
-                        f"task_chat_{task.id}",
-                        {"type": "chat_message", "message": TaskMessageSerializer(ai_msg).data}
-                    )
+                # WS orqali broadcast (Redis yo'q bo'lsa jimgina o'tkaziladi)
+                emit_sync(
+                    f"task_chat_{task.id}",
+                    {"type": "chat_message", "message": TaskMessageSerializer(ai_msg).data},
+                )
                 
                 return {
                     'action': ai_action,
@@ -1789,12 +1859,9 @@ Xabar matni: {message.content}
         message.content = content
         message.save(update_fields=['content', 'updated_at'])
 
-        channel_layer = get_channel_layer()
-        if channel_layer:
-            async_to_sync(channel_layer.group_send)(
-                f"task_chat_{task.id}",
-                {"type": "chat_message", "message": TaskMessageSerializer(message).data}
-            )
+        # Redis o'chgan bo'lsa ham xabar saqlanadi: emit_sync
+        # istisno ko'tarmaydi (core/realtime.py).
+        emit_sync(f"task_chat_{task.id}", {"type": "chat_message", "message": TaskMessageSerializer(message).data})
 
         return Response(TaskMessageSerializer(message).data)
 
@@ -1815,12 +1882,9 @@ Xabar matni: {message.content}
             message.attachment.delete()
         message.delete()
 
-        channel_layer = get_channel_layer()
-        if channel_layer:
-            async_to_sync(channel_layer.group_send)(
-                f"task_chat_{task.id}",
-                {"type": "chat_message", "message": {"id": message_id_value, "deleted": True}}
-            )
+        # Redis o'chgan bo'lsa ham xabar saqlanadi: emit_sync
+        # istisno ko'tarmaydi (core/realtime.py).
+        emit_sync(f"task_chat_{task.id}", {"type": "chat_message", "message": {"id": message_id_value, "deleted": True}})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     

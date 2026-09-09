@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 from typing import Iterable, Optional
 
-from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.realtime import emit_sync
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -54,7 +54,9 @@ def _broadcast_notification(notification_id) -> None:
     except Notification.DoesNotExist:
         return
 
-    async_to_sync(channel_layer.group_send)(
+    # Redis yo'q bo'lsa bildirishnoma bazada qoladi va sahifa yangilanganda
+    # ko'rinadi — so'rov 500 bermaydi.
+    emit_sync(
         f"notifications_{notification.user_id}",
         {"type": "notification_message", "notification": _notification_payload(notification)},
     )

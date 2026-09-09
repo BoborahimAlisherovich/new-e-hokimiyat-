@@ -272,6 +272,14 @@ function normalizeAppeal(appeal: TelegramAppealResponse): Appeal {
     attachments,
     newMessagesCount: appeal.new_messages_count || 0,
     lastMessageAt: appeal.last_message_at || null,
+
+    // Murojaatchi kimligi — operator kim yozganini aniq bilishi kerak
+    citizenTelegramUsername: (telegramUser?.username || '').replace(/^@/, '') || undefined,
+    citizenTelegramId: telegramUser?.telegram_id,
+    citizenLanguage: telegramUser?.language || (appeal as any).citizen_language || undefined,
+    citizenRegistered: telegramUser?.is_registered,
+    source: (appeal as any).source || (telegramUser ? 'telegram' : 'manual'),
+    appealNumber: appeal.appeal_number || undefined,
   }
 }
 

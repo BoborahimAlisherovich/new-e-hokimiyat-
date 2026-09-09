@@ -117,6 +117,8 @@ interface AppealMessage {
   id: number
   text: string
   is_from_admin: boolean
+  /** Tizim avtomatik yuborgan bildirish (holat o'zgarishi) */
+  is_system?: boolean
   admin_name: string | null
   sender_name: string | null
   sender_avatar_url: string | null
@@ -766,6 +768,67 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                     </div>
                   </div>
 
+                  {/* MUROJAATCHI — kim yozgani. Ilgari faqat ism bor edi:
+                      bir xil ismli ikki fuqaroni ajratishning imkoni yo'q
+                      edi va operator kimga javob berayotganini bilmasdi. */}
+                  <div className="rounded-2xl bg-background p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Murojaatchi
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <p className="text-md font-semibold text-foreground">
+                        {appeal.citizenName || "Noma’lum"}
+                      </p>
+                      {appeal.citizenTelegramUsername ? (
+                        <a
+                          href={`https://t.me/${appeal.citizenTelegramUsername}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          @{appeal.citizenTelegramUsername}
+                        </a>
+                      ) : appeal.citizenTelegramId ? (
+                        <span className="text-sm text-muted-foreground">
+                          Telegram ID: {appeal.citizenTelegramId}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="rounded-lg bg-card px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                        {appeal.source === "telegram"
+                          ? "Telegram bot orqali"
+                          : appeal.source === "manual"
+                            ? "Qo‘lda kiritilgan"
+                            : appeal.source === "web"
+                              ? "Veb-sayt orqali"
+                              : "Manbasi ko‘rsatilmagan"}
+                      </span>
+                      {appeal.appealNumber && (
+                        <span className="rounded-lg bg-card px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                          №{appeal.appealNumber}
+                        </span>
+                      )}
+                      {appeal.citizenLanguage && (
+                        <span className="rounded-lg bg-card px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                          Til: {appeal.citizenLanguage === "ru" ? "Ruscha" : appeal.citizenLanguage === "en" ? "Inglizcha" : "O‘zbekcha"}
+                        </span>
+                      )}
+                      {appeal.citizenRegistered === false && (
+                        <span className="rounded-lg bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning-soft-foreground">
+                          Botda ro‘yxatdan o‘tmagan
+                        </span>
+                      )}
+                    </div>
+                    {appeal.citizenTelegramId && (
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        Holat o‘zgarganda fuqaroga bot orqali avtomatik xabar
+                        yuboriladi — muloqot oynasida «Fuqaroga yuborildi» deb
+                        ko‘rinadi.
+                      </p>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <PremiumInfoItem icon={User} label="Fuqaro" value={appeal.citizenName} />
                     <PremiumInfoItem icon={Phone} label="Telefon" value={appeal.citizenPhone || "-"} />
@@ -931,6 +994,25 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                               </div>
                             ) : (
                               messages.map((msg) => {
+                                // Tizim bildirishi — odam yozgan xabar emas.
+                                // Ilgari bunday matn «Admin» nomidan
+                                // ko'rinardi va operator nima avtomatik,
+                                // nima o'zi yozgani aralashib ketardi.
+                                if (msg.is_system) {
+                                  return (
+                                    <div key={msg.id} className="flex justify-center">
+                                      <div className="max-w-[85%] rounded-2xl bg-surface-sunken px-3.5 py-2.5 text-center">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                          Fuqaroga yuborildi · {formatDate(msg.created_at)}
+                                        </p>
+                                        <p className="mt-1 whitespace-pre-line text-xs leading-5 text-secondary-foreground">
+                                          {msg.text}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )
+                                }
+
                                 const senderDisplayName = msg.is_from_admin
                                   ? msg.sender_name || msg.admin_name || "Admin"
                                   : appeal.citizenName || "Fuqaro"

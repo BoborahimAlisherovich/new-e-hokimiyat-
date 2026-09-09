@@ -170,6 +170,29 @@ export async function acceptTaskExecution(taskId: string | number): Promise<Task
   return fetchApi<Task>(`/tasks/${taskId}/accept/`, { method: 'POST' })
 }
 
+export interface MarkViewedResult {
+  /** Holat haqiqatan `YANGI` dan `TEKSHIRUVDA` ga o'tdimi */
+  changed: boolean
+  organization_status?: string
+  task_status?: string
+  viewed_at?: string | null
+  reason?: 'not_executor' | 'not_assigned'
+}
+
+/**
+ * «Ijrochi topshiriqni ochdi» signali — holat `YANGI` dan
+ * «Ko'rib chiqilmoqda» (`TEKSHIRUVDA`) ga o'tadi.
+ * `POST /api/tasks/{id}/mark-viewed/`
+ *
+ * Idempotent: ikkinchi chaqiruvda `changed: false` qaytadi, shuning
+ * uchun sahifa qayta yuklansa ham hech narsa buzilmaydi. Hokimlik
+ * xodimi ochganda ham holat o'zgarmaydi (`reason: 'not_executor'`) —
+ * bu faqat ijrochi tashkilot uchun ma'noli signal.
+ */
+export async function markTaskViewed(taskId: string | number): Promise<MarkViewedResult> {
+  return fetchApi<MarkViewedResult>(`/tasks/${taskId}/mark-viewed/`, { method: 'POST' })
+}
+
 /**
  * Hisobot va ISBOTLARNI topshirish — topshiriqni `BAJARILDI` holatiga
  * o'tkazadigan yagona to'g'ri yo'l.

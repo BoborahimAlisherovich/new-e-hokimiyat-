@@ -310,14 +310,61 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
 # Channels Configuration (WebSocket)
 ASGI_APPLICATION = 'ehokimiyat.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379/0')],
+# ----------------------------------------------------------- CHANNEL LAYERS
+# WebSocket fan-out. Ishlab chiqarishda Redis kerak (bir nechta worker
+# orasida xabar almashish uchun). Lokalda Redis o'rnatilmagan bo'lsa —
+# masalan Windows'da — jarayon ichidagi layer'ga tushamiz: bitta
+# `runserver` uchun WebSocket ishlaydi, bir nechta worker uchun ishlamaydi.
+#
+# Nima uchun: ilgari Redis o'chgan bo'lsa topshiriq chatiga xabar yozish
+# 500 qaytarardi. Endi broadcast core/realtime.py orqali o'tadi (istisno
+# ko'tarmaydi), bu yerda esa layer'ning o'zi ishlaydigan variantga
+# almashtiriladi. Majburlash uchun: CHANNEL_LAYER_BACKEND=redis|memory
+def _redis_reachable(url: str, timeout: float = 0.35) -> bool:
+    """Redis porti ochiq-mi. Faqat ishga tushishda bir marta tekshiriladi."""
+    import socket
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or '127.0.0.1'
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+_forced_layer = (os.environ.get('CHANNEL_LAYER_BACKEND') or '').strip().lower()
+
+if _forced_layer == 'memory':
+    _use_redis_layer = False
+elif _forced_layer == 'redis':
+    _use_redis_layer = True
+else:
+    _use_redis_layer = _redis_reachable(REDIS_URL)
+
+if _use_redis_layer:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
         },
-    },
-}
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+    }
+    import warnings
+
+    warnings.warn(
+        "Redis ({}) mavjud emas — WebSocket uchun jarayon ichidagi layer "
+        "ishlatiladi. Bu faqat bitta jarayon uchun to'g'ri. Ishlab "
+        "chiqarishda Redis ishga tushirilishi shart.".format(REDIS_URL),
+        RuntimeWarning,
+        stacklevel=1,
+    )
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')

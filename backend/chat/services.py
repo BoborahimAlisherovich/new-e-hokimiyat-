@@ -13,8 +13,7 @@ worker orasida ham fan-out ishlaydi.
 
 from typing import Any, Dict, Iterable, List, Optional
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
+from core.realtime import emit_sync
 from django.db.models import Q
 from django.utils import timezone
 
@@ -29,15 +28,13 @@ def group_name(user_id) -> str:
 
 
 def emit(user_id, payload: Dict[str, Any]) -> None:
-    """Bitta foydalanuvchining barcha ochiq socketlariga yuboradi."""
-    channel_layer = get_channel_layer()
-    if not channel_layer:
-        return
-    try:
-        async_to_sync(channel_layer.group_send)(group_name(user_id), payload)
-    except Exception:
-        # Redis yo'q bo'lsa chat HTTP orqali ishlashda davom etadi.
-        pass
+    """Bitta foydalanuvchining barcha ochiq socketlariga yuboradi.
+
+    Xatolarni core/realtime.py yutadi va birinchi xatodan keyin qisqa
+    vaqt qayta urinmaydi — Redis o'chgan bo'lsa har so'rov kutib
+    sekinlashmasligi uchun.
+    """
+    emit_sync(group_name(user_id), payload)
 
 
 def serialize_message(message: DirectMessage, request=None) -> Dict[str, Any]:
