@@ -110,6 +110,15 @@ export function Header({ title, description, actions, onMenuClick }: HeaderProps
     if (searchOpen) searchRef.current?.focus()
   }, [searchOpen])
 
+  /* Sidebar'dagi «Qidiruv» bandi va Ctrl/⌘+K: desktopda maydonga fokus
+     sidebar'ning o'zida beriladi; mobilda shu hodisa orqali qidiruv
+     varag'i ochiladi. */
+  useEffect(() => {
+    const open = () => setSearchOpen(true)
+    window.addEventListener("ehokimiyat:open-search", open)
+    return () => window.removeEventListener("ehokimiyat:open-search", open)
+  }, [])
+
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const q = query.trim()

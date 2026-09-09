@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   BarChart3,
   Bell,
+  ShieldCheck,
   Bot,
   Building2,
   ClipboardList,
@@ -130,6 +131,57 @@ export const NAV_SECTIONS: { key: NavSection; labelKey: keyof Translations["navi
   { key: "analytics", labelKey: "analyticsSection" },
   { key: "administration", labelKey: "administrationSection" },
 ]
+
+/**
+ * YON MENYU TARTIBI (Frappe/ERPNext uslubi)
+ *
+ * Uppercase bo'lim yorliqlari o'rniga uch qavat:
+ *   flat   — asosiy ish bandlari, tekis ro'yxat (Bildirishnomalar bu yerda
+ *            yo'q: u tepadagi tezkor amallar qatorida, Qidiruv yonida);
+ *   groups — ochiladigan guruhlar (chevron bilan), ichidagi bandlar
+ *            chapdan surilgan;
+ *   tail   — eng pastda alohida turadigan bandlar (Sozlamalar).
+ *
+ * Bu faqat TARTIB: qaysi band ko'rinishi hali ham NAV_ITEMS dagi
+ * `requiresRole` va marshrut ruxsati bilan hal qilinadi — sidebar shu
+ * ro'yxatlardan faqat ruxsat etilganlarini oladi.
+ */
+export interface SidebarGroup {
+  key: string
+  labelKey: keyof Translations["navigation"]
+  icon: LucideIcon
+  hrefs: readonly string[]
+}
+
+export const SIDEBAR_LAYOUT: {
+  flat: readonly string[]
+  groups: readonly SidebarGroup[]
+  tail: readonly string[]
+} = {
+  flat: [
+    "/dashboard",
+    "/dashboard/tasks",
+    "/dashboard/recurring-tasks",
+    "/dashboard/appeals",
+    "/dashboard/projects",
+    "/dashboard/chat",
+  ],
+  groups: [
+    {
+      key: "analytics",
+      labelKey: "analyticsSection",
+      icon: BarChart3,
+      hrefs: ["/dashboard/analytics", "/dashboard/map", "/dashboard/ai-assistant"],
+    },
+    {
+      key: "administration",
+      labelKey: "administrationSection",
+      icon: ShieldCheck,
+      hrefs: ["/dashboard/users", "/dashboard/organizations", "/dashboard/telegram-bot"],
+    },
+  ],
+  tail: ["/dashboard/settings"],
+}
 
 /**
  * Mobil pastki panel — beshta eng ko'p ishlatiladigan yo'nalish.
