@@ -478,7 +478,7 @@ export function TaskWizard() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="h-9 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"
+                className="h-9 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"
                 onClick={() => {
                   const d = loadDraft()
                   if (d) {
@@ -492,7 +492,7 @@ export function TaskWizard() {
               </button>
               <button
                 type="button"
-                className="h-9 rounded-md border border-border px-3 text-xs font-semibold text-foreground hover:bg-muted"
+                className="h-9 rounded-xl bg-card shadow-xs px-3 text-xs font-semibold text-foreground hover:bg-muted"
                 onClick={() => {
                   clearDraft()
                   setDraftFound(false)
@@ -506,8 +506,8 @@ export function TaskWizard() {
       )}
 
       {/* ------------------------------------------------------ Qadamlar chizig'i */}
-      <nav aria-label="Qadamlar" className="surface mb-3 overflow-hidden">
-        <ol className="scroll-x flex divide-x divide-border">
+      <nav aria-label="Qadamlar" className="surface mb-4 overflow-hidden">
+        <ol className="scroll-x flex gap-1 p-1.5">
           {WIZARD_STEPS.map((s, i) => {
             const active = s.key === step
             const done = i < stepIndex
@@ -518,8 +518,8 @@ export function TaskWizard() {
                   onClick={() => jumpTo(s.key)}
                   aria-current={active ? "step" : undefined}
                   className={cn(
-                    "flex h-full w-full items-center gap-2.5 px-3 py-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring",
-                    active ? "bg-accent" : "hover:bg-muted",
+                    "flex h-full w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring",
+                    active ? "bg-primary-soft" : "hover:bg-muted",
                   )}
                 >
                   <span
@@ -538,7 +538,7 @@ export function TaskWizard() {
                     <span
                       className={cn(
                         "block truncate text-xs font-semibold",
-                        active ? "text-accent-foreground" : "text-foreground",
+                        active ? "text-primary-soft-foreground" : "text-foreground",
                       )}
                     >
                       {s.title}
@@ -561,7 +561,7 @@ export function TaskWizard() {
       )}
 
       {/* -------------------------------------------------------------- Qadamlar */}
-      <div className="surface p-4 sm:p-5">
+      <div className="surface p-5 sm:p-8">
         {step === "basics" && (
           <StepBasics
             form={form}
@@ -610,14 +610,14 @@ export function TaskWizard() {
       </div>
 
       {/* ------------------------------------------------- Harakatlar (mobilda qadalgan) */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 pb-safe shadow-lg md:static md:mt-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 pb-safe shadow-lg md:static md:mt-4 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
         <div className="mx-auto flex max-w-3xl items-center gap-2">
           {stepIndex > 0 ? (
             <button
               type="button"
               onClick={goBack}
               disabled={submitting}
-              className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-card shadow-xs px-4 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
               Orqaga
@@ -625,7 +625,7 @@ export function TaskWizard() {
           ) : (
             <Link
               href="/dashboard/tasks"
-              className="inline-flex h-11 items-center gap-1.5 rounded-md border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+              className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-card shadow-xs px-4 text-sm font-semibold text-foreground hover:bg-muted"
             >
               <X className="h-4 w-4" aria-hidden />
               Bekor qilish
@@ -640,7 +640,7 @@ export function TaskWizard() {
             <button
               type="button"
               onClick={goNext}
-              className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Keyingisi
               <ArrowRight className="h-4 w-4" aria-hidden />
@@ -650,7 +650,7 @@ export function TaskWizard() {
               type="button"
               onClick={submit}
               disabled={submitting}
-              className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -743,7 +743,7 @@ function StepBasics({
                   onClick={() => set("sectorId", active ? "" : s.id)}
                   aria-pressed={active}
                   className={cn(
-                    "inline-flex h-11 items-center gap-1.5 rounded-md border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    "inline-flex h-11 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     active
                       ? "border-primary bg-primary-soft text-primary-soft-foreground"
                       : "border-border bg-card text-foreground hover:bg-muted",
@@ -844,14 +844,14 @@ function StepAssignees({
             {form.organizationIds.map((id) => (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-1 text-xs font-medium text-primary-soft-foreground"
+                className="inline-flex items-center gap-1 rounded-xl bg-primary-soft px-2 py-1 text-xs font-medium text-primary-soft-foreground"
               >
                 {orgById.get(id)?.name ?? id}
                 <button
                   type="button"
                   onClick={() => toggleOrg(id)}
                   aria-label={`${orgById.get(id)?.name ?? id} — olib tashlash`}
-                  className="rounded-xs hover:text-destructive"
+                  className="rounded-md hover:text-destructive"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
@@ -860,7 +860,7 @@ function StepAssignees({
           </div>
         )}
 
-        <div className="max-h-72 overflow-y-auto rounded-md border border-border">
+        <div className="max-h-72 overflow-y-auto rounded-xl bg-card shadow-xs">
           {filtered.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">
               Tashkilot topilmadi
@@ -917,7 +917,7 @@ function StepAssignees({
                 «Hokim o‘rinbosari» rolidagi xodim qo‘shilishi kerak.
               </Banner>
             ) : (
-              <ul className="divide-y divide-border rounded-md border border-border">
+              <ul className="divide-y divide-border rounded-xl bg-card shadow-xs">
                 {relevantDeputies.map((d) => {
                   const active = form.deputyIds.includes(d.id)
                   return (
@@ -995,7 +995,7 @@ function StepSchedule({
                 onClick={() => setPriority(p)}
                 aria-pressed={active}
                 className={cn(
-                  "flex h-auto flex-col items-start gap-1.5 rounded-md border p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  "flex h-auto flex-col items-start gap-1.5 rounded-xl border p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   active ? "border-primary bg-accent" : "border-border bg-card hover:bg-muted",
                 )}
               >
@@ -1010,7 +1010,7 @@ function StepSchedule({
       </Field>
 
       {/* Takrorlanuvchi rejim */}
-      <div className="rounded-md border border-border p-3">
+      <div className="rounded-xl bg-card shadow-xs p-3">
         <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
@@ -1044,7 +1044,7 @@ function StepSchedule({
                     onClick={() => setFrequency(f)}
                     aria-pressed={active}
                     className={cn(
-                      "h-11 rounded-md border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                      "h-11 rounded-xl border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                       active
                         ? "border-primary bg-primary-soft text-primary-soft-foreground"
                         : "border-border bg-card text-foreground hover:bg-muted",
@@ -1143,7 +1143,7 @@ function StepSchedule({
                 key={d}
                 type="button"
                 onClick={() => set("deadline", addDays(d))}
-                className="h-8 rounded-md border border-border px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="h-8 rounded-xl bg-card shadow-xs px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 +{d} kun
               </button>
@@ -1220,7 +1220,7 @@ function StepReview({
               if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files)
             }}
             className={cn(
-              "rounded-md border-2 border-dashed p-5 text-center transition-colors",
+              "rounded-2xl border-2 border-dashed p-5 text-center transition-colors",
               dragging ? "border-primary bg-accent" : "border-border bg-muted/40",
             )}
           >
@@ -1231,7 +1231,7 @@ function StepReview({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="mt-2 inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted"
+              className="mt-2 inline-flex h-11 items-center gap-1.5 rounded-xl bg-card shadow-xs bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted"
             >
               <Paperclip className="h-4 w-4" aria-hidden />
               Fayl tanlash
@@ -1250,7 +1250,7 @@ function StepReview({
           </div>
 
           {files.length > 0 && (
-            <ul className="mt-2 divide-y divide-border rounded-md border border-border">
+            <ul className="mt-2 divide-y divide-border rounded-xl bg-card shadow-xs">
               {files.map((f, i) => (
                 <li key={`${f.name}-${f.size}`} className="flex items-center gap-3 px-3 py-2">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -1264,7 +1264,7 @@ function StepReview({
                     type="button"
                     onClick={() => removeFile(i)}
                     aria-label={`${f.name} — o‘chirish`}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>
@@ -1276,7 +1276,7 @@ function StepReview({
       )}
 
       {/* Xulosa */}
-      <div className="rounded-md border border-border">
+      <div className="rounded-xl bg-card shadow-xs">
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
           <h3 className="text-sm font-semibold text-foreground">Topshiriq xulosasi</h3>
         </div>
@@ -1335,8 +1335,10 @@ function StepReview({
 
 function inputCls(invalid: boolean) {
   return cn(
-    "h-11 w-full rounded-md border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-    invalid ? "border-destructive" : "border-input",
+    // Chegara o'rniga ichki halqa (inset ring): fokus va xato holati
+    // shu halqa rangi bilan beriladi, layout siljimaydi.
+    "h-11 w-full rounded-xl bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground shadow-[inset_0_0_0_1px_var(--border)] outline-none transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--primary)]",
+    invalid && "shadow-[inset_0_0_0_1.5px_var(--destructive)]",
   )
 }
 
@@ -1351,12 +1353,12 @@ function SectionHead({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
-        <Icon className="h-4.5 w-4.5" />
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary-soft-foreground">
+        <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <h2 className="text-md font-semibold text-foreground">{title}</h2>
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
+        {hint && <p className="mt-0.5 text-sm text-muted-foreground">{hint}</p>}
       </div>
     </div>
   )
@@ -1440,7 +1442,7 @@ function Row({
         <button
           type="button"
           onClick={onEdit}
-          className="shrink-0 self-start rounded-xs text-xs font-semibold text-primary hover:underline"
+          className="shrink-0 self-start rounded-md text-xs font-semibold text-primary hover:underline"
         >
           O‘zgartirish
         </button>
@@ -1468,7 +1470,7 @@ function Banner({
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
-      className={cn("flex items-start gap-2.5 rounded-md px-3 py-2.5 text-sm", tones[tone], className)}
+      className={cn("flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-sm", tones[tone], className)}
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="min-w-0 flex-1">{children}</div>
@@ -1482,7 +1484,7 @@ export function AiCreateLink({ className }: { className?: string }) {
     <Link
       href="/dashboard/tasks/new/ai"
       className={cn(
-        "inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted",
+        "inline-flex h-11 items-center gap-1.5 rounded-xl bg-card shadow-xs bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted",
         className,
       )}
     >
