@@ -25,10 +25,15 @@ class SectorSerializer(serializers.ModelSerializer):
 class OrganizationMinimalSerializer(serializers.ModelSerializer):
     """
     Minimal organization serializer for nested relations.
+
+    `sector` va `sector_name` — topshiriq yaratish oynasi tashkilotlarni
+    soha bo'yicha guruhlab ko'rsatishi uchun.
     """
+    sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
+
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'short_name']
+        fields = ['id', 'name', 'short_name', 'sector', 'sector_name']
 
 
 class OrganizationSerializer(serializers.ModelSerializer):

@@ -411,8 +411,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         Returns:
             Xatolik `Response` obyekti yoki `None` (ruxsat berilgan).
         """
+        from tasks.access import can_create_tasks, can_edit_task
+
         user = request.user
-        if user.role not in TASK_EDITOR_ROLES:
+        if not can_create_tasks(user):
             return Response(
                 {'detail': "Topshiriqni tahrirlash huquqingiz yo'q"},
                 status=status.HTTP_403_FORBIDDEN
@@ -426,6 +428,17 @@ class TaskViewSet(viewsets.ModelViewSet):
                     f"(holat: {task.get_status_display()})"
                 )},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        # Yaratish huquqi bo'lgan har kim ham HAR QANDAY topshiriqni tahrirlay
+        # olmaydi: faqat o'zi yaratgani yoki nazoratchi sifatida biriktirilgani.
+        # Hokim va admin — hammasini.
+        if not can_edit_task(user, task):
+            return Response(
+                {'detail': (
+                    "Bu topshiriqni faqat uni yaratgan shaxs, biriktirilgan hokim "
+                    "o'rinbosari yoki hokim tahrirlashi mumkin"
+                )},
+                status=status.HTTP_403_FORBIDDEN
             )
         return None
 
@@ -769,30 +782,9 @@ QOIDALAR:
             )
         ).order_by('status_order', 'deadline', '-created_at')
         
-        # Role-based scoping
-        if user.role in UserRole.ADMIN_ROLES:
-            scoped = queryset
-        elif user.role == UserRole.HOKIM_YORDAMCHISI:
-            scoped = queryset.filter(Q(created_by=user) | Q(assigned_deputies=user)).distinct()
-        elif user.role == UserRole.HOKIMLIK_MASUL:
-            if user.supervisor_id:
-                scoped = queryset.filter(
-                    Q(created_by=user.supervisor) | Q(assigned_deputies=user.supervisor)
-                ).distinct()
-            elif user.sector_id:
-                scoped = queryset.filter(
-                    Q(created_by__role=UserRole.HOKIM_YORDAMCHISI, created_by__sector_id=user.sector_id)
-                    | Q(assigned_deputies__role=UserRole.HOKIM_YORDAMCHISI, assigned_deputies__sector_id=user.sector_id)
-                ).distinct()
-            else:
-                scoped = queryset.none()
-        elif user.role in UserRole.ORGANIZATION_ROLES:
-            if user.organization:
-                scoped = queryset.filter(assigned_organizations__organization=user.organization).distinct()
-            else:
-                scoped = queryset.none()
-        else:
-            scoped = queryset.none()
+        # Rol bo'yicha doira — qoidalar tasks/access.py da (bitta manba)
+        from tasks.access import scope_tasks_for
+        scoped = scope_tasks_for(user, queryset)
 
         status_value = (self.request.query_params.get('status') or '').strip()
         if status_value:

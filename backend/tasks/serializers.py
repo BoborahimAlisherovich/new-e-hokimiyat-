@@ -182,6 +182,30 @@ class TaskSerializer(serializers.ModelSerializer):
     is_overdue = serializers.SerializerMethodField()
     days_remaining = serializers.IntegerField(read_only=True)
     sector_name = serializers.CharField(source='sector.name', read_only=True, default=None)
+    # Frontend tugmalarni shu bayroqlar bo'yicha ko'rsatadi — rol bo'yicha
+    # taxmin qilmaydi (qoidalar: tasks/access.py)
+    can_edit = serializers.SerializerMethodField()
+    can_approve = serializers.SerializerMethodField()
+    # Yaratishda biriktirilgan hujjatlar (ijro hisobotining isbotlari emas —
+    # ular execution.attachments da). Ilgari detail javobida umuman yo'q edi,
+    # ijrochi topshiriqqa qo'shilgan faylni ko'ra olmasdi.
+    attachments = serializers.SerializerMethodField()
+
+    def get_attachments(self, task: Task):
+        # execution'siz (isbot emas) va xabarga bog'lanmagan (chat fayli emas)
+        qs = (task.attachments.filter(execution__isnull=True, messages__isnull=True)
+              .order_by('created_at').distinct())
+        return TaskAttachmentSerializer(qs, many=True, context=self.context).data
+
+    def get_can_edit(self, task: Task) -> bool:
+        from tasks.access import can_edit_task
+        user = getattr(self.context.get('request'), 'user', None)
+        return bool(user and user.is_authenticated and can_edit_task(user, task))
+
+    def get_can_approve(self, task: Task) -> bool:
+        from tasks.access import can_approve_task
+        user = getattr(self.context.get('request'), 'user', None)
+        return bool(user and user.is_authenticated and can_approve_task(user, task))
 
     def _effective_status(self, task: Task) -> str:
         # Keep logic in sync with TaskMinimalSerializer.
@@ -225,11 +249,13 @@ class TaskSerializer(serializers.ModelSerializer):
             'deadline', 'completed_at', 'closed_at',
             'latitude', 'longitude', 'address',
             'created_by', 'closed_by', 'assigned_deputies', 'assigned_organizations',
-            'is_overdue', 'days_remaining', 'created_at', 'updated_at'
+            'is_overdue', 'days_remaining', 'created_at', 'updated_at',
+            'can_edit', 'can_approve', 'attachments',
         ]
         read_only_fields = [
             'id', 'status', 'completed_at', 'closed_at',
-            'created_by', 'closed_by', 'created_at', 'updated_at'
+            'created_by', 'closed_by', 'created_at', 'updated_at',
+            'can_edit', 'can_approve', 'attachments',
         ]
 
 
@@ -383,14 +409,21 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         deputies = [deputy_map[str(item)] for item in deputy_ids if str(item) in deputy_map]
 
         if user.role == UserRole.HOKIM_YORDAMCHISI:
-            if not user.sector_id:
+            # Doira tasks/access.py da: alohida biriktirilgan tashkilotlar
+            # bo'lsa — faqat ular, bo'lmasa o'z sohasi.
+            from tasks.access import assignable_organizations
+            allowed = set(str(pk) for pk in assignable_organizations(user).values_list('id', flat=True))
+            if not allowed:
                 raise serializers.ValidationError({
-                    'organizations': "Hokim o'rinbosariga soha/kompleks biriktirilmagan"
+                    'organizations': "Sizga soha yoki tashkilot biriktirilmagan — administratorga murojaat qiling"
                 })
-            invalid_orgs = [org.name for org in orgs if org.sector_id != user.sector_id]
+            invalid_orgs = [org.name for org in orgs if str(org.id) not in allowed]
             if invalid_orgs:
                 raise serializers.ValidationError({
-                    'organizations': f"Siz faqat o'z komplekisingizdagi tashkilotlarga topshiriq bera olasiz: {', '.join(invalid_orgs)}"
+                    'organizations': (
+                        "Siz faqat o'zingizga biriktirilgan tashkilotlarga topshiriq bera olasiz. "
+                        "Doiradan tashqari: " + ', '.join(invalid_orgs)
+                    )
                 })
             attrs['deputy_ids'] = [user.id]
 

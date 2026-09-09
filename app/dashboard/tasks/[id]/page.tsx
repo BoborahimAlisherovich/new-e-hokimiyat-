@@ -1,1271 +1,1014 @@
 "use client"
 
-import { DashboardDetailFrame } from "@/components/layout/dashboard-detail-frame"
-import { PremiumActionButton, PremiumActivityCard, PremiumAttachmentItem, PremiumFieldGroup, PremiumFieldSurface, PremiumFormLayout, PremiumImagePreview, PremiumInfoCard, PremiumInfoItem, PremiumMessageBubble, PremiumSideCard, PremiumSystemNote, PremiumTimelineItem } from "@/components/dashboard/premium-activity"
-import { Header } from "@/components/layout/header"
-import { LoadingSpinner } from "@/components/ui/loading"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { UserAvatar } from "@/components/ui/user-avatar"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { priorityLabels, sectorLabels, type TaskPriority } from "@/lib/constants"
-import { getTaskById, getTaskChat, getUsers, getOrganizations, sendTaskMessage, getAccessToken, WS_BASE, getCurrentUser, updateTaskMessage, deleteTaskMessage, updateTask, requestDeadlineExtension } from "@/lib/api"
-// approveTask/rejectTask/markTaskComplete olib tashlandi:
-//   rejectTask() mavjud bo'lmagan /tasks/{id}/reject/ ga so'rov yuborardi (404),
-//   markTaskComplete() esa fayl qabul qilmaydi - shuning uchun topshiriq
-//   nol isbot bilan "bajarildi" bo'lardi. To'g'ri endpointlar approval.api da.
-import { approveTaskExecution, returnTaskForRework } from "@/lib/api/approval.api"
-import { ReportDialog, ReturnReasonDialog } from "@/components/dashboard/tasks/task-action-dialogs"
-import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
-import { cn } from "@/lib/utils"
-import {
-  ArrowLeft,
-  Send,
-  Paperclip,
-  Mic,
-  Calendar,
-  Building2,
-  User,
-  Clock,
-  MapPin,
-  FileText,
-  CheckCircle2,
-  RotateCcw,
-  Edit,
-  Trash2,
-  History,
-  MessageSquare,
-  Layers,
-  Lock,
-  Download,
-  File as FileIcon,
-  Image as ImageIcon,
-} from "lucide-react"
+import type React from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import {
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  Calendar,
+  Check,
+  CheckCircle2,
+  Clock,
+  Download,
+  FileText,
+  History,
+  Image as ImageIcon,
+  Loader2,
+  MessageSquare,
+  Paperclip,
+  Pencil,
+  Play,
+  RotateCcw,
+  Send,
+  ShieldCheck,
+  Upload,
+  User as UserIcon,
+  Users,
+  X,
+} from "lucide-react"
 
-const CATEGORY_LABELS: Record<string, string> = {
-  IJTIMOIY: "Ijtimoiy",
-  IQTISODIY: "Iqtisodiy",
-  HUQUQIY: "Huquqiy",
-  INFRASTRUKTURA: "Infrastruktura",
-  TA_LIM: "Ta'lim",
-  SOG_LIQNI_SAQLASH: "Sog'liqni saqlash",
-  BOSHQA: "Boshqa",
+import { cn } from "@/lib/utils"
+import { Header } from "@/components/layout/header"
+import { DashboardDetailFrame } from "@/components/layout/dashboard-detail-frame"
+import { TaskStatusBadge, PriorityBadge } from "@/components/ui/status-badge"
+import { ReportDialog, ReturnReasonDialog } from "@/components/dashboard/tasks/task-action-dialogs"
+import {
+  getTaskById,
+  getTaskChat,
+  getTaskExecutions,
+  sendTaskMessage,
+  updateTask,
+  getCurrentUser,
+  getAccessToken,
+  WS_BASE,
+} from "@/lib/api"
+import {
+  acceptTaskExecution,
+  approveTaskExecution,
+  returnTaskForRework,
+  requestExtension,
+  formatFileSize,
+} from "@/lib/api/approval.api"
+import {
+  TASK_STATUS_HINT,
+  TASK_STATUS_LABEL,
+  PRIORITY_LABEL,
+  PRIORITIES,
+  taskStatusClass,
+} from "@/lib/status-styles"
+
+/**
+ * TOPSHIRIQ SAHIFASI — 2-tahrir
+ *
+ * Ilgari 1270 qatorli monolit: chat, ovoz yozish, geolokatsiya, tahrirlash
+ * bir faylda; tugmalar `bg-white/10 text-white` — quyuq gradient sarlavha
+ * uchun yozilgan, u olib tashlangach oq fonda KO'RINMAY qolgan edi;
+ * huquqlar rol nomiga qarab taxmin qilinardi (`isAdmin`), `alert()` lar.
+ *
+ * Endi:
+ *  · Ikki ustun: chapda «nima qilish kerak» (tafsilot, hujjatlar, ijrochi
+ *    tashkilotlar, muhokama/tarix), o'ngda holat va harakat paneli.
+ *    Telefonda bitta ustun + pastda qadalgan asosiy harakat tugmasi.
+ *  · Harakatlar backend bayroqlari bo'yicha: `task.can_edit`,
+ *    `task.can_approve` (qoidalar backend/tasks/access.py da).
+ *    Ijrochi (tashkilot roli) uchun: Ijroga olish -> Hisobot va isbot ->
+ *    Tasdiq kutilmoqda. Hokim/o'rinbosar uchun: Tasdiqlash / Qayta ijroga.
+ *  · Holat banneri odam tilida: hozir kim nima qilishi kerak.
+ *  · Chat: matn + fayl, WebSocket bilan jonli yangilanish. Ovozli xabar va
+ *    geolokatsiya ataylab olib tashlandi — ular mikrofonni ochiq qoldirar
+ *    va sahifani og'irlashtirar edi; kerak bo'lsa alohida komponent.
+ */
+
+/* ============================================================ Yordamchilar */
+
+const ORG_ROLES = new Set(["TASHKILOT_RAHBARI", "TASHKILOT_MASUL"])
+const REPORTABLE = new Set(["YANGI", "IJRODA", "TEKSHIRUVDA", "QAYTA_IJROGA_YUBORILDI", "MUDDATI_KECH"])
+const EXTENDABLE = new Set(["IJRODA", "TEKSHIRUVDA", "QAYTA_IJROGA_YUBORILDI", "MUDDATI_KECH"])
+const CLOSED = new Set(["NAZORATDAN_YECHILDI", "BAJARILMADI"])
+
+const CARD =
+  "rounded-3xl bg-card p-5 shadow-[0_1px_2px_rgba(13,21,36,0.04),0_14px_40px_-18px_rgba(13,21,36,0.14)] sm:p-6"
+const FIELD =
+  "h-11 w-full rounded-xl bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground shadow-[inset_0_0_0_1px_var(--border)] outline-none transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--primary)] disabled:opacity-60"
+const BTN =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-[transform,background-color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 disabled:pointer-events-none"
+const BTN_PRIMARY = cn(BTN, "bg-primary text-primary-foreground hover:bg-primary-hover")
+const BTN_SOFT = cn(BTN, "bg-background text-foreground hover:bg-muted")
+const BTN_SUCCESS = cn(BTN, "bg-success text-success-foreground hover:opacity-90")
+const BTN_WARN = cn(BTN, "bg-warning-soft text-warning-soft-foreground hover:opacity-90")
+
+function fmtDate(v?: string | null, withTime = false) {
+  if (!v) return "—"
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return "—"
+  return d.toLocaleDateString("uz-UZ", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  })
 }
 
+function daysLeft(deadline?: string | null): number | null {
+  if (!deadline) return null
+  const end = new Date(deadline).getTime()
+  if (Number.isNaN(end)) return null
+  return Math.ceil((end - Date.now()) / 86_400_000)
+}
+
+function localDateInput(v?: string | null): string {
+  if (!v) return ""
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return ""
+  const p = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function personName(u: any): string {
+  if (!u) return "—"
+  if (typeof u === "string") return u
+  return (
+    u.full_name ||
+    [u.last_name, u.first_name].filter(Boolean).join(" ") ||
+    u.username ||
+    u.login ||
+    "—"
+  )
+}
+
+function isImage(a: any): boolean {
+  const t = String(a?.file_type ?? "").toUpperCase()
+  if (t === "IMAGE") return true
+  return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(a?.file_name ?? a?.file ?? ""))
+}
+
+/* ================================================================== SAHIFA */
+
 export default function TaskDetailPage() {
-  const params = useParams()
-  const id = params.id as string
-  const [newMessage, setNewMessage] = useState("")
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isExtendOpen, setIsExtendOpen] = useState(false)
+  const params = useParams<{ id: string }>()
+  const id = String(params?.id ?? "")
+  const router = useRouter()
+
   const [task, setTask] = useState<any | null>(null)
-  const [chatMessages, setChatMessages] = useState<any[]>([])
-  const [taskExecutions, setTaskExecutions] = useState<any[]>([])
-  const [usersMap, setUsersMap] = useState<Record<string, any>>({})
-  const [orgsMap, setOrgsMap] = useState<Record<string, any>>({})
-  const [currentUser, setCurrentUser] = useState<any | null>(null)
-  const [chatFile, setChatFile] = useState<File | null>(null)
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
-  const [editingContent, setEditingContent] = useState<string>("")
-  const [isRecording, setIsRecording] = useState(false)
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
-  const [isLocationLoading, setIsLocationLoading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isReportOpen, setIsReportOpen] = useState(false)
-  const [isReturnOpen, setIsReturnOpen] = useState(false)
+  const [me, setMe] = useState<any | null>(null)
+  const [timeline, setTimeline] = useState<any[]>([])
+  const [executions, setExecutions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const [tab, setTab] = useState<"chat" | "history">("chat")
+  const [dialog, setDialog] = useState<null | "edit" | "extend" | "report" | "return">(null)
+  const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  
-  // Edit form state
-  const [editTitle, setEditTitle] = useState("")
-  const [editDescription, setEditDescription] = useState("")
-  const [editPriority, setEditPriority] = useState("")
-  const [editDeadline, setEditDeadline] = useState("")
-  const [editCategory, setEditCategory] = useState("")
-  
-  // Extend form state
-  const [extendDeadline, setExtendDeadline] = useState("")
-  const [extendReason, setExtendReason] = useState("")
-  
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
+  const [toast, setToast] = useState<string | null>(null)
+
   const wsRef = useRef<WebSocket | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const normalizeExecution = useCallback((item: any) => {
-    if (item?.type !== "execution") return null
-    return {
-      id: item.id,
-      actionType: item.action_type || item.actionType || "ACTION",
-      comment: item.content || item.comment || "",
-      executedByName: item.user_name || item.executed_by_name || item.executedByName || "Tizim",
-      executedByRole: item.user_role || item.executed_by_role || item.executedByRole || "SYSTEM",
-      createdAt: item.timestamp || item.created_at || item.createdAt,
+  /* ------------------------------------------------------------ Yuklash */
+  const reloadTimeline = useCallback(async () => {
+    try {
+      const [chat, execs] = await Promise.all([
+        getTaskChat(id).catch(() => []),
+        getTaskExecutions(id).catch(() => []),
+      ])
+      setTimeline(Array.isArray(chat) ? chat : [])
+      setExecutions(Array.isArray(execs) ? execs : [])
+    } catch {
+      /* jim */
     }
-  }, [])
-
-  const normalizeChatMessage = useCallback((msg: any) => {
-    if (msg?.type === 'execution') return null
-    const senderObj = msg.sender && typeof msg.sender === 'object' ? msg.sender : null
-    const senderId = senderObj?.id || msg.sender || msg.sender_id || msg.senderId
-    return {
-      id: msg.id,
-      senderId: String(senderId),
-      senderName: senderObj?.name || msg.sender_name || msg.senderName || msg.user_name,
-      senderRole: senderObj?.role || msg.sender_role || msg.senderRole || msg.user_role,
-      messageType: msg.message_type || msg.messageType || msg.type,
-      content: msg.content || msg.message || "",
-      attachment: msg.attachment || (msg.attachments && msg.attachments[0]) || null,
-      createdAt: msg.created_at || msg.createdAt || msg.timestamp,
-    }
-  }, [])
-
-  const normalizeChatMessages = useCallback((list: any[]) => {
-    const normalized = (list || []).map(normalizeChatMessage).filter(Boolean)
-    const seen = new Set<number | string>()
-    return normalized.filter((msg) => {
-      if (!msg || seen.has(msg.id)) return false
-      seen.add(msg.id)
-      return true
-    })
-  }, [normalizeChatMessage])
-
-  const applyTimelineData = useCallback((timeline: any[]) => {
-    const normalizedMessages = normalizeChatMessages(timeline || [])
-    const normalizedExecutions = (timeline || [])
-      .map(normalizeExecution)
-      .filter(Boolean)
-
-    setChatMessages(normalizedMessages)
-    setTaskExecutions(normalizedExecutions)
-  }, [normalizeChatMessages, normalizeExecution])
+  }, [id])
 
   useEffect(() => {
-    let mounted = true
-    Promise.all([getTaskById(id), getTaskChat(id), getUsers(), getOrganizations(), getCurrentUser()])
-      .then(([t, chat, users, orgs, me]) => {
-        if (!mounted) return
+    if (!id) return
+    let alive = true
+    setLoading(true)
+    Promise.all([getTaskById(id), getCurrentUser().catch(() => null)])
+      .then(([t, u]) => {
+        if (!alive) return
         setTask(t)
-        applyTimelineData(chat || [])
-        const uMap: Record<string, any> = {}
-        users.forEach((u: any) => (uMap[u.id] = u))
-        setUsersMap(uMap)
-        const oMap: Record<string, any> = {}
-        orgs.forEach((o: any) => (oMap[o.id] = o))
-        setOrgsMap(oMap)
-        setCurrentUser(me)
-
-	        // Setup WebSocket for real-time chat
-	        const token = getAccessToken()
-	        if (token) {
-	          const wsUrl = `${WS_BASE}/ws/tasks/${id}/chat/?token=${token}`
-	          const ws = new WebSocket(wsUrl)
-	          wsRef.current = ws
-	          ws.onmessage = (ev) => {
-            try {
-              const payload = JSON.parse(ev.data)
-              if (payload.type === 'history') {
-                applyTimelineData(payload.messages || [])
-              } else if (payload.type === 'message') {
-                // On new message, refresh chat from REST to keep shape consistent
-                getTaskChat(id).then((data) => applyTimelineData(data || [])).catch(() => {})
-              }
-            } catch {}
-          }
-          ws.onclose = () => { wsRef.current = null }
-        }
+        setMe(u)
       })
-      .catch(() => {})
+      .catch((e: any) => {
+        if (alive) setLoadError(e?.message || "Topshiriq topilmadi yoki sizga ko‘rsatilmaydi")
+      })
+      .finally(() => alive && setLoading(false))
+    void reloadTimeline()
+
+    // Jonli muhokama — WebSocket. Ulanmasa ham sahifa ishlaydi.
+    const token = getAccessToken()
+    if (token) {
+      try {
+        const ws = new WebSocket(`${WS_BASE}/ws/tasks/${id}/chat/?token=${token}`)
+        wsRef.current = ws
+        ws.onmessage = () => void reloadTimeline()
+        ws.onclose = () => {
+          wsRef.current = null
+        }
+      } catch {
+        /* WS ixtiyoriy */
+      }
+    }
     return () => {
-      mounted = false
-      if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
+      alive = false
+      wsRef.current?.close()
+      wsRef.current = null
     }
-  }, [id, applyTimelineData])
-  
-  // Initialize edit form when task loads
+  }, [id, reloadTimeline])
+
   useEffect(() => {
-    if (task) {
-      setEditTitle(task.title || "")
-      setEditDescription(task.description || "")
-      setEditPriority(task.priority || "")
-      setEditDeadline(task.deadline || "")
-      setEditCategory(task.category || "")
-      setExtendDeadline(task.deadline || "")
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3200)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  /* ------------------------------------------------------- Huquq bayroqlari */
+  const status: string = task?.status ?? ""
+  const role: string = me?.role ?? ""
+  const isOrgUser = ORG_ROLES.has(role)
+  const isClosed = CLOSED.has(status)
+
+  const myOrg = useMemo(() => {
+    if (!task || !isOrgUser) return null
+    const orgId = String(me?.organization?.id ?? me?.organization_id ?? me?.organization ?? "")
+    return (task.assigned_organizations ?? []).find(
+      (o: any) => String(o.organization?.id ?? o.organization_id) === orgId,
+    )
+  }, [task, me, isOrgUser])
+  const myOrgStatus: string = myOrg?.status ?? status
+
+  const canEdit = Boolean(task?.can_edit) && !isClosed
+  const canApprove = Boolean(task?.can_approve) && status === "BAJARILDI"
+  const canAccept = isOrgUser && ["YANGI", "TEKSHIRUVDA"].includes(myOrgStatus)
+  const canReport = isOrgUser && REPORTABLE.has(myOrgStatus)
+  const canExtend = isOrgUser && EXTENDABLE.has(myOrgStatus)
+  const awaiting = isOrgUser && myOrgStatus === "BAJARILDI"
+
+  /* --------------------------------------------------------------- Amallar */
+  const run = async (key: string, fn: () => Promise<any>, ok: string) => {
+    setBusy(key)
+    setActionError(null)
+    try {
+      const updated = await fn()
+      if (updated && typeof updated === "object" && "id" in updated) setTask(updated)
+      else setTask(await getTaskById(id))
+      setToast(ok)
+      void reloadTimeline()
+    } catch (e: any) {
+      setActionError(e?.data?.detail || e?.data?.error || e?.message || "Amal bajarilmadi")
+    } finally {
+      setBusy(null)
     }
-  }, [task])
+  }
 
-  // Backend created_by ni ob'ekt sifatida yuboradi
-  const creator = task?.created_by || (task?.createdBy ? usersMap[task.createdBy] : undefined)
-
-  if (!task) {
+  /* ------------------------------------------------------------------ Render */
+  if (loading) {
     return (
       <>
-        <Header title="Topshiriq tafsilotlari" />
-        <DashboardDetailFrame
-          eyebrow="Topshiriq"
-          title="Ma'lumotlar tayyorlanmoqda"
-          description="Topshiriq tafsilotlari, ijro holati va muloqot ma'lumotlari yuklanmoqda."
-          backHref="/dashboard/tasks"
-          stats={[]}
-        >
-          <div className="rounded-[28px] border border-border bg-card p-10 text-center shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
-            <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-sm text-muted-foreground">Topshiriq ma'lumotlari yuklanmoqda...</p>
+        <Header title="Topshiriq" />
+        <div className="p-4 sm:p-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="space-y-6">
+              <div className="h-40 animate-pulse rounded-3xl bg-muted" />
+              <div className="h-64 animate-pulse rounded-3xl bg-muted" />
+            </div>
+            <div className="h-72 animate-pulse rounded-3xl bg-muted" />
           </div>
-        </DashboardDetailFrame>
+        </div>
       </>
     )
   }
 
-  const CLOSED_STATUSES = ["BAJARILDI", "NAZORATDAN_YECHILDI", "BAJARILMADI"]
-  const isClosed = CLOSED_STATUSES.includes(task.status)
-  
-  // Rolga qarab tahrirlash imkoniyatlarini cheklash
-  const isAdmin = currentUser?.role && ['HOKIM', 'HOKIM_YORDAMCHISI', 'ADMIN'].includes(currentUser.role)
-  const isOrgUser = currentUser?.role && ['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'].includes(currentUser.role)
-  
-  // Faqat HOKIM, HOKIM_YORDAMCHISI, ADMIN tahrirlashi mumkin
-  const canEdit = !isClosed && isAdmin
-  const canChat = !isClosed
-  // Faqat HOKIM tasdiqlashi/qayta ijroga yuborishi mumkin
-  const canClose = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
-  const canReassign = task.status === "BAJARILDI" && currentUser?.role === 'HOKIM'
-  // Tashkilot xodimlari "Bajarildi" deb belgilashi mumkin, lekin muddatni uzaytira olmaydi
-  // Ijrochi YANGI va QAYTA_IJROGA_YUBORILDI holatlaridan ham hisobot topshira oladi
-  const canMarkComplete = ["YANGI", "IJRODA", "TEKSHIRUVDA", "QAYTA_IJROGA_YUBORILDI", "MUDDATI_KECH"].includes(task.status) && isOrgUser
-  // Muddat uzaytirish faqat adminlar uchun
-  // Backend extend_request faqat TASHKILOT rollariga ruxsat beradi (CanExecuteTasks).
-  // Ilgari tugma isAdmin uchun chiqarilardi - ya'ni faqat 403 oladiganlarga.
-  const canExtend = (["IJRODA", "TEKSHIRUVDA", "MUDDATI_KECH", "QAYTA_IJROGA_YUBORILDI"].includes(task.status)) && isOrgUser
-  
-  // Handle save task edits
-  const handleSaveTask = async () => {
-    if (!editTitle.trim()) {
-      alert("Sarlavha majburiy")
-      return
-    }
-    
-    setIsSaving(true)
-    try {
-      const deadlineIso = editDeadline ? toIsoDateTime(editDeadline, task.deadline) : ""
-      const updatedTask = await updateTask(id, {
-        title: editTitle,
-        description: editDescription,
-        priority: editPriority as any,
-        deadline: deadlineIso || undefined,
-        category: editCategory as any,
-      } as any)
-      setTask(updatedTask)
-      setIsEditOpen(false)
-    } catch (error) {
-      console.error("Task update error:", error)
-      alert("Topshiriqni yangilashda xatolik yuz berdi")
-    } finally {
-      setIsSaving(false)
-    }
-  }
-  
-  // Handle extend deadline
-  const handleExtendDeadline = async () => {
-    if (!extendDeadline || !extendReason.trim()) {
-      alert("Yangi muddat va sabab majburiy")
-      return
-    }
-    
-    setIsSaving(true)
-    try {
-      const requestedIso = toIsoDateTime(extendDeadline, task.deadline)
-      const updatedTask = await requestDeadlineExtension(id, {
-        requested_deadline: requestedIso,
-        reason: extendReason,
-      })
-      setTask(updatedTask)
-      refreshTimeline()
-      setExtendReason("")
-      setIsExtendOpen(false)
-    } catch (error) {
-      console.error("Deadline extend error:", error)
-      alert("Muddatni uzaytirishda xatolik yuz berdi")
-    } finally {
-      setIsSaving(false)
-    }
-  }
-  
-  // Hisobot va ISBOT topshirish oynasini ochadi.
-  const handleMarkComplete = () => {
-    setActionError(null)
-    setIsReportOpen(true)
+  if (loadError || !task) {
+    return (
+      <>
+        <Header title="Topshiriq" />
+        <div className="p-4 sm:p-6">
+          <div className={cn(CARD, "mx-auto max-w-lg text-center")}>
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive-soft text-destructive-soft-foreground">
+              <AlertCircle className="h-6 w-6" aria-hidden />
+            </span>
+            <h2 className="mt-4 text-lg font-semibold text-foreground">Topshiriq ochilmadi</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{loadError}</p>
+            <Link href="/dashboard/tasks" className={cn(BTN_SOFT, "mt-6")}>
+              Topshiriqlar ro‘yxatiga qaytish
+            </Link>
+          </div>
+        </div>
+      </>
+    )
   }
 
-  // Nazoratdan yechish (faqat hokim)
-  const handleApproveTask = async () => {
-    if (!confirm("Topshiriqni nazoratdan yechmoqchimisiz?")) return
+  const left = daysLeft(task.deadline)
+  const overdue = left !== null && left < 0 && !isClosed && status !== "BAJARILDI"
+  const orgs: any[] = task.assigned_organizations ?? []
+  const deputies: any[] = task.assigned_deputies ?? []
+  const attachments: any[] = task.attachments ?? []
+  const proofs: any[] = executions.filter((e) => Array.isArray(e.attachments) && e.attachments.length > 0)
 
-    setIsSaving(true)
-    setActionError(null)
-    try {
-      const updatedTask = await approveTaskExecution(id, {
-        comment: "Topshiriq nazoratdan yechildi",
-      })
-      setTask(updatedTask as any)
-      refreshTimeline()
-    } catch (error: any) {
-      setActionError(
-        error?.data?.detail || error?.message || "Topshiriqni tasdiqlab bo'lmadi"
-      )
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  // Qayta ijroga yuborish - sabab majburiy, oyna orqali olinadi
-  const handleRejectTask = () => {
-    setActionError(null)
-    setIsReturnOpen(true)
-  }
-
-  const submitReturn = async (reason: string) => {
-    setIsSaving(true)
-    setActionError(null)
-    try {
-      const updatedTask = await returnTaskForRework(id, reason)
-      setTask(updatedTask as any)
-      setIsReturnOpen(false)
-      refreshTimeline()
-    } catch (error: any) {
-      setActionError(
-        error?.data?.comment?.[0] ||
-          error?.data?.detail ||
-          error?.message ||
-          "Qayta ijroga yuborib bo'lmadi"
-      )
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const refreshTimeline = () => {
-    getTaskChat(id)
-      .then((data) => applyTimelineData(data || []))
-      .catch(() => {})
-  }
-
-  // Audio recording functions
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
-        }
-      }
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        setAudioBlob(audioBlob)
-        stream.getTracks().forEach(track => track.stop())
-      }
-
-      mediaRecorder.start()
-      setIsRecording(true)
-    } catch (error) {
-      console.error('Microphone access denied:', error)
-      alert('Mikrofondan foydalanish uchun ruxsat berilmagan')
-    }
-  }
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-    }
-  }
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-    }
-    setIsRecording(false)
-    setAudioBlob(null)
-  }
-
-  const sendAudio = async () => {
-    if (!audioBlob) return
-    const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' })
-    try {
-      await sendTaskMessage(id, { content: '🎤 Ovozli xabar', attachment: audioFile })
-      setAudioBlob(null)
-      refreshTimeline()
-    } catch (error) {
-      console.error('Audio yuborishda xatolik:', error)
-    }
-  }
-
-  // Location function
-  const sendLocation = async () => {
-    setIsLocationLoading(true)
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        })
-      })
-      
-      const { latitude, longitude } = position.coords
-      const locationMessage = `📍 Joylashuv: https://maps.google.com/maps?q=${latitude},${longitude}`
-      
-      await sendTaskMessage(id, { content: locationMessage })
-      refreshTimeline()
-    } catch (error) {
-      console.error('Location error:', error)
-      alert('Joylashuvni olishda xatolik. Iltimos, joylashuv ruxsatini tekshiring.')
-    } finally {
-      setIsLocationLoading(false)
-    }
-  }
-
-  // Handle paste for images
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = e.clipboardData?.items
-    if (!items) return
-    
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      if (item.type.startsWith('image/')) {
-        e.preventDefault()
-        const file = item.getAsFile()
-        if (file) {
-          setChatFile(file)
-        }
-        break
-      }
-    }
-  }
-
-  // Trigger file input click
-  const handleFileButtonClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const sendMessage = async () => {
-    // Validate that there's something to send
-    const messageContent = editingMessageId ? editingContent : newMessage
-    const hasContent = messageContent && messageContent.trim()
-    const hasFile = chatFile instanceof File
-    
-    if (!hasContent && !hasFile) {
-      return
-    }
-
-    if (editingMessageId) {
-      if (!hasContent) {
-        return
-      }
-      try {
-        await updateTaskMessage(id, editingMessageId, editingContent.trim())
-        setEditingMessageId(null)
-        setEditingContent("")
-        setNewMessage("")
-        refreshTimeline()
-        return
-      } catch {
-        return
-      }
-    }
-
-    try {
-      await sendTaskMessage(id, { content: hasContent ? newMessage.trim() : undefined, attachment: hasFile ? chatFile : undefined })
-      setNewMessage("")
-      setChatFile(null)
-      refreshTimeline()
-    } catch {
-      // fallback: if WS available, try send directly (text only)
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && newMessage.trim()) {
-        try { wsRef.current.send(JSON.stringify({ type: 'text', content: newMessage.trim() })) } catch {}
-      }
-      setNewMessage("")
-      setChatFile(null)
-    }
-  }
-
-  const handleEditMessage = (msg: any) => {
-    setEditingMessageId(msg.id)
-    setEditingContent(msg.content || "")
-    setNewMessage(msg.content || "")
-  }
-
-  const handleDeleteMessage = async (msg: any) => {
-    try {
-      await deleteTaskMessage(id, msg.id)
-      refreshTimeline()
-    } catch {}
-  }
-
-  const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString("uz-UZ", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return "-"
-    return new Date(dateStr).toLocaleDateString("uz-UZ", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  }
-
-  const toIsoDateTime = (value: string, fallbackIso?: string) => {
-    if (!value) return ""
-    if (value.includes("T")) return value
-
-    const fallbackTime = fallbackIso?.includes("T") ? fallbackIso.split("T")[1] : ""
-    const timePart = (fallbackTime || "23:59:59").replace("Z", "").split(".")[0] || "23:59:59"
-    const localDateTime = `${value}T${timePart}`
-    const parsed = new Date(localDateTime)
-    if (!Number.isFinite(parsed.getTime())) {
-      const fallback = new Date(`${value}T23:59:59`)
-      return Number.isFinite(fallback.getTime()) ? fallback.toISOString() : value
-    }
-    return parsed.toISOString()
-  }
-
-  const isOverdue = new Date(task.deadline) < new Date() && !["BAJARILDI", "NAZORATDAN_YECHILDI"].includes(task.status)
+  /* Asosiy harakat — telefonda pastda qadalgan tugma uchun */
+  const primaryAction =
+    canApprove
+      ? { label: "Tasdiqlash", icon: ShieldCheck, cls: BTN_SUCCESS, onClick: () => void run("approve", () => approveTaskExecution(id), "Topshiriq tasdiqlandi va yopildi") }
+      : canAccept
+        ? { label: "Ijroga olish", icon: Play, cls: BTN_PRIMARY, onClick: () => void run("accept", () => acceptTaskExecution(id), "Topshiriq ijroga olindi") }
+        : canReport
+          ? { label: "Hisobot va isbot yuklash", icon: Upload, cls: BTN_PRIMARY, onClick: () => setDialog("report") }
+          : null
 
   return (
     <>
-      <Header title="Topshiriq tafsilotlari" description={task.title} />
+      <Header title="Topshiriq" description={task.title} />
+
       <DashboardDetailFrame
-        eyebrow="Topshiriq kartasi"
-        title={task.title}
-        description={task.description || "Topshiriq tafsilotlari, ijro holati va ichki muloqot bir oynada."}
-        backHref="/dashboard/tasks"
-        stats={[
-          {
-            label: "Holat",
-            value: task.status?.replaceAll("_", " ") || "Noma'lum",
-            icon: CheckCircle2,
-            tone: "from-cyan-50 via-white to-cyan-100/70",
-          },
-          {
-            label: "Murojaatlar",
-            value: chatMessages.length,
-            icon: MessageSquare,
-            tone: "from-emerald-50 via-white to-emerald-100/70",
-          },
-          {
-            label: "Muddat",
-            value: task.deadline ? formatDate(task.deadline) : "Belgilanmagan",
-            icon: Calendar,
-            tone: "from-amber-50 via-white to-amber-100/70",
-          },
+        breadcrumbs={[
+          { label: "Topshiriqlar", href: "/dashboard/tasks" },
+          { label: task.title?.length > 48 ? task.title.slice(0, 48) + "…" : task.title },
         ]}
+        eyebrow={task.sector_name ? `Soha · ${task.sector_name}` : "Topshiriq"}
+        title={task.title}
         badges={
           <>
-            {task.category && (
-              <Badge variant="outline" className="font-normal">
-                {CATEGORY_LABELS[task.category] || task.category}
-              </Badge>
-            )}
+            <TaskStatusBadge status={status} />
             <PriorityBadge priority={task.priority} />
-            <TaskStatusBadge status={task.status} />
+            {overdue && (
+              <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-destructive-soft px-2.5 text-xs font-semibold text-destructive-soft-foreground">
+                <Clock className="h-3.5 w-3.5" aria-hidden />
+                {Math.abs(left!)} kun kechikdi
+              </span>
+            )}
           </>
         }
         actions={
-          <>
-            {canMarkComplete && (
-              <Button
-                variant="secondary"
-                className="border-white/20 bg-success text-white shadow-none hover:bg-success"
-                onClick={handleMarkComplete}
-                disabled={isSaving}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                {isSaving ? "Saqlanmoqda..." : "Bajarildi"}
-              </Button>
-            )}
-            {canExtend && (
-              <Dialog open={isExtendOpen} onOpenChange={setIsExtendOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Muddat uzaytirish
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-foreground">Muddat uzaytirish so'rovi</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">Yangi muddat va sababni aniq kiriting.</DialogDescription>
-                  </DialogHeader>
-                  <PremiumFormLayout>
-                    <PremiumFieldGroup label="Yangi muddat" hint="Joriy muddatdan keyingi sanani tanlang.">
-                      <Input 
-                        type="date" 
-                        value={extendDeadline ? extendDeadline.split('T')[0] : ''} 
-                        onChange={(e) => setExtendDeadline(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="h-11 rounded-2xl border-border bg-white" 
-                      />
-                    </PremiumFieldGroup>
-                    <PremiumFieldGroup label="Sabab" hint="Uzatirish zaruratini qisqa va ravshan yozing.">
-                      <Textarea 
-                        placeholder="Sababni kiriting..." 
-                        value={extendReason}
-                        onChange={(e) => setExtendReason(e.target.value)}
-                        className="min-h-[120px] rounded-2xl border-border bg-white" 
-                      />
-                    </PremiumFieldGroup>
-                  </PremiumFormLayout>
-                  <DialogFooter className="border-t border-border pt-4">
-                    <Button variant="outline" onClick={() => setIsExtendOpen(false)} className="rounded-2xl border-border bg-white">
-                      Bekor qilish
-                    </Button>
-                    <Button onClick={handleExtendDeadline} disabled={isSaving} className="rounded-2xl">
-                      {isSaving ? "Saqlanmoqda..." : "So'rov yuborish"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-            {canEdit && (
-              <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" className="border-white/20 bg-white/10 text-white shadow-none hover:bg-white/18">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Tahrirlash
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[640px] overflow-hidden border-border bg-card shadow-[0_26px_70px_-36px_rgba(14,165,233,0.32)]">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-foreground">Topshiriqni tahrirlash</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">Asosiy maydonlarni yangilang va topshiriqni bir xil standartda saqlang.</DialogDescription>
-                  </DialogHeader>
-                  <PremiumFormLayout>
-                    <PremiumFieldGroup label="Sarlavha">
-                      <Input 
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="h-11 rounded-2xl border-border bg-white" 
-                      />
-                    </PremiumFieldGroup>
-                    <PremiumFieldGroup label="Tavsif">
-                      <Textarea 
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        rows={3}
-                        className="min-h-[120px] rounded-2xl border-border bg-white"
-                      />
-                    </PremiumFieldGroup>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <PremiumFieldGroup label="Ustuvorlik">
-                        <Select value={editPriority} onValueChange={setEditPriority}>
-                          <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(Object.keys(priorityLabels) as TaskPriority[]).map((priority) => (
-                              <SelectItem key={priority} value={priority}>
-                                {priorityLabels[priority]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </PremiumFieldGroup>
-                      <PremiumFieldGroup label="Muddat">
-                        <Input 
-                          type="date" 
-                          value={editDeadline ? editDeadline.split('T')[0] : ''} 
-                          onChange={(e) => setEditDeadline(e.target.value)}
-                          className="h-11 rounded-2xl border-border bg-white"
-                        />
-                      </PremiumFieldGroup>
-                    </div>
-                    <PremiumFieldGroup label="Soha">
-                      <Select value={editCategory} onValueChange={setEditCategory}>
-                        <SelectTrigger className="h-11 rounded-2xl border-border bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PremiumFieldGroup>
-                  </PremiumFormLayout>
-                  <DialogFooter className="border-t border-border pt-4">
-                    <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-2xl border-border bg-white">
-                      Bekor qilish
-                    </Button>
-                    <Button onClick={handleSaveTask} disabled={isSaving} className="rounded-2xl">
-                      {isSaving ? "Saqlanmoqda..." : "Saqlash"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-
-            {canReassign && (
-              <Button
-                variant="secondary"
-                className="border-border bg-warning-soft text-warning-soft-foreground shadow-none hover:bg-warning-soft"
-                onClick={handleRejectTask}
-                disabled={isSaving}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                {isSaving ? "Yuborilmoqda..." : "Qayta ijroga"}
-              </Button>
-            )}
-
-            {canClose && (
-              <Button 
-                className="bg-white text-success-soft-foreground hover:bg-success-soft"
-                onClick={handleApproveTask}
-                disabled={isSaving}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                {isSaving ? "Yopilmoqda..." : "Nazoratdan yechish"}
-              </Button>
-            )}
-          </>
+          canEdit ? (
+            <button type="button" onClick={() => setDialog("edit")} className={BTN_SOFT}>
+              <Pencil className="h-4 w-4" aria-hidden />
+              Tahrirlash
+            </button>
+          ) : undefined
         }
       >
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Content - Task Details and Chat */}
-          <div className="lg:col-span-2 space-y-6">
-            <PremiumInfoCard
-              icon={Layers}
-              title="Topshiriq ma'lumotlari"
-              subtitle="Asosiy tafsilotlar, muddat va biriktirilgan tashkilotlar."
-              accent="from-cyan-50 via-white to-emerald-50/35"
-              headerExtra={
-                <div className="flex flex-wrap gap-2">
-                  {task.category && (
-                    <Badge variant="outline" className="font-normal">
-                      {CATEGORY_LABELS[task.category] || task.category}
-                    </Badge>
-                  )}
-                  <PriorityBadge priority={task.priority} />
-                  <TaskStatusBadge status={task.status} />
-                </div>
-              }
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <PremiumInfoItem
-                  icon={Calendar}
-                  label="Muddat"
-                  value={
-                    <>
-                      {formatDate(task.deadline)}
-                      {isOverdue && " (kechiktirilgan)"}
-                    </>
-                  }
-                  valueClassName={isOverdue ? "text-destructive" : undefined}
-                />
-                <PremiumInfoItem
-                  icon={User}
-                  label="Yaratuvchi"
-                  value={creator?.full_name || `${creator?.last_name || ""} ${creator?.first_name || ""}`.trim() || "—"}
-                />
-                <PremiumInfoItem
-                  icon={Layers}
-                  label="Soha"
-                  value={CATEGORY_LABELS[task.category] || task.category || "—"}
-                />
-                <PremiumInfoItem
-                  icon={Building2}
-                  label="Tashkilotlar"
-                  value={
-                    (task.assigned_organizations || task.organizations || [])
-                      .map((org: any) => (typeof org === "object" ? org.organization?.name || org.name : orgsMap[org]?.name))
-                      .filter(Boolean)
-                      .join(", ") || "-"
-                  }
-                />
-                <PremiumInfoItem
-                  icon={Clock}
-                  label="Yaratilgan"
-                  value={formatDate(task.createdAt || task.created_at)}
-                />
-                {task.location && (
-                  <PremiumInfoItem
-                    icon={MapPin}
-                    label="Joylashuv"
-                    value={`${task.location.lat.toFixed(4)}, ${task.location.lng.toFixed(4)}`}
-                  />
-                )}
-              </div>
-            </PremiumInfoCard>
-
-            {/* Task Content - Full Description */}
-            {task.description && (
-              <PremiumInfoCard
-                icon={FileText}
-                title="Topshiriq mazmuni"
-                subtitle="Batafsil tavsif va ijro uchun asosiy matn."
-                accent="from-amber-50 via-white to-cyan-50/30"
-              >
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                      {task.description}
-                    </p>
-                  </div>
-              </PremiumInfoCard>
-            )}
-
-            {/* Attachments */}
-            {task.attachments && task.attachments.length > 0 && (
-              <PremiumSideCard icon={Paperclip} title={`Biriktirilgan fayllar (${task.attachments.length})`} accent="from-cyan-50 via-white to-amber-50/40">
-                <div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {task.attachments.map((attachment: any) => {
-                      const fileName = attachment.file_name || attachment.fileName || attachment.file?.split('/').pop() || 'Fayl'
-                      const fileUrl = attachment.file || attachment.url
-                      const fileSize = attachment.file_size || attachment.fileSize
-                      const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-                      
-                      return (
-                        <PremiumAttachmentItem
-                          key={attachment.id}
-                          href={fileUrl}
-                          icon={isImage ? ImageIcon : FileIcon}
-                          title={fileName}
-                          meta={fileSize ? `${(fileSize / 1024).toFixed(1)} KB` : undefined}
-                          actionLabel="Yuklash"
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              </PremiumSideCard>
-            )}
-
-            {/* Chat / Timeline */}
-            <PremiumActivityCard>
-              <Tabs defaultValue="chat" className="w-full">
-                <CardHeader className="bg-primary-soft border-b border-border">
-                  <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1">
-                    <TabsTrigger value="chat" className="gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      Muloqot
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="gap-2">
-                      <History className="h-4 w-4" />
-                      Tarix
-                    </TabsTrigger>
-                  </TabsList>
-                </CardHeader>
-                <TabsContent value="chat" className="m-0">
-                  <ScrollArea className="h-[400px] p-4">
-                    <div className="space-y-4">
-                      {chatMessages.length === 0 && (
-                        <div className="rounded-[24px] border border-dashed border-border bg-primary-soft px-4 py-10 text-center text-sm text-muted-foreground">
-                          Hozircha muloqot boshlanmagan
-                        </div>
-                      )}
-                      {chatMessages.map((msg) => {
-                        const sender = usersMap[msg.senderId] || null
-                        const isSystem = msg.messageType === "SYSTEM" || msg.senderRole === "SYSTEM"
-                        const isCurrentUser = currentUser && String(msg.senderId) === String(currentUser.id)
-                        const attachment = msg.attachment
-
-                        if (isSystem) {
-                          return (
-                            <PremiumSystemNote key={msg.id}>
-                                {msg.content} - {formatDateTime(msg.createdAt)}
-                            </PremiumSystemNote>
-                          )
-                        }
-
-                        return (
-                          <div key={msg.id} className={cn("flex gap-3", isCurrentUser && "flex-row-reverse")}>
-                            <UserAvatar
-                              firstName={sender?.first_name}
-                              lastName={sender?.last_name}
-                              avatarUrl={sender?.avatar_url}
-                              size="sm"
-                            />
-                            <PremiumMessageBubble
-                              align={isCurrentUser ? "right" : "left"}
-                              title={
-                                isCurrentUser && currentUser
-                                  ? `${currentUser.last_name || ''} ${currentUser.first_name || ''}`.trim()
-                                  : sender
-                                    ? `${sender.last_name || ''} ${sender.first_name || ''}`.trim()
-                                    : msg.senderName || "-"
-                              }
-                              meta={formatDateTime(msg.createdAt)}
-                              footer={
-                                isCurrentUser && !isSystem ? (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full"
-                                      onClick={() => handleEditMessage(msg)}
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full"
-                                      onClick={() => handleDeleteMessage(msg)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ) : null
-                              }
-                            >
-                              <div className="space-y-2">
-                                {msg.content && <p className="text-sm leading-6">{msg.content}</p>}
-                                {attachment && (
-                                  <div className="space-y-2">
-                                    {attachment.file_type === "IMAGE" && (
-                                      <PremiumImagePreview
-                                        src={attachment.file}
-                                        alt={attachment.file_name || "Biriktirilgan rasm"}
-                                        className="h-48 w-full max-w-xs"
-                                      />
-                                    )}
-                                    {attachment.file_type === "VIDEO" && (
-                                      <video src={attachment.file} controls className="max-h-48 w-full rounded-2xl border border-border" />
-                                    )}
-                                    {attachment.file_type === "AUDIO" && (
-                                      <audio src={attachment.file} controls className="w-full" />
-                                    )}
-                                    {attachment.file_type !== "IMAGE" && attachment.file_type !== "VIDEO" && attachment.file_type !== "AUDIO" && (
-                                      <a
-                                        href={attachment.file}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className={cn(
-                                          "flex items-center gap-2 text-xs underline",
-                                          isCurrentUser ? "text-white/80" : "text-muted-foreground",
-                                        )}
-                                      >
-                                        <FileText className="h-3 w-3" />
-                                        {attachment.file_name || "Fayl"}
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </PremiumMessageBubble>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </ScrollArea>
-                  <div className="border-t border-border p-4">
-                    {!canChat ? (
-                      <div className="text-center py-3 text-muted-foreground bg-muted rounded-lg">
-                        <Lock className="h-4 w-4 inline-block mr-2" />
-                        Bu topshiriq yopilgan, xabar yuborish mumkin emas
-                      </div>
-                    ) : (
-                    <div className="flex flex-col gap-2">
-                      {/* Audio Recording UI */}
-                      {isRecording && (
-                        <div className="flex items-center gap-2 p-2 bg-destructive-soft rounded-lg border border-border">
-                          <div className="h-3 w-3 bg-destructive rounded-full animate-pulse" />
-                          <span className="text-sm text-destructive font-medium">Yozib olinmoqda...</span>
-                          <div className="flex-1" />
-                          <Button variant="outline" size="sm" onClick={stopRecording} className="text-success border-success">
-                            Tugatish
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={cancelRecording} className="text-destructive border-destructive">
-                            Bekor qilish
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Audio Preview */}
-                      {audioBlob && !isRecording && (
-                        <div className="flex items-center gap-2 p-2 bg-primary-soft rounded-lg border border-border">
-                          <Mic className="h-4 w-4 text-primary" />
-                          <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
-                          <Button size="sm" onClick={sendAudio} className="bg-primary hover:bg-primary">
-                            <Send className="h-3 w-3 mr-1" /> Yuborish
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2 rounded-[24px] border border-border bg-background p-2">
-                        {/* Hidden file input */}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                          onChange={(e) => {
-                            setChatFile(e.target.files?.[0] || null)
-                            e.target.value = '' // Reset for re-selection
-                          }}
-                        />
-                        
-                        {/* File attach button */}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="shrink-0" 
-                          type="button" 
-                          title="Fayl biriktirish"
-                          onClick={handleFileButtonClick}
-                        >
-                          <Paperclip className="h-4 w-4" />
-                        </Button>
-                        
-                        {/* Audio record */}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className={cn("shrink-0", isRecording && "text-destructive")}
-                          type="button"
-                          onClick={isRecording ? stopRecording : startRecording}
-                          title={isRecording ? "Yozishni to'xtatish" : "Ovozli xabar yozish"}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </Button>
-                        
-                        {/* Location */}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="shrink-0" 
-                          type="button"
-                          onClick={sendLocation}
-                          disabled={isLocationLoading}
-                          title="Joylashuvni yuborish"
-                        >
-                          <MapPin className={cn("h-4 w-4", isLocationLoading && "animate-pulse")} />
-                        </Button>
-                        
-                        <Input
-                          placeholder={editingMessageId ? "Xabarni tahrirlash..." : "Xabar yozing... (Ctrl+V - rasm)"}
-                          value={editingMessageId ? editingContent : newMessage}
-                          onChange={(e) => editingMessageId ? setEditingContent(e.target.value) : setNewMessage(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                          onPaste={handlePaste}
-                          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-                        />
-                        <Button onClick={sendMessage} className="shrink-0 rounded-2xl">
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {chatFile && (
-                        <div className="flex items-center gap-2 rounded-[22px] border border-border bg-background p-2.5">
-                          {chatFile.type.startsWith('image/') ? (
-                            <>
-                              <ImageIcon className="h-4 w-4 text-primary" />
-                              <PremiumImagePreview src={URL.createObjectURL(chatFile)} alt="Tanlangan rasm" className="h-12 w-12" />
-                            </>
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                          <span className="text-xs text-muted-foreground flex-1 truncate">{chatFile.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => setChatFile(null)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      {editingMessageId && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>Tahrirlash rejimi</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingMessageId(null)
-                              setEditingContent("")
-                              setNewMessage("")
-                            }}
-                          >
-                            Bekor qilish
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="history" className="m-0">
-                  <ScrollArea className="h-[450px] p-4">
-                    <div className="space-y-4">
-                      {taskExecutions.length === 0 ? (
-                        <div className="rounded-[24px] border border-dashed border-border bg-warning-soft px-4 py-10 text-center text-sm text-muted-foreground">
-                          Hozircha tarix yo'q
-                        </div>
-                      ) : (
-                        taskExecutions.map((exec) => {
-                          return (
-                            <PremiumTimelineItem
-                              key={exec.id}
-                              icon={History}
-                              title={(exec.actionType || "ACTION").replace(/_/g, " ")}
-                              description={exec.comment || "Izoh yo'q"}
-                              meta={`${exec.executedByName || "Tizim"} • ${formatDateTime(exec.createdAt)}`}
-                              tone="bg-warning-soft text-warning-soft-foreground"
-                            />
-                          )
-                        })
-                      )}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
-            </PremiumActivityCard>
-          </div>
-
-          {/* Sidebar - Organizations Status */}
-          <div className="space-y-6">
-            <PremiumSideCard icon={Building2} title="Tashkilotlar holati" accent="from-emerald-50 via-white to-cyan-50/30">
-              <div className="space-y-3">
-                {(task.organizations || []).map((orgId: string) => {
-                  const org = orgsMap[orgId]
-                  return (
-                    <div key={orgId} className="flex items-center justify-between rounded-[20px] border border-border bg-background p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-border">
-                          <Building2 className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium">{org?.name}</span>
-                          {org && <p className="text-xs text-muted-foreground">{(sectorLabels as Record<string, string>)[org.sector] || org.sector}</p>}
-                        </div>
-                      </div>
-                      <TaskStatusBadge status={task.status} />
-                    </div>
-                  )
-                })}
-              </div>
-            </PremiumSideCard>
-
-            {/* Attachments */}
-            {task.attachments && task.attachments.length > 0 && (
-              <PremiumSideCard icon={Download} title="Tezkor fayllar" accent="from-amber-50 via-white to-cyan-50/30">
-                <div className="space-y-2">
-                  {task.attachments.map((file: any, i: number) => {
-                    const fileName = typeof file === 'string' ? file : (file.file_name || file.fileName || file.file?.split('/').pop() || 'Fayl')
-                    const fileUrl = typeof file === 'string' ? file : (file.file || file.url)
-                    return (
-                      <PremiumAttachmentItem
-                        key={file?.id || i}
-                        href={fileUrl}
-                        icon={FileText}
-                        title={fileName}
-                        actionLabel="Ochish"
-                      />
-                    )
-                  })}
-                </div>
-              </PremiumSideCard>
-            )}
-
-            <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="from-cyan-50 via-white to-emerald-50/30">
-              <div className="space-y-3">
-                {canMarkComplete && (
-                  <PremiumActionButton icon={CheckCircle2} onClick={handleMarkComplete} disabled={isSaving} className="text-success">
-                    {isSaving ? "Saqlanmoqda..." : "Bajarildi deb belgilash"}
-                  </PremiumActionButton>
-                )}
-                {canExtend && (
-                  <PremiumActionButton icon={Clock} onClick={() => setIsExtendOpen(true)}>
-                    Muddat uzaytirish
-                  </PremiumActionButton>
-                )}
-                {canEdit && (
-                  <PremiumActionButton icon={Edit} onClick={() => setIsEditOpen(true)}>
-                    Topshiriqni tahrirlash
-                  </PremiumActionButton>
-                )}
-                {canReassign && (
-                  <PremiumActionButton icon={RotateCcw} onClick={handleRejectTask} disabled={isSaving} className="text-warning">
-                    Qayta ijroga yuborish
-                  </PremiumActionButton>
-                )}
-                {canClose && (
-                  <PremiumActionButton icon={CheckCircle2} onClick={handleApproveTask} disabled={isSaving} className="text-primary">
-                    Nazoratdan yechish
-                  </PremiumActionButton>
-                )}
-              </div>
-            </PremiumSideCard>
-          </div>
-        </div>
+        {/* ------------------------------------------------ Xabarlar (toast/xato) */}
+        {toast && (
+          <p role="status" className="mb-4 flex items-center gap-2 rounded-xl bg-success-soft px-4 py-3 text-sm font-medium text-success-soft-foreground">
+            <CheckCircle2 className="h-4 w-4" aria-hidden />
+            {toast}
+          </p>
+        )}
         {actionError && (
-          <p
-            role="alert"
-            className="mt-4 rounded-md bg-destructive-soft px-3 py-2.5 text-sm text-destructive-soft-foreground"
-          >
+          <p role="alert" className="mb-4 flex items-start gap-2 rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive-soft-foreground">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             {actionError}
           </p>
         )}
+
+        <div className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-0">
+          {/* ================================================== CHAP USTUN */}
+          <div className="min-w-0 space-y-6">
+            {/* Holat banneri — hozir nima bo'lyapti, kim nima qilishi kerak */}
+            <StatusBanner
+              status={status}
+              myOrgStatus={myOrgStatus}
+              isOrgUser={isOrgUser}
+              canApprove={canApprove}
+              awaiting={awaiting}
+            />
+
+            {/* Tafsilot */}
+            <section className={CARD}>
+              <SectionTitle icon={FileText} title="Nima qilinishi kerak" />
+              <div className="mt-4 whitespace-pre-wrap text-[16px] leading-8 text-foreground">
+                {task.description?.trim() || (
+                  <span className="text-muted-foreground">Tafsilot kiritilmagan.</span>
+                )}
+              </div>
+
+              {attachments.length > 0 && (
+                <div className="mt-6">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Biriktirilgan hujjatlar · {attachments.length}
+                  </p>
+                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {attachments.map((a: any) => (
+                      <AttachmentRow key={a.id} a={a} />
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+
+            {/* Ijrochi tashkilotlar */}
+            <section className={CARD}>
+              <SectionTitle icon={Building2} title="Ijrochi tashkilotlar" count={orgs.length} />
+              {orgs.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">Tashkilot biriktirilmagan.</p>
+              ) : (
+                <ul className="mt-4 divide-y divide-border">
+                  {orgs.map((o: any) => {
+                    const st = o.status ?? status
+                    const mine = myOrg && myOrg.id === o.id
+                    return (
+                      <li key={o.id} className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[15px] font-semibold text-foreground">
+                            {o.organization?.short_name || o.organization?.name || "—"}
+                            {mine && (
+                              <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-soft-foreground">
+                                sizning
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {o.assigned_to ? `Mas’ul: ${personName(o.assigned_to)}` : "Mas’ul hali belgilanmagan"}
+                            {o.accepted_at ? ` · ijroga olingan ${fmtDate(o.accepted_at)}` : ""}
+                            {o.completed_at ? ` · hisobot ${fmtDate(o.completed_at)}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold", taskStatusClass(st))}>
+                            {TASK_STATUS_LABEL[st] ?? st}
+                          </span>
+                          {canApprove && st === "BAJARILDI" && orgs.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => void run(`approve-${o.id}`, () => approveTaskExecution(id, { organizationId: o.organization?.id }), "Tashkilot hisoboti tasdiqlandi")}
+                              disabled={busy !== null}
+                              className="inline-flex h-8 items-center gap-1 rounded-lg bg-success-soft px-2.5 text-xs font-semibold text-success-soft-foreground"
+                            >
+                              <Check className="h-3.5 w-3.5" aria-hidden />
+                              Tasdiqlash
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+
+            {/* Isbotlar — hisobot bilan yuklangan fayllar */}
+            {proofs.length > 0 && (
+              <section className={CARD}>
+                <SectionTitle icon={ImageIcon} title="Ijro isbotlari" />
+                <div className="mt-4 space-y-5">
+                  {proofs.map((e: any) => (
+                    <div key={e.id}>
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold">{e.executed_by_name || personName(e.executed_by)}</span>
+                        <span className="text-muted-foreground"> · {fmtDate(e.created_at, true)}</span>
+                      </p>
+                      {e.comment && <p className="mt-1 text-sm leading-6 text-muted-foreground">{e.comment}</p>}
+                      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                        {e.attachments.map((a: any) => (
+                          <li key={a.id}>
+                            {isImage(a) ? (
+                              <a href={a.file} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl bg-background">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={a.file} alt={a.file_name} loading="lazy" className="aspect-square w-full object-cover" />
+                              </a>
+                            ) : (
+                              <AttachmentRow a={a} />
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Muhokama / Tarix */}
+            <section className={cn(CARD, "p-0 sm:p-0")}>
+              <div className="flex items-center gap-1 px-3 pt-3 sm:px-4">
+                <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={MessageSquare} label="Muhokama" count={timeline.filter((t) => t.type === "message").length} />
+                <TabBtn active={tab === "history"} onClick={() => setTab("history")} icon={History} label="Tarix" count={timeline.filter((t) => t.type === "execution").length} />
+              </div>
+              <div className="p-5 sm:p-6">
+                {tab === "chat" ? (
+                  <ChatPanel taskId={id} me={me} items={timeline.filter((t) => t.type === "message")} disabled={isClosed} onSent={reloadTimeline} />
+                ) : (
+                  <HistoryPanel items={timeline.filter((t) => t.type === "execution")} createdAt={task.created_at} creator={personName(task.created_by)} />
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* ================================================== O'NG USTUN */}
+          <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            {/* Harakatlar */}
+            <section className={CARD}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Harakatlar</p>
+              <div className="mt-4 flex flex-col gap-2">
+                {canApprove && (
+                  <>
+                    <button type="button" disabled={busy !== null} onClick={() => void run("approve", () => approveTaskExecution(id), "Topshiriq tasdiqlandi va yopildi")} className={BTN_SUCCESS}>
+                      {busy === "approve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" aria-hidden />}
+                      Tasdiqlash va yopish
+                    </button>
+                    <button type="button" disabled={busy !== null} onClick={() => setDialog("return")} className={BTN_WARN}>
+                      <RotateCcw className="h-4 w-4" aria-hidden />
+                      Qayta ijroga yuborish
+                    </button>
+                  </>
+                )}
+                {canAccept && (
+                  <button type="button" disabled={busy !== null} onClick={() => void run("accept", () => acceptTaskExecution(id), "Topshiriq ijroga olindi")} className={BTN_PRIMARY}>
+                    {busy === "accept" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" aria-hidden />}
+                    Ijroga olish
+                  </button>
+                )}
+                {canReport && (
+                  <button type="button" disabled={busy !== null} onClick={() => setDialog("report")} className={canAccept ? BTN_SOFT : BTN_PRIMARY}>
+                    <Upload className="h-4 w-4" aria-hidden />
+                    Hisobot va isbot yuklash
+                  </button>
+                )}
+                {canExtend && (
+                  <button type="button" disabled={busy !== null} onClick={() => setDialog("extend")} className={BTN_SOFT}>
+                    <Clock className="h-4 w-4" aria-hidden />
+                    Muddat uzaytirishni so‘rash
+                  </button>
+                )}
+                {canEdit && (
+                  <button type="button" onClick={() => setDialog("edit")} className={BTN_SOFT}>
+                    <Pencil className="h-4 w-4" aria-hidden />
+                    Tahrirlash
+                  </button>
+                )}
+                {!canApprove && !canAccept && !canReport && !canExtend && !canEdit && (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {isClosed ? "Topshiriq yopilgan — o‘zgartirish mumkin emas." : awaiting ? "Hisobot yuborilgan. Hokim tasdig‘i kutilmoqda." : "Bu topshiriq bo‘yicha sizda harakat yo‘q."}
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* Ma'lumot */}
+            <section className={CARD}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Ma’lumot</p>
+              <dl className="mt-4 space-y-4">
+                <MetaRow icon={Calendar} label="Muddat">
+                  <span className={cn("font-semibold", overdue ? "text-destructive" : "text-foreground")}>
+                    {fmtDate(task.deadline)}
+                  </span>
+                  {left !== null && !isClosed && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {left > 0 ? `${left} kun qoldi` : left === 0 ? "bugun" : `${Math.abs(left)} kun o‘tdi`}
+                    </span>
+                  )}
+                </MetaRow>
+                <MetaRow icon={AlertCircle} label="Muhimlik">
+                  {PRIORITY_LABEL[task.priority] ?? task.priority ?? "—"}
+                </MetaRow>
+                <MetaRow icon={Users} label="Nazoratchi">
+                  {deputies.length ? deputies.map((d: any) => personName(d)).join(", ") : "—"}
+                </MetaRow>
+                <MetaRow icon={UserIcon} label="Yaratdi">
+                  {personName(task.created_by)}
+                  <span className="block text-xs text-muted-foreground">{fmtDate(task.created_at, true)}</span>
+                </MetaRow>
+                {task.closed_at && (
+                  <MetaRow icon={CheckCircle2} label="Yopildi">
+                    {fmtDate(task.closed_at, true)}
+                    {task.closed_by && <span className="block text-xs text-muted-foreground">{personName(task.closed_by)}</span>}
+                  </MetaRow>
+                )}
+              </dl>
+            </section>
+          </aside>
+        </div>
       </DashboardDetailFrame>
 
-      {isReportOpen && (
+      {/* ---------------------------------- Telefonda qadalgan asosiy harakat */}
+      {primaryAction && (
+        <div className="fixed inset-x-0 bottom-14 z-30 border-t border-border bg-card/95 p-3 pb-safe backdrop-blur-sm lg:hidden">
+          <button type="button" disabled={busy !== null} onClick={primaryAction.onClick} className={cn(primaryAction.cls, "w-full")}>
+            <primaryAction.icon className="h-4 w-4" aria-hidden />
+            {primaryAction.label}
+          </button>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------ Dialoglar */}
+      {dialog === "report" && (
         <ReportDialog
           taskId={id}
           taskTitle={task.title}
-          onClose={() => setIsReportOpen(false)}
-          onSubmitted={(updated) => {
-            setTask(updated as any)
-            setIsReportOpen(false)
-            refreshTimeline()
+          onClose={() => setDialog(null)}
+          onSubmitted={(t) => {
+            setDialog(null)
+            if (t && typeof t === "object") setTask(t as any)
+            setToast("Hisobot yuborildi — hokim tasdig‘i kutilmoqda")
+            void reloadTimeline()
           }}
         />
       )}
-
-      {isReturnOpen && (
+      {dialog === "return" && (
         <ReturnReasonDialog
-          subtitle={task.title}
-          busy={isSaving}
+          subtitle="Sabab ijrochiga ko‘rsatiladi — nima yetishmayotganini aniq yozing."
+          busy={busy === "return"}
           error={actionError}
-          onCancel={() => setIsReturnOpen(false)}
-          onSubmit={submitReturn}
+          onCancel={() => setDialog(null)}
+          onSubmit={(reason) => {
+            void run("return", () => returnTaskForRework(id, reason), "Topshiriq qayta ijroga yuborildi").then(() => setDialog(null))
+          }}
+        />
+      )}
+      {dialog === "edit" && (
+        <EditDialog
+          task={task}
+          busy={busy === "edit"}
+          onClose={() => setDialog(null)}
+          onSave={(payload) => {
+            void run("edit", () => updateTask(id, payload as any), "O‘zgarishlar saqlandi").then(() => setDialog(null))
+          }}
+        />
+      )}
+      {dialog === "extend" && (
+        <ExtendDialog
+          currentDeadline={task.deadline}
+          busy={busy === "extend"}
+          onClose={() => setDialog(null)}
+          onSubmit={(d, reason) => {
+            void run("extend", () => requestExtension(id, { requested_deadline: d, reason }), "Muddat uzaytirish so‘rovi yuborildi").then(() => setDialog(null))
+          }}
         />
       )}
     </>
+  )
+}
+
+/* ============================================================ BO'LAKLAR */
+
+function SectionTitle({ icon: Icon, title, count }: { icon: React.ComponentType<{ className?: string }>; title: string; count?: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+        <Icon className="h-4 w-4" />
+      </span>
+      <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-foreground">
+        {title}
+        {typeof count === "number" && <span className="ml-2 text-sm font-medium text-muted-foreground">{count}</span>}
+      </h2>
+    </div>
+  )
+}
+
+function MetaRow({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5 text-sm text-foreground">{children}</dd>
+      </div>
+    </div>
+  )
+}
+
+function TabBtn({ active, onClick, icon: Icon, label, count }: { active: boolean; onClick: () => void; icon: React.ComponentType<{ className?: string }>; label: string; count?: number }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        active ? "bg-primary-soft text-primary-soft-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+      {typeof count === "number" && count > 0 && <span className="tabular-nums opacity-70">{count}</span>}
+    </button>
+  )
+}
+
+function AttachmentRow({ a }: { a: any }) {
+  return (
+    <a
+      href={a.file}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 rounded-xl bg-background px-3 py-2.5 transition-colors hover:bg-muted"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground shadow-xs">
+        {isImage(a) ? <ImageIcon className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">{a.file_name || "Fayl"}</span>
+        <span className="block text-xs text-muted-foreground">
+          {typeof a.file_size === "number" ? formatFileSize(a.file_size) : ""}
+          {a.uploaded_by_name ? ` · ${a.uploaded_by_name}` : ""}
+        </span>
+      </span>
+      <Download className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+    </a>
+  )
+}
+
+/** Holat banneri — odam tilida: hozir nima bo'lyapti va kim nima qilishi kerak */
+function StatusBanner({ status, myOrgStatus, isOrgUser, canApprove, awaiting }: { status: string; myOrgStatus: string; isOrgUser: boolean; canApprove: boolean; awaiting: boolean }) {
+  const s = isOrgUser ? myOrgStatus : status
+  let tone = "bg-info-soft text-info-soft-foreground"
+  let text = TASK_STATUS_HINT[s] ?? ""
+  let Icon: React.ComponentType<{ className?: string }> = Clock
+
+  if (canApprove) {
+    tone = "bg-warning-soft text-warning-soft-foreground"
+    text = "Ijrochi hisobot va isbotlarni yukladi. Ko‘rib chiqing: tasdiqlang yoki kamchilik bo‘lsa qayta ijroga yuboring."
+    Icon = ShieldCheck
+  } else if (awaiting) {
+    tone = "bg-success-soft text-success-soft-foreground"
+    text = "Hisobotingiz yuborildi. Hokim yoki o‘rinbosari tasdiqlashi kutilmoqda — qo‘shimcha harakat kerak emas."
+    Icon = CheckCircle2
+  } else if (isOrgUser && ["YANGI", "TEKSHIRUVDA"].includes(s)) {
+    text = "Sizga yangi topshiriq. Tafsilotni o‘qing, so‘ng «Ijroga olish»ni bosing — muddat hisobi shundan boshlanadi."
+    Icon = Play
+  } else if (isOrgUser && s === "IJRODA") {
+    text = "Ish bajarilmoqda. Tugatgach «Hisobot va isbot yuklash» orqali foto/hujjat bilan hisobot bering."
+    Icon = Upload
+  } else if (isOrgUser && s === "QAYTA_IJROGA_YUBORILDI") {
+    tone = "bg-destructive-soft text-destructive-soft-foreground"
+    text = "Hisobot qabul qilinmadi. Tarixdagi sababni o‘qib, kamchilikni bartaraf eting va qayta hisobot yuklang."
+    Icon = RotateCcw
+  } else if (s === "MUDDATI_KECH") {
+    tone = "bg-destructive-soft text-destructive-soft-foreground"
+    Icon = AlertCircle
+  } else if (CLOSED.has(s)) {
+    tone = "bg-muted text-muted-foreground"
+    Icon = CheckCircle2
+  }
+
+  if (!text) return null
+  return (
+    <div className={cn("flex items-start gap-3 rounded-2xl px-4 py-3.5 text-sm leading-6", tone)}>
+      <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+      <p>{text}</p>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ Chat */
+
+function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me: any; items: any[]; disabled: boolean; onSent: () => void }) {
+  const [text, setText] = useState("")
+  const [file, setFile] = useState<File | null>(null)
+  const [sending, setSending] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const endRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "nearest" })
+  }, [items.length])
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (sending || (!text.trim() && !file)) return
+    setSending(true)
+    setErr(null)
+    try {
+      await sendTaskMessage(taskId, { content: text.trim(), attachment: file ?? undefined } as any)
+      setText("")
+      setFile(null)
+      onSent()
+    } catch (e: any) {
+      setErr(e?.message || "Xabar yuborilmadi")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const myId = String(me?.id ?? "")
+
+  return (
+    <div>
+      <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+        {items.length === 0 && (
+          <p className="rounded-xl bg-background px-4 py-6 text-center text-sm text-muted-foreground">
+            Hali xabar yo‘q. Savol yoki izohingizni yozing — ijrochi va nazoratchi ko‘radi.
+          </p>
+        )}
+        {items.map((m: any) => {
+          const mine = String(m.sender ?? "") === myId
+          return (
+            <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+              <div className={cn("max-w-[86%] rounded-2xl px-3.5 py-2.5 text-sm leading-6", mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-background text-foreground")}>
+                {!mine && <p className="mb-0.5 text-xs font-semibold text-muted-foreground">{m.user_name || "—"}</p>}
+                {m.content && <p className="whitespace-pre-wrap">{m.content}</p>}
+                {m.attachment && (
+                  <a href={m.attachment.file} target="_blank" rel="noopener noreferrer" className={cn("mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium underline-offset-2 hover:underline", mine ? "text-primary-foreground" : "text-primary")}>
+                    <Paperclip className="h-3.5 w-3.5" aria-hidden />
+                    {m.attachment.file_name || "Fayl"}
+                  </a>
+                )}
+                <p className={cn("mt-1 text-[11px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>{fmtDate(m.timestamp, true)}</p>
+              </div>
+            </div>
+          )
+        })}
+        <div ref={endRef} />
+      </div>
+
+      {disabled ? (
+        <p className="mt-4 text-xs text-muted-foreground">Topshiriq yopilgan — muhokama faqat o‘qish uchun.</p>
+      ) : (
+        <form onSubmit={send} className="mt-4">
+          {file && (
+            <p className="mb-2 inline-flex items-center gap-2 rounded-lg bg-background px-3 py-1.5 text-xs text-foreground">
+              <Paperclip className="h-3.5 w-3.5" aria-hidden />
+              <span className="max-w-[220px] truncate">{file.name}</span>
+              <button type="button" onClick={() => setFile(null)} aria-label="Faylni olib tashlash" className="text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </p>
+          )}
+          {err && <p className="mb-2 text-xs text-destructive">{err}</p>}
+          <div className="flex items-end gap-2">
+            <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-background text-muted-foreground hover:bg-muted hover:text-foreground">
+              <Paperclip className="h-4 w-4" aria-hidden />
+              <span className="sr-only">Fayl biriktirish</span>
+              <input type="file" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            </label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  ;(e.currentTarget.form as HTMLFormElement | null)?.requestSubmit()
+                }
+              }}
+              rows={1}
+              placeholder="Xabar yozing…"
+              className={cn(FIELD, "min-h-11 resize-none py-2.5")}
+            />
+            <button type="submit" disabled={sending || (!text.trim() && !file)} className={cn(BTN_PRIMARY, "h-11 w-11 shrink-0 px-0")} aria-label="Yuborish">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+/* --------------------------------------------------------------- Tarix */
+
+function HistoryPanel({ items, createdAt, creator }: { items: any[]; createdAt?: string; creator: string }) {
+  const rows = [
+    { id: "created", timestamp: createdAt, user_name: creator, content: "Topshiriq yaratildi", action_type: "YARATILDI" },
+    ...items,
+  ]
+  return (
+    <ol className="space-y-4">
+      {rows.map((r: any, i) => (
+        <li key={`${r.id}-${i}`} className="flex gap-3">
+          <span className="relative flex flex-col items-center">
+            <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
+            {i < rows.length - 1 && <span className="mt-1 w-px flex-1 bg-border" aria-hidden />}
+          </span>
+          <div className="min-w-0 flex-1 pb-1">
+            <p className="text-sm text-foreground">
+              <span className="font-semibold">{r.user_name || "Tizim"}</span>
+              <span className="text-muted-foreground"> · {fmtDate(r.timestamp, true)}</span>
+            </p>
+            <p className="mt-0.5 text-sm leading-6 text-muted-foreground">{r.content}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/* ------------------------------------------------------------ Dialoglar */
+
+function Modal({ title, subtitle, onClose, children }: { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
+    window.addEventListener("keydown", onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+      <div className="absolute inset-0 bg-[#0d1524]/50" onClick={onClose} aria-hidden />
+      <div role="dialog" aria-modal="true" className="relative z-10 w-full max-w-lg rounded-t-3xl bg-card p-6 shadow-[0_40px_100px_-30px_rgba(13,21,36,0.4)] pb-safe sm:rounded-3xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+          </div>
+          <button type="button" onClick={onClose} aria-label="Yopish" className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="mt-5">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function EditDialog({ task, busy, onClose, onSave }: { task: any; busy: boolean; onClose: () => void; onSave: (p: Record<string, unknown>) => void }) {
+  const [title, setTitle] = useState<string>(task.title ?? "")
+  const [description, setDescription] = useState<string>(task.description ?? "")
+  const [priority, setPriority] = useState<string>(task.priority ?? "ODDIY")
+  const [deadline, setDeadline] = useState<string>(localDateInput(task.deadline))
+  const [err, setErr] = useState<string | null>(null)
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return setErr("Sarlavha majburiy")
+    if (!deadline) return setErr("Muddatni tanlang")
+    setErr(null)
+    onSave({ title: title.trim(), description, priority, deadline: `${deadline}T23:59:00` })
+  }
+
+  return (
+    <Modal title="Topshiriqni tahrirlash" subtitle="O‘zgarishlar ijro tarixiga yoziladi." onClose={onClose}>
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        {err && <p className="text-sm text-destructive">{err}</p>}
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Sarlavha</span>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} className={FIELD} maxLength={500} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Tafsilot</span>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} className={cn(FIELD, "min-h-28 resize-y py-2.5")} />
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Muhimlik</span>
+            <div className="flex flex-wrap gap-2">
+              {PRIORITIES.map((p) => (
+                <button key={p} type="button" onClick={() => setPriority(p)} aria-pressed={priority === p} className={cn("h-10 rounded-xl px-3 text-sm font-medium", priority === p ? "bg-primary-soft text-primary-soft-foreground shadow-[inset_0_0_0_1.5px_var(--primary)]" : "bg-background text-foreground hover:bg-muted")}>
+                  {PRIORITY_LABEL[p]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Muddat</span>
+            <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className={FIELD} />
+          </label>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className={BTN_SOFT}>Bekor qilish</button>
+          <button type="submit" disabled={busy} className={BTN_PRIMARY}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" aria-hidden />}
+            Saqlash
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function ExtendDialog({ currentDeadline, busy, onClose, onSubmit }: { currentDeadline?: string; busy: boolean; onClose: () => void; onSubmit: (deadline: string, reason: string) => void }) {
+  const [deadline, setDeadline] = useState("")
+  const [reason, setReason] = useState("")
+  const [err, setErr] = useState<string | null>(null)
+  const min = localDateInput(new Date().toISOString())
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!deadline) return setErr("Yangi muddatni tanlang")
+    if (currentDeadline && deadline <= localDateInput(currentDeadline)) return setErr("Yangi muddat joriy muddatdan keyin bo‘lishi kerak")
+    if (reason.trim().length < 10) return setErr("Sababni kamida 10 belgi bilan yozing")
+    setErr(null)
+    onSubmit(`${deadline}T23:59:00`, reason.trim())
+  }
+
+  return (
+    <Modal title="Muddat uzaytirishni so‘rash" subtitle={`Joriy muddat: ${fmtDate(currentDeadline)}. So‘rovni hokim yoki o‘rinbosari ko‘rib chiqadi.`} onClose={onClose}>
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        {err && <p className="text-sm text-destructive">{err}</p>}
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Yangi muddat</span>
+          <input type="date" min={min} value={deadline} onChange={(e) => setDeadline(e.target.value)} className={FIELD} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Sabab</span>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} placeholder="Nima uchun muddat yetmayapti — aniq yozing" className={cn(FIELD, "min-h-24 resize-y py-2.5")} />
+        </label>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className={BTN_SOFT}>Bekor qilish</button>
+          <button type="submit" disabled={busy} className={BTN_PRIMARY}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" aria-hidden />}
+            So‘rov yuborish
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }

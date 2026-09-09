@@ -26,8 +26,11 @@ import {
 
 import { cn } from "@/lib/utils"
 import { getCurrentUser } from "@/lib/api/auth.api"
-import { getOrganizations } from "@/lib/api/organizations.api"
 import { getSectors, type Sector } from "@/lib/api/sectors.api"
+import {
+  getAssignableOrganizations,
+  type AssignableScope,
+} from "@/lib/api/organizations.api"
 import { getUsers } from "@/lib/api/users.api"
 import { createTask, createRecurringTask } from "@/lib/api/tasks.api"
 import { PriorityBadge } from "@/components/ui/status-badge"
@@ -91,6 +94,13 @@ export function TaskWizard() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [deputies, setDeputies] = useState<DeputyOption[]>([])
   const [role, setRole] = useState<string>("")
+  /* Topshiriq berish doirasi (backend/tasks/access.py):
+       all     — hokim/admin: barcha tashkilotlar, soha erkin tanlanadi
+       sector  — o'rinbosar: faqat o'z sohasi, soha qulflangan
+       curated — alohida biriktirilgan tashkilotlar, soha qulflangan
+       own     — tashkilot rahbari: faqat o'z tashkiloti
+       none    — soha/tashkilot biriktirilmagan, yaratish mumkin emas */
+  const [lockedSector, setLockedSector] = useState<{ id: string; name: string } | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -106,18 +116,46 @@ export function TaskWizard() {
     Promise.all([
       getCurrentUser().catch(() => null),
       getSectors().catch(() => [] as Sector[]),
-      getOrganizations().catch(() => [] as Organization[]),
+      // FAQAT shu foydalanuvchi topshiriq bera oladigan tashkilotlar.
+      // O'rinbosar kabinetida boshqa sohaning tashkilotlari umuman
+      // ko'rinmaydi — backend ham yaratishda shu doirani tekshiradi.
+      getAssignableOrganizations().catch(() => ({
+        scope: "none" as AssignableScope,
+        sector: null,
+        organizations: [],
+      })),
       // Faqat o'rinbosarlar kerak — hamma foydalanuvchi emas
       getUsers({ role: "HOKIM_YORDAMCHISI" } as any, 1, 200).catch(() => []),
     ])
-      .then(([me, sectorList, orgList, deputyList]) => {
+      .then(([me, sectorList, assignable, deputyList]) => {
         if (!alive) return
 
         setRole(String((me as any)?.role ?? ""))
-        setSectors((sectorList as Sector[]).filter((s) => s.is_active !== false))
-        setOrganizations(
-          (orgList as Organization[]).filter((o) => (o as any).is_active !== false),
-        )
+
+        const orgList = assignable.organizations as unknown as Organization[]
+        const allSectors = (sectorList as Sector[]).filter((s) => s.is_active !== false)
+
+        if (assignable.scope === "all") {
+          setSectors(allSectors)
+          setLockedSector(null)
+        } else {
+          // Doira cheklangan: soha qulflanadi va faqat ruxsat etilgan
+          // tashkilotlarning sohalari ko'rsatiladi.
+          const allowedSectorIds = new Set(
+            orgList.map((o) => String((o as any).sector ?? "")).filter(Boolean),
+          )
+          const narrowed = allSectors.filter((sec) => allowedSectorIds.has(String(sec.id)))
+          setSectors(narrowed.length > 0 ? narrowed : allSectors)
+          if (assignable.sector) {
+            setLockedSector(assignable.sector)
+            setForm((prev) => ({ ...prev, sectorId: prev.sectorId || assignable.sector!.id }))
+          } else if (narrowed.length === 1) {
+            setLockedSector({ id: String(narrowed[0].id), name: narrowed[0].name })
+            setForm((prev) => ({ ...prev, sectorId: prev.sectorId || String(narrowed[0].id) }))
+          }
+        }
+
+        setOrganizations(orgList)
         setDeputies(
           (deputyList as any[]).map((u) => ({
             id: String(u.id),
@@ -131,9 +169,11 @@ export function TaskWizard() {
           })),
         )
 
-        if ((orgList as Organization[]).length === 0) {
+        if (orgList.length === 0) {
           setLoadError(
-            "Tashkilotlar ro‘yxati yuklanmadi. Internet yoki server ulanishini tekshirib, sahifani yangilang.",
+            assignable.scope === "none"
+              ? "Sizga soha yoki tashkilot biriktirilmagan — topshiriq bera olmaysiz. Administratorga murojaat qiling."
+              : "Tashkilotlar ro‘yxati yuklanmadi. Internet yoki server ulanishini tekshirib, sahifani yangilang.",
           )
         }
       })
@@ -567,6 +607,7 @@ export function TaskWizard() {
             form={form}
             errors={errors}
             sectors={sectors}
+            lockedSector={lockedSector}
             set={set}
           />
         )}
@@ -674,11 +715,14 @@ function StepBasics({
   form,
   errors,
   sectors,
+  lockedSector,
   set,
 }: {
   form: TaskWizardForm
   errors: WizardErrors
   sectors: Sector[]
+  /** Doira cheklangan (o'rinbosar / rahbar) — soha o'zgartirilmaydi */
+  lockedSector: { id: string; name: string } | null
   set: <K extends keyof TaskWizardForm>(k: K, v: TaskWizardForm[K]) => void
 }) {
   return (
@@ -728,7 +772,18 @@ function StepBasics({
         error={errors.sectorId}
         hint="Soha ijrochi tashkilotlar ro‘yxatini va mas’ul o‘rinbosarni belgilaydi"
       >
-        {sectors.length === 0 ? (
+        {lockedSector ? (
+          /* O'rinbosar / rahbar: soha biriktirilgan, tanlanmaydi */
+          <div className="flex items-center gap-3 rounded-xl bg-primary-soft px-4 py-3">
+            <Check className="h-4 w-4 shrink-0 text-primary-soft-foreground" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-primary-soft-foreground">{lockedSector.name}</p>
+              <p className="text-xs text-primary-soft-foreground/80">
+                Sizga biriktirilgan soha — topshiriq faqat shu sohaning tashkilotlariga beriladi
+              </p>
+            </div>
+          </div>
+        ) : sectors.length === 0 ? (
           <Banner tone="warning" icon={AlertCircle}>
             Sohalar ro‘yxati bo‘sh. Sozlamalar → Sohalar bo‘limida soha qo‘shilishi kerak.
           </Banner>

@@ -171,6 +171,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='subordinates',
         verbose_name="Bevosita rahbar"
     )
+    # Hokimlik mas'uli / o'rinbosar ALOHIDA tashkilotlarga biriktirilganda.
+    # Bo'sh bo'lsa — doira soha (sector) bo'yicha aniqlanadi. To'ldirilsa —
+    # topshiriq berish va tahrirlash faqat shu tashkilotlar bilan cheklanadi
+    # (qoidalar: tasks/access.py).
+    curated_organizations = models.ManyToManyField(
+        'organizations.Organization',
+        blank=True,
+        related_name='curators',
+        verbose_name='Biriktirilgan tashkilotlar',
+    )
     position = models.CharField(max_length=200, blank=True, verbose_name='Lavozim')
     visible_password = models.CharField(
         max_length=128,

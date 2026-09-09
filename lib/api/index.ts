@@ -129,6 +129,7 @@ export type {
 
 export {
   getOrganizations,
+  getAssignableOrganizations,
   getOrganizationById,
   createOrganization,
   updateOrganization,
@@ -140,6 +141,9 @@ export {
 export type {
   OrganizationStatistics,
   OrganizationTreeNode,
+  AssignableOrganizations,
+  AssignableOrganization,
+  AssignableScope,
 } from './organizations.api'
 
 export {

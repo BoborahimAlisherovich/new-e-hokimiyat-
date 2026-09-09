@@ -17,7 +17,18 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('login', 'pnfl', 'password')}),
         ('Shaxsiy ma\'lumotlar', {'fields': ('first_name', 'last_name', 'middle_name', 'phone', 'email')}),
-        ('Rol va tashkilot', {'fields': ('role', 'organization', 'position')}),
+        # `sector` va `supervisor` admin'da umuman ko'rinmasdi — ular esa
+        # topshiriq berish doirasini belgilaydi. `curated_organizations`
+        # to'ldirilsa doira soha o'rniga aynan shu tashkilotlar bo'ladi.
+        ('Rol va vakolat doirasi', {
+            'fields': ('role', 'sector', 'organization', 'supervisor', 'position',
+                       'curated_organizations'),
+            'description': (
+                "Hokim o'rinbosari / hokimlik mas'uli topshiriqni faqat o'z sohasidagi "
+                "tashkilotlarga bera oladi. Alohida tashkilotlarga biriktirish kerak bo'lsa — "
+                "«Biriktirilgan tashkilotlar»ni to'ldiring: shunda doira faqat ular bo'ladi."
+            ),
+        }),
         ('Holat', {'fields': ('status', 'is_active', 'is_staff')}),
         ('Muhim sanalar', {'fields': ('created_at', 'activated_at', 'first_login_at')}),
     )
@@ -30,6 +41,8 @@ class UserAdmin(BaseUserAdmin):
     )
     
     readonly_fields = ['created_at', 'activated_at', 'first_login_at']
+    filter_horizontal = ['curated_organizations']
+    autocomplete_fields = ['supervisor']
 
 
 @admin.register(Role)

@@ -351,6 +351,48 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         set_levels(roots)
         return Response(roots)
     
+    @action(detail=False, methods=['get'], url_path='assignable')
+    def assignable(self, request):
+        """
+        Joriy foydalanuvchi topshiriq BERISHI mumkin bo'lgan tashkilotlar.
+
+        GET /api/organizations/assignable/
+        200 { "scope": "all" | "sector" | "curated" | "own" | "none",
+              "sector": {"id", "name"} | null,
+              "organizations": [ ...OrganizationMinimalSerializer ] }
+
+        Topshiriq yaratish oynasi shu ro'yxatni ko'rsatadi: hokim
+        o'rinbosari kabinetida faqat o'ziga tegishli tashkilotlar chiqadi,
+        hokim hammasini ko'radi. Qoidalar bitta joyda — tasks/access.py;
+        serializer ham yaratishda aynan shu doirani tekshiradi, shuning
+        uchun frontend va backend bir-biriga mos.
+        """
+        from core.constants import UserRole
+        from tasks.access import assignable_organizations
+
+        user = request.user
+        queryset = assignable_organizations(user).select_related('sector').order_by('name')
+
+        if user.role in UserRole.ADMIN_ROLES:
+            scope = 'all'
+        elif user.role == UserRole.TASHKILOT_RAHBARI:
+            scope = 'own'
+        elif getattr(user, 'curated_organizations', None) is not None and user.curated_organizations.exists():
+            scope = 'curated'
+        elif user.sector_id or (user.supervisor_id and getattr(user.supervisor, 'sector_id', None)):
+            scope = 'sector'
+        else:
+            scope = 'none'
+
+        sector = user.sector or (user.supervisor.sector if user.supervisor_id and user.supervisor else None)
+        sector_payload = {'id': str(sector.id), 'name': sector.name} if sector else None
+
+        return Response({
+            'scope': scope,
+            'sector': sector_payload,
+            'organizations': OrganizationMinimalSerializer(queryset, many=True).data,
+        })
+
     @action(detail=False, methods=['get'])
     def list_minimal(self, request):
         """

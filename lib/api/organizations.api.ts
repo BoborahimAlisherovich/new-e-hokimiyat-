@@ -54,6 +54,44 @@ export async function getOrganizations(): Promise<Organization[]> {
   return response.results || []
 }
 
+/* --------------------------------------------------------------------------
+   Topshiriq berish doirasi
+   -------------------------------------------------------------------------- */
+
+/** Foydalanuvchi topshiriq berishi mumkin bo'lgan tashkilotlar doirasi */
+export type AssignableScope = 'all' | 'sector' | 'curated' | 'own' | 'none'
+
+export interface AssignableOrganization {
+  id: string
+  name: string
+  short_name?: string
+  sector?: string | null
+  sector_name?: string | null
+}
+
+export interface AssignableOrganizations {
+  scope: AssignableScope
+  sector: { id: string; name: string } | null
+  organizations: AssignableOrganization[]
+}
+
+/**
+ * Joriy foydalanuvchi topshiriq BERISHI mumkin bo'lgan tashkilotlar.
+ *
+ * Topshiriq yaratish oynasi shu ro'yxatni ko'rsatadi: hokim o'rinbosari
+ * kabinetida faqat o'ziga tegishli tashkilotlar chiqadi, hokim hammasini
+ * ko'radi. Backend yaratishda aynan shu doirani tekshiradi
+ * (backend/tasks/access.py), shuning uchun ikkalasi bir-biriga mos.
+ */
+export async function getAssignableOrganizations(): Promise<AssignableOrganizations> {
+  const res = await fetchApi<AssignableOrganizations>('/organizations/assignable/')
+  return {
+    scope: res?.scope ?? 'none',
+    sector: res?.sector ?? null,
+    organizations: Array.isArray(res?.organizations) ? res.organizations : [],
+  }
+}
+
 /**
  * Bitta tashkilotni ID bo'yicha oladi
  * 
