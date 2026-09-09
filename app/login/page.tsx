@@ -23,7 +23,7 @@ import { login } from "@/lib/api/auth.api"
  *  3. Login uzunligini `length / 12` bo'yicha to'ldiradigan "progress"
  *     chizig'i bor edi — ma'nosiz vizual signal.
  *  4. Xato matni `role="alert"` siz edi — ekran o'quvchi e'lon qilmasdi.
- *  5. `min-h-screen` + `overflow-hidden`: iPhone SE (667px) da karta
+ *  5. `min-h-dvh` + `overflow-hidden`: iPhone SE (667px) da karta
  *     ikki tomondan kesilib qolardi va scroll qilishning imkoni yo'q edi.
  *     Endi `min-h-dvh` va scroll.
  *  6. Shartlar havolalari `dangerouslySetInnerHTML` bilan `href="#"` ga

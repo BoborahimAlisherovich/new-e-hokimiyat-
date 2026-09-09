@@ -59,7 +59,7 @@ export default function NotificationDetailPage() {
     return (
       <>
         <Header title="Билдиришнома" description="Билдиришнома тafsilotи" />
-        <div className="min-h-screen bg-background pt-24">
+        <div className="min-h-dvh bg-background pt-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
@@ -78,7 +78,7 @@ export default function NotificationDetailPage() {
   return (
     <>
       <Header title="Билдиришнома тafsilotи" description={notification.title} />
-      <div className="min-h-screen bg-background pt-24">
+      <div className="min-h-dvh bg-background pt-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-8 py-8">
             {/* Back Button */}

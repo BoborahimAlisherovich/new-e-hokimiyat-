@@ -17,8 +17,8 @@ export default function GlobalError({
 
   return (
     <html lang="uz">
-      <body className="min-h-screen bg-background text-foreground">
-        <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-4 p-6">
+      <body className="min-h-dvh bg-background text-foreground">
+        <main className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-4 p-6">
           <h1 className="text-2xl font-semibold">Kutilmagan xatolik</h1>
           <p className="text-sm text-muted-foreground">
             Sahifa yuklanishida xatolik yuz berdi. Qayta urinib ko‘ring yoki bosh sahifaga qayting.

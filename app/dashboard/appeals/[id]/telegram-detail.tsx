@@ -1550,7 +1550,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
       </Dialog>
 
       <Dialog open={activeImageIndex !== null} onOpenChange={(open) => !open && setActiveImageIndex(null)}>
-        <DialogContent className="h-screen w-screen max-w-none border-0 bg-black/95 p-0 text-white backdrop-blur-sm">
+        <DialogContent className="h-dvh w-screen max-w-none border-0 bg-black/95 p-0 text-white backdrop-blur-sm">
           <DialogHeader className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between border-b border-white/10 bg-black/35 px-5 py-4 backdrop-blur-md">
             <div>
               <DialogTitle className="text-white">
