@@ -424,14 +424,18 @@ export default function TaskDetailPage() {
                     return (
                       <li key={o.id} className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:gap-4">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[15px] font-semibold text-foreground">
-                            {o.organization?.short_name || o.organization?.name || "—"}
+                          {/* Nishon `truncate` bo'lgan <p> ICHIDA emas: 320-390px da
+                              inline element kesilmay viewport'dan chiqib ketardi. */}
+                          <div className="flex min-w-0 items-center gap-2">
+                            <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-foreground">
+                              {o.organization?.short_name || o.organization?.name || "—"}
+                            </p>
                             {mine && (
-                              <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-soft-foreground">
+                              <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-soft-foreground">
                                 sizning
                               </span>
                             )}
-                          </p>
+                          </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {o.assigned_to ? `Mas’ul: ${personName(o.assigned_to)}` : "Mas’ul hali belgilanmagan"}
                             {o.accepted_at ? ` · ijroga olingan ${fmtDate(o.accepted_at)}` : ""}
@@ -447,7 +451,7 @@ export default function TaskDetailPage() {
                               type="button"
                               onClick={() => void run(`approve-${o.id}`, () => approveTaskExecution(id, { organizationId: o.organization?.id }), "Tashkilot hisoboti tasdiqlandi")}
                               disabled={busy !== null}
-                              className="inline-flex h-8 items-center gap-1 rounded-lg bg-success-soft px-2.5 text-xs font-semibold text-success-soft-foreground"
+                              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-success-soft px-3 text-xs font-semibold text-success-soft-foreground"
                             >
                               <Check className="h-3.5 w-3.5" aria-hidden />
                               Tasdiqlash

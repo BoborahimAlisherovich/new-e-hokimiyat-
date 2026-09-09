@@ -17,7 +17,7 @@ const LoadingSpinner = forwardRef<HTMLDivElement, LoadingSpinnerProps>(
         <div className="relative">
           <div
             className={cn(
-              "rounded-full bg-gradient-to-r from-cyan-100 via-emerald-100 to-amber-100 blur-sm",
+              "rounded-full bg-info blur-sm",
               {
                 sm: "h-5 w-5",
                 md: "h-7 w-7",
@@ -27,7 +27,7 @@ const LoadingSpinner = forwardRef<HTMLDivElement, LoadingSpinnerProps>(
           />
           <div
             className={cn(
-              "absolute inset-0 animate-spin rounded-full border-2 border-cyan-500/25 border-t-cyan-600 border-r-emerald-500",
+              "absolute inset-0 animate-spin rounded-full border-2 border-cyan-500/25 border-t-primary border-r-success",
               {
                 sm: "h-4 w-4",
                 md: "h-6 w-6",
@@ -58,7 +58,7 @@ const LoadingSkeleton = ({ lines = 3, className }: LoadingSkeletonProps) => (
           animationDelay: `${i * 0.1}s`,
         }}
       >
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] bg-gradient-to-r from-transparent via-white to-transparent opacity-70" />
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] from-transparent via-card to-transparent opacity-70" />
       </div>
     ))}
   </div>

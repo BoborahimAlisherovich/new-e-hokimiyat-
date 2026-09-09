@@ -130,10 +130,10 @@ export default function RecurringTasksPage() {
         title="Muntazam takrorlanadigan topshiriqlarni avtomatik boshqaring"
         description="Har kuni, har hafta yoki har oy takrorlanadigan topshiriqlar tizim tomonidan avtomatik yaratiladi."
         stats={[
-          { label: "Jami", value: statistics.total, icon: ListTodo, tone: "from-violet-500/18 to-violet-100/70" },
-          { label: "Faol", value: statistics.active, icon: Play, tone: "from-emerald-500/18 to-emerald-100/70" },
-          { label: "To'xtatilgan", value: statistics.paused, icon: Pause, tone: "from-amber-500/18 to-amber-100/70" },
-          { label: "Yaratilgan", value: statistics.total_tasks_created, icon: Calendar, tone: "from-blue-500/18 to-blue-100/70" },
+          { label: "Jami", value: statistics.total, icon: ListTodo, tone: "bg-primary" },
+          { label: "Faol", value: statistics.active, icon: Play, tone: "bg-success" },
+          { label: "To'xtatilgan", value: statistics.paused, icon: Pause, tone: "bg-warning" },
+          { label: "Yaratilgan", value: statistics.total_tasks_created, icon: Calendar, tone: "bg-primary" },
         ]}
       >
         {/* Filters */}
@@ -159,7 +159,7 @@ export default function RecurringTasksPage() {
             </div>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-primary rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:from-indigo-700 hover:to-violet-700"
+              className="bg-primary rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-hover"
             >
               <Plus className="mr-2 h-4 w-4" />
               {t.recurringTasks.createNew}
@@ -475,7 +475,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-primary rounded-xl hover:from-indigo-700 hover:to-violet-700"
+            className="bg-primary rounded-xl hover:bg-primary-hover"
           >
             {loading ? t.common.saving : t.common.save}
           </Button>

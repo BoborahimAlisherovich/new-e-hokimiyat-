@@ -186,7 +186,7 @@ export function OrganizationCreateDialog({
               </SelectContent>
             </Select>
             {!loadingSectors && sectors.length === 0 && (
-              <div className="rounded-xl border border-border bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
+              <div className="rounded-xl bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
                 {tr.noSectors}
                 <button
                   type="button"
@@ -242,7 +242,7 @@ export function OrganizationCreateDialog({
           <Button 
             onClick={onSubmit} 
             disabled={loading}
-            className="bg-[var(--st-tekshiruvda-bg)] rounded-xl hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25"
+            className="bg-[var(--st-tekshiruvda-bg)] rounded-xl text-white shadow-lg shadow-violet-500/25 hover:bg-primary-hover"
           >
             {loading ? tr.loading : tr.add}
           </Button>

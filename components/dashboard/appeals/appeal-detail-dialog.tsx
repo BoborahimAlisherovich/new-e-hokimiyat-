@@ -28,7 +28,7 @@ export function AppealDetailDialog({ appeal, onClose, onUpdate }: AppealDetailDi
     <Dialog open={!!appeal} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-card rounded-2xl border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="h-10 shrink-0 gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground">
             Мурожаат тафсилотлари
             {appeal && (
               <Badge variant="outline" className="ml-2">
@@ -41,16 +41,16 @@ export function AppealDetailDialog({ appeal, onClose, onUpdate }: AppealDetailDi
         
         {appeal && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="details" className="flex items-center gap-2">
+            <TabsList className="scroll-x flex w-full justify-start gap-1 rounded-2xl bg-surface-sunken p-1">
+              <TabsTrigger value="details" className="h-10 shrink-0 gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground">
                 <FileText className="h-4 w-4" />
                 Маълумотлар
               </TabsTrigger>
-              <TabsTrigger value="ai" className="flex items-center gap-2">
+              <TabsTrigger value="ai" className="h-10 shrink-0 gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground">
                 <Sparkles className="h-4 w-4" />
                 AI Ёрдамчи
               </TabsTrigger>
-              <TabsTrigger value="messages" className="flex items-center gap-2">
+              <TabsTrigger value="messages" className="h-10 shrink-0 gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground">
                 <MessageSquare className="h-4 w-4" />
                 Хабарлар
               </TabsTrigger>

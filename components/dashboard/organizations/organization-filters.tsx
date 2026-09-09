@@ -173,7 +173,7 @@ export function OrganizationFilters({
           {showCreateButton && (
             <Button 
               onClick={onCreate}
-              className="bg-[var(--st-tekshiruvda-bg)] w-full rounded-xl text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md sm:w-auto"
+              className="bg-[var(--st-tekshiruvda-bg)] w-full rounded-xl text-white shadow-sm transition-all hover:shadow-md sm:w-auto hover:bg-primary-hover"
             >
               <Plus className="mr-2 h-4 w-4" />
               {tr.create}

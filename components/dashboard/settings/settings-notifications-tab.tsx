@@ -107,7 +107,7 @@ export function SettingsNotificationsTab({
               disabled={!pushSupported || !pushConfigured}
             />
             {pushWarning ? (
-              <div className="rounded-[20px] border border-border bg-warning-soft px-4 py-3 text-sm leading-6 text-warning-soft-foreground">
+              <div className="rounded-[20px] bg-warning-soft px-4 py-3 text-sm leading-6 text-warning-soft-foreground">
                 {pushWarning}
               </div>
             ) : null}
@@ -137,7 +137,7 @@ export function SettingsNotificationsTab({
             <Button
               onClick={onSave}
               disabled={saving}
-              className="bg-primary h-11 rounded-xl px-6 text-sm font-semibold text-white shadow-[0_16px_32px_-18px_rgba(37,99,235,0.7)] transition hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50"
+              className="bg-primary h-11 rounded-xl px-6 text-sm font-semibold text-white shadow-[0_16px_32px_-18px_rgba(37,99,235,0.7)] transition disabled:opacity-50 hover:bg-info"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -173,11 +173,11 @@ function NotificationSettingRow({
   const toneClasses = tone === "amber"
     ? {
         wrapper: "bg-warning-soft border-border hover:border-border hover:bg-warning-soft",
-        icon: "bg-warning text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
+        icon: "bg-warning text-warning-foreground shadow-[0_14px_28px_-18px_rgba(245,158,11,0.75)]",
       }
     : {
         wrapper: "bg-primary-soft border-border hover:border-border hover:bg-primary-soft",
-        icon: "bg-primary text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
+        icon: "bg-primary text-primary-foreground shadow-[0_14px_28px_-18px_rgba(14,165,233,0.75)]",
       }
 
   return (

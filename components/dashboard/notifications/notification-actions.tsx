@@ -21,18 +21,18 @@ export function NotificationActions({
 }: NotificationActionsProps) {
   const t = useTranslation()
   return (
-    <div className="bg-primary-soft flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-4 border border-border shadow-sm">
+    <div className="bg-primary-soft flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-4 shadow-sm">
       <Tabs value={filter} onValueChange={(value) => onFilterChange(value as "all" | "unread")}>
         <TabsList className="gap-2 p-1 bg-card rounded-xl shadow-inner">
-          <TabsTrigger value="all" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium">
+          <TabsTrigger value="all" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2.5 rounded-lg transition-all duration-200 font-medium">
             {t.notifications.tabsAll}
             <Badge variant="secondary" className="ml-1.5 bg-primary-soft text-secondary-foreground text-xs">
               {totalCount}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="unread" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium">
+          <TabsTrigger value="unread" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2.5 rounded-lg transition-all duration-200 font-medium">
             {t.notifications.tabsUnread}
-            {unreadCount > 0 && <Badge className="ml-1.5 bg-destructive text-white text-xs">{unreadCount}</Badge>}
+            {unreadCount > 0 && <Badge className="ml-1.5 bg-destructive text-destructive-foreground text-xs">{unreadCount}</Badge>}
           </TabsTrigger>
         </TabsList>
       </Tabs>

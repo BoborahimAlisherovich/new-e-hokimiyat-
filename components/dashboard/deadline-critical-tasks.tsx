@@ -68,7 +68,7 @@ export default function DeadlineCriticalTasks() {
   return (
     <Card className="bg-card border-border ring-1 ring-ring/20 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.08)] hover:shadow-2xl transition-all duration-300 rounded-2xl">
       <CardHeader className="bg-destructive-soft flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.deadlineTitle}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.deadlineTitle}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/tasks" className="flex items-center gap-1">
             {t.common.all} <ArrowRight className="h-4 w-4" />

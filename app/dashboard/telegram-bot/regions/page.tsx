@@ -233,14 +233,15 @@ export default function TelegramBotRegionsPage() {
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
+            <div className="scroll-x">
+            <Table className="min-w-[560px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tartib</TableHead>
+                  <TableHead className="w-16">Tartib</TableHead>
                   <TableHead>Nomi</TableHead>
-                  <TableHead>Kod</TableHead>
+                  <TableHead className="hidden sm:table-cell">Kod</TableHead>
                   <TableHead>Holat</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="w-24 text-right"><span className="sr-only">Amallar</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -255,7 +256,7 @@ export default function TelegramBotRegionsPage() {
                     <TableRow key={region.id}>
                       <TableCell>{region.order}</TableCell>
                       <TableCell className="font-medium">{region.name}</TableCell>
-                      <TableCell>{region.code || "-"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{region.code || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={region.is_active ? "default" : "secondary"}>
                           {region.is_active ? "Faol" : "Nofaol"}
@@ -285,6 +286,7 @@ export default function TelegramBotRegionsPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

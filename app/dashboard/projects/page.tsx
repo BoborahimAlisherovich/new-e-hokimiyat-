@@ -403,9 +403,9 @@ export default function ProjectsPage() {
         title="Portfel boshqaruvi, progress va strategik og'irlik bir oynada jamlandi."
         description="Loyihalar shu sahifaning o'zida real API orqali yaratiladi, tahrirlanadi, arxivlanadi va qayta tiklanadi."
         stats={[
-          { label: "Jami", value: summary.total, icon: FolderKanban, tone: "from-emerald-500/18 to-emerald-100/70" },
-          { label: "Faol", value: summary.active_count, icon: TrendingUp, tone: "from-sky-500/18 to-sky-100/70" },
-          { label: "Driver", value: summary.driver_count, icon: Rocket, tone: "from-amber-500/18 to-amber-100/70" },
+          { label: "Jami", value: summary.total, icon: FolderKanban, tone: "bg-success" },
+          { label: "Faol", value: summary.active_count, icon: TrendingUp, tone: "bg-info" },
+          { label: "Driver", value: summary.driver_count, icon: Rocket, tone: "bg-warning" },
         ]}
       >
         <PremiumStatsGrid
@@ -465,7 +465,7 @@ export default function ProjectsPage() {
               <div className="flex w-full flex-col items-start gap-2 lg:w-auto">
                 <Button
                   onClick={openCreate}
-                  className="w-full gap-2 rounded-full bg-success text-white shadow-sm hover:bg-success sm:w-auto"
+                  className="w-full gap-2 rounded-full bg-success text-success-foreground shadow-sm hover:bg-success/90 sm:w-auto"
                 >
                   <Plus className="h-4 w-4" />
                   Yangi loyiha

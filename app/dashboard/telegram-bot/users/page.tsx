@@ -398,16 +398,17 @@ export default function TelegramBotUsersPage() {
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
+            <div className="scroll-x">
+            <Table className="min-w-[680px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Foydalanuvchi</TableHead>
-                  <TableHead>Telefon</TableHead>
-                  <TableHead>Hudud</TableHead>
+                  <TableHead className="hidden sm:table-cell">Telefon</TableHead>
+                  <TableHead className="hidden lg:table-cell">Hudud</TableHead>
                   <TableHead>Murojaatlar</TableHead>
                   <TableHead>Holat</TableHead>
-                  <TableHead>Qo'shilgan</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="hidden xl:table-cell">Qo'shilgan</TableHead>
+                  <TableHead className="w-28 text-right"><span className="sr-only">Amallar</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -428,8 +429,8 @@ export default function TelegramBotUsersPage() {
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell>{user.phone || "-"}</TableCell>
-                      <TableCell>{user.region_name || "-"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{user.phone || "-"}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{user.region_name || "-"}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{user.appeals_count}</Badge>
                       </TableCell>
@@ -442,7 +443,7 @@ export default function TelegramBotUsersPage() {
                           <Badge variant="secondary">Ro'yxatdan o'tmagan</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         {new Date(user.created_at).toLocaleDateString("uz")}
                       </TableCell>
                       <TableCell>
@@ -484,6 +485,7 @@ export default function TelegramBotUsersPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -779,7 +781,7 @@ export default function TelegramBotUsersPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-3 bg-warning-soft border border-border rounded-lg">
+            <div className="p-3 bg-warning-soft rounded-lg">
               <p className="text-sm text-warning">
                 ⚠️ Diqqat! Bu xabar barcha {totalUsers} ta bloklanmagan foydalanuvchiga yuboriladi.
               </p>

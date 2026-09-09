@@ -185,7 +185,7 @@ export default function OrganizationsPage() {
             <Button
               data-gsap-action
               onClick={() => setIsCreateOpen(true)}
-              className="bg-[var(--st-tekshiruvda-bg)] h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-md md:w-auto md:px-4"
+              className="bg-[var(--st-tekshiruvda-bg)] h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:shadow-md md:w-auto md:px-4 hover:bg-primary-hover"
               aria-label={{
                 uz: "Yangi tashkilot",
                 "uz-cyrl": "Янги ташкилот",
@@ -212,9 +212,9 @@ export default function OrganizationsPage() {
         title="Tashkilotlar tuzilmasi, holati va sektorlarga bog‘lanishi yagona ko‘rinishda boshqariladi."
         description="Faol tashkilotlar, sektorlar va mas’ullar kesimida tizimni nazorat qilish va yangilarini qo‘shish uchun toza ish maydoni."
         stats={[
-          { label: "Jami", value: organizations.length, icon: Building2, tone: "from-cyan-500/18 to-cyan-100/70" },
-          { label: "Faol", value: organizations.filter((org) => org.is_active).length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
-          { label: "Mas'ullar", value: users.length, icon: BriefcaseBusiness, tone: "from-amber-400/24 to-amber-100/75" },
+          { label: "Jami", value: organizations.length, icon: Building2, tone: "bg-info" },
+          { label: "Faol", value: organizations.filter((org) => org.is_active).length, icon: ShieldCheck, tone: "bg-success" },
+          { label: "Mas'ullar", value: users.length, icon: BriefcaseBusiness, tone: "bg-warning" },
         ]}
       >
             <section data-gsap-section>
@@ -260,7 +260,7 @@ export default function OrganizationsPage() {
                 <p className="text-destructive">{error === "load_error" ? t.pages.organizations.loadError : error}</p>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
+                  className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover"
                 >
                   {t.pages.organizations.retry}
                 </button>

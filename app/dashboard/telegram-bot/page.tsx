@@ -583,7 +583,7 @@ export default function TelegramBotPage() {
               </Button>
               <Button 
                 variant="destructive" 
-                className="w-full bg-destructive text-white hover:bg-destructive sm:w-auto"
+                className="w-full bg-destructive text-destructive-foreground hover:bg-destructive sm:w-auto"
                 onClick={stopBot} 
                 disabled={stopping}
               >
@@ -596,7 +596,7 @@ export default function TelegramBotPage() {
               {botStatus?.is_running ? (
                 <Button 
                   variant="destructive" 
-                  className="w-full bg-destructive text-white hover:bg-destructive sm:w-auto"
+                  className="w-full bg-destructive text-destructive-foreground hover:bg-destructive sm:w-auto"
                   onClick={stopBot} 
                   disabled={stopping}
                 >
@@ -606,7 +606,7 @@ export default function TelegramBotPage() {
               ) : (
                 <Button 
                   variant="default"
-                  className="w-full bg-success text-white hover:bg-success sm:w-auto"
+                  className="w-full bg-success text-success-foreground hover:bg-success/90 sm:w-auto"
                   onClick={() => startBot(false)} 
                   disabled={starting || (!settings?.bot_token && !settings?.has_token)}
                 >
@@ -800,7 +800,7 @@ export default function TelegramBotPage() {
 
               {/* Bot Status Info */}
               {settings?.bot_token && settings?.bot_username && botStatus?.is_running ? (
-                <div className="p-4 bg-success-soft rounded-lg border border-border">
+                <div className="p-4 bg-success-soft rounded-lg">
                   <p className="text-success flex items-center gap-2">
                     <span>✅</span>
                     <span className="font-medium">Bot ulangan va ishlayapti:</span>
@@ -815,7 +815,7 @@ export default function TelegramBotPage() {
                   </p>
                 </div>
               ) : settings?.has_token && !settings?.bot_token ? (
-                <div className="p-4 bg-success-soft rounded-lg border border-border">
+                <div className="p-4 bg-success-soft rounded-lg">
                   <p className="text-success flex items-center gap-2">
                     <span>✅</span>
                     <span className="font-medium">Token saqlangan.</span>
@@ -823,7 +823,7 @@ export default function TelegramBotPage() {
                   </p>
                 </div>
               ) : (settings?.bot_token || settings?.has_token) && settings?.bot_username ? (
-                <div className="p-4 bg-warning-soft rounded-lg border border-border">
+                <div className="p-4 bg-warning-soft rounded-lg">
                   <p className="text-warning flex items-center gap-2">
                     <span>⚠️</span>
                     <span className="font-medium">Bot to'xtatilgan:</span>
@@ -832,7 +832,7 @@ export default function TelegramBotPage() {
                   </p>
                 </div>
               ) : settings?.bot_token || settings?.has_token ? (
-                <div className="p-4 bg-warning-soft rounded-lg border border-border">
+                <div className="p-4 bg-warning-soft rounded-lg">
                   <p className="text-warning flex items-center gap-2">
                     <span>⚠️</span>
                     <span className="font-medium">Token kiritilgan, lekin tekshirilmagan.</span>
@@ -840,7 +840,7 @@ export default function TelegramBotPage() {
                   </p>
                 </div>
               ) : (
-                <div className="p-4 bg-primary-soft rounded-lg border border-border">
+                <div className="p-4 bg-primary-soft rounded-lg">
                   <p className="text-muted-foreground flex items-center gap-2">
                     <span>ℹ️</span>
                     <span>Bot ulanmagan. @BotFather dan token oling va yuqoriga kiriting.</span>
@@ -1147,7 +1147,7 @@ export default function TelegramBotPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-border bg-primary-soft p-4">
+                      <div className="rounded-xl bg-primary-soft p-4">
                         <h5 className="font-medium text-primary">AI tahlil nimalarni qiladi?</h5>
                         <ul className="mt-2 space-y-1 text-sm text-primary">
                           <li>• Murojaat matnini avtomatik tahlil qiladi</li>
@@ -1332,7 +1332,7 @@ export default function TelegramBotPage() {
               </div>
 
               {/* Info */}
-              <div className="p-4 bg-warning-soft rounded-lg border border-border">
+              <div className="p-4 bg-warning-soft rounded-lg">
                 <h5 className="font-medium text-warning mb-2">💡 Qo'llaniladigan o'zgaruvchilar</h5>
                 <div className="text-sm text-warning space-y-1">
                   <p><code className="bg-warning-soft px-1 rounded">{'{name}'}</code> - Foydalanuvchi ismi</p>

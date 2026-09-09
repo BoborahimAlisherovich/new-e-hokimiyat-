@@ -100,7 +100,7 @@ export function ActivityChart() {
             <div className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
               <BarChart4 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.taskDynamics}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.taskDynamics}</CardTitle>
           </div>
         </CardHeader>
       
@@ -215,18 +215,18 @@ export function ActivityChart() {
         
         {/* Stats summary */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-lg bg-success-soft border border-border hover:bg-success-soft hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-success">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-success-soft hover:bg-success-soft hover:shadow-md transition-all duration-300">
+            <div className="text-xl font-bold text-success sm:text-2xl">{isLoading ? "…" : data.reduce((sum, item) => sum + item.bajarildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCompleted}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-primary-soft border border-border hover:bg-primary-soft hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-primary">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-primary-soft hover:bg-primary-soft hover:shadow-md transition-all duration-300">
+            <div className="text-xl font-bold text-primary sm:text-2xl">{isLoading ? "…" : data.reduce((sum, item) => sum + item.yaratildi, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyCreated}</div>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-warning-soft border border-border hover:bg-warning-soft hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-warning">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
+          <div className="text-center p-3 rounded-lg bg-warning-soft hover:bg-warning-soft hover:shadow-md transition-all duration-300">
+            <div className="text-xl font-bold text-warning sm:text-2xl">{isLoading ? "…" : data.reduce((sum, item) => sum + item.jami, 0)}</div>
             <div className="text-xs text-muted-foreground">{t.dashboard.monthlyTotal}</div>
           </div>
         </div>

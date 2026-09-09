@@ -191,22 +191,24 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
   return (
     <section className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-card border border-border rounded-xl p-1.5 shadow-sm">
+        {/* Telefonda uchta uzun sarlavha 360px ga sig'masdi — endi
+            gorizontal siljiydi va faol tab yumshoq fon bilan ajratiladi. */}
+        <TabsList className="scroll-x flex w-full justify-start gap-1 rounded-2xl bg-surface-sunken p-1">
           <TabsTrigger
             value="status"
-            className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            className="h-10 shrink-0 rounded-xl px-3.5 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_2px_rgb(13_21_36_/_0.06),0_8px_20px_-14px_rgb(13_21_36_/_0.24)]"
           >
             Holat bo'yicha
           </TabsTrigger>
           <TabsTrigger
             value="sector"
-            className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            className="h-10 shrink-0 rounded-xl px-3.5 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_2px_rgb(13_21_36_/_0.06),0_8px_20px_-14px_rgb(13_21_36_/_0.24)]"
           >
             Soha bo'yicha
           </TabsTrigger>
           <TabsTrigger
             value="organizations"
-            className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            className="h-10 shrink-0 rounded-xl px-3.5 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_2px_rgb(13_21_36_/_0.06),0_8px_20px_-14px_rgb(13_21_36_/_0.24)]"
           >
             Tashkilotlar
           </TabsTrigger>
@@ -217,10 +219,10 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
           {hasTaskStatusStats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Bajarildi", value: statusStats.completed, color: "from-green-500 to-green-600", icon: "✓" },
-                { label: "Ijroda", value: statusStats.in_progress, color: "from-blue-500 to-blue-600", icon: "⟳" },
-                { label: "Yangi", value: statusStats.new, color: "from-purple-500 to-purple-600", icon: "★" },
-                { label: "Muddati kechgan", value: statusStats.overdue, color: "from-red-500 to-red-600", icon: "!" },
+                { label: "Bajarildi", value: statusStats.completed, color: "bg-success", icon: "✓" },
+                { label: "Ijroda", value: statusStats.in_progress, color: "bg-primary", icon: "⟳" },
+                { label: "Yangi", value: statusStats.new, color: "bg-primary", icon: "★" },
+                { label: "Muddati kechgan", value: statusStats.overdue, color: "bg-destructive", icon: "!" },
               ].map((stat, index) => (
                 <motion.div
                   key={stat.label}
@@ -235,7 +237,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                           <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
                           <p className="text-3xl font-bold text-foreground">{stat.value}</p>
                         </div>
-                        <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br", stat.color, "flex items-center justify-center text-white text-2xl shadow-lg")}>
+                        <div className={cn("w-12 h-12 rounded-xl ", stat.color, "flex items-center justify-center text-white text-2xl shadow-lg")}>
                           {stat.icon}
                         </div>
                       </div>
@@ -271,7 +273,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                 {!isCreating && !editingSector && (
                   <Button 
                     onClick={() => setIsCreating(true)}
-                    className="bg-primary hover:from-blue-600 hover:to-blue-700 shadow-md"
+                    className="bg-primary shadow-md hover:bg-primary-hover"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Soha qo'shish
@@ -287,7 +289,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-primary-soft rounded-xl border border-border"
+                    className="p-4 bg-primary-soft rounded-xl"
                   >
                     <div className="space-y-4">
                       <div>
@@ -315,7 +317,7 @@ export function AnalyticsTabs({ tasks = [], organizations = [] }: AnalyticsTabsP
                         <Button
                           onClick={editingSector ? handleUpdateSector : handleCreateSector}
                           disabled={loading || !formData.name.trim()}
-                          className="bg-primary hover:from-blue-600 hover:to-blue-700"
+                          className="bg-primary hover:bg-primary-hover"
                         >
                           <Save className="h-4 w-4 mr-2" />
                           {editingSector ? "Yangilash" : "Saqlash"}

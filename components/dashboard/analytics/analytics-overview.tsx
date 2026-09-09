@@ -72,7 +72,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
         <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary">
                 <Target className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -87,7 +87,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
         <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-success">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -102,7 +102,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
         <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-warning">
                 <Clock className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -118,7 +118,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
         <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -133,7 +133,7 @@ export function AnalyticsOverview({ tasks, organizations, appeals }: AnalyticsOv
         <Card className="bg-card/80 border border-border shadow-md rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-102">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-info">
                 <MessageSquare className="w-6 h-6 text-white" />
               </div>
               <div>

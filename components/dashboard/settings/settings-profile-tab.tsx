@@ -328,7 +328,7 @@ export function SettingsProfileTab({ t, currentUser, onUserUpdate }: SettingsPro
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="h-11 px-6 bg-primary hover:bg-primary text-white font-medium disabled:opacity-50"
+              className="h-11 px-6 bg-primary hover:bg-primary-hover text-white font-medium disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

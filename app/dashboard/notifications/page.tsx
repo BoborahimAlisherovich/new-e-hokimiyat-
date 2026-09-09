@@ -138,7 +138,7 @@ export default function NotificationsPage() {
               <p className="text-destructive">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover"
               >
                 {t.pages.notifications.retry}
               </button>

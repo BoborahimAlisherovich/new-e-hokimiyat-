@@ -165,19 +165,19 @@ export default function UserDetailPage() {
         label: "Holat",
         value: user.status === "FAOL" ? "Faol" : user.status === "BLOKLANGAN" ? "Bloklangan" : user.status === "ARXIV" ? "Arxiv" : "Kutilmoqda",
         icon: Shield,
-        tone: "from-cyan-50 via-white to-cyan-100/70",
+        tone: "via-white bg-info",
       },
       {
         label: "Rol",
         value: ROLE_LABELS[user.role] || user.role,
         icon: Users,
-        tone: "from-emerald-50 via-white to-emerald-100/70",
+        tone: "via-white bg-success",
       },
       {
         label: "Tashkilot",
         value: user.organization?.name || user.organization_name || "Biriktirilmagan",
         icon: Building,
-        tone: "from-amber-50 via-white to-amber-100/70",
+        tone: "via-white bg-warning",
       },
     ]
   }, [user])
@@ -218,7 +218,7 @@ export default function UserDetailPage() {
               icon={AlertTriangle}
               title="Ma'lumot topilmadi"
               description="Ro'yxatga qayting yoki boshqa foydalanuvchini tanlang."
-              tone="from-amber-100 to-orange-100 text-warning"
+              tone="text-warning bg-warning"
             />
           </div>
         </DashboardDetailFrame>

@@ -45,7 +45,7 @@ export function SettingsAppearanceTab({ t, language, onLanguageChange, onSave, s
             <Button 
               onClick={onSave} 
               disabled={saving}
-              className="bg-primary hover:bg-primary text-white disabled:opacity-50"
+              className="bg-primary hover:bg-primary-hover text-white disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

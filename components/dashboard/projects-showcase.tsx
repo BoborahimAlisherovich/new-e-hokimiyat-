@@ -13,19 +13,19 @@ const groupMeta = {
   MAHALLIY: {
     title: "Mahalliy loyihalar",
     icon: Landmark,
-    accent: "from-emerald-500 to-teal-500",
+    accent: "bg-success",
     tone: "bg-success-soft border-border",
   },
   XALQARO: {
     title: "Xalqaro loyihalar",
     icon: Globe2,
-    accent: "from-sky-500 to-cyan-500",
+    accent: "bg-info",
     tone: "bg-primary-soft border-border",
   },
   DRIVER: {
     title: "Driver loyihalar",
     icon: Rocket,
-    accent: "from-amber-500 to-orange-500",
+    accent: "bg-warning",
     tone: "bg-warning-soft border-border",
   },
 } as const
@@ -89,7 +89,7 @@ export function ProjectsShowcase() {
           <div className="flex items-center gap-3">
             <Badge className="rounded-full bg-white px-3 py-1 text-success shadow-sm">{projects.length} ta loyiha</Badge>
             {canManage && (
-              <Button asChild className="rounded-full bg-success text-white hover:bg-success">
+              <Button asChild className="rounded-full bg-success text-success-foreground hover:bg-success/90">
                 <Link href="/dashboard/projects?action=create">
                   Yangi loyiha
                 </Link>
@@ -115,7 +115,7 @@ export function ProjectsShowcase() {
             <article key={group.key} className={`rounded-[28px] border ${group.tone} bg-card p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.32)]`}>
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${group.accent}`}>
+                  <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl ${group.accent}`}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">{group.title}</h3>

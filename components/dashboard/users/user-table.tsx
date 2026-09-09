@@ -187,8 +187,8 @@ export function UserTable({ users }: UserTableProps) {
         })}
       </div>
 
-      <div className="hidden md:block">
-        <Table>
+      <div className="scroll-x hidden md:block">
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow className="bg-primary-soft border-b-2 border-border">
               <TableHead className="font-bold text-foreground py-4 text-sm">FIO</TableHead>
@@ -231,7 +231,7 @@ export function UserTable({ users }: UserTableProps) {
                   </TableCell>
                   <TableCell className="py-4 whitespace-normal">
                     <div className="space-y-1 min-w-0">
-                      <code className="bg-primary-soft max-w-full truncate rounded-lg border border-border px-3 py-1.5 text-sm font-mono font-medium text-secondary-foreground inline-block">
+                      <code className="bg-primary-soft max-w-full truncate rounded-lg px-3 py-1.5 text-sm font-mono font-medium text-secondary-foreground inline-block">
                         {user.login || "—"}
                       </code>
                       <div className="text-xs text-muted-foreground whitespace-normal break-all">

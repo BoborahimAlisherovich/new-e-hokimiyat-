@@ -303,7 +303,7 @@ export function AIAppealAssistant({
               <Button
                 onClick={sendAIResponse}
                 disabled={loading || !editedResponse.trim()}
-                className="bg-primary hover:bg-primary"
+                className="bg-primary hover:bg-primary-hover"
               >
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

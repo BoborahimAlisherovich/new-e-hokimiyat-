@@ -167,7 +167,7 @@ export default function UsersPage() {
             <Button
               data-gsap-action
               onClick={handleCreateUser}
-              className="bg-primary h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md md:w-auto md:px-4"
+              className="bg-primary h-9 w-9 rounded-xl px-0 text-white shadow-sm transition-all hover:shadow-md md:w-auto md:px-4 hover:bg-primary-hover"
               aria-label={{
                 uz: "Yangi foydalanuvchi",
                 "uz-cyrl": "Янги фойдаланувчи",
@@ -194,9 +194,9 @@ export default function UsersPage() {
         title="Jamoa, rollar va tashkilotlar kesimida boshqaruv bir xil uslubda yuritiladi."
         description="Faol xodimlar, tashkilotlar bo‘yicha taqsimot va yangi foydalanuvchi yaratish jarayoni bir oqimda boshqariladi."
         stats={[
-          { label: "Jami", value: users.length, icon: UsersRound, tone: "from-cyan-500/18 to-cyan-100/70" },
-          { label: "Faol", value: users.filter((u) => getUserStatusKey(u) === "ACTIVE").length, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
-          { label: "Tashkilotlar", value: organizations.length, icon: Building2, tone: "from-amber-400/24 to-amber-100/75" },
+          { label: "Jami", value: users.length, icon: UsersRound, tone: "bg-info" },
+          { label: "Faol", value: users.filter((u) => getUserStatusKey(u) === "ACTIVE").length, icon: ShieldCheck, tone: "bg-success" },
+          { label: "Tashkilotlar", value: organizations.length, icon: Building2, tone: "bg-warning" },
         ]}
       >
           <section data-gsap-section>
@@ -259,7 +259,7 @@ export default function UsersPage() {
             <DialogDescription>Login va parolni admin/hokim keyin ham foydalanuvchi profilida ko'ra oladi.</DialogDescription>
           </DialogHeader>
           {createdCredentials && (
-            <div className="space-y-3 rounded-2xl border border-border bg-primary-soft p-4 text-sm text-secondary-foreground">
+            <div className="space-y-3 rounded-2xl bg-primary-soft p-4 text-sm text-secondary-foreground">
               <p><span className="font-semibold text-foreground">Foydalanuvchi:</span> {createdCredentials.name}</p>
               <p><span className="font-semibold text-foreground">Login:</span> {createdCredentials.login}</p>
               <p><span className="font-semibold text-foreground">Parol:</span> {createdCredentials.password}</p>

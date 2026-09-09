@@ -615,7 +615,7 @@ function ChatHeader({
 
         {/* Logo & Title */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="p-1.5 sm:p-2 rounded-xl bg-linear-to-br from-sky-600 to-blue-700 shadow-md">
+          <div className="p-1.5 sm:p-2 rounded-xl shadow-md bg-info">
             <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
           <div className="hidden sm:block">
@@ -1043,7 +1043,7 @@ function ChatArea({
         <ScrollArea className="h-full">
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
             {error && (
-              <div className="rounded-2xl border border-border bg-warning-soft px-4 py-3 text-left shadow-sm">
+              <div className="rounded-2xl bg-warning-soft px-4 py-3 text-left shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-warning">AI yordamchi bilan ulanishda uzilish bor</p>
@@ -1064,7 +1064,7 @@ function ChatArea({
             {/* Welcome Screen */}
             {messages.length === 0 && !isLoading && (
               <div className="text-center py-8 sm:py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-linear-to-br from-sky-600 to-blue-700 mb-4 sm:mb-6 shadow-[0_16px_30px_-18px_rgba(3,105,161,0.75)]">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl mb-4 sm:mb-6 shadow-[0_16px_30px_-18px_rgba(3,105,161,0.75)] bg-info">
                   <Bot className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">AI Yordamchi</h2>
@@ -1108,7 +1108,7 @@ function ChatArea({
                   className={`flex gap-2 sm:gap-4 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {message.role === "assistant" && (
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-linear-to-br from-sky-600 to-blue-700 flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-info">
                       <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
                   )}
@@ -1148,7 +1148,7 @@ function ChatArea({
                             <button
                               type="button"
                               onClick={() => onQuickAction("ha")}
-                              className="inline-flex items-center gap-2 rounded-lg bg-success px-3 py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-success"
+                              className="inline-flex items-center gap-2 rounded-lg bg-success px-3 py-2 text-xs sm:text-sm font-medium text-success-foreground transition-colors hover:bg-success/90"
                             >
                               <Check className="h-4 w-4" />
                               Tasdiqlash
@@ -1156,7 +1156,7 @@ function ChatArea({
                             <button
                               type="button"
                               onClick={() => onQuickAction("yo'q")}
-                              className="inline-flex items-center gap-2 rounded-lg border border-border bg-destructive-soft px-3 py-2 text-xs sm:text-sm font-medium text-destructive-soft-foreground transition-colors hover:bg-destructive-soft"
+                              className="inline-flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-2 text-xs sm:text-sm font-medium text-destructive-soft-foreground transition-colors hover:bg-destructive-soft"
                             >
                               <X className="h-4 w-4" />
                               Bekor qilish
@@ -1169,7 +1169,7 @@ function ChatArea({
                     </p>
                   </div>
                   {message.role === "user" && (
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-linear-to-br from-emerald-600 to-teal-700 flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-success">
                       <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
                   )}
@@ -1184,7 +1184,7 @@ function ChatArea({
                 animate={{ opacity: 1 }}
                 className="flex gap-2 sm:gap-4"
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-linear-to-br from-sky-600 to-blue-700 flex items-center justify-center shadow-sm">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-sm bg-info">
                   <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 <div className="bg-card rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-4 border border-border shadow-sm">
@@ -1289,7 +1289,7 @@ function ChatInput({
 
         {/* Recording Indicator */}
         {isRecording && (
-          <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-destructive-soft border border-border">
+          <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-destructive-soft">
             <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 bg-destructive rounded-full animate-pulse" />
             <span className="text-xs sm:text-sm text-destructive font-medium">
               Yozib olinmoqda: {formatTime(recordingTime)}
@@ -1299,14 +1299,14 @@ function ChatInput({
 
         {/* Audio Preview */}
         {audioBlob && !isRecording && (
-          <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-primary-soft border border-border">
+          <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-primary-soft">
             <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
             <audio src={audioUrl || undefined} controls className="flex-1 h-7 sm:h-8" />
             <Button 
               size="sm" 
               onClick={sendMessageWithAudio} 
               disabled={isSending} 
-              className="h-10 bg-primary text-xs hover:bg-primary sm:text-sm"
+              className="h-10 bg-primary text-xs hover:bg-primary-hover sm:text-sm"
             >
               <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
               <span className="hidden sm:inline">Yuborish</span>
@@ -1354,7 +1354,7 @@ function ChatInput({
           <Button
             onClick={onSendMessage}
             disabled={!inputMessage.trim() || isSending || isRecording}
-            className="shrink-0 h-11 w-11 sm:h-11 sm:px-4 bg-primary hover:bg-primary disabled:opacity-50 rounded-xl shadow-sm"
+            className="shrink-0 h-11 w-11 sm:h-11 sm:px-4 bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl shadow-sm"
           >
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

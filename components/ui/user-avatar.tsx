@@ -60,7 +60,7 @@ export function UserAvatar({
         )}
         <AvatarFallback
           className={cn(
-            "bg-gradient-to-br from-blue-600 to-blue-700 text-white font-semibold",
+            "bg-primary text-primary-foreground font-semibold",
             textSizeClasses[size]
           )}
         >

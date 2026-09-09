@@ -140,19 +140,19 @@ export default function OrganizationDetailPage() {
         label: "Xodimlar",
         value: orgUsers.length,
         icon: Users,
-        tone: "from-cyan-50 via-white to-cyan-100/70",
+        tone: "via-white bg-info",
       },
       {
         label: "Topshiriqlar",
         value: orgTasks.length,
         icon: ClipboardList,
-        tone: "from-emerald-50 via-white to-emerald-100/70",
+        tone: "via-white bg-success",
       },
       {
         label: "Ijro darajasi",
         value: `${completionRate}%`,
         icon: TrendingUp,
-        tone: "from-amber-50 via-white to-amber-100/70",
+        tone: "via-white bg-warning",
       },
     ],
     [completionRate, orgTasks.length, orgUsers.length],
@@ -196,7 +196,7 @@ export default function OrganizationDetailPage() {
               icon={Building2}
               title="Tashkilot topilmadi"
               description="Boshqa tashkilotni tanlang yoki ro'yxatga qayting."
-              tone="from-slate-100 to-cyan-100 text-muted-foreground"
+              tone="text-muted-foreground bg-muted"
             />
           </div>
         </DashboardDetailFrame>
@@ -309,15 +309,15 @@ export default function OrganizationDetailPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[22px] border border-border bg-success-soft p-4 text-center">
+                  <div className="rounded-[22px] bg-success-soft p-4 text-center">
                     <p className="text-2xl font-semibold text-success">{completedTasks}</p>
                     <p className="mt-1 text-xs uppercase tracking-[0.14em] text-success">Bajarilgan</p>
                   </div>
-                  <div className="rounded-[22px] border border-border bg-warning-soft p-4 text-center">
+                  <div className="rounded-[22px] bg-warning-soft p-4 text-center">
                     <p className="text-2xl font-semibold text-warning">{pendingTasks}</p>
                     <p className="mt-1 text-xs uppercase tracking-[0.14em] text-warning">Jarayonda</p>
                   </div>
-                  <div className="rounded-[22px] border border-border bg-destructive-soft p-4 text-center">
+                  <div className="rounded-[22px] bg-destructive-soft p-4 text-center">
                     <p className="text-2xl font-semibold text-destructive">{overdueTasks}</p>
                     <p className="mt-1 text-xs uppercase tracking-[0.14em] text-destructive">Kechikkan</p>
                   </div>
@@ -361,7 +361,7 @@ export default function OrganizationDetailPage() {
                       icon={Users}
                       title="Xodimlar hali biriktirilmagan"
                       description="Ushbu tashkilotga xodim qo'shilsa, ro'yxat shu yerda ko'rinadi."
-                      tone="from-cyan-100 to-cyan-50 text-primary"
+                      tone="text-primary bg-info"
                     />
                   ) : (
                     <div className="divide-y divide-border">
@@ -414,7 +414,7 @@ export default function OrganizationDetailPage() {
                       icon={ClipboardList}
                       title="Topshiriqlar mavjud emas"
                       description="Yangi topshiriqlar biriktirilganda ular shu bo'limda ko'rinadi."
-                      tone="from-amber-100 to-amber-50 text-warning"
+                      tone="text-warning bg-warning"
                     />
                   ) : (
                     <div className="divide-y divide-border">

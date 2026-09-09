@@ -301,7 +301,7 @@ export function SettingsAppealsRoutingTab({ t }: { t: Translation }) {
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-2xl">
               {t.common.cancel}
             </Button>
-            <Button onClick={saveCategory} disabled={saving} className="rounded-2xl bg-primary hover:bg-primary">
+            <Button onClick={saveCategory} disabled={saving} className="rounded-2xl bg-primary hover:bg-primary-hover">
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

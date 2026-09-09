@@ -13,8 +13,7 @@ export function PremiumActivityCard({
 }) {
   return (
     <div
-      className={cn(
-        "rounded-[28px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]",
+      className={cn( "rounded-[28px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]",
         className,
       )}
     >
@@ -48,8 +47,7 @@ export function PremiumMessageBubble({
           </div>
         )}
         <div
-          className={cn(
-            "rounded-[22px] border px-4 py-3 shadow-sm",
+          className={cn( "rounded-[22px] border px-4 py-3 shadow-sm",
             isRight
               ? "bg-primary border-border text-white"
               : "bg-background border-border text-secondary-foreground",
@@ -70,7 +68,7 @@ export function PremiumSystemNote({
 }) {
   return (
     <div className="flex justify-center">
-      <div className="rounded-full border border-border bg-primary-soft px-3 py-1 text-xs font-medium text-primary-soft-foreground">
+      <div className="rounded-full bg-primary-soft px-3 py-1 text-xs font-medium text-primary-soft-foreground">
         {children}
       </div>
     </div>
@@ -124,7 +122,7 @@ export function PremiumSideCard({
   icon: Icon,
   title,
   children,
-  accent = "from-cyan-50 via-white to-cyan-50/30",
+  accent = "via-white bg-info",
 }: {
   icon: LucideIcon
   title: string
@@ -133,7 +131,7 @@ export function PremiumSideCard({
 }) {
   return (
     <div className="overflow-hidden rounded-[26px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
-      <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
+      <div className={cn("border-b border-border px-5 py-4", accent)}>
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-card p-2.5 shadow-sm ring-1 ring-border">
             <Icon className="h-4 w-4 text-secondary-foreground" />
@@ -156,8 +154,7 @@ export function PremiumActionButton({
 }) {
   return (
     <button
-      className={cn(
-        "flex w-full items-center gap-3 rounded-[20px] border border-border bg-background px-4 py-3 text-left text-sm font-medium text-secondary-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
+      className={cn( "flex w-full items-center gap-3 rounded-[20px] border border-border bg-background px-4 py-3 text-left text-sm font-medium text-secondary-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
         className,
       )}
       {...props}
@@ -237,7 +234,7 @@ export function PremiumInfoCard({
   title,
   subtitle,
   children,
-  accent = "from-cyan-50 via-white to-cyan-50/30",
+  accent = "via-white bg-info",
   headerExtra,
 }: {
   icon: LucideIcon
@@ -249,7 +246,7 @@ export function PremiumInfoCard({
 }) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_22px_50px_-34px_rgba(14,165,233,0.28)]">
-      <div className={cn("border-b border-border bg-gradient-to-r px-5 py-4", accent)}>
+      <div className={cn("border-b border-border px-5 py-4", accent)}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-card p-2.5 shadow-sm ring-1 ring-border">
@@ -371,17 +368,15 @@ export function PremiumChoiceItem({
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition",
+      className={cn( "flex w-full items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition",
         selected
           ? "border-border-strong bg-primary-soft text-primary-soft-foreground"
           : "border-border bg-white text-secondary-foreground hover:bg-background",
       )}
     >
       <span
-        className={cn(
-          "flex h-4 w-4 items-center justify-center rounded border text-[10px] font-bold",
-          selected ? "border-ring bg-primary text-white" : "border-border-strong text-transparent",
+        className={cn( "flex h-4 w-4 items-center justify-center rounded border text-[10px] font-bold",
+          selected ? "border-ring bg-primary text-primary-foreground" : "border-border-strong text-transparent",
         )}
       >
         ✓

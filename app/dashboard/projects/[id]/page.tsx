@@ -110,9 +110,9 @@ export default function ProjectDetailPage() {
         title={project?.title || "Loyiha yuklanmoqda"}
         description={project?.summary || "Loyiha bo'yicha asosiy ma'lumotlar va timeline shu sahifada jamlangan."}
         stats={[
-          { label: "Holat", value: project?.status_display || project?.status || "—", icon: FolderKanban, tone: "from-emerald-500/18 to-emerald-100/70" },
-          { label: "Progress", value: `${project?.progress ?? 0}%`, icon: BarChart3, tone: "from-sky-500/18 to-sky-100/70" },
-          { label: "Tarix", value: history.length, icon: History, tone: "from-amber-500/18 to-amber-100/70" },
+          { label: "Holat", value: project?.status_display || project?.status || "—", icon: FolderKanban, tone: "bg-success" },
+          { label: "Progress", value: `${project?.progress ?? 0}%`, icon: BarChart3, tone: "bg-info" },
+          { label: "Tarix", value: history.length, icon: History, tone: "bg-warning" },
         ]}
       >
         <PremiumStatsGrid

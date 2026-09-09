@@ -656,19 +656,19 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             label: "Holat",
             value: getStatusInfo(appeal.status).label,
             icon: CheckCircle,
-            tone: "from-cyan-50 via-white to-cyan-100/70",
+            tone: "via-white bg-info",
           },
           {
             label: "Xabarlar",
             value: messages.length,
             icon: MessageSquare,
-            tone: "from-emerald-50 via-white to-emerald-100/70",
+            tone: "via-white bg-success",
           },
           {
             label: "Sana",
             value: formatDate(appeal.createdAt),
             icon: Calendar,
-            tone: "from-amber-50 via-white to-amber-100/70",
+            tone: "via-white bg-warning",
           },
         ]}
         badges={
@@ -736,7 +736,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                 icon={FileText}
                 title="Murojaat ma'lumotlari"
                 subtitle="Fuqaro, hudud, kategoriya va murojaat matni."
-                accent="from-cyan-50 via-white to-emerald-50/35"
+                accent="via-white bg-info"
                 headerExtra={
                   <div className="flex items-center gap-2">
                     {getStatusBadge(appeal.status)}
@@ -964,7 +964,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
                         <div className="flex flex-col gap-2">
                           {isRecording && (
-                            <div className="flex items-center gap-2 rounded-[22px] border border-border bg-destructive-soft p-2.5">
+                            <div className="flex items-center gap-2 rounded-[22px] bg-destructive-soft p-2.5">
                               <div className="h-3 w-3 rounded-full bg-destructive animate-pulse" />
                               <span className="text-sm font-medium text-destructive">Yozib olinmoqda...</span>
                               <div className="flex-1" />
@@ -978,10 +978,10 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                           )}
 
                           {audioBlob && !isRecording && (
-                            <div className="flex items-center gap-2 rounded-[22px] border border-border bg-primary-soft p-2.5">
+                            <div className="flex items-center gap-2 rounded-[22px] bg-primary-soft p-2.5">
                               <Mic className="h-4 w-4 text-primary" />
                               <audio src={URL.createObjectURL(audioBlob)} controls className="h-8 flex-1" />
-                              <Button size="sm" onClick={sendAudio} className="bg-primary hover:bg-primary" disabled={sendingMessage}>
+                              <Button size="sm" onClick={sendAudio} className="bg-primary hover:bg-primary-hover" disabled={sendingMessage}>
                                 {sendingMessage ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Send className="mr-1 h-3 w-3" /> Yuborish</>}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => setAudioBlob(null)}>
@@ -1148,7 +1148,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
             {/* Right Column - Quick Actions */}
             <div className="space-y-6">
-              <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="from-cyan-50 via-white to-emerald-50/30">
+              <PremiumSideCard icon={Clock} title="Tezkor harakatlar" accent="via-white bg-info">
                 <div className="space-y-3">
                   <PremiumActionButton
                     icon={CheckCircle}
@@ -1178,12 +1178,12 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
 
               {/* AI Analysis Card */}
               {history.some(h => h.type === 'ai_analysis') && (
-                <PremiumSideCard icon={Bot} title="AI tahlili" accent="from-cyan-50 via-white to-blue-50/40">
+                <PremiumSideCard icon={Bot} title="AI tahlili" accent="via-white bg-info">
                   <div className="space-y-3">
                     {history
                       .filter(h => h.type === 'ai_analysis')
                       .map((item, i) => (
-                        <div key={i} className="space-y-2 rounded-[22px] border border-border bg-primary-soft p-4 text-sm">
+                        <div key={i} className="space-y-2 rounded-[22px] bg-primary-soft p-4 text-sm">
                           <PremiumInsightMetric
                             label="Ball"
                             value={`${item.score || 0}/100`}
@@ -1313,7 +1313,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             <Button
               onClick={handleRouteAppeal}
               disabled={routingAppeal || (!routeCategoryId && routeSelectedOrganizations.length === 0)}
-              className="rounded-2xl bg-primary hover:bg-primary"
+              className="rounded-2xl bg-primary hover:bg-primary-hover"
             >
               {routingAppeal ? (
                 <>
@@ -1531,7 +1531,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
             <Button 
               onClick={handleCreateTask} 
               disabled={creatingTask || !taskTitle || !taskDeadline || selectedOrganizations.length === 0 || !taskComment.trim()}
-              className="rounded-2xl bg-primary hover:bg-primary"
+              className="rounded-2xl bg-primary hover:bg-primary-hover"
             >
               {creatingTask ? (
                 <>

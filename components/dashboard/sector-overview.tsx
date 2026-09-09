@@ -66,9 +66,9 @@ export function SectorOverview() {
   }, [unknownLabel])
 
   const getCompletionColor = (rate: number) => {
-    if (rate >= 80) return "from-emerald-500 to-emerald-600"
-    if (rate >= 50) return "from-amber-500 to-amber-600"
-    return "from-red-500 to-red-600"
+    if (rate >= 80) return "bg-success"
+    if (rate >= 50) return "bg-warning"
+    return "bg-destructive"
   }
 
   const getCompletionTextColor = (rate: number) => {
@@ -86,7 +86,7 @@ export function SectorOverview() {
             <div className="bg-success w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
               <Grid3X3 className="w-4 h-4 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold bg-clip-text text-transparent">{t.dashboard.sectorStatsTitle}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-foreground">{t.dashboard.sectorStatsTitle}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/dashboard/analytics">
@@ -112,17 +112,15 @@ export function SectorOverview() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.02, y: -2 }}
-              className={cn(
-                "group/sector relative rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-lg hover:border-success"
+              className={cn( "group/sector relative rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-lg hover:border-success"
               )}
             >
               
               {/* Header */}
               <div className="relative z-10 flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold transition-all duration-300 group-hover/sector:scale-110",
-                    "bg-gradient-to-br " + getCompletionColor(sector.completionRate)
+                  <div className={cn( "w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold transition-all duration-300 group-hover/sector:scale-110",
+                    getCompletionColor(sector.completionRate)
                   )}>
                     {sector.label && sector.label.charAt ? sector.label.charAt(0) : "?"}
                   </div>
@@ -132,9 +130,7 @@ export function SectorOverview() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded-lg transition-all duration-250",
-                    "bg-success-soft text-success-soft-foreground"
+                  <div className={cn( "flex items-center gap-1 px-2 py-1 rounded-lg transition-all duration-250", "bg-success-soft text-success-soft-foreground"
                   )}>
                     <TrendingUp className="w-3 h-3 text-success" />
                     <span className="text-xs font-bold text-success">{sector.completionRate}%</span>
@@ -145,14 +141,12 @@ export function SectorOverview() {
               
               {/* Progress Bar */}
               <div className="relative z-10 mb-4">
-                <div className={cn(
-                  "relative h-3 w-full overflow-hidden rounded-full transition-all duration-1000 ease-out",
+                <div className={cn( "relative h-3 w-full overflow-hidden rounded-full transition-all duration-1000 ease-out",
                   sector.completionRate >= 80 ? "bg-success-soft" : 
                   sector.completionRate >= 50 ? "bg-warning-soft" : "bg-destructive-soft"
                 )}>
                   <div 
-                    className={cn(
-                      "h-full rounded-full transition-all duration-1000 ease-out",
+                    className={cn( "h-full rounded-full transition-all duration-1000 ease-out",
                       sector.completionRate >= 80 ? "bg-success" : 
                       sector.completionRate >= 50 ? "bg-warning" : "bg-destructive"
                     )}
@@ -164,19 +158,19 @@ export function SectorOverview() {
               {/* Stats */}
               <div className="relative z-10 space-y-3">
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-2 rounded-lg bg-success-soft border border-border transition-all duration-300 hover:scale-105 hover:bg-success-soft hover:shadow-md">
+                  <div className="p-2 rounded-lg bg-success-soft transition-all duration-300 hover:scale-105 hover:bg-success-soft hover:shadow-md">
                     <BarChart4 className="w-4 h-4 text-success mx-auto mb-1" />
                     <div className="text-lg font-bold text-success">{sector.total}</div>
                     <div className="text-xs text-muted-foreground">{t.dashboard.total}</div>
                   </div>
                   
-                  <div className="p-2 rounded-lg bg-success-soft border border-border transition-all duration-300 hover:scale-105 hover:bg-success-soft hover:shadow-md">
+                  <div className="p-2 rounded-lg bg-success-soft transition-all duration-300 hover:scale-105 hover:bg-success-soft hover:shadow-md">
                     <PieChart className="w-4 h-4 text-success mx-auto mb-1" />
                     <div className="text-lg font-bold text-success">{sector.completed}</div>
                     <div className="text-xs text-muted-foreground">{t.dashboard.completed}</div>
                   </div>
                   
-                  <div className="p-2 rounded-lg bg-warning-soft border border-border transition-all duration-300 hover:scale-105 hover:bg-warning-soft hover:shadow-md">
+                  <div className="p-2 rounded-lg bg-warning-soft transition-all duration-300 hover:scale-105 hover:bg-warning-soft hover:shadow-md">
                     <TrendingUp className="w-4 h-4 text-warning mx-auto mb-1" />
                     <div className="text-lg font-bold text-warning">{sector.inProgress}</div>
                     <div className="text-xs text-muted-foreground">{t.dashboard.inProgress}</div>
@@ -184,7 +178,7 @@ export function SectorOverview() {
                 </div>
                 
                 {sector.late > 0 && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-destructive-soft border border-border transition-all duration-300 hover:bg-destructive-soft hover:shadow-md">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-destructive-soft transition-all duration-300 hover:bg-destructive-soft hover:shadow-md">
                     <span className="text-sm font-medium text-destructive">{t.dashboard.overdue}: {sector.late}</span>
                     <span className="text-xs text-muted-foreground">{t.dashboard.taskUnit}</span>
                   </div>

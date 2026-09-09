@@ -171,9 +171,9 @@ export default function AppealsPage() {
         title="Fuqarolar murojaatlari holati, ustuvorligi va oqimi bir markazda ko‘rinadi."
         description="Murojaatlarni tez saralash, nazoratga olish va javob jarayonini yo‘qotmasdan boshqarish uchun yagona ish maydoni."
         stats={[
-          { label: "Jami", value: calculatedStats.total, icon: MessageCircleMore, tone: "from-cyan-500/18 to-cyan-100/70" },
-          { label: "Kutilmoqda", value: calculatedStats.pending, icon: CircleAlert, tone: "from-amber-400/24 to-amber-100/75" },
-          { label: "Hal etildi", value: calculatedStats.resolved, icon: ShieldCheck, tone: "from-emerald-500/18 to-emerald-100/70" },
+          { label: "Jami", value: calculatedStats.total, icon: MessageCircleMore, tone: "bg-info" },
+          { label: "Kutilmoqda", value: calculatedStats.pending, icon: CircleAlert, tone: "bg-warning" },
+          { label: "Hal etildi", value: calculatedStats.resolved, icon: ShieldCheck, tone: "bg-success" },
         ]}
       >
         {/* Stats Cards */}

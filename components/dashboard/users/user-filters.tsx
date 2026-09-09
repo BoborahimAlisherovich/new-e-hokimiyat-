@@ -85,7 +85,7 @@ export function UserFilters({
             />
           </div>
           {showCreateButton && (
-            <Button onClick={onCreate} className="bg-primary rounded-xl text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md">
+            <Button onClick={onCreate} className="bg-primary rounded-xl text-white shadow-sm transition-all hover:shadow-md hover:bg-primary-hover">
               <Plus className="h-4 w-4 mr-1" />
               Yangi foydalanuvchi
             </Button>

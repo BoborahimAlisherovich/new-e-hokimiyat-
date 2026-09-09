@@ -106,7 +106,7 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
 
   if (organizations.length === 0) {
     return (
-      <PremiumEmptyState icon={Building2} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-violet-100 to-purple-200 text-[var(--st-tekshiruvda-fg)]" />
+      <PremiumEmptyState icon={Building2} title={tr.emptyTitle} description={tr.emptyDesc} tone="text-[var(--st-tekshiruvda-fg)] bg-primary" />
     )
   }
 
@@ -207,8 +207,8 @@ export function OrganizationTable({ organizations, users = [], onDelete, onToggl
         })}
       </div>
 
-      <div className="hidden md:block">
-        <Table>
+      <div className="scroll-x hidden md:block">
+        <Table className="min-w-[760px]">
           <TableHeader>
             <TableRow className="bg-primary-soft border-b-2 border-border">
               <TableHead className="font-bold text-foreground py-4 px-4 text-sm">ID</TableHead>

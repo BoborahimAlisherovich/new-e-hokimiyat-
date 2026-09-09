@@ -74,7 +74,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
 
   if (appeals.length === 0) {
     return (
-      <PremiumEmptyState icon={MessageSquare} title={tr.emptyTitle} description={tr.emptyDesc} tone="from-cyan-50 to-teal-100 text-success" />
+      <PremiumEmptyState icon={MessageSquare} title={tr.emptyTitle} description={tr.emptyDesc} tone="text-success bg-info" />
     )
   }
 
@@ -99,7 +99,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
                 className="text-left"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <code className="bg-success-soft rounded-lg border border-border px-2.5 py-1 text-xs font-mono font-bold text-success shadow-sm">
+                  <code className="bg-success-soft rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-success shadow-sm">
                     {appeal.id}
                   </code>
                   {(appeal.newMessagesCount ?? 0) > 0 && (
@@ -172,7 +172,7 @@ export function AppealTable({ appeals, onView, onArchive }: AppealTableProps) {
               onClick={() => handleRowClick(appeal)}
             >
               <TableCell className="py-4 px-6">
-                <code className="bg-success-soft rounded-lg border border-border px-3 py-1.5 text-sm font-mono font-bold text-success shadow-sm">
+                <code className="bg-success-soft rounded-lg px-3 py-1.5 text-sm font-mono font-bold text-success shadow-sm">
                   {appeal.id}
                 </code>
               </TableCell>
