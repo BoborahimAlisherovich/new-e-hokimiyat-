@@ -90,3 +90,13 @@ frontend/.next/
 # Package locks (optional - uncomment if needed)
 # pnpm-lock.yaml
 # package-lock.json
+
+# ---------------------------------------------------------------- Claude Code
+# ECC (everything-claude-code) — har dasturchi o'ziga o'rnatadi, repoga
+# kirmaydi: 392 fayl uchinchi tomon vositasi, mahsulot kodi emas.
+# Qayta o'rnatish:
+#   git clone --depth 1 https://github.com/affaan-m/everything-claude-code.git
+#   npm install --no-save sql.js@1.14.2        (ECC repo ichida)
+#   node <ecc>/scripts/install-apply.js --target claude-project --profile minimal --no-hooks
+# CLAUDE.md esa loyiha bilimi — u REPODA saqlanadi.
+.claude/
