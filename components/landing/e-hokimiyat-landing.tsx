@@ -44,6 +44,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
 } from "framer-motion"
 import {
@@ -153,25 +154,97 @@ function MicroLabel({
   )
 }
 
+/**
+ * BO'LIM SARLAVHASI — landing sahifasi uchun YAGONA manba.
+ *
+ * Ilgari har bo'lim o'zicha yozilgan edi:
+ *   HowItWorks    32/42px · MicroLabel · mt-4 / mt-5
+ *   Features      32/42px · markazlangan
+ *   TelegramCta   34/46px · pill chip eyebrow · mt-7
+ *   OneIdSection  30/36px · yalang'och MicroLabel · mt-4
+ *   Trust         sarlavhasiz · mt-3
+ *
+ * Ya'ni UCH xil sarlavha o'lchami, UCH xil eyebrow uslubi va TO'RT xil
+ * vertikal ritm. Sahifa bo'ylab aylantirilganda har bo'lim boshqa
+ * hujjatdan ko'chirilganday ko'rinardi.
+ *
+ * Endi bitta shkala:
+ *   eyebrow  11px · uppercase · tracking 0.16em
+ *   title    30px -> 42px (sm) · bitta o'lcham, barcha bo'limlarda
+ *   lead     17px / leading-8
+ * va bitta ritm: eyebrow -> title (mt-4) -> lead (mt-5).
+ *
+ * `title` ATAYLAB ixtiyoriy: «Xavfsizlik» bo'limida sarlavha yo'q
+ * (foydalanuvchi talabi bilan olib tashlangan), faqat eyebrow va bir
+ * qatorli izoh. Sarlavha bo'lmasa lead eyebrow'ga yaqinlashadi (mt-3).
+ *
+ * Quyuq panelda (`tone="dark"`) eyebrow pill ko'rinishiga o'tadi —
+ * ilgari bu TelegramCta ichida alohida yozilgan edi.
+ */
 function SectionHead({
   label,
+  labelIcon: LabelIcon,
   title,
   lead,
-  center,
+  align = "start",
+  tone = "light",
+  className,
 }: {
   label: string
-  title: React.ReactNode
-  lead?: string
-  center?: boolean
+  labelIcon?: React.ComponentType<{ className?: string }>
+  title?: React.ReactNode
+  lead?: React.ReactNode
+  align?: "start" | "center"
+  tone?: "light" | "dark"
+  className?: string
 }) {
+  const dark = tone === "dark"
+  const center = align === "center"
+
   return (
-    <div className={cn("max-w-2xl", center && "mx-auto text-center")}>
-      <MicroLabel>{label}</MicroLabel>
-      <h2 className="mt-4 text-[32px] font-semibold leading-[1.12] tracking-[-0.028em] text-foreground text-balance sm:text-[42px]">
-        {title}
-      </h2>
+    <div className={cn("max-w-2xl", center && "mx-auto text-center", className)}>
+      {dark ? (
+        <p
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-3.5 py-2",
+            "text-[11px] font-semibold uppercase tracking-[0.16em] text-[#bcd0f7]",
+          )}
+        >
+          {LabelIcon && <LabelIcon className="h-3.5 w-3.5" aria-hidden />}
+          {label}
+        </p>
+      ) : (
+        <p
+          className={cn(
+            "flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
+            center && "justify-center",
+          )}
+        >
+          {LabelIcon && <LabelIcon className="h-3.5 w-3.5" aria-hidden />}
+          {label}
+        </p>
+      )}
+
+      {title && (
+        <h2
+          className={cn(
+            "mt-4 text-[30px] font-semibold leading-[1.14] tracking-[-0.028em] text-balance",
+            "sm:text-[42px] sm:leading-[1.08] sm:tracking-[-0.032em]",
+            dark ? "text-white" : "text-foreground",
+          )}
+        >
+          {title}
+        </h2>
+      )}
+
       {lead && (
-        <p className="mt-5 text-[17px] leading-8 text-muted-foreground text-pretty">
+        <p
+          className={cn(
+            title ? "mt-5" : "mt-3",
+            "text-[17px] leading-8 text-pretty",
+            dark ? "text-[#c3d3f2]" : "text-muted-foreground",
+          )}
+        >
           {lead}
         </p>
       )}
@@ -365,15 +438,59 @@ function Hero({
   onLogin: () => void
 }) {
   const reduce = useReducedMotion()
-  const { scrollY } = useScroll()
+  const heroRef = useRef<HTMLElement | null>(null)
 
-  /* Aylantirish oynasi ~0-560px: shu masofada surat to'liq ochiladi */
-  const scrimOpacity = useTransform(scrollY, [0, 460], [1, 0])
-  const tintOpacity = useTransform(scrollY, [0, 560], [1, 0.28])
-  const imageY = useTransform(scrollY, [0, 1100], [0, 150])
-  const imageScale = useTransform(scrollY, [0, 700], [1.08, 1.0])
-  const contentOpacity = useTransform(scrollY, [0, 340], [1, 0])
-  const contentY = useTransform(scrollY, [0, 420], [0, -60])
+  /* PARALLAKS — nima o'zgardi va nima uchun.
+   *
+   * Ilgari global `scrollY` va qattiq piksel chegaralari ishlatilgan edi
+   * (`[0, 460]`, `[0, 1100]` …). Ikki muammo bor edi:
+   *
+   *  1. Piksel viewport balandligiga moslashmaydi. 667px'li telefonda
+   *     460px — ekranning deyarli hammasi, 1100px'li monitorda esa
+   *     uchdan biri. Ya'ni effekt har qurilmada boshqa tezlikda
+   *     tugardi.
+   *  2. Silliqlash yo'q: `scrollY` to'g'ridan-to'g'ri transformga
+   *     ulangani uchun trekpad va telefonda titrash sezilardi.
+   *
+   * Endi `useScroll({ target })` hero elementining O'ZIGA bog'langan
+   * 0 -> 1 normallashgan progress beradi (viewport'dan mustaqil), va
+   * `useSpring` uni silliqlaydi.
+   *
+   * Chuqurlik uchta qatlam bilan hosil qilinadi — bu asl parallaks:
+   *   surat   sekin pastga suriladi va zoom'dan chiqadi
+   *   tonlash o'rtada, shaffoflik bilan
+   *   matn    TESKARI yo'nalishda va TEZROQ ketadi
+   * Fon bilan matn tezligi farqi — ko'z chuqurlikni shundan sezadi.
+   */
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  })
+
+  /* Silliqlash: qattiq emas, aks holda «suzuvchi» hissi paydo bo'ladi.
+     restDelta — mikro-yangilanishlarni to'xtatadi (bekorga repaint yo'q). */
+  const p = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 26,
+    mass: 0.35,
+    restDelta: 0.0005,
+  })
+
+  /* Surat: 12% pastga + zoom'dan chiqish. Konteyner viewport'dan baland
+     (h-[120%], -top-[10%]) — shuning uchun surish chetni ochib
+     qo'ymaydi. */
+  const imageY = useTransform(p, [0, 1], ["0%", "12%"])
+  const imageScale = useTransform(p, [0, 0.85], [1.14, 1.0])
+
+  /* Scrim matn ostida — u matndan oldin ketishi kerak, aks holda matn
+     yo'qolgach ham qorayib turadi. */
+  const scrimOpacity = useTransform(p, [0, 0.5], [1, 0])
+  const tintOpacity = useTransform(p, [0, 0.72], [1, 0.24])
+
+  /* Matn: tezroq va yuqoriga — surat bilan tezlik farqi chuqurlik beradi. */
+  const contentY = useTransform(p, [0, 1], ["0%", "-26%"])
+  const contentOpacity = useTransform(p, [0, 0.42], [1, 0])
+  const hintOpacity = useTransform(p, [0, 0.14], [1, 0])
 
   const fade = (delay: number) =>
     reduce
@@ -388,15 +505,23 @@ function Hero({
           transition: { duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] as const },
         }
 
-  const scrollStyle = reduce ? {} : { opacity: contentOpacity, y: contentY }
+  const scrollStyle = reduce
+    ? {}
+    : { opacity: contentOpacity, y: contentY, willChange: "transform, opacity" }
 
   return (
-    <header id="top" className="relative h-[120dvh] lg:h-[145dvh]">
+    <header ref={heroRef} id="top" className="relative h-[120dvh] lg:h-[145dvh]">
       <div className="sticky top-0 h-[100dvh] overflow-hidden">
-        {/* Fon surati — parallaks bilan */}
+        {/* Fon surati — eng sekin qatlam.
+            Konteyner viewport'dan baland va yuqoriga chiqarilgan:
+            surish paytida chetlar ochilib qolmaydi. */}
         <motion.div
-          className="absolute inset-0 -z-20"
-          style={reduce ? {} : { y: imageY, scale: imageScale }}
+          className="absolute -top-[10%] left-0 -z-20 h-[120%] w-full"
+          style={
+            reduce
+              ? {}
+              : { y: imageY, scale: imageScale, willChange: "transform" }
+          }
         >
           <Image
             src="/xatirchi-login.png"
@@ -423,6 +548,7 @@ function Hero({
         />
 
         {/* ---- MARKAZIY KOMPOZITSIYA + SUZUVCHI SHISHA KARTALAR ---- */}
+        {/* Matn — eng tez qatlam, teskari yo'nalishda */}
         <motion.div style={scrollStyle} className="relative h-[100dvh]">
           <div className="mx-auto flex h-full max-w-3xl flex-col items-center justify-center px-6 pb-10 pt-20 text-center sm:pb-8 sm:pt-24 lg:max-w-4xl">
             <motion.p
@@ -476,8 +602,11 @@ function Hero({
               </button>
             </motion.div>
 
-            {/* Pastga ishora — «suratni ochish» taklifi */}
-            <div
+                {/* Pastga ishora — birinchi harakatdan keyin darhol so'nadi,
+                aks holda foydalanuvchi allaqachon aylantirayotganda ham
+                «pastga aylantiring» deb turadi. */}
+            <motion.div
+              style={reduce ? {} : { opacity: hintOpacity }}
               className="scroll-hint absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
               aria-hidden
             >
@@ -487,7 +616,7 @@ function Hero({
               <span className="flex h-8 w-5 items-start justify-center rounded-full bg-white/15 pt-1.5 backdrop-blur-sm">
                 <span className="dot h-1.5 w-1.5 rounded-full bg-white/85" />
               </span>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -948,7 +1077,14 @@ function Facts() {
   return (
     <section className="bg-card py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <dl className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Eyebrow — plitalar kontekstsiz suzib turmasligi uchun.
+            Sarlavha ataylab qo'shilmadi: bu fakt tasmasi, alohida
+            bo'lim emas. */}
+        <Reveal>
+          <SectionHead label="Qisqacha ma'lumot" />
+        </Reveal>
+
+        <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FACTS.map((f, i) => (
             <Reveal key={f.v} delay={i * 0.06}>
               <div className={cn(TILE, "flex h-full items-start gap-4 p-6")}>
@@ -1032,7 +1168,7 @@ function Features() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <Reveal>
           <SectionHead
-            center
+            align="center"
             label="Tizim imkoniyatlari"
             title="Murojaatdan natijagacha — bitta tizimda"
             lead="Qabul, yo'naltirish, muddat nazorati va isbot bilan tasdiqlash — har bir bosqich ko'rinib turadi va vaqti bilan qayd etiladi."
@@ -1104,21 +1240,25 @@ function TelegramCta() {
 
             <div className="relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_auto]">
               <div className="max-w-2xl">
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#bcd0f7]">
-                  <Bot className="h-3.5 w-3.5" aria-hidden />
-                  Telegram bot · bepul · 24/7
-                </p>
-
-                <h2 className="mt-7 text-[34px] font-semibold leading-[1.1] tracking-[-0.03em] text-white text-balance sm:text-[46px]">
-                  Hurmatli Xatirchiliklar,{" "}
-                  <span className="text-gradient-sky">muammolaringizni ayting!</span>
-                </h2>
-
-                <p className="mt-5 text-[17px] leading-8 text-[#c3d3f2] text-pretty">
-                  Qaysi masala bo&apos;lsa ham yozing — murojaatingiz raqam
-                  oladi, mas&apos;ul tashkilotga yo&apos;naltiriladi va muddati
-                  nazoratga tushadi. Javobni Telegram orqali olasiz.
-                </p>
+                {/* Ilgari bu yerda sarlavha alohida yozilgan edi (34/46px,
+                    mt-7) — sahifadagi boshqa bo'limlardan bir qadam katta.
+                    Endi umumiy SectionHead: chaqiruv o'z panelining quyuq
+                    foni, gradient matni va katta tugmalari bilan ajralib
+                    turadi, shrift o'lchami bilan emas. */}
+                <SectionHead
+                  tone="dark"
+                  labelIcon={Bot}
+                  label="Telegram bot · bepul · 24/7"
+                  title={
+                    <>
+                      Hurmatli Xatirchiliklar,{" "}
+                      <span className="text-gradient-sky">
+                        muammolaringizni ayting!
+                      </span>
+                    </>
+                  }
+                  lead="Qaysi masala bo'lsa ham yozing — murojaatingiz raqam oladi, mas'ul tashkilotga yo'naltiriladi va muddati nazoratga tushadi. Javobni Telegram orqali olasiz."
+                />
 
                 <ul className="mt-8 flex flex-wrap gap-2.5">
                   {TOPICS.map((topic) => (
@@ -1214,17 +1354,11 @@ function OneIdSection() {
             )}
           >
             <div className="max-w-xl">
-              <MicroLabel>Yagona identifikatsiya</MicroLabel>
-
-              <h2 className="mt-4 text-[30px] font-semibold leading-[1.14] tracking-[-0.028em] text-foreground text-balance sm:text-[36px]">
-                OneID orqali ro&apos;yxatdan o&apos;tish
-              </h2>
-
-              <p className="mt-5 text-[17px] leading-8 text-muted-foreground text-pretty">
-                Davlat xizmatlarining yagona identifikatsiya tizimi orqali
-                shaxsingizni tasdiqlang. Shundan so&apos;ng murojaatlaringiz
-                bitta shaxsiy kabinetda to&apos;planadi.
-              </p>
+              <SectionHead
+                label="Yagona identifikatsiya"
+                title="OneID orqali ro'yxatdan o'tish"
+                lead="Davlat xizmatlarining yagona identifikatsiya tizimi orqali shaxsingizni tasdiqlang. Shundan so'ng murojaatlaringiz bitta shaxsiy kabinetda to'planadi."
+              />
 
               <ul className="mt-8 space-y-4">
                 {[
@@ -1336,12 +1470,13 @@ function Trust() {
     <section id="ishonch" className="scroll-mt-24 bg-background py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <Reveal>
-          <div className="max-w-2xl">
-            <MicroLabel>Xavfsizlik</MicroLabel>
-            <p className="mt-3 text-[17px] leading-8 text-muted-foreground">
-              Tizim ma&apos;lumotni qanday himoya qiladi — qisqacha:
-            </p>
-          </div>
+          {/* Bu bo'limda sarlavha ATAYLAB yo'q — foydalanuvchi talabi
+              bilan olib tashlangan. SectionHead `title` bermasa lead
+              eyebrow'ga yaqinlashadi (mt-3), ritm buzilmaydi. */}
+          <SectionHead
+            label="Xavfsizlik"
+            lead="Tizim ma'lumotni qanday himoya qiladi — qisqacha:"
+          />
         </Reveal>
 
         <div className="mt-10 grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
