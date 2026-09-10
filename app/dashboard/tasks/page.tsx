@@ -241,9 +241,11 @@ export default function TasksPage() {
   /* -------------------------------------------------- Tab yonidagi sanoqlar */
   const viewCounts: TaskViewCounts = useMemo(
     () => ({
+      all: stats.total,
       awaiting: stats.awaiting_approval,
       overdue: stats.overdue,
       active: stats.in_progress,
+      closed: stats.completed,
     }),
     [stats],
   )
@@ -283,75 +285,81 @@ export default function TasksPage() {
   /* ------------------------------------------------------------------ RENDER */
   return (
     <>
+      {/* Sarlavhada harakat tugmalari YO'Q: ular qo'ng'iroq, til va avatar
+          ikonkalari yonida turib, xuddi shu o'lchamdagi ikkilamchi element
+          kabi ko'rinardi va e'tibordan chetda qolardi. Asosiy harakat
+          kontent boshida, alohida qatorda. */}
       <Header
         title={t.pages?.tasks?.title ?? "Topshiriqlar"}
         description={t.pages?.tasks?.description ?? "Ijro intizomi va nazorat"}
-        actions={
-          canCreateTask ? (
-            <div className="hidden items-center gap-2 sm:flex">
-              <Link
-                href="/dashboard/tasks/new"
-                className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-                Yangi topshiriq
-              </Link>
-              <Link
-                href="/dashboard/tasks/new/ai"
-                className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-card px-4 text-sm font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)] hover:bg-muted"
-              >
-                <Sparkles className="h-4 w-4 text-primary" aria-hidden />
-                AI orqali
-              </Link>
-            </div>
-          ) : undefined
-        }
       />
 
-      <div className="space-y-4 p-4 pb-28 sm:p-6 sm:pb-6">
+      <div className="space-y-4 p-4 pb-20 sm:p-6 sm:pb-6">
         {refError && (
           <p role="alert" className="rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
             {refError}
           </p>
         )}
 
-        {/* Tasdiqlash navbatiga tezkor kirish */}
+        {/* ASOSIY HARAKAT — sahifaning eng yuqorisida, barcha
+            o'lchamlarda ko'rinadi. Ko'k tugma rangli soya bilan sirtdan
+            ko'tarilib turadi, ikkinchi tugma yumshoq ko'k fonda —
+            ilgari u deyarli oq edi va ko'zga tashlanmasdi. */}
+        {canCreateTask && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Link
+              href="/dashboard/tasks/new"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-[0_1px_2px_rgb(51_102_255_/_0.28),0_10px_24px_-10px_rgb(51_102_255_/_0.55)] transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-11"
+            >
+              <Plus className="h-5 w-5" aria-hidden />
+              Yangi topshiriq
+            </Link>
+            <Link
+              href="/dashboard/tasks/new/ai"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary-soft px-5 text-[15px] font-semibold text-primary-soft-foreground transition-colors hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-11"
+            >
+              <Sparkles className="h-5 w-5" aria-hidden />
+              AI orqali yaratish
+            </Link>
+            <span className="hidden flex-1 sm:block" />
+            <span className="hidden text-sm text-muted-foreground sm:inline">
+              <span className="font-semibold tabular-nums text-foreground">{totalCount}</span> topshiriq
+            </span>
+          </div>
+        )}
+
+        {/* Tasdiqlash chaqiruvi — bir qatorli tasma.
+            Ilgari bu uch qatorli karta edi va telefonda ~140px joy
+            olardi; ayni paytda «Tasdiqlashda» tabi va ko'rsatkich
+            plitasi ham xuddi shu narsani aytardi. */}
         {canApprove && stats.awaiting_approval > 0 && view !== "awaiting" && (
           <button
             type="button"
             onClick={() => setView("awaiting")}
-            className="surface surface-interactive flex w-full items-center gap-3 p-3.5 text-left"
+            className="flex w-full items-center gap-2.5 rounded-xl bg-warning-soft px-3.5 py-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info-soft-foreground">
-              <ShieldCheck className="h-5 w-5" aria-hidden />
+            <ShieldCheck className="h-4 w-4 shrink-0 text-warning-soft-foreground" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-warning-soft-foreground">
+              {stats.awaiting_approval} ta topshiriq tasdig‘ingizni kutmoqda
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-md font-semibold text-foreground">
-                {stats.awaiting_approval} ta topshiriq tasdig‘ingizni kutmoqda
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                Hisobot va isbotlar yuklangan — nazoratdan yechish yoki qayta ijroga yuborish
-              </span>
-            </span>
-            <span className="shrink-0 text-sm font-semibold text-primary">Ko‘rish →</span>
+            <span className="shrink-0 text-sm font-semibold text-warning-soft-foreground">Ko‘rish →</span>
           </button>
         )}
 
         {/* Tezkor ko'rinishlar */}
         <TaskViewTabs value={view} counts={viewCounts} canApprove={canApprove} onChange={setView} />
 
-        {/* KPI */}
+        {/* Ko'rsatkichlar — ixcham qator. «Ijroda / Tasdiqlashda /
+            Kechikkan» sanoqlari tablarda ham bor, shuning uchun bu
+            yerda faqat tablarda yo'q raqamlar qoldirildi. */}
         {!refLoaded && listLoading ? (
-          <PremiumStatsSkeleton count={6} />
+          <PremiumStatsSkeleton count={4} />
         ) : (
           <TaskStats
             total={stats.total}
             pending={stats.pending}
-            inProgress={stats.in_progress}
-            awaitingApproval={stats.awaiting_approval}
             completed={stats.completed}
-            overdue={stats.overdue}
-            returned={stats.returned}
+            awaitingApproval={stats.awaiting_approval}
             canApprove={canApprove}
           />
         )}
@@ -457,27 +465,9 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Mobil: bitta asosiy harakat. Pastki navigatsiya ustida turadi. */}
-      {canCreateTask && (
-        <div className="fixed inset-x-0 bottom-16 z-30 px-4 pb-safe sm:hidden">
-          <div className="mx-auto flex max-w-md items-center gap-2">
-            <Link
-              href="/dashboard/tasks/new"
-              className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-lg"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Yangi topshiriq
-            </Link>
-            <Link
-              href="/dashboard/tasks/new/ai"
-              aria-label="AI orqali yaratish"
-              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-card shadow-[0_8px_24px_-8px_rgb(13_21_36_/_0.28),inset_0_0_0_1px_var(--border)]"
-            >
-              <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Ilgari telefonda pastda suzuvchi tugma bor edi — u kontentni
+          yopib turardi va yuqoridagi qator bilan ikkilanardi. Endi
+          yagona harakat qatori sahifa boshida. */}
     </>
   )
 }
