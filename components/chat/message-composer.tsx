@@ -2,26 +2,12 @@
 
 import type React from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  AlertCircle,
-  Check,
-  Loader2,
-  Mic,
-  Paperclip,
-  Send,
-  Smile,
-  Square,
-  Trash2,
-  X,
-} from "lucide-react"
+import { AlertCircle, Check, Loader2, Paperclip, Send, Smile, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import {
-  formatBytes,
-  formatDuration,
-  uploadAttachment,
-  type ChatAttachment,
-} from "@/lib/api/chat-v2.api"
+import { formatBytes, uploadAttachment, type ChatAttachment } from "@/lib/api/chat-v2.api"
+import { VoiceRecorder, voiceToFile } from "./voice-recorder"
+import type { VoiceRecording } from "@/hooks/use-voice-recorder"
 import type { LocalMessage } from "./chat-utils"
 
 /**
@@ -84,53 +70,23 @@ export function MessageComposer({
 }) {
   const [pending, setPending] = useState<Pending[]>([])
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [recording, setRecording] = useState(false)
-  const [recordMs, setRecordMs] = useState(0)
-  const [micError, setMicError] = useState<string | null>(null)
-  const [voice, setVoice] = useState<{ blob: Blob; url: string; ms: number } | null>(null)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
   const [voiceBusy, setVoiceBusy] = useState(false)
+  const [recording, setRecording] = useState(false)
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const tickRef = useRef<number | null>(null)
-  const cancelledRef = useRef(false)
   const typingTimer = useRef<number | null>(null)
 
   /* --------------------------------------------------------- Tozalash */
-  const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-    recorderRef.current = null
-    chunksRef.current = []
-    if (tickRef.current) {
-      window.clearInterval(tickRef.current)
-      tickRef.current = null
-    }
-  }, [])
-
+  // Mikrofon oqimini `VoiceRecorder` o'zi boshqaradi va unmount'da
+  // to'xtatadi — bu yerda faqat yozish taymeri qoladi.
   useEffect(
     () => () => {
-      cancelledRef.current = true
-      try {
-        if (recorderRef.current?.state === "recording") recorderRef.current.stop()
-      } catch {
-        /* ignore */
-      }
-      stopStream()
       if (typingTimer.current) window.clearTimeout(typingTimer.current)
     },
-    [stopStream],
+    [],
   )
-
-  // Ovoz blob URL'ini bir marta yaratamiz va tozalaymiz
-  useEffect(() => {
-    return () => {
-      if (voice?.url) URL.revokeObjectURL(voice.url)
-    }
-  }, [voice?.url])
 
   /* --------------------------------------------------- Tahrirlash rejimi */
   useEffect(() => {
@@ -227,88 +183,32 @@ export function MessageComposer({
   )
 
   /* ------------------------------------------------------- Ovoz yozish */
-  const startRecording = useCallback(async () => {
-    setMicError(null)
-    cancelledRef.current = false
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setMicError("Brauzer mikrofonni qo‘llab-quvvatlamaydi")
-      return
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      streamRef.current = stream
-      chunksRef.current = []
-      const rec = new MediaRecorder(stream)
-      recorderRef.current = rec
-      const startedAt = Date.now()
-
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data)
-      }
-      rec.onstop = () => {
-        const ms = Date.now() - startedAt
-        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" })
-        stopStream()
-        setRecording(false)
-        setRecordMs(0)
-
-        if (cancelledRef.current) return
-        if (blob.size < 1000 || ms < 500) {
-          setMicError("Yozuv juda qisqa")
-          return
-        }
-        setVoice({ blob, url: URL.createObjectURL(blob), ms })
-      }
-
-      rec.start()
-      setRecording(true)
-      setRecordMs(0)
-      tickRef.current = window.setInterval(() => setRecordMs(Date.now() - startedAt), 200)
-    } catch {
-      stopStream()
-      setMicError("Mikrofonga ruxsat berilmadi")
-    }
-  }, [stopStream])
-
-  const stopRecording = useCallback(
-    (cancel: boolean) => {
-      cancelledRef.current = cancel
+  /**
+   * Ovozli xabar yozib bo'lindi — faylni yuklaymiz va darhol yuboramiz.
+   *
+   * Telegramda ovoz qo'yib yuborilishi bilan ketadi: «tinglab ko'ring,
+   * keyin yuboring» degan oraliq qadam yo'q. Shuning uchun bu yerda ham
+   * oldindan tinglash oynasi yo'q — kerak bo'lsa foydalanuvchi yozuvni
+   * surib bekor qiladi.
+   */
+  const handleVoiceRecorded = useCallback(
+    async (recorded: VoiceRecording) => {
+      setVoiceBusy(true)
+      setVoiceError(null)
       try {
-        if (recorderRef.current?.state === "recording") recorderRef.current.stop()
-        else {
-          stopStream()
-          setRecording(false)
-        }
-      } catch {
-        stopStream()
-        setRecording(false)
+        const attachment = await uploadAttachment(voiceToFile(recorded), {
+          kind: "VOICE",
+          durationMs: recorded.durationMs,
+        })
+        onSend("", [attachment.id])
+      } catch (err: any) {
+        setVoiceError(err?.message || "Ovozli xabar yuborilmadi")
+      } finally {
+        setVoiceBusy(false)
       }
     },
-    [stopStream],
+    [onSend],
   )
-
-  const sendVoice = useCallback(async () => {
-    if (!voice) return
-    setVoiceBusy(true)
-    try {
-      const file = new File([voice.blob], `ovoz-${Date.now()}.webm`, {
-        type: voice.blob.type || "audio/webm",
-      })
-      const attachment = await uploadAttachment(file, {
-        kind: "VOICE",
-        durationMs: voice.ms,
-      })
-      onSend("", [attachment.id])
-      URL.revokeObjectURL(voice.url)
-      setVoice(null)
-    } catch (err: any) {
-      setMicError(err?.message || "Ovozli xabar yuborilmadi")
-    } finally {
-      setVoiceBusy(false)
-    }
-  }, [voice, onSend])
 
   /* ------------------------------------------------------------ Yuborish */
   const readyIds = pending
@@ -419,192 +319,140 @@ export function MessageComposer({
         </ul>
       )}
 
-      {micError && (
+      {voiceError && (
         <p
           role="alert"
           className="flex items-center gap-1.5 border-b border-border bg-destructive-soft px-3 py-1.5 text-xs text-destructive-soft-foreground"
         >
           <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {micError}
+          {voiceError}
         </p>
       )}
 
-      {/* Ovozli xabar oldindan tinglash */}
-      {voice && (
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-          <audio src={voice.url} controls className="h-9 min-w-0 flex-1" />
-          <span className="shrink-0 text-2xs tabular-nums text-muted-foreground">
-            {formatDuration(voice.ms)}
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              URL.revokeObjectURL(voice.url)
-              setVoice(null)
-            }}
-            aria-label="O‘chirish"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => void sendVoice()}
-            disabled={voiceBusy}
-            aria-label="Ovozli xabarni yuborish"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-          >
-            {voiceBusy ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <Send className="h-4 w-4" aria-hidden />
-            )}
-          </button>
-        </div>
-      )}
+      {/*
+        YOZISH QATORI — Telegram tartibi
+        --------------------------------
+        Skrepka CHAPDA, matn maydoni o'rtada, emoji va mikrofon O'NGDA.
+        Ilgari emoji ham, skrepka ham chapda turardi va matn maydoni
+        ikki tugma orasida siqilib qolardi.
 
-      {/* Yozuv rejimi */}
-      {recording ? (
-        <div className="flex items-center gap-2 p-2">
-          <span className="flex items-center gap-2 rounded-md bg-destructive-soft px-3 py-2 text-sm font-semibold text-destructive-soft-foreground">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" aria-hidden />
-            {formatDuration(recordMs)}
-          </span>
-          <button
-            type="button"
-            onClick={() => stopRecording(true)}
-            className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-            Bekor
-          </button>
-          <button
-            type="button"
-            onClick={() => stopRecording(false)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground"
-          >
-            <Square className="h-4 w-4" aria-hidden />
-            To‘xtatish
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-end gap-1 p-2">
-          {/* Emoji */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setEmojiOpen((v) => !v)}
-              aria-expanded={emojiOpen}
-              aria-label="Emoji"
-              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <Smile className="h-5 w-5" aria-hidden />
-            </button>
-            {emojiOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setEmojiOpen(false)}
-                  aria-hidden
-                />
-                <div className="absolute bottom-12 left-0 z-20 grid w-64 grid-cols-8 gap-0.5 rounded-lg border border-border bg-popover p-2 shadow-lg">
-                  {EMOJI.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => {
-                        onDraftChange(draft + e)
-                        inputRef.current?.focus()
-                      }}
-                      className="flex h-7 w-7 items-center justify-center rounded text-base hover:bg-muted"
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+        `relative` — MAJBURIY: ovoz yozilayotganda `VoiceRecorder` shu
+        qatorni to'liq yopadigan panel chizadi.
+      */}
+      <div className="relative flex items-end gap-1 p-2">
+        {/* Fayl */}
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={disabled || recording}
+          tabIndex={recording ? -1 : undefined}
+          aria-label="Fayl biriktirish"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+        >
+          <Paperclip className="h-5 w-5" aria-hidden />
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.length) addFiles(e.target.files)
+            e.target.value = ""
+          }}
+        />
 
-          {/* Fayl */}
+        {/* Matn */}
+        <label htmlFor="chat-input" className="sr-only">
+          Xabar yozish
+        </label>
+        <textarea
+          id="chat-input"
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => handleChange(e.target.value)}
+          onPaste={onPaste}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault()
+              submit()
+            }
+          }}
+          onFocus={() => {
+            // Klaviatura ochilganda maydon ko'rinishda qolsin
+            window.setTimeout(() => inputRef.current?.scrollIntoView({ block: "nearest" }), 250)
+          }}
+          rows={1}
+          disabled={disabled || recording}
+          tabIndex={recording ? -1 : undefined}
+          placeholder="Xabar yozing…"
+          className="min-h-11 flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
+        />
+
+        {/* Emoji */}
+        <div className="relative shrink-0">
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            aria-label="Fayl biriktirish"
+            onClick={() => setEmojiOpen((v) => !v)}
+            disabled={recording}
+            tabIndex={recording ? -1 : undefined}
+            aria-expanded={emojiOpen}
+            aria-label="Emoji"
             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <Paperclip className="h-5 w-5" aria-hidden />
+            <Smile className="h-5 w-5" aria-hidden />
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.length) addFiles(e.target.files)
-              e.target.value = ""
-            }}
-          />
-
-          {/* Matn */}
-          <label htmlFor="chat-input" className="sr-only">
-            Xabar yozish
-          </label>
-          <textarea
-            id="chat-input"
-            ref={inputRef}
-            value={draft}
-            onChange={(e) => handleChange(e.target.value)}
-            onPaste={onPaste}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                submit()
-              }
-            }}
-            onFocus={() => {
-              // Klaviatura ochilganda maydon ko'rinishda qolsin
-              window.setTimeout(
-                () => inputRef.current?.scrollIntoView({ block: "nearest" }),
-                250,
-              )
-            }}
-            rows={1}
-            disabled={disabled}
-            placeholder="Xabar yozing…"
-            className="min-h-11 flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
-          />
-
-          {/* Mikrofon yoki yuborish */}
-          {draft.trim() || readyIds.length > 0 || editing ? (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={editing ? !draft.trim() : !canSend}
-              aria-label={editing ? "Saqlash" : "Yuborish"}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-40"
-            >
-              {uploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-              ) : editing ? (
-                <Check className="h-5 w-5" aria-hidden />
-              ) : (
-                <Send className="h-5 w-5" aria-hidden />
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void startRecording()}
-              disabled={disabled}
-              aria-label="Ovozli xabar yozish"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-40"
-            >
-              <Mic className="h-5 w-5" aria-hidden />
-            </button>
+          {emojiOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setEmojiOpen(false)} aria-hidden />
+              <div className="absolute bottom-12 right-0 z-20 grid w-64 grid-cols-8 gap-0.5 rounded-lg border border-border bg-popover p-2 shadow-lg">
+                {EMOJI.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => {
+                      onDraftChange(draft + e)
+                      inputRef.current?.focus()
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded text-base hover:bg-muted"
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
-      )}
+
+        {/*
+          Mikrofon yoki yuborish — Telegramdagi kabi: maydon bo'sh bo'lsa
+          mikrofon, matn yozilsa yuborish o'qi.
+        */}
+        {draft.trim() || readyIds.length > 0 || editing ? (
+          <button
+            type="button"
+            onClick={submit}
+            disabled={editing ? !draft.trim() : !canSend}
+            aria-label={editing ? "Saqlash" : "Yuborish"}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-40"
+          >
+            {uploading ? (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            ) : editing ? (
+              <Check className="h-5 w-5" aria-hidden />
+            ) : (
+              <Send className="h-5 w-5" aria-hidden />
+            )}
+          </button>
+        ) : (
+          <VoiceRecorder
+            onRecorded={handleVoiceRecorded}
+            disabled={disabled}
+            busy={voiceBusy}
+            onRecordingChange={setRecording}
+          />
+        )}
+      </div>
     </div>
   )
 }

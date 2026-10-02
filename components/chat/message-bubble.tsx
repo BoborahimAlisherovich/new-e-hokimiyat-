@@ -2,12 +2,12 @@
 
 import type React from "react"
 import { useRef } from "react"
-import { AlertCircle, Check, CheckCheck, Clock, Download, FileText, Play, RotateCcw } from "lucide-react"
+import { AlertCircle, Check, CheckCheck, Clock, Download, FileText, RotateCcw } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { VoicePlayer } from "./voice-player"
 import {
   formatBytes,
-  formatDuration,
   type ChatAttachment,
 } from "@/lib/api/chat-v2.api"
 import { timeLabel, type LocalMessage } from "./chat-utils"
@@ -315,21 +315,30 @@ function AttachmentRow({
     )
   }
 
-  if (attachment.kind === "VOICE" || attachment.kind === "AUDIO") {
+  // Ovozli xabar — Telegramdagidek bitta qator: ▶ · to'lqin · davomiylik.
+  // Brauzerning `<audio controls>` paneli pufak rangiga moslashmasdi va
+  // balandligi bilan pufakning yarmini egallardi.
+  if (attachment.kind === "VOICE") {
+    return (
+      <VoicePlayer
+        src={attachment.url}
+        durationMs={attachment.duration_ms}
+        seed={attachment.id}
+        tone={mine ? "own" : "muted"}
+      />
+    )
+  }
+
+  if (attachment.kind === "AUDIO") {
     return (
       <div className={cn("rounded-md px-2 py-1.5", surface)}>
-        <div className="mb-1 flex items-center gap-1.5">
-          <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="text-2xs font-semibold">
-            {attachment.kind === "VOICE" ? "Ovozli xabar" : attachment.original_name}
-          </span>
-          {attachment.duration_ms ? (
-            <span className="ml-auto text-2xs tabular-nums opacity-75">
-              {formatDuration(attachment.duration_ms)}
-            </span>
-          ) : null}
-        </div>
-        <audio src={attachment.url ?? undefined} controls preload="metadata" className="w-full" />
+        <p className="mb-1 truncate text-2xs font-semibold">{attachment.original_name}</p>
+        <VoicePlayer
+          src={attachment.url}
+          durationMs={attachment.duration_ms}
+          seed={attachment.id}
+          tone={mine ? "own" : "muted"}
+        />
       </div>
     )
   }

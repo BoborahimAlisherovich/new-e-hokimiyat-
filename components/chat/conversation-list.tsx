@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Loader2, MessageSquare, Search, X } from "lucide-react"
+import { Loader2, MessageSquare, Plus, Search, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -42,12 +42,15 @@ export function ConversationList({
   activePeerId,
   loading,
   onSelect,
+  onNewChat,
   language,
 }: {
   rows: ConversationRow[]
   activePeerId: string | null
   loading: boolean
   onSelect: (peerId: string) => void
+  /** «+» tugmasi — butun xodimlar ro'yxatini ochadi */
+  onNewChat?: () => void
   language?: string
 }) {
   const [query, setQuery] = useState("")
@@ -88,9 +91,9 @@ export function ConversationList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Qidiruv */}
-      <div className="border-b border-border p-2">
-        <div className="relative">
+      {/* Qidiruv + «yangi suhbat» */}
+      <div className="flex items-center gap-2 border-b border-border p-2">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -114,6 +117,18 @@ export function ConversationList({
             </button>
           )}
         </div>
+
+        {onNewChat && (
+          <button
+            type="button"
+            onClick={onNewChat}
+            aria-label="Yangi suhbat boshlash"
+            title="Yangi suhbat"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <Plus className="h-5 w-5" aria-hidden />
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -130,8 +145,18 @@ export function ConversationList({
               <div className="flex flex-col items-center gap-2 p-8 text-center">
                 <MessageSquare className="h-7 w-7 text-muted-foreground" aria-hidden />
                 <p className="text-sm text-muted-foreground">
-                  {debounced ? "Hech narsa topilmadi" : "Suhbat yo‘q"}
+                  {debounced ? "Hech narsa topilmadi" : "Hali suhbat yo‘q"}
                 </p>
+                {!debounced && onNewChat && (
+                  <button
+                    type="button"
+                    onClick={onNewChat}
+                    className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden />
+                    Suhbat boshlash
+                  </button>
+                )}
               </div>
             ) : (
               <ul className="divide-y divide-border">

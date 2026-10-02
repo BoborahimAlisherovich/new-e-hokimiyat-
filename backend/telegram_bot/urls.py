@@ -6,6 +6,7 @@ from .views import (
     TelegramUserViewSet, AppealCategoryViewSet, AppealTypeViewSet,
     TelegramAppealViewSet, BotStatsView, WebhookView
 )
+from .views_media import AppealAttachmentFileView
 
 router = DefaultRouter()
 router.register('settings', BotSettingsViewSet, basename='bot-settings')
@@ -17,7 +18,15 @@ router.register('types', AppealTypeViewSet, basename='appeal-types')
 router.register('appeals', TelegramAppealViewSet, basename='telegram-appeals')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Murojaat ilovasi — sayt ichida ochish uchun (imzolangan havola).
+    # Router'dan OLDIN turishi shart, aks holda 'attachments' ni
+    # DefaultRouter o'ziga oladi.
+    path(
+        'attachments/<int:pk>/file/',
+        AppealAttachmentFileView.as_view(),
+        name='appeal-attachment-file',
+    ),
     path('stats/', BotStatsView.as_view(), name='bot-stats'),
     path('webhook/', WebhookView.as_view(), name='telegram-webhook'),
+    path('', include(router.urls)),
 ]

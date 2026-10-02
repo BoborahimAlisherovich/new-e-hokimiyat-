@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { VoiceRecordingBar } from "@/components/chat/voice-recorder";
+import { usePushToTalk } from "@/hooks/use-push-to-talk";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +31,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { API_BASE, getAccessToken } from "@/lib/api/client";
-import { useAudioRecorder, formatTime } from "@/hooks/use-audio-recorder";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -119,6 +121,13 @@ const messageVariants = {
 // Main Component
 // ============================================================================
 
+/** Mikrofon jestiga uzatiladigan uchta amal */
+type RecordControls = {
+  start: () => void | Promise<void>;
+  stop: () => void;
+  cancel: () => void;
+};
+
 export default function AIAssistantPage() {
   // State
   const [conversations, setConversations] = useState<AIConversation[]>([]);
@@ -144,6 +153,8 @@ export default function AIAssistantPage() {
   const speechRecognitionRef = useRef<any>(null);
   const speechFinalRef = useRef<string>("");
   const isRecordingRef = useRef<boolean>(false);
+  /** Yozuvdan OLDINGI matn — bekor qilinganda shu qaytariladi */
+  const inputBeforeRecordRef = useRef<string>("");
 
   const {
     isRecording,
@@ -313,26 +324,61 @@ export default function AIAssistantPage() {
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
-    if (!isRecording && speechText.trim() && audioBlob) {
-      setInputMessage(speechText.trim());
-      resetRecording();
+    // Yozuv tugagach aytilgan matn maydonga tushadi.
+    //
+    // ILGARI shu yerda `resetRecording()` ham chaqirilardi — ya'ni audio
+    // darhol o'chib ketardi va pastdagi «ovozni AI ga yuborish» paneli
+    // amalda HECH QACHON ko'rinmasdi. Endi audio saqlanadi: foydalanuvchi
+    // matnni ham, ovozni ham yuborishi mumkin.
+    if (!isRecording && speechText.trim()) {
+      setInputMessage((prev) => (prev.trim() ? prev : speechText.trim()));
     }
-  }, [isRecording, speechText, audioBlob, resetRecording]);
+  }, [isRecording, speechText]);
 
   // ============================================================================
   // Handlers
   // ============================================================================
 
-  const handleRecordToggle = async () => {
-    if (isRecording) {
-      stopRecording();
-      if (speechRecognitionRef.current) {
-        try { speechRecognitionRef.current.stop(); } catch {}
-        speechRecognitionRef.current = null;
-      }
-      resetRecording();
-    } else {
+  /**
+   * OVOZ YOZISH — chatdagi bilan BIR XIL jest
+   * =========================================
+   * Ilgari bu tugma «bosildi — boshlandi, yana bosildi — to'xtadi»
+   * tarzida ishlardi, chatdagi mikrofon esa bosib turishni talab qilardi.
+   * Bitta tizimda ovoz yozishning ikki xil usuli bo'lishi foydalanuvchini
+   * chalkashtiradi, shuning uchun ikkalasi ham `usePushToTalk` ga o'tdi.
+   *
+   * Bu yerdagi farq: yozuv bilan bir vaqtda NUTQ MATNGA aylantiriladi
+   * (Web Speech API), shuning uchun `useVoiceRecorder` emas, mavjud
+   * `useAudioRecorder` qoldirildi — faqat jest almashtirildi.
+   */
+  const stopSpeechRecognition = useCallback(() => {
+    if (speechRecognitionRef.current) {
+      try { speechRecognitionRef.current.stop(); } catch {}
+      speechRecognitionRef.current = null;
+    }
+  }, []);
+
+  /** Qo'yib yuborildi — yozuv tugadi, matn va audio saqlanadi */
+  const handleRecordStop = useCallback(() => {
+    stopRecording();
+    stopSpeechRecognition();
+  }, [stopRecording, stopSpeechRecognition]);
+
+  /** Chapga surildi — yozuv ham, aytilgan matn ham bekor qilinadi */
+  const handleRecordCancel = useCallback(() => {
+    stopRecording();
+    stopSpeechRecognition();
+    resetRecording();
+    speechFinalRef.current = "";
+    setSpeechText("");
+    setInputMessage(inputBeforeRecordRef.current);
+  }, [resetRecording, stopRecording, stopSpeechRecognition]);
+
+  const handleRecordStart = async () => {
+    {
+      inputBeforeRecordRef.current = inputMessage;
       setSpeechText("");
+      resetRecording();
       await startRecording();
       
       if (speechSupported) {
@@ -522,7 +568,11 @@ export default function AIAssistantPage() {
           currentConversation={currentConversation}
           onInputChange={setInputMessage}
           onSendMessage={() => sendMessage()}
-          onRecordToggle={handleRecordToggle}
+          recordControls={{
+            start: handleRecordStart,
+            stop: handleRecordStop,
+            cancel: handleRecordCancel,
+          }}
           onQuickChat={quickChat}
           onQuickAction={sendMessage}
           onResetRecording={resetRecording}
@@ -993,7 +1043,7 @@ function ChatArea({
   currentConversation,
   onInputChange,
   onSendMessage,
-  onRecordToggle,
+  recordControls,
   onQuickChat,
   onQuickAction,
   onResetRecording,
@@ -1018,7 +1068,7 @@ function ChatArea({
   currentConversation: AIConversation | null;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
-  onRecordToggle: () => void;
+  recordControls: RecordControls;
   onQuickChat: (message: string) => void;
   onQuickAction: (message: string) => void;
   onResetRecording: () => void;
@@ -1214,7 +1264,7 @@ function ChatArea({
         onQuickChat={onQuickChat}
         onInputChange={onInputChange}
         onSendMessage={onSendMessage}
-        onRecordToggle={onRecordToggle}
+        recordControls={recordControls}
         onResetRecording={onResetRecording}
         sendMessageWithAudio={sendMessageWithAudio}
       />
@@ -1234,7 +1284,7 @@ function ChatInput({
   onQuickChat,
   onInputChange,
   onSendMessage,
-  onRecordToggle,
+  recordControls,
   onResetRecording,
   sendMessageWithAudio,
 }: {
@@ -1249,7 +1299,7 @@ function ChatInput({
   onQuickChat: (message: string) => void;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
-  onRecordToggle: () => void;
+  recordControls: RecordControls;
   onResetRecording: () => void;
   sendMessageWithAudio: () => void;
 }) {
@@ -1259,6 +1309,19 @@ function ChatInput({
     "Hisobot yarat",
     "Muddati o'tgan vazifalar",
   ];
+
+  /**
+   * Chatdagi mikrofon bilan BIR XIL jest: bosib turing, qo'yib
+   * yuborsangiz to'xtaydi, chapga sursangiz bekor bo'ladi, yuqoriga
+   * sursangiz qulflanadi (sichqonchada bir marta bosish ham qulflaydi).
+   */
+  const gesture = usePushToTalk({
+    onStart: recordControls.start,
+    onStop: recordControls.stop,
+    onCancel: recordControls.cancel,
+    disabled: isSending,
+    isRecording,
+  });
 
   return (
     <div className="shrink-0 border-t border-border bg-card p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
@@ -1282,20 +1345,18 @@ function ChatInput({
           </span>
           <span>
             {isRecording
-              ? "Mikrofon yozuvni tugatgach, matn maydonga tushadi."
+              ? "Qo'yib yuboring — to'xtaydi. Chapga suring — bekor bo'ladi."
               : "Enter yuboradi, Shift+Enter yangi qator ochadi."}
           </span>
         </div>
 
-        {/* Recording Indicator */}
-        {isRecording && (
-          <div className="mb-2 sm:mb-3 flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-destructive-soft">
-            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 bg-destructive rounded-full animate-pulse" />
-            <span className="text-xs sm:text-sm text-destructive font-medium">
-              Yozib olinmoqda: {formatTime(recordingTime)}
-            </span>
-          </div>
-        )}
+        {/*
+          «Yozib olinmoqda» tasmasi ataylab OLIB TASHLANDI: u yozuv
+          boshlanganda paydo bo'lib, pastdagi butun qatorni surib
+          yuborardi — barmoq mikrofon ustida turgan payt tugma joyidan
+          siljib ketardi. Endi vaqt ham, to'lqin ham qatorning O'ZIDA,
+          mutlaq joylashgan panelda ko'rsatiladi.
+        */}
 
         {/* Audio Preview */}
         {audioBlob && !isRecording && (
@@ -1318,21 +1379,43 @@ function ChatInput({
           </div>
         )}
 
-        {/* Input Field */}
-        <div className="flex gap-2 items-end">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onRecordToggle}
+        {/*
+          Input Field — `relative`: yozuv paneli shu qatorni USTIDAN
+          yopadi, hech narsani surmaydi.
+        */}
+        <div className="relative flex gap-2 items-end">
+          {/* Yozuv paneli */}
+          {isRecording && (
+            <div className="absolute inset-0 z-20 flex items-center rounded-xl bg-card">
+              <VoiceRecordingBar
+                seconds={recordingTime}
+                locked={gesture.locked}
+                willCancel={gesture.willCancel}
+                dx={gesture.dx}
+                onCancel={gesture.cancel}
+                onStop={() => void gesture.stop()}
+              />
+            </div>
+          )}
+
+          <button
+            type="button"
+            {...gesture.handlers}
             disabled={isSending}
-            className={`shrink-0 h-11 w-11 rounded-xl sm:h-11 sm:w-11 ${
-              isRecording 
-                ? "bg-destructive-soft border-border text-destructive-soft-foreground hover:bg-destructive-soft" 
+            aria-pressed={isRecording}
+            aria-label={
+              isRecording
+                ? "Yozuvni tugatish"
+                : "Ovoz bilan aytish — bosib turing yoki bir marta bosing"
+            }
+            className={`relative z-30 flex shrink-0 h-11 w-11 items-center justify-center rounded-xl border transition-colors disabled:opacity-50 ${gesture.surfaceClass} ${
+              isRecording
+                ? "border-destructive bg-destructive text-white"
                 : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </Button>
+          </button>
           
           <div className="flex-1 relative">
             <Textarea

@@ -140,24 +140,75 @@ class AppealTypeSerializer(serializers.ModelSerializer):
 
 
 class AppealAttachmentSerializer(serializers.ModelSerializer):
-    """Murojaat ilovasi serializer"""
-    
+    """Murojaat ilovasi serializer.
+
+    `file_url` HAR DOIM saytning o'z proxy manzilini qaytaradi. Fayl
+    diskda bo'ladimi yoki Telegram serverida qoladimi — frontend uchun
+    farqi yo'q, ikkalasi ham bir xil havolada ochiladi.
+
+    Havola imzolangan va muddati cheklangan: `<img>` va `<video>`
+    teglari `Authorization` sarlavhasini yubora olmaydi, shuning uchun
+    JWT o'rniga imzo ishlatiladi (`telegram_bot/media.py`).
+    """
+
     file_url = serializers.SerializerMethodField()
-    
+    download_url = serializers.SerializerMethodField()
+    preview_kind = serializers.SerializerMethodField()
+    content_type = serializers.SerializerMethodField()
+    is_remote = serializers.SerializerMethodField()
+
     class Meta:
         model = AppealAttachment
         fields = [
             'id', 'file_type', 'telegram_file_id', 'file', 'file_url',
+            'download_url', 'preview_kind', 'content_type', 'is_remote',
             'file_name', 'file_size', 'mime_type', 'created_at'
         ]
-    
+
     def get_file_url(self, obj):
-        if obj.file:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.file.url)
-            return obj.file.url
-        return None
+        from .media import build_attachment_url
+
+        return build_attachment_url(obj, self.context.get('request'))
+
+    def get_download_url(self, obj):
+        separator = '&' if '?' in self.get_file_url(obj) else '?'
+        return f"{self.get_file_url(obj)}{separator}download=1"
+
+    def get_content_type(self, obj):
+        from .media import guess_content_type
+
+        return guess_content_type(obj)
+
+    def get_is_remote(self, obj):
+        """Fayl diskda emas, Telegram serverida turibdimi."""
+        return not bool(obj.file)
+
+    def get_preview_kind(self, obj):
+        """Frontend qaysi ko'rgichni ochishini aytadi.
+
+        Qiymatlar: image | video | audio | pdf | text | office | other
+        """
+        from .media import guess_content_type
+
+        content_type = (guess_content_type(obj) or '').lower()
+        file_type = (obj.file_type or '').lower()
+
+        if file_type == 'photo' or content_type.startswith('image/'):
+            return 'image'
+        if file_type in ('video', 'video_note') or content_type.startswith('video/'):
+            return 'video'
+        if file_type in ('audio', 'voice') or content_type.startswith('audio/'):
+            return 'audio'
+        if content_type == 'application/pdf':
+            return 'pdf'
+        if content_type.startswith('text/'):
+            return 'text'
+        if any(marker in content_type for marker in (
+            'wordprocessingml', 'spreadsheetml', 'presentationml',
+            'msword', 'ms-excel', 'ms-powerpoint',
+        )):
+            return 'office'
+        return 'other'
 
 
 class AppealMessageSerializer(serializers.ModelSerializer):

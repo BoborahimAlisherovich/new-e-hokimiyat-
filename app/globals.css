@@ -992,6 +992,28 @@
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* --------------------------------------------------------------- KALENDAR
+     Joriy oyga kirmagan kun katagi. DashStack maketidagi ingichka qiya
+     chiziqlar. Bu RANG O'TISHI emas — ikki tokenli takrorlanuvchi naqsh,
+     ustida matn yo'q, shuning uchun kontrast o'lchash talabiga tushmaydi.
+     Kun raqami o'z fonida (`--card`) qoladi va o'qiladi.
+     --------------------------------------------------------------------- */
+  .cal-outside {
+    background-color: var(--card);
+    /* Chiziqlar `--muted` da deyarli ko'rinmasdi — `--border` ravshanroq
+       va to'r chiziqlari bilan bir xil rangda, ya'ni bir butun ko'rinadi. */
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--border) 0,
+      var(--border) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  }
+  .cal-outside:hover {
+    background-color: var(--muted);
+  }
 }
 
 /* ============================================================= PERFORMANS
@@ -1251,4 +1273,53 @@
   .float-soft {
     animation: none;
   }
+}
+
+/* ============================================================ LANDING v2
+   Marquee (davlat xizmatlari — ikki qarama-qarshi qator; rahbariyat
+   karuseli) va rasm tiniqlashtirish.
+   ---------------------------------------------------------------------------*/
+
+/* Ro'yxat ikki nusxada joylanadi; -50% ga surilganda ikkinchi nusxa
+   birinchisining o'rniga keladi — uzluksiz halqa, sakrash yo'q. */
+@keyframes marquee-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes marquee-right {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+.marquee-track {
+  animation: marquee-left var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+.marquee-track-reverse {
+  animation: marquee-right var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+/* Ustiga kelinsa yoki ichidagi havola fokuslansa — to'xtaydi */
+.marquee-mask:hover .marquee-track,
+.marquee-mask:hover .marquee-track-reverse,
+.marquee-mask:focus-within .marquee-track,
+.marquee-mask:focus-within .marquee-track-reverse {
+  animation-play-state: paused;
+}
+/* Chetlari yumshoq so'nadi — kesilgan karta ko'rinmaydi */
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .marquee-track-reverse {
+    animation: none;
+  }
+}
+
+/* Rahbariyat rasmlari — portaldagi asl fayllar kichik; feConvolveMatrix
+   (SVG filtri `#sharpen`, Leadership bo'limida) qirralarni tiniqlashtiradi.
+   Filtr qo'llab-quvvatlanmasa rasm o'zgarishsiz qoladi. */
+.sharpen {
+  filter: url(#sharpen) contrast(1.04) saturate(1.05);
 }

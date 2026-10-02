@@ -60,6 +60,7 @@ from .serializers import (
     TaskAttachmentSerializer,
     TaskCreateSerializer,
     TaskDetailSerializer,
+    TaskExecutionSerializer,
     TaskMessageSerializer,
     TaskMinimalSerializer,
     TaskOrganizationSerializer,
@@ -390,7 +391,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         # Topshiriqni tahrirlash faqat yaratuvchilar uchun
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), CanCreateTasks()]
-        return [IsAuthenticated()]
+        # MUHIM: boshqa amallar uchun `super()` — u `@action(permission_classes=...)`
+        # ni hisobga oladi. Ilgari bu yerda `[IsAuthenticated()]` qaytarilardi va
+        # CanCloseTask / CanExecuteTasks umuman ishlamasdi: istalgan xodim
+        # topshiriqni nazoratdan yechishi yoki qayta ijroga qaytarishi mumkin edi.
+        return super().get_permissions()
     
     @staticmethod
     def _field_snapshot(task: Task) -> Dict[str, Any]:
@@ -577,7 +582,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         if audio_file:
             raw_transcription = ai_service.transcribe_audio(audio_file)
             if raw_transcription.startswith('Xatolik:'):
-                return Response({'error': raw_transcription}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': raw_transcription}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             text = raw_transcription
         
         # Tashkilotlar ro'yxatini olish
@@ -664,7 +669,8 @@ QOIDALAR:
         try:
             client = ai_service.get_client()
             if not client:
-                return Response({'error': 'AI xizmat sozlanmagan'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # 503: AI tashqi xizmat, sozlanmagani server nosozligi emas.
+                return Response({'error': 'AI xizmat sozlanmagan'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
             if ai_service.provider == 'openai':
                 response = client.chat.completions.create(
@@ -1404,12 +1410,26 @@ QOIDALAR:
         if file_url and request is not None:
             file_url = request.build_absolute_uri(file_url)
 
+        import mimetypes
+
+        from core.file_validators import preview_kind
+
+        content_type = mimetypes.guess_type(attachment.file_name or '')[0] or 'application/octet-stream'
+
         return {
             'id': str(attachment.id),
             'file': file_url,
+            'file_url': file_url,
             'file_name': attachment.file_name,
             'file_type': attachment.file_type,
             'file_size': attachment.file_size,
+            'content_type': content_type,
+            # Frontend shu qiymatga qarab sayt ichidagi ko'rgichni ochadi.
+            'preview_kind': preview_kind(
+                file_name=attachment.file_name or '',
+                content_type=content_type,
+                file_type=attachment.file_type or '',
+            ),
             'uploaded_at': attachment.created_at,
         }
 
@@ -1585,6 +1605,27 @@ QOIDALAR:
         
         return Response(TaskDetailSerializer(task, context={"request": request}).data)
     
+    @action(detail=True, methods=['get'])
+    def executions(self, request: Request, pk=None) -> Response:
+        """
+        GET /api/tasks/{id}/executions/
+
+        Ijro yozuvlari ilova fayllari bilan. Frontend topshiriq sahifasida
+        ijrochi yuklagan isbot fayllarini shu yerdan oladi — ilgari bu
+        endpoint yo'q edi (404) va isbotlar sahifada umuman chiqmasdi.
+        Tashkilot xodimi faqat o'z tashkilotining yozuvlarini ko'radi.
+        """
+        task = self.get_object()
+        qs = (
+            task.executions.select_related('executed_by')
+            .prefetch_related('attachments')
+            .order_by('created_at')
+        )
+        user = request.user
+        if user.role in (UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL):
+            qs = qs.filter(task_organization__organization_id=user.organization_id)
+        return Response(TaskExecutionSerializer(qs, many=True, context={'request': request}).data)
+
     @action(detail=True, methods=['get', 'post'])
     def timeline(self, request, pk=None):
         """

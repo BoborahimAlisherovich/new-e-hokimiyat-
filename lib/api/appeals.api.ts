@@ -43,12 +43,19 @@ interface TelegramAppealResponse {
   telegram_user?: {
     id: number
     telegram_id: number
+    username?: string | null
     first_name?: string
     last_name?: string
     full_name?: string
     gender?: string
     phone?: string
+    region?: number | null
     region_name?: string
+    language?: string
+    is_registered?: boolean
+    is_blocked?: boolean
+    appeals_count?: number
+    last_activity?: string | null
   }
   user_name?: string
   user_phone?: string

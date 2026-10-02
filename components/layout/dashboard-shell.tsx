@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
 import { MobileNavDrawer, Sidebar } from "@/components/layout/sidebar"
@@ -53,7 +53,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <CurrentUserProvider onUnauthenticated={() => (window.location.href = "/login")}>
+    <CurrentUserProvider onUnauthenticated={() => (window.location.href = "/kirish")}>
       <UnreadProvider>
         <MobileNavProvider value={mobileNav}>
           <AccessGate>
@@ -77,32 +77,32 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Marshrut ruxsatini tekshiradi. Foydalanuvchi hali yechilmagan bo'lsa
- * kontentni BLOKLAMAYDI — faqat rol aniq bo'lgach va ruxsat yo'q bo'lsa
- * yo'naltiradi. Shu sababli sahifalar orasidagi o'tish tez.
+ * Marshrut ruxsatini tekshiradi. Hamma rollarga ochiq sahifalar rol
+ * yechilmasidan oldin ham chiziladi (tez o'tish uchun); cheklangan
+ * sahifalar esa rolni kutadi va ruxsat bo'lmasa umuman chizilmaydi.
  */
 function AccessGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const { role, status } = useCurrentUser()
-  const [denied, setDenied] = useState(false)
 
-  const check = useCallback(() => {
-    if (!role) return
-    if (canAccessDashboardPath(role, pathname)) {
-      setDenied(false)
-      return
-    }
-    setDenied(true)
-    router.replace(getFirstAllowedDashboardPath(role))
-  }, [role, pathname, router])
+  // Ruxsat RENDER vaqtida hisoblanadi. Ilgari `denied` useEffect ichida
+  // o'rnatilardi — bola sahifaning effektlari ota effektidan oldin
+  // ishlagani uchun ruxsatsiz sahifa baribir API'ni so'rab ulgurardi
+  // (konsolda 403). Endi bunday sahifa bir marta ham chizilmaydi.
+  const denied = !!role && !canAccessDashboardPath(role, pathname)
 
   useEffect(() => {
-    check()
-  }, [check])
+    if (denied) router.replace(getFirstAllowedDashboardPath(role))
+  }, [denied, role, router])
+
+  // Rol hali kelmagan va sahifa eng kam huquqli rolga ham ochiq emas
+  // (telegram-bot, users, analytics...) — kontent rolni kutadi.
+  // Hamma uchun ochiq sahifalar darhol chiziladi.
+  const waitForRole = !role && status === "loading" && !canAccessDashboardPath(null, pathname)
 
   // Ruxsat yo'q — yo'naltirish davomida kontent ko'rsatilmaydi
-  if (denied) {
+  if (denied || waitForRole) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background p-4">
         <div className="surface flex flex-col items-center gap-3 px-6 py-5">
@@ -116,8 +116,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Birinchi yuklanishda rol hali kelmagan bo'lsa ham kontent
+  // Hamma rollarga ochiq sahifalarda rol hali kelmagan bo'lsa ham kontent
   // ko'rsatiladi: sahifalar o'z skeletlarini chizadi.
-  void status
   return <>{children}</>
 }

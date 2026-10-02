@@ -18,6 +18,9 @@ import type {
   TaskUpdateInput, 
   TaskExecution, 
   TaskChatMessage,
+  TaskPriority,
+  RecurringFrequency,
+  RecurringStatus,
   PaginatedResponse 
 } from '@/types'
 import { fetchApi, buildQueryString, ApiError } from './client'
@@ -506,9 +509,11 @@ export interface RecurringTaskResponse {
   id: string
   title: string
   description: string
-  frequency: string
+  // Backend `RecurringTask.FREQUENCY_CHOICES` dan boshqa qiymat
+  // qaytarmaydi — `string` bo'lsa UI da har qanday matn o'tib ketardi.
+  frequency: RecurringFrequency
   frequency_display: string
-  priority: string
+  priority: TaskPriority
   category: string
   deadline_days: number
   organizations: string[]
@@ -518,7 +523,7 @@ export interface RecurringTaskResponse {
   end_date: string | null
   next_run_date: string | null
   last_run_date: string | null
-  status: string
+  status: RecurringStatus
   status_display: string
   total_created: number
   created_by: string

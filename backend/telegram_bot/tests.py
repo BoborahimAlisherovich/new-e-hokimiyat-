@@ -35,10 +35,20 @@ class TelegramAppealVisibilityTests(TestCase):
         )
 
     def _get_queryset_for(self, user):
+        """ViewSet queryset'ini test uchun tayyorlash.
+
+        `force_authenticate` faqat DRF `Request` ob'ektida ishlaydi:
+        xom `WSGIRequest` da `.user` atributi umuman bo'lmaydi va
+        `get_queryset()` `AttributeError` bilan yiqiladi. Shuning uchun
+        so'rov `initialize_request` orqali o'tkaziladi — bu DRF ning
+        haqiqiy oqimi bilan bir xil.
+        """
         request = self.factory.get("/api/telegram-bot/appeals/")
         force_authenticate(request, user=user)
         view = TelegramAppealViewSet()
-        view.request = request
+        view.action_map = {}
+        view.format_kwarg = None
+        view.request = view.initialize_request(request)
         return view.get_queryset()
 
     def test_org_leader_sees_appeal_by_category_mapping(self):

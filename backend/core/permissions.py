@@ -161,13 +161,23 @@ class CanExecuteTasks(permissions.BasePermission):
 
 class CanCloseTask(permissions.BasePermission):
     """
-    Permission to close/remove control from tasks.
-    Only Hokim can close tasks.
+    Nazoratdan yechish, qayta ijroga qaytarish, muddat uzaytirishni ko'rib
+    chiqish. Qoida `tasks/access.py::can_approve_task` da (yagona manba):
+    hokim/admin — hammasini; hokim yordamchisi — o'zi yaratgan yoki unga
+    biriktirilgan topshiriqni. Frontend'dagi `task.can_approve` ham shu.
     """
+    APPROVER_ROLES = ('HOKIM', 'ADMIN', 'HOKIM_YORDAMCHISI')
+
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.role == 'HOKIM'
+        return request.user.role in self.APPROVER_ROLES
+
+    def has_object_permission(self, request, view, obj):
+        from tasks.access import can_approve_task
+
+        task = getattr(obj, 'task', obj)
+        return can_approve_task(request.user, task)
 
 
 class IsOwnerOrAdmin(permissions.BasePermission):

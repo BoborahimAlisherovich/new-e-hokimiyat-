@@ -431,10 +431,12 @@ class TaskTrendsView(views.APIView):
             task_orgs = TaskOrganization.objects.filter(organization=user.organization)
             
             # Tasks created per day (tayinlangan sana bo'yicha)
+            # `TaskOrganization` da `assigned_at` yo'q — biriktirilgan vaqt
+            # `created_at`. Ilgari bu yer tashkilot rollarida 500 berardi.
             created_trend = task_orgs.filter(
-                assigned_at__date__gte=start_date
+                created_at__date__gte=start_date
             ).annotate(
-                date=TruncDate('assigned_at')
+                date=TruncDate('created_at')
             ).values('date').annotate(
                 count=Count('id')
             ).order_by('date')

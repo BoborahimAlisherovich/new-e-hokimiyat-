@@ -87,7 +87,6 @@ export function DistrictMap({
 
   /* -------------------------------------------------------- Ma'lumot yuklash */
   useEffect(() => {
-    const ac = new AbortController()
     let alive = true
 
     /* Geometriya va statistika ALOHIDA yuklanadi.
@@ -105,7 +104,7 @@ export function DistrictMap({
         if (alive) setLoading(false)
       })
 
-    getVillageStats(ac.signal)
+    getVillageStats()
       .then((st) => {
         if (!alive) return
         setStats(st)
@@ -117,7 +116,6 @@ export function DistrictMap({
 
     return () => {
       alive = false
-      ac.abort()
     }
   }, [])
 
@@ -220,8 +218,9 @@ export function DistrictMap({
     }
     if (tipValueRef.current) {
       const s = stats?.[code]
-      tipValueRef.current.textContent = s
-        ? `${metricLabel(L, metric)}: ${nf.format(s[metric])}`
+      const v = s?.[metric]
+      tipValueRef.current.textContent = v != null
+        ? `${metricLabel(L, metric)}: ${nf.format(v)}`
         : L.noData
     }
 
@@ -435,7 +434,7 @@ export function DistrictMap({
                       role="button"
                       aria-pressed={selected === v.code}
                       aria-label={`${villageName(v, locale)} — ${metricLabel(L, metric)}: ${
-                        s ? nf.format(s[metric]) : L.noData
+                        s?.[metric] != null ? nf.format(s[metric] as number) : L.noData
                       }`}
                       onClick={() => onSelect(v.code)}
                       onFocus={(e) => {

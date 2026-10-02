@@ -25,11 +25,33 @@ app.conf.beat_schedule = {
         'task': 'tasks.celery_tasks.check_overdue_tasks',
         'schedule': crontab(minute='*/10'),
     },
-    'send-deadline-reminders': {
-        'task': 'tasks.celery_tasks.send_deadline_reminders',
-        'schedule': crontab(hour='9', minute='0'),
+    # ESLATMALAR — `agenda` ilovasida.
+    # Eski `tasks.celery_tasks.send_deadline_reminders` ataylab ro'yxatdan
+    # OLIB TASHLANDI: u oyna bo'yicha ishlagani uchun takroriy xabar
+    # yuborardi va faqat tashkilot xodimlariga borardi (hokim ham,
+    # mas'ul yordamchi ham xabardor bo'lmasdi). Funksiyaning o'zi
+    # `tasks` ichida qoldirildi — eski chaqiruvlar sinmasligi uchun.
+    #
+    # Muddatga 3 / 2 / 1 / 0 kun qolganda — ijrochi, mas'ul yordamchi,
+    # (1 kun va undan kam qolganda) hokim.
+    'send-task-deadline-reminders': {
+        'task': 'agenda.celery_tasks.send_task_deadline_reminders',
+        'schedule': crontab(hour='8', minute='30'),
     },
-    
+    # Muddat o'tganda — hokimga «bu tashkilot bajarmadi» xabari.
+    # Soatda bir marta: kechikish hokimga darrov ko'rinishi kerak,
+    # lekin har daqiqada baza aylantirilmasin.
+    'notify-overdue-tasks': {
+        'task': 'agenda.celery_tasks.notify_overdue_tasks',
+        'schedule': crontab(minute='5'),
+    },
+    # Kalendarga qo'lda qo'yilgan eslatmalar
+    'send-calendar-event-reminders': {
+        'task': 'agenda.celery_tasks.send_calendar_event_reminders',
+        'schedule': crontab(minute='*/5'),
+    },
+
+
     # Takrorlanuvchi topshiriqlar
     'process-recurring-tasks': {
         'task': 'core.tasks.process_recurring_tasks',

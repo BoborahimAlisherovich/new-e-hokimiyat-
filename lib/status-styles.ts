@@ -58,6 +58,60 @@ export const TASK_STATUS_LABEL: Record<string, string> = {
   BAJARILMADI: "Bajarilmadi",
 }
 
+/**
+ * JADVAL VA NISHONLAR UCHUN QISQA YORLIQLAR
+ *
+ * «Muddati kechikkan» va «Qayta ijroga yuborildi» to'liq holda 92px lik
+ * nishonga sig'masdi: matn ikki qatorga bo'linib, qat'iy balandlikdagi
+ * qutidan toshib chiqardi va qo'shni qator bilan ustma-ust tushardi.
+ *
+ * Shuning uchun jadvalda QISQA yorliq ko'rsatiladi, to'liq matn esa
+ * `title` atributida qoladi — sichqoncha olib borilsa o'qiladi.
+ * Batafsil sahifada (topshiriq kartasi) baribir to'liq yorliq chiqadi.
+ */
+export const TASK_STATUS_SHORT: Record<string, string> = {
+  YANGI: "Yangi",
+  TEKSHIRUVDA: "Ko'rilmoqda",
+  IJRODA: "Ijroda",
+  BAJARILDI: "Tasdiqlashda",
+  NAZORATDAN_YECHILDI: "Yechildi",
+  MUDDATI_KECH: "Kechikkan",
+  QAYTA_IJROGA_YUBORILDI: "Qayta ijroda",
+  BAJARILMADI: "Bajarilmadi",
+}
+
+export const PRIORITY_SHORT: Record<string, string> = {
+  FAVQULODDA: "Favqulodda",
+  YUQORI: "Yuqori",
+  ODDIY: "Oddiy",
+  PAST: "Past",
+  MUHIM: "Muhim",
+  SHOSHILINCH: "Shoshilinch",
+  MUHIM_SHOSHILINCH: "Muhim",
+}
+
+/* --------------------------------------------------------------- SANA */
+
+/**
+ * O'zbekcha oy qisqartmalari.
+ *
+ * `Intl.DateTimeFormat("uz-Latn-UZ", { month: "short" })` brauzerlarda
+ * «M09» qaytaradi — jadvalda «2026 M09 10» degan o'qib bo'lmaydigan
+ * satr hosil bo'lardi. Shuning uchun oy nomlari qo'lda.
+ */
+export const MONTH_SHORT_UZ = [
+  "yan", "fev", "mar", "apr", "may", "iyn",
+  "iyl", "avg", "sen", "okt", "noy", "dek",
+] as const
+
+/** `10 sen 2026` — jadval ustuni uchun ixcham va bir xil enlikda */
+export function formatDateShort(value?: string | null): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return "—"
+  return `${String(d.getDate()).padStart(2, "0")} ${MONTH_SHORT_UZ[d.getMonth()]} ${d.getFullYear()}`
+}
+
 /** Tooltip / yordam matni — foydalanuvchi statusni tushunishi uchun */
 export const TASK_STATUS_HINT: Record<string, string> = {
   YANGI: "Topshiriq yuborilgan, tashkilot hali ijroga olmagan",

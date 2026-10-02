@@ -245,11 +245,11 @@ async function tryRefreshToken(): Promise<boolean> {
 }
 
 /**
- * Foydalanuvchini login sahifasiga yo'naltiradi
+ * Foydalanuvchini kirish sahifasiga (/kirish) yo'naltiradi
  */
 function redirectToLogin(): void {
   if (typeof window !== 'undefined') {
-    window.location.href = '/login'
+    window.location.href = '/kirish'
   }
 }
 

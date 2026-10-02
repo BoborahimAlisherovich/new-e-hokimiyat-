@@ -767,11 +767,31 @@ class AppealAttachment(models.Model):
         max_length=200,
         verbose_name="Telegram fayl ID"
     )
+    # `file` ATAYLAB bo'sh qoladi: media baytlari bazaga/diskka
+    # ko'chirilmaydi, ular Telegram serverida qoladi va foydalanuvchi
+    # ko'rmoqchi bo'lganda `telegram_bot/media.py` orqali oqim bilan
+    # uzatiladi. Maydon eski (arxivlangan) ilovalar uchun saqlanadi —
+    # to'lgan bo'lsa diskdagi nusxa beriladi.
     file = models.FileField(
         upload_to='appeals/attachments/%Y/%m/',
         blank=True,
         null=True,
         verbose_name="Fayl"
+    )
+    # `getFile` qaytargan vaqtinchalik yo'l keshi. Telegram uni ~1 soat
+    # amal qiladi deydi, shuning uchun vaqt tamg'asi bilan saqlanadi va
+    # eskirganda qayta so'raladi — aks holda har ko'rish `getFile`
+    # chaqirib, Telegram limitini yeb qo'yadi.
+    telegram_file_path = models.CharField(
+        max_length=300,
+        blank=True,
+        default='',
+        verbose_name="Telegram fayl yo'li (kesh)"
+    )
+    telegram_path_synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fayl yo'li yangilangan vaqt"
     )
     file_name = models.CharField(
         max_length=200,

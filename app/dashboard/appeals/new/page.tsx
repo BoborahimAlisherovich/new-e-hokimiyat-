@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { createManualAppeal, getAppealCategories, getAppealTypes, getCurrentUser, api } from "@/lib/api"
-import { ArrowLeft, FileText, Loader2, Plus, Save, Trash2, Upload } from "lucide-react"
+import { AlertTriangle, ArrowLeft, FileText, Loader2, Plus, Save, Trash2, Upload } from "lucide-react"
 import Link from "next/link"
 
 type RegionItem = { id: number; name_uz: string }
@@ -71,6 +71,16 @@ export default function NewAppealPage() {
   const [regions, setRegions] = useState<RegionItem[]>([])
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [appealTypes, setAppealTypes] = useState<AppealTypeItem[]>([])
+  /**
+   * Ma'lumotnomalar hali yuklanmoqdami.
+   *
+   * Busiz shunday bo'lardi: sahifa ochilishi bilan «Soha» ro'yxati BO'SH
+   * massiv bo'ladi, foydalanuvchi uni bosadi va OCHILGAN, LEKIN BO'SH
+   * oynacha ko'radi — na «yuklanmoqda», na «ma'lumot yo'q». Aynan shu
+   * ingichka bo'sh quti «tanlab bo'lmayapti» degan xatoga o'xshab
+   * ko'rinardi.
+   */
+  const [refLoading, setRefLoading] = useState(true)
 
   const [citizenName, setCitizenName] = useState("")
   const [citizenPhone, setCitizenPhone] = useState("")
@@ -91,6 +101,12 @@ export default function NewAppealPage() {
   }, [router])
 
   useEffect(() => {
+    let pending = 3
+    const done = () => {
+      pending -= 1
+      if (pending <= 0) setRefLoading(false)
+    }
+
     api
       .get<any>("/telegram-bot/regions/")
       .then((res) => {
@@ -102,14 +118,17 @@ export default function NewAppealPage() {
         )
       })
       .catch(() => setRegions([]))
+      .finally(done)
 
     getAppealCategories()
       .then((rows) => setCategories(rows.map((c) => ({ id: c.id, name_uz: c.name_uz }))))
       .catch(() => setCategories([]))
+      .finally(done)
 
     getAppealTypes()
       .then((rows) => setAppealTypes(rows.map((item) => ({ id: item.id, name_uz: item.name_uz }))))
       .catch(() => setAppealTypes([]))
+      .finally(done)
   }, [])
 
   const canSubmit = useMemo(() => {
@@ -260,9 +279,21 @@ export default function NewAppealPage() {
 
                 <div className="space-y-2">
                   <Label>Hudud</Label>
-                  <Select value={regionId} onValueChange={setRegionId}>
+                  <Select
+                    value={regionId}
+                    onValueChange={setRegionId}
+                    disabled={refLoading || regions.length === 0}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Tanlang (ixtiyoriy)" />
+                      <SelectValue
+                        placeholder={
+                          refLoading
+                            ? "Yuklanmoqda…"
+                            : regions.length === 0
+                              ? "Hududlar kiritilmagan"
+                              : "Tanlang (ixtiyoriy)"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {regions.map((r) => (
@@ -272,6 +303,7 @@ export default function NewAppealPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <EmptyRefHint loading={refLoading} count={regions.length} what="Hududlar" />
                 </div>
               </div>
 
@@ -321,9 +353,13 @@ export default function NewAppealPage() {
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
                       <Label>Murojaat turi</Label>
-                      <Select value={task.appealTypeId} onValueChange={(value) => updateTask(task.id, { appealTypeId: value })}>
+                      <Select
+                        value={task.appealTypeId}
+                        onValueChange={(value) => updateTask(task.id, { appealTypeId: value })}
+                        disabled={refLoading || appealTypes.length === 0}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Tanlang" />
+                          <SelectValue placeholder={placeholderFor(refLoading, appealTypes.length)} />
                         </SelectTrigger>
                         <SelectContent>
                           {appealTypes.map((item) => (
@@ -333,13 +369,22 @@ export default function NewAppealPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <EmptyRefHint
+                        loading={refLoading}
+                        count={appealTypes.length}
+                        what="Murojaat turlari"
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label>Soha</Label>
-                      <Select value={task.categoryId} onValueChange={(value) => updateTask(task.id, { categoryId: value })}>
+                      <Select
+                        value={task.categoryId}
+                        onValueChange={(value) => updateTask(task.id, { categoryId: value })}
+                        disabled={refLoading || categories.length === 0}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Tanlang" />
+                          <SelectValue placeholder={placeholderFor(refLoading, categories.length)} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((item) => (
@@ -349,6 +394,11 @@ export default function NewAppealPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <EmptyRefHint
+                        loading={refLoading}
+                        count={categories.length}
+                        what="Murojaat sohalari"
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -421,5 +471,48 @@ export default function NewAppealPage() {
         </div>
       </DashboardPageFrame>
     </>
+  )
+}
+
+/* ------------------------------------------------------------ YORDAMCHILAR */
+
+/**
+ * Bo'sh ma'lumotnoma uchun ko'rsatkich.
+ *
+ * NEGA KERAK: Radix Select bo'sh ro'yxatda ham ochiladi va ingichka,
+ * bo'sh oynacha chizadi. Foydalanuvchi buni «tanlab bo'lmayapti, xatolik»
+ * deb qabul qiladi — aslida sabab boshqa: ma'lumotnoma bazada to'ldirilmagan.
+ * Endi ekran sababni ham, qayerda to'ldirishni ham aytadi.
+ */
+function placeholderFor(loading: boolean, count: number): string {
+  if (loading) return "Yuklanmoqda…"
+  if (count === 0) return "Ro'yxat bo'sh"
+  return "Tanlang"
+}
+
+function EmptyRefHint({
+  loading,
+  count,
+  what,
+}: {
+  loading: boolean
+  count: number
+  what: string
+}) {
+  if (loading || count > 0) return null
+  return (
+    <p className="flex items-start gap-1.5 text-xs text-warning-soft-foreground">
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span>
+        {what} hali kiritilmagan.{" "}
+        <Link
+          href="/dashboard/telegram-bot"
+          className="font-semibold underline underline-offset-2"
+        >
+          Telegram bot sozlamalarida
+        </Link>{" "}
+        qo&apos;shing.
+      </span>
+    </p>
   )
 }

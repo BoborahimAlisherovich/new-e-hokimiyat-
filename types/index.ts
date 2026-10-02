@@ -30,7 +30,11 @@ export interface BaseModel {
 
 // ==================== User Interfaces ====================
 
-export interface User extends BaseModel {
+export interface User extends Omit<BaseModel, 'created_at' | 'updated_at'> {
+  // `UserMeSerializer` (login va `/auth/me`) vaqt tamg'alarini
+  // yubormaydi — faqat foydalanuvchilar ro'yxatida keladi.
+  created_at?: string
+  updated_at?: string
   login: string
   pnfl?: string
   masked_pnfl?: string
@@ -544,6 +548,10 @@ export interface Project extends BaseModel {
   sort_order?: number
   is_active?: boolean
   history_entries?: ProjectHistory[]
+  // Backend `ProjectSerializer` bu ikkalasini har doim yuboradi
+  // (`projects/serializers.py`), tipda esa yo'q edi.
+  attachments?: ProjectAttachment[]
+  comments?: ProjectComment[]
 }
 
 export type ProjectScope = 'active' | 'archived' | 'all'

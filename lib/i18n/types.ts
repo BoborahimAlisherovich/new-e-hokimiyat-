@@ -101,6 +101,7 @@ export interface Translations {
     analyticsSection: string
     mainMenu: string
     recurringTasks: string
+    calendar: string
     map: string
     operationsSection: string
     administrationSection: string
@@ -213,6 +214,7 @@ export interface Translations {
     deadline: string
   }
   tasks: {
+    listTitle: string
     emptyTitle: string
     emptyDescription: string
     titleLabel: string
@@ -387,5 +389,50 @@ export interface Translations {
     view: string
     emptyTitle: string
     emptyDescription: string
+  }
+  recurringTasks: {
+    title: string
+    description: string
+    emptyTitle: string
+    emptyDescription: string
+    createNew: string
+    createTitle: string
+    createDescription: string
+    editTitle: string
+    editDescription: string
+    pause: string
+    resume: string
+    runNow: string
+    deleteConfirm: string
+    deleteSuccess: string
+    deleteError: string
+    pauseSuccess: string
+    resumeSuccess: string
+    runNowSuccess: string
+    runNowError: string
+    frequency: string
+    frequencyDaily: string
+    frequencyWeekly: string
+    frequencyBiweekly: string
+    frequencyMonthly: string
+    frequencyQuarterly: string
+    frequencyYearly: string
+    frequencyCustom: string
+    startDate: string
+    endDate: string
+    nextRun: string
+    lastRun: string
+    totalCreated: string
+    statusActive: string
+    statusPaused: string
+    fieldTitle: string
+    fieldDescription: string
+    priority: string
+    organizations: string
+    category: string
+    deadlineDays: string
+    actions: string
+    history: string
+    noHistory: string
   }
 }

@@ -19,6 +19,7 @@ import { normalizeUserRole } from "@/lib/role-utils"
 const ORGANIZATION_PATHS: readonly string[] = [
   "/dashboard",
   "/dashboard/tasks",
+  "/dashboard/calendar",
   "/dashboard/recurring-tasks",
   "/dashboard/appeals",
   "/dashboard/chat",
@@ -30,6 +31,7 @@ const ORGANIZATION_PATHS: readonly string[] = [
 const HOKIMLIK_MASUL_PATHS: readonly string[] = [
   "/dashboard",
   "/dashboard/tasks",
+  "/dashboard/calendar",
   "/dashboard/recurring-tasks",
   "/dashboard/appeals",
   "/dashboard/chat",
@@ -42,6 +44,7 @@ const HOKIMLIK_MASUL_PATHS: readonly string[] = [
 const HOKIM_YORDAMCHISI_PATHS: readonly string[] = [
   "/dashboard",
   "/dashboard/tasks",
+  "/dashboard/calendar",
   "/dashboard/recurring-tasks",
   "/dashboard/projects",
   "/dashboard/organizations",
@@ -57,6 +60,7 @@ const HOKIM_YORDAMCHISI_PATHS: readonly string[] = [
 const HOKIM_PATHS: readonly string[] = [
   "/dashboard",
   "/dashboard/tasks",
+  "/dashboard/calendar",
   "/dashboard/recurring-tasks",
   "/dashboard/projects",
   "/dashboard/users",
@@ -123,7 +127,24 @@ export function getAllowedDashboardPaths(role?: UserRole | null): string[] {
   return DASHBOARD_ROUTE_ACCESS[normalizedRole] || DASHBOARD_ROUTE_ACCESS[FALLBACK_ROLE]
 }
 
+/**
+ * Ruxsat berilgan bo'lim ichidagi TORROQ sahifalar. `/dashboard/tasks`
+ * hammaga ochiq, lekin tasdiqlash navbati faqat tasdiqlovchilarga —
+ * backend `CanCloseTask` bilan bir xil (hokim, admin, hokim yordamchisi).
+ */
+const RESTRICTED_SUBPATHS: ReadonlyArray<{ path: string; roles: readonly UserRole[] }> = [
+  { path: "/dashboard/tasks/pending-approval", roles: ["HOKIM", "ADMIN", "HOKIM_YORDAMCHISI"] },
+]
+
 export function canAccessDashboardPath(role: UserRole | null | undefined, pathname: string): boolean {
+  const normalizedRole = normalizeUserRole(role)
+  const restricted = RESTRICTED_SUBPATHS.find(
+    (r) => pathname === r.path || pathname.startsWith(`${r.path}/`),
+  )
+  if (restricted && !(normalizedRole && restricted.roles.includes(normalizedRole))) {
+    return false
+  }
+
   const allowedPaths = getAllowedDashboardPaths(role)
 
   return allowedPaths.some((allowedPath) => {

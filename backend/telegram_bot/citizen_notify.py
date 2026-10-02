@@ -98,6 +98,14 @@ def build_text(appeal, status: str) -> Optional[str]:
     if note and status in ('rejected', 'responded', 'resolved'):
         text += '\n\n{}: {}'.format(NOTE_LABEL.get(lang, NOTE_LABEL['uz']), note)
 
+    # Qarorni kim qabul qilgani. Rasmiy javob imzosiz bo'lmaydi — fuqaro
+    # kimdan hisobot so'rashni bilishi kerak. Muallif aniqlanmasa imzo
+    # umuman qo'yilmaydi (o'ylab chiqarilgan nom yozilmaydi).
+    if status in ('rejected', 'responded', 'resolved'):
+        from .authorship import build_signature, resolve_author
+
+        text += build_signature(resolve_author(appeal), lang)
+
     return text
 
 

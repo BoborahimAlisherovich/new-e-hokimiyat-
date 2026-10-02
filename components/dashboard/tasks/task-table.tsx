@@ -103,7 +103,7 @@ export function TaskTable({
 
   if (tasks.length === 0) {
     return (
-      <PremiumTableShell icon={ClipboardList} title={t.tasks.listTitle ?? "Topshiriqlar ro'yxati"}>
+      <PremiumTableShell icon={ClipboardList} title={t.tasks.listTitle}>
         <PremiumEmptyState
           icon={FileX}
           title={t.tasks.emptyTitle}
@@ -131,7 +131,7 @@ export function TaskTable({
   return (
     <PremiumTableShell
       icon={ClipboardList}
-      title={t.tasks.listTitle ?? "Topshiriqlar ro'yxati"}
+      title={t.tasks.listTitle}
       countLabel={String(tasks.length)}
     >
       {/* ---------------------------------------------------------- MOBIL */}

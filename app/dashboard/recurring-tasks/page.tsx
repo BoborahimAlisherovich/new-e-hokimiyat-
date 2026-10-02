@@ -9,9 +9,12 @@ import { getOrganizations } from "@/lib/api/organizations.api"
 import { useTranslation } from "@/lib/i18n/context"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
 import { Repeat, Plus, Pause, Play, Trash2, Zap, Calendar, Clock3, ListTodo } from "lucide-react"
-import type { RecurringTask } from "@/types"
+import type { RecurringTaskResponse } from "@/lib/api/tasks.api"
 
-interface RecurringTaskWithOrgs extends RecurringTask {
+// API javobining haqiqiy shakli. Ilgari `RecurringTask` (baza modeli
+// shakli) ishlatilgan edi: u yerda `organizations: number[]`, API esa
+// UUID satrlarini qaytaradi — shuning uchun tip mos kelmasdi.
+interface RecurringTaskWithOrgs extends RecurringTaskResponse {
   organization_names?: string[]
 }
 
@@ -50,7 +53,7 @@ export default function RecurringTasksPage() {
     loadData()
   }, [loadData])
 
-  const handlePause = async (id: number) => {
+  const handlePause = async (id: string) => {
     try {
       await pauseRecurringTask(id)
       loadData()
@@ -60,7 +63,7 @@ export default function RecurringTasksPage() {
     }
   }
 
-  const handleResume = async (id: number) => {
+  const handleResume = async (id: string) => {
     try {
       await resumeRecurringTask(id)
       loadData()
@@ -70,7 +73,7 @@ export default function RecurringTasksPage() {
     }
   }
 
-  const handleRunNow = async (id: number) => {
+  const handleRunNow = async (id: string) => {
     if (!confirm(t.recurringTasks.runNow)) return
     try {
       await runRecurringTaskNow(id)
@@ -81,7 +84,7 @@ export default function RecurringTasksPage() {
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm(t.recurringTasks.deleteConfirm)) return
     try {
       await deleteRecurringTask(id)
@@ -231,7 +234,7 @@ export default function RecurringTasksPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handlePause(task.id as number)}
+                            onClick={() => handlePause(task.id)}
                             className="h-8 rounded-lg border-border text-warning-soft-foreground hover:bg-warning-soft"
                           >
                             <Pause className="mr-1.5 h-3.5 w-3.5" />
@@ -241,7 +244,7 @@ export default function RecurringTasksPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleResume(task.id as number)}
+                            onClick={() => handleResume(task.id)}
                             className="h-8 rounded-lg border-border text-success-soft-foreground hover:bg-success-soft"
                           >
                             <Play className="mr-1.5 h-3.5 w-3.5" />
@@ -251,7 +254,7 @@ export default function RecurringTasksPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleRunNow(task.id as number)}
+                          onClick={() => handleRunNow(task.id)}
                           className="h-8 rounded-lg border-border text-primary-soft-foreground hover:bg-primary-soft"
                         >
                           <Zap className="mr-1.5 h-3.5 w-3.5" />
@@ -260,7 +263,7 @@ export default function RecurringTasksPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDelete(task.id as number)}
+                          onClick={() => handleDelete(task.id)}
                           className="h-8 rounded-lg border-border text-destructive-soft-foreground hover:bg-destructive-soft"
                         >
                           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -310,7 +313,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
   const [frequency, setFrequency] = useState("WEEKLY")
   const [priority, setPriority] = useState("ODDIY")
   const [category, setCategory] = useState("BOSHQA")
-  const [deadlineDays, setDeadlineDays] = useState(5)
+  const [deadlineDays, setDeadlineDays] = useState("5")
   const [selectedOrgs, setSelectedOrgs] = useState<string[]>([])
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
   const [endDate, setEndDate] = useState("")
@@ -360,7 +363,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.title}</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.fieldTitle}</label>
             <input
               type="text"
               value={title}
@@ -370,7 +373,7 @@ function CreateRecurringTaskDialog({ open, onOpenChange, organizations, onCreate
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.description}</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">{t.recurringTasks.fieldDescription}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}

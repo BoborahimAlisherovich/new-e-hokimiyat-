@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 /**
@@ -84,7 +85,7 @@ export function TaskStats({
 
       {/* Tasdiqlash navbati — yagona bosiladigan plita */}
       {canApprove ? (
-        <a
+        <Link
           href="/dashboard/tasks/pending-approval"
           className="surface surface-interactive relative overflow-hidden p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:p-3.5"
         >
@@ -98,7 +99,7 @@ export function TaskStats({
           <p className="mt-1 truncate text-[11px] font-semibold text-primary">
             Navbatni ochish →
           </p>
-        </a>
+        </Link>
       ) : (
         <div className="surface relative overflow-hidden p-3 sm:p-3.5">
           <span className="absolute inset-x-0 top-0 h-0.5 bg-warning" aria-hidden />

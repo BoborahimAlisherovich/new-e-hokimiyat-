@@ -15,6 +15,7 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
+from . import task_routing
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
@@ -27,7 +28,7 @@ from .serializers import (
     AppealReviewSerializer, AppealAssignSerializer, ManualAppealCreateSerializer, BotStatsSerializer
 )
 from core.permissions import CanManageBotSettings
-from notifications.services import create_notification, notify_appeal_feedback, notify_appeal_message, notify_appeal_status_update
+from notifications.services import notify_appeal_message, notify_appeal_status_update
 
 
 def _find_bot_pids() -> list:
@@ -483,6 +484,27 @@ class BotSettingsViewSet(viewsets.ModelViewSet):
             'pid': pid if is_running else None
         })
     
+    # Ilgari bu metod xato bilan TelegramUserViewSet ichida turardi:
+    # /settings/webhook_info/ 404, /users/webhook_info/ esa 500 berardi.
+    @action(detail=False, methods=['get'])
+    def webhook_info(self, request):
+        """Telegram webhook holatini olish"""
+        settings = self.get_object()
+        if not settings.bot_token:
+            return Response({'success': False, 'error': 'Bot token kiritilmagan'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            import requests
+            response = requests.get(
+                f'https://api.telegram.org/bot{settings.bot_token}/getWebhookInfo',
+                timeout=10
+            )
+            data = response.json()
+            if data.get('ok'):
+                return Response({'success': True, 'result': data.get('result', {})})
+            return Response({'success': False, 'error': data.get('description', 'Noma\'lum xato')}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     @action(detail=False, methods=['post'])
     def test_ai_connection(self, request):
         """AI ulanishini tekshirish"""
@@ -640,25 +662,6 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @action(detail=False, methods=['get'])
-    def webhook_info(self, request):
-        """Telegram webhook holatini olish"""
-        settings = self.get_object()
-        if not settings.bot_token:
-            return Response({'success': False, 'error': 'Bot token kiritilmagan'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            import requests
-            response = requests.get(
-                f'https://api.telegram.org/bot{settings.bot_token}/getWebhookInfo',
-                timeout=10
-            )
-            data = response.json()
-            if data.get('ok'):
-                return Response({'success': True, 'result': data.get('result', {})})
-            return Response({'success': False, 'error': data.get('description', 'Noma\'lum xato')}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     @action(detail=True, methods=['post'])
     def send_media(self, request, pk=None):
         """Foydalanuvchiga media (rasm, video, fayl) yuborish"""
@@ -1180,238 +1183,52 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    # =========================================================================
+    # TOPSHIRIQ YARATISH
+    # =========================================================================
+    # Mantiq `telegram_bot/task_routing.py` da — AI avtomatik yo'naltirish
+    # ham aynan shu kodni chaqiradi. Ikki joyda nusxa turganda biri
+    # yangilanib, ikkinchisi eskirib qolardi.
+
     def _normalize_task_priority(self, priority):
-        value = str(priority or 'ODDIY').upper()
-        if value == 'SHOSHILINCH':
-            value = 'FAVQULODDA'
-        return value if value in {'PAST', 'ODDIY', 'YUQORI', 'FAVQULODDA'} else 'ODDIY'
+        return task_routing.normalize_task_priority(priority)
 
     def _get_default_deadline_for_priority(self, priority):
-        normalized = str(priority or 'medium').lower()
-        days_map = {
-            'low': 7,
-            'medium': 5,
-            'high': 3,
-            'urgent': 1,
-        }
-        return timezone.now() + timedelta(days=days_map.get(normalized, 5))
+        return task_routing.default_deadline_for_priority(priority)
 
     def _normalize_task_category(self, appeal):
-        raw = (
-            getattr(getattr(appeal, 'category', None), 'name_uz', '')
-            or getattr(getattr(appeal, 'ai_category_suggestion', None), 'name_uz', '')
-            or 'BOSHQA'
-        )
-        normalized = str(raw).upper().replace(" ", "_").replace("O‘", "O'").replace("`", "'")
-        category_map = {
-            'IJTIMOIY': 'IJTIMOIY',
-            'IQTISODIY': 'IQTISODIY',
-            'HUQUQIY': 'HUQUQIY',
-            'INFRASTRUKTURA': 'INFRASTRUKTURA',
-            "TA'LIM": 'TA_LIM',
-            'TA_LIM': 'TA_LIM',
-            "SOG'LIQNI_SAQLASH": 'SOG_LIQNI_SAQLASH',
-            'SOG_LIQNI_SAQLASH': 'SOG_LIQNI_SAQLASH',
-            'BANDLIK': 'IQTISODIY',
-        }
-        return category_map.get(normalized, 'BOSHQA')
+        return task_routing.normalize_task_category(appeal)
 
     def _normalize_organization_ids(self, organization_ids):
-        if organization_ids is None:
-            return []
-        if isinstance(organization_ids, str):
-            return [item.strip() for item in organization_ids.split(',') if item.strip()]
-        return [str(item).strip() for item in organization_ids if str(item).strip()]
+        return task_routing.normalize_organization_ids(organization_ids)
 
     def _get_default_task_assignee(self, organization):
-        preferred_roles = ['TASHKILOT_MASUL', 'TASHKILOT_RAHBARI']
-        employees = list(
-            organization.employees.filter(
-                status='FAOL',
-                role__in=preferred_roles,
-            )
-        )
-        if not employees:
-            return None
-
-        employees.sort(
-            key=lambda employee: (
-                preferred_roles.index(employee.role) if employee.role in preferred_roles else len(preferred_roles),
-                employee.created_at,
-            )
-        )
-        return employees[0]
+        return task_routing.default_task_assignee(organization)
 
     def _get_task_deputies_for_organizations(self, *, organizations, creator):
-        from users.models import User
-
-        if getattr(creator, 'role', None) == 'HOKIM_YORDAMCHISI':
-            return [creator]
-
-        sector_ids = {
-            organization.sector_id
-            for organization in organizations
-            if getattr(organization, 'sector_id', None)
-        }
-        if not sector_ids:
-            return []
-
-        return list(
-            User.objects.filter(
-                role='HOKIM_YORDAMCHISI',
-                status='FAOL',
-                sector_id__in=sector_ids,
-            )
+        return task_routing.task_deputies_for_organizations(
+            organizations=organizations, creator=creator
         )
 
     def _create_task_context_message(self, *, task, user, appeal, organizations, attachment_files=None):
-        from tasks.models import TaskMessage
-
-        citizen_name = (getattr(appeal, 'citizen_name', '') or '').strip()
-        citizen_phone = (getattr(appeal, 'citizen_phone', '') or '').strip() or "-"
-        region_name = "-"
-        try:
-            if appeal.citizen_region:
-                region_name = appeal.citizen_region.name_uz
-        except Exception:
-            region_name = "-"
-
-        organization_names = ", ".join(org.name for org in organizations) or "-"
-        appeal_type_name = getattr(getattr(appeal, 'appeal_type', None), 'name_uz', '') or "-"
-        category_name = getattr(getattr(appeal, 'category', None), 'name_uz', '') or "-"
-        attachment_count = len(list(attachment_files or []))
-        citizen_display_name = citizen_name or "Noma'lum"
-
-        lines = [
-            "Tizim xabari",
-            f"Murojaat raqami: {appeal.appeal_number}",
-            f"Murojaatchi: {citizen_display_name}",
-            f"Telefon: {citizen_phone}",
-            f"Hudud: {region_name}",
-            f"Murojaat turi: {appeal_type_name}",
-            f"Soha: {category_name}",
-            f"Yo'naltirilgan tashkilotlar: {organization_names}",
-        ]
-
-        if attachment_count:
-            lines.append(f"Biriktirilgan fayllar soni: {attachment_count}")
-
-        lines.extend([
-            "",
-            "Murojaat matni:",
-            appeal.text,
-        ])
-
-        TaskMessage.objects.create(
+        return task_routing.create_task_context_message(
             task=task,
-            sender=None,
-            message_type='SYSTEM',
-            content="\n".join(lines),
-        )
-
-    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment='', attachment_files=None):
-        from tasks.models import Task, TaskAttachment, TaskOrganization
-        from organizations.models import Organization
-        normalized_org_ids = self._normalize_organization_ids(organization_ids)
-        organizations = list(Organization.objects.filter(id__in=normalized_org_ids, is_active=True))
-        if not organizations:
-            raise ValueError("Tashkilot tanlanmagan yoki topilmadi")
-
-        if appeal.telegram_user:
-            citizen_name = appeal.telegram_user.full_name
-            citizen_phone = appeal.telegram_user.phone
-            region_name = appeal.telegram_user.region.name_uz if appeal.telegram_user.region else "Noma'lum"
-        else:
-            citizen_name = (getattr(appeal, 'citizen_name', '') or '').strip() or "Noma'lum"
-            citizen_phone = (getattr(appeal, 'citizen_phone', '') or '').strip()
-            try:
-                region_name = appeal.citizen_region.name_uz if appeal.citizen_region else "Noma'lum"
-            except Exception:
-                region_name = "Noma'lum"
-
-        normalized_comment = (comment or '').strip()
-        description_parts = [
-            f"Telegram murojaat #{appeal.appeal_number}",
-            "",
-            f"Fuqaro: {citizen_name}",
-            f"Telefon: {citizen_phone}",
-            f"Hudud: {region_name}",
-        ]
-        if normalized_comment:
-            description_parts.extend([
-                "",
-                "Hokim/AI izohi:",
-                normalized_comment,
-            ])
-        description_parts.extend([
-            "",
-            "Murojaat matni:",
-            appeal.text,
-        ])
-
-        task = Task.objects.create(
-            title=title,
-            description="\n".join(description_parts),
-            priority=self._normalize_task_priority(priority),
-            deadline=deadline,
-            created_by=user,
-            category=self._normalize_task_category(appeal),
-            source='TELEGRAM',
-        )
-
-        deputies = self._get_task_deputies_for_organizations(organizations=organizations, creator=user)
-        if deputies:
-            task.assigned_deputies.set([deputy.id for deputy in deputies])
-
-        for uploaded_file in attachment_files or []:
-            try:
-                uploaded_file.seek(0)
-            except Exception:
-                pass
-            TaskAttachment.objects.create(
-                task=task,
-                uploaded_by=user,
-                file=uploaded_file,
-                file_name=uploaded_file.name,
-                file_size=getattr(uploaded_file, 'size', 0) or 0,
-                file_type=_guess_task_attachment_type(uploaded_file),
-            )
-
-        for organization in organizations:
-            default_assignee = self._get_default_task_assignee(organization)
-            TaskOrganization.objects.create(
-                task=task,
-                organization=organization,
-                status='YANGI',
-                assigned_to=default_assignee,
-            )
-            for org_user in organization.employees.filter(
-                status='FAOL',
-                role__in=['TASHKILOT_RAHBARI', 'TASHKILOT_MASUL'],
-            ):
-                create_notification(
-                    user=org_user,
-                    title='Yangi topshiriq',
-                    message=f"Murojaat asosida yangi topshiriq berildi: {task.title}",
-                    notification_type='TASK',
-                    related_task=task,
-                    link=f'/dashboard/tasks/{task.id}',
-                )
-
-        self._create_task_context_message(
-            task=task,
-            user=user,
             appeal=appeal,
             organizations=organizations,
             attachment_files=attachment_files,
         )
 
-        appeal.forwarded_to_site = True
-        appeal.status = 'forwarded'
-        appeal.site_task_id = str(task.id)
-        appeal.assigned_organizations.set([org.id for org in organizations])
-        appeal.save(update_fields=['forwarded_to_site', 'status', 'site_task_id', 'updated_at'])
-        return task, organizations
+    def _create_task_for_appeal(self, *, appeal, user, title, deadline, priority, organization_ids, comment='', attachment_files=None):
+        return task_routing.create_task_for_appeal(
+            appeal=appeal,
+            user=user,
+            title=title,
+            deadline=deadline,
+            priority=priority,
+            organization_ids=organization_ids,
+            comment=comment,
+            attachment_files=attachment_files,
+        )
 
     @action(detail=True, methods=['post'])
     def assign(self, request, pk=None):
@@ -1593,23 +1410,31 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def send_message(self, request, pk=None):
-        """Foydalanuvchiga xabar yuborish (matn va/yoki fayl)"""
+        """Fuqaroga javob yuborish (matn va/yoki fayl).
+
+        Javob HAR DOIM imzolanadi: fuqaro kim javob berganini bilishi
+        kerak (`telegram_bot/authorship.py`). Ilgari xabar anonim
+        ketardi va fuqaro kimdan hisobot so'rashni bilmasdi.
+        """
+        from .authorship import sign_for_citizen
+
         appeal = self.get_object()
         text = request.data.get('text', '')
         uploaded_file = request.FILES.get('file')
-        
+
         if not text and not uploaded_file:
             return Response(
                 {'error': 'Xabar matni yoki fayl kiritilmagan'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Admin topish
         admin = None
         if hasattr(request.user, 'bot_admin_profiles'):
             admin = request.user.bot_admin_profiles.first()
-        
-        # Xabarni saqlash
+
+        # Xabarni saqlash. Matn operator yozgan holida qoladi — imzo
+        # yetkazishda qo'shiladi, saytda esa muallif alohida ko'rsatiladi.
         message = AppealMessage.objects.create(
             appeal=appeal,
             is_from_admin=True,
@@ -1621,13 +1446,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
         # Qo'lda kiritilgan murojaat (yoki telegram foydalanuvchi yo'q) bo'lsa - Telegramga yuborilmaydi.
         if not appeal.telegram_user or appeal.source != 'telegram':
             return Response({'success': True, 'message_id': message.id, 'delivered_to_telegram': False})
-        
+
         # Telegram orqali yuborish
+        delivered = False
         try:
             settings = BotSettings.objects.first()
             if settings and settings.bot_token:
                 import requests as req
-                
+
                 # Javob berish tugmasi
                 keyboard = {
                     'inline_keyboard': [
@@ -1636,80 +1462,73 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
                         ]
                     ]
                 }
-                
+
                 chat_id = appeal.telegram_user.telegram_id
-                
-                # Fayl bor bo'lsa
+                header = f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:"
+
+                def _caption(fallback: str) -> str:
+                    """Imzolangan matn. Matn bo'sh bo'lsa fayl turi aytiladi."""
+                    body = f"{header}\n\n{text}" if text else fallback
+                    return sign_for_citizen(body, request.user, appeal)
+
+                base_data = {
+                    'chat_id': chat_id,
+                    'parse_mode': 'HTML',
+                    'reply_markup': json.dumps(keyboard),
+                }
+
                 if uploaded_file:
                     file_name = uploaded_file.name.lower()
                     content_type = uploaded_file.content_type or ''
-                    
-                    # Rasm
+                    payload = uploaded_file.read()
+
                     if content_type.startswith('image/') or file_name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
-                        req.post(
-                            f'https://api.telegram.org/bot{settings.bot_token}/sendPhoto',
-                            data={
-                                'chat_id': chat_id,
-                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga rasm yuborildi",
-                                'parse_mode': 'HTML',
-                                'reply_markup': str(keyboard).replace("'", '"')
-                            },
-                            files={'photo': (uploaded_file.name, uploaded_file.read(), content_type)},
-                            timeout=30
+                        method, field, fallback, timeout = (
+                            'sendPhoto', 'photo',
+                            f"📨 #{appeal.appeal_number} raqamli murojaatingizga rasm yuborildi", 30,
                         )
-                    # Video
                     elif content_type.startswith('video/') or file_name.endswith(('.mp4', '.avi', '.mov', '.mkv')):
-                        req.post(
-                            f'https://api.telegram.org/bot{settings.bot_token}/sendVideo',
-                            data={
-                                'chat_id': chat_id,
-                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga video yuborildi",
-                                'parse_mode': 'HTML',
-                                'reply_markup': str(keyboard).replace("'", '"')
-                            },
-                            files={'video': (uploaded_file.name, uploaded_file.read(), content_type)},
-                            timeout=60
+                        method, field, fallback, timeout = (
+                            'sendVideo', 'video',
+                            f"📨 #{appeal.appeal_number} raqamli murojaatingizga video yuborildi", 60,
                         )
-                    # Audio
                     elif content_type.startswith('audio/') or file_name.endswith(('.mp3', '.ogg', '.wav', '.webm', '.m4a')):
-                        req.post(
-                            f'https://api.telegram.org/bot{settings.bot_token}/sendVoice',
-                            data={
-                                'chat_id': chat_id,
-                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob" if not text else text,
-                                'reply_markup': str(keyboard).replace("'", '"')
-                            },
-                            files={'voice': (uploaded_file.name, uploaded_file.read(), content_type)},
-                            timeout=30
+                        method, field, fallback, timeout = (
+                            'sendVoice', 'voice',
+                            f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob", 30,
                         )
-                    # Boshqa fayl
                     else:
-                        req.post(
-                            f'https://api.telegram.org/bot{settings.bot_token}/sendDocument',
-                            data={
-                                'chat_id': chat_id,
-                                'caption': f"📨 #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}" if text else f"📨 #{appeal.appeal_number} raqamli murojaatingizga fayl yuborildi",
-                                'parse_mode': 'HTML',
-                                'reply_markup': str(keyboard).replace("'", '"')
-                            },
-                            files={'document': (uploaded_file.name, uploaded_file.read(), content_type)},
-                            timeout=30
+                        method, field, fallback, timeout = (
+                            'sendDocument', 'document',
+                            f"📨 #{appeal.appeal_number} raqamli murojaatingizga fayl yuborildi", 30,
                         )
+
+                    response = req.post(
+                        f'https://api.telegram.org/bot{settings.bot_token}/{method}',
+                        data={**base_data, 'caption': _caption(fallback)},
+                        files={field: (uploaded_file.name, payload, content_type)},
+                        timeout=timeout,
+                    )
                 else:
-                    # Faqat matn
-                    req.post(
+                    response = req.post(
                         f'https://api.telegram.org/bot{settings.bot_token}/sendMessage',
                         json={
                             'chat_id': chat_id,
-                            'text': f"📨 Sizning #{appeal.appeal_number} raqamli murojaatingizga javob:\n\n{text}",
+                            'text': _caption(header),
                             'parse_mode': 'HTML',
-                            'reply_markup': keyboard
+                            'reply_markup': keyboard,
                         },
-                        timeout=10
+                        timeout=10,
+                    )
+
+                delivered = response.ok and bool(response.json().get('ok'))
+                if not delivered:
+                    logging.getLogger(__name__).warning(
+                        'Murojaat %s: Telegram javobni qabul qilmadi (%s)',
+                        appeal.pk, response.text[:200],
                     )
         except Exception as e:
-            import logging
-            logging.error(f"Telegram xabar yuborishda xato: {e}")
+            logging.getLogger(__name__).error(f"Telegram xabar yuborishda xato: {e}")
 
         notify_appeal_message(
             appeal=appeal,
@@ -1717,9 +1536,14 @@ class TelegramAppealViewSet(viewsets.ModelViewSet):
             preview=text,
             exclude_user_ids=[request.user.id],
         )
-        
-        return Response({'success': True, 'message_id': message.id})
-    
+
+        return Response({
+            'success': True,
+            'message_id': message.id,
+            'delivered_to_telegram': delivered,
+        })
+
+
     @action(detail=True, methods=['post'])
     def close_appeal(self, request, pk=None):
         """Murojaatni yopish va qoniqish so'rash"""

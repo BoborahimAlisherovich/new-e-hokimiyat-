@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   BarChart3,
   Bell,
+  CalendarDays,
   ShieldCheck,
   Bot,
   Building2,
@@ -62,6 +63,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/recurring-tasks",
     labelKey: "recurringTasks",
     icon: Repeat,
+    section: "operations",
+  },
+  {
+    href: "/dashboard/calendar",
+    labelKey: "calendar",
+    icon: CalendarDays,
     section: "operations",
   },
   {
@@ -161,6 +168,7 @@ export const SIDEBAR_LAYOUT: {
   flat: [
     "/dashboard",
     "/dashboard/tasks",
+    "/dashboard/calendar",
     "/dashboard/recurring-tasks",
     "/dashboard/appeals",
     "/dashboard/projects",

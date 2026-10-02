@@ -120,6 +120,49 @@ Chetlanishlar: `QAYTA_IJROGA_YUBORILDI`, `MUDDATI_KECH`, `BAJARILMADI`.
 - Yuborilgan xabar `AppealMessage(is_system=True)` — operator oynasida
   «Fuqaroga yuborildi» deb ajratib ko'rsatiladi.
 
+### Avtomatik yo'naltirish (AI)
+
+Murojaat kelgach `process_appeal_with_ai` AI tahlilini bajaradi va
+`telegram_bot/auto_assign.py` mas'ul tashkilotni **o'zi topib**,
+topshiriq yaratadi. Tashkilot uch bosqichda qidiriladi:
+
+1. `AppealCategory.responsible_organizations` — admin panelda sozlangan
+   jadval (eng ishonchli);
+2. soha (`Sector`) nomi bo'yicha moslik;
+3. AI taklif qilgan tashkilot nomlariga **aynan** mos keladiganlar.
+
+Hech biri topilmasa topshiriq YARATILMAYDI — murojaat `pending_review`
+da qoladi. Tasodifiy tashkilotga biriktirish javobgarlikni noto'g'ri
+odamga yuklaydi.
+
+Muddat: **kamida 7 kun** (`task_routing.MIN_AUTO_TASK_DAYS`). Muhimlik
+darajasi muddatni qisqartira olmaydi.
+
+Topshiriq yaratish mantig'i — `telegram_bot/task_routing.py` da,
+YAGONA manba. `TelegramAppealViewSet` ham shu yerga murojaat qiladi.
+
+### Javob muallifi
+
+Fuqaroga ketadigan har bir javob imzolanadi (`telegram_bot/authorship.py`):
+ism, lavozim va tashkilot bazadan olinadi. Muallif aniqlanmasa imzo
+umuman qo'yilmaydi — «Noma'lum» deb yozilmaydi.
+
+### Media — bazada emas, havola orqali
+
+`AppealAttachment` faqat `telegram_file_id` ni saqlaydi; baytlar
+Telegram serverida qoladi. Ko'rish vaqtida `telegram_bot/media.py`
+oqim (stream) bilan uzatadi:
+
+    GET /api/telegram-bot/attachments/<pk>/file/?sig=...
+
+`<img>` va `<video>` teglari `Authorization` sarlavhasini yubora
+olmaydi, shuning uchun havola **imzolangan** va muddati cheklangan
+(`SIGNED_URL_MAX_AGE`). Havolani qo'lda yozmang — `reverse()` ishlating.
+
+`Range` so'rovlari Telegram'ga uzatiladi, ya'ni videoni oldinga surish
+ishlaydi. `TELEGRAM_MEDIA_LOCAL_COPY_MAX_BYTES` (standart 0) noldan
+katta bo'lsa kichik fayllar diskda ham arxivlanadi.
+
 ## Dizayn standarti (foydalanuvchi tasdiqlagan — o'zgartirilmaydi)
 
 Apple / Stripe / Linear darajasi. Har bir yangi ekran shu qoidalarga
@@ -163,6 +206,26 @@ Talab: **gorizontal siljish 0**.
 - `truncate` bo'lgan `<p>` ichiga inline nishon qo'yilmaydi — u kesilmay
   viewport'dan chiqib ketadi. Flex qatorga ajratiladi.
 
+## Fayllar
+
+- Chegara: **40 MB** (`backend/core/file_validators.py` va
+  `lib/file-preview.ts` — ikkalasi BIRGA o'zgaradi, aks holda
+  foydalanuvchi faylni yuklaydi-yu, server 400 qaytaradi).
+  nginx `client_max_body_size` ham shundan katta bo'lishi kerak.
+- **APK va boshqa o'rnatiladigan paketlar taqiqlangan**
+  (`.apk/.apks/.xapk/.aab/.ipa`). APK — ZIP arxiv, `.docx` deb
+  nomlansa magic bytes mos keladi, shuning uchun arxiv ichidagi
+  `AndroidManifest.xml` markeri ham tekshiriladi.
+- Yuklangan **barcha fayl sayt ichida ochiladi**:
+  `components/dashboard/file-viewer/`. Rasm, video, audio, PDF, matn —
+  to'g'ridan-to'g'ri; Word (`mammoth`) va Excel (`xlsx`) brauzerda
+  o'qiladi, fayl hech qayerga yuborilmaydi. `.doc`/`.ppt` uchun
+  yolg'on va'da berilmaydi — yuklab olish taklif qilinadi.
+- PDF `<iframe src={apiUrl}>` bilan ochilmaydi: backend
+  `X-Frame-Options` yuboradi. Blob URL ishlatiladi.
+- Backend har bir ilova uchun `preview_kind` beradi — frontend fayl
+  turini nomidan taxmin qilmaydi.
+
 ## Muhandislik qoidalari
 
 - **Ma'lumot bazasi va serializer birga o'zgaradi**: maydon qo'shildi →
@@ -181,8 +244,10 @@ Talab: **gorizontal siljish 0**.
 - **Palitra/gradiyent skriptlari**: `scripts/palette-*.py`,
   `scripts/gradient-repair.py`. Har passdan keyin sintaksis tekshiriladi —
   `hover:bg-X"` shaklidagi almashtirish qo'shtirnoqni yeb qo'yishi mumkin.
-- `next.config.mjs` da hali `ignoreBuildErrors: true` / `ignoreDuringBuilds:
-  true` — o'chirishdan oldin `npx tsc --noEmit` to'liq o'tishi kerak.
+- `next.config.mjs` da `typescript.ignoreBuildErrors: false` — tip
+  xatolari build'ni to'xtatadi. `npx tsc --noEmit` toza o'tadi, shunday
+  qoldiring. (Next 16 da `eslint` kaliti qo'llab-quvvatlanmaydi, lint
+  alohida ishga tushiriladi.)
 
 ## Til
 

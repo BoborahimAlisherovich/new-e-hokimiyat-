@@ -131,7 +131,7 @@ export function Header({ title, description, actions, onMenuClick }: HeaderProps
     try {
       await logout()
     } finally {
-      window.location.href = "/login"
+      window.location.href = "/"
     }
   }
 

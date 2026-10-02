@@ -155,6 +155,17 @@ const formatShortDate = (value: string) => {
   return date.toLocaleDateString("uz-UZ", { day: "2-digit", month: "short" })
 }
 
+/**
+ * Yorliq lug'atidan xavfsiz o'qish.
+ *
+ * Lug'atlar aniq kalitlar bilan e'lon qilingan (`YANGI`, `IJRODA`...),
+ * server esa ixtiyoriy `string` qaytarishi mumkin. Kalit topilmasa
+ * kalitning o'zi ko'rsatiladi — «undefined» emas.
+ */
+function labelFor(labels: Record<string, string | undefined>, key: string): string {
+  return labels[key] ?? key
+}
+
 export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChartsProps) {
   const { language } = useI18n()
   const tr = TEXTS[language || "uz"] || TEXTS.uz
@@ -259,7 +270,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: key === "UNKNOWN" ? tr.unknown : statusLabels[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : labelFor(statusLabels, key),
       value,
     }))
   }, [tasks, statusLabels, tr.unknown])
@@ -272,7 +283,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: key === "UNKNOWN" ? tr.unknown : priorityLabels[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : labelFor(priorityLabels, key),
       value,
     }))
   }, [tasks, priorityLabels, tr.unknown])
@@ -285,7 +296,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
       map.set(key, (map.get(key) || 0) + 1)
     })
     return Array.from(map.entries()).map(([key, value]) => ({
-      name: key === "UNKNOWN" ? tr.unknown : categoryLabels[key] || key,
+      name: key === "UNKNOWN" ? tr.unknown : labelFor(categoryLabels, key),
       value,
     }))
   }, [tasks, categoryLabels, tr.unknown])
@@ -307,7 +318,7 @@ export function AnalyticsCharts({ tasks, organizations, appeals }: AnalyticsChar
     }
 
     const data = Array.from(map.entries()).map(([key, value]) => ({
-      name: genderLabels[key] || key,
+      name: labelFor(genderLabels, key),
       value,
       fill: key === 'male' ? GENDER_COLORS[0] : GENDER_COLORS[1],
       startAngle: key === 'male' ? 90 : -90,

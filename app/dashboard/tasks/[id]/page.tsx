@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Eye,
   FileText,
   History,
   Image as ImageIcon,
@@ -60,6 +61,8 @@ import {
   PRIORITIES,
   taskStatusClass,
 } from "@/lib/status-styles"
+import { FileViewer, useFileViewer } from "@/components/dashboard/file-viewer"
+import { toViewerFile, validateUpload, type ViewerFile } from "@/lib/file-preview"
 
 /**
  * TOPSHIRIQ SAHIFASI — 2-tahrir
@@ -153,6 +156,7 @@ export default function TaskDetailPage() {
   const id = String(params?.id ?? "")
   const router = useRouter()
 
+  const viewer = useFileViewer()
   const [task, setTask] = useState<any | null>(null)
   const [me, setMe] = useState<any | null>(null)
   const [timeline, setTimeline] = useState<any[]>([])
@@ -345,6 +349,15 @@ export default function TaskDetailPage() {
   const attachments: any[] = task.attachments ?? []
   const proofs: any[] = executions.filter((e) => Array.isArray(e.attachments) && e.attachments.length > 0)
 
+  /** Ilovalar ro'yxatini ko'rgich formatiga o'tkazish. */
+  const asViewerFiles = (items: any[]): ViewerFile[] =>
+    items.map((item, index) => toViewerFile(item, index)).filter(Boolean) as ViewerFile[]
+
+  const openAttachment = (items: any[], index: number) => {
+    const files = asViewerFiles(items)
+    if (files.length) viewer.open(files, index)
+  }
+
   /* Asosiy harakat — telefonda pastda qadalgan tugma uchun */
   const primaryAction =
     canApprove
@@ -431,8 +444,8 @@ export default function TaskDetailPage() {
                     Biriktirilgan hujjatlar · {attachments.length}
                   </p>
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {attachments.map((a: any) => (
-                      <AttachmentRow key={a.id} a={a} />
+                    {attachments.map((a: any, index: number) => (
+                      <AttachmentRow key={a.id} a={a} onOpen={() => openAttachment(attachments, index)} />
                     ))}
                   </ul>
                 </div>
@@ -507,15 +520,19 @@ export default function TaskDetailPage() {
                       </p>
                       {e.comment && <p className="mt-1 text-sm leading-6 text-muted-foreground">{e.comment}</p>}
                       <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                        {e.attachments.map((a: any) => (
+                        {e.attachments.map((a: any, index: number) => (
                           <li key={a.id}>
                             {isImage(a) ? (
-                              <a href={a.file} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl bg-background">
+                              <button
+                                type="button"
+                                onClick={() => openAttachment(e.attachments, index)}
+                                className="block w-full overflow-hidden rounded-xl bg-background"
+                              >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={a.file} alt={a.file_name} loading="lazy" className="aspect-square w-full object-cover" />
-                              </a>
+                                <img src={a.file_url || a.file} alt={a.file_name} loading="lazy" className="aspect-square w-full object-cover" />
+                              </button>
                             ) : (
-                              <AttachmentRow a={a} />
+                              <AttachmentRow a={a} onOpen={() => openAttachment(e.attachments, index)} />
                             )}
                           </li>
                         ))}
@@ -683,6 +700,9 @@ export default function TaskDetailPage() {
           }}
         />
       )}
+
+      {/* Fayllar sayt ichida ochiladi — yangi varaqda emas, yuklab olinmasdan */}
+      <FileViewer {...viewer.props} />
     </>
   )
 }
@@ -820,13 +840,13 @@ function TabBtn({ active, onClick, icon: Icon, label, count }: { active: boolean
   )
 }
 
-function AttachmentRow({ a }: { a: any }) {
+/** Ilova qatori — bosilganda fayl SAYT ICHIDA ochiladi, yuklab olinmaydi. */
+function AttachmentRow({ a, onOpen }: { a: any; onOpen?: () => void }) {
   return (
-    <a
-      href={a.file}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-3 rounded-xl bg-background px-3 py-2.5 transition-colors hover:bg-muted"
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full min-h-11 items-center gap-3 rounded-xl bg-background px-3 py-2.5 text-left transition-colors hover:bg-muted"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground shadow-xs">
         {isImage(a) ? <ImageIcon className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
@@ -838,8 +858,8 @@ function AttachmentRow({ a }: { a: any }) {
           {a.uploaded_by_name ? ` · ${a.uploaded_by_name}` : ""}
         </span>
       </span>
-      <Download className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-    </a>
+      <Eye className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+    </button>
   )
 }
 
@@ -888,6 +908,7 @@ function StatusBanner({ status, myOrgStatus, isOrgUser, canApprove, awaiting }: 
 /* ------------------------------------------------------------------ Chat */
 
 function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me: any; items: any[]; disabled: boolean; onSent: () => void }) {
+  const viewer = useFileViewer()
   const [text, setText] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
@@ -933,10 +954,17 @@ function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me
                 {!mine && <p className="mb-0.5 text-xs font-semibold text-muted-foreground">{m.user_name || "—"}</p>}
                 {m.content && <p className="whitespace-pre-wrap">{m.content}</p>}
                 {m.attachment && (
-                  <a href={m.attachment.file} target="_blank" rel="noopener noreferrer" className={cn("mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium underline-offset-2 hover:underline", mine ? "text-primary-foreground" : "text-primary")}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const viewerFile = toViewerFile(m.attachment)
+                      if (viewerFile) viewer.open([viewerFile])
+                    }}
+                    className={cn("mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium underline-offset-2 hover:underline", mine ? "text-primary-foreground" : "text-primary")}
+                  >
                     <Paperclip className="h-3.5 w-3.5" aria-hidden />
                     {m.attachment.file_name || "Fayl"}
-                  </a>
+                  </button>
                 )}
                 <p className={cn("mt-1 text-[11px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>{fmtDate(m.timestamp, true)}</p>
               </div>
@@ -964,7 +992,19 @@ function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me
             <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-background text-muted-foreground hover:bg-muted hover:text-foreground">
               <Paperclip className="h-4 w-4" aria-hidden />
               <span className="sr-only">Fayl biriktirish</span>
-              <input type="file" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <input
+                type="file"
+                className="sr-only"
+                onChange={(e) => {
+                  const picked = e.target.files?.[0] ?? null
+                  // Serverga yubormasdan oldin tekshiramiz: 40 MB faylni
+                  // yuklab, keyin rad javobini olish — eng yomon tajriba.
+                  const problem = picked ? validateUpload(picked) : null
+                  setErr(problem)
+                  setFile(problem ? null : picked)
+                  e.target.value = ""
+                }}
+              />
             </label>
             <textarea
               value={text}
@@ -985,6 +1025,8 @@ function ChatPanel({ taskId, me, items, disabled, onSent }: { taskId: string; me
           </div>
         </form>
       )}
+
+      <FileViewer {...viewer.props} />
     </div>
   )
 }

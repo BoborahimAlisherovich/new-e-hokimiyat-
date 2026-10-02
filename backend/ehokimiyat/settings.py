@@ -71,6 +71,23 @@ ALLOWED_HOSTS = env_csv(
 
 # Application definition
 INSTALLED_APPS = [
+    # DAPHNE ENG BIRINCHI BO'LISHI SHART — bu bezak emas, talab.
+    #
+    # Channels 4 da `runserver` buyrug'i endi channels paketida YO'Q.
+    # ASGI (ya'ni WebSocket) ni `runserver` xizmat qilishi uchun `daphne`
+    # INSTALLED_APPS da va `django.contrib.staticfiles` dan OLDIN turishi
+    # kerak — faqat shunda u staticfiles'ning `runserver` buyrug'ini
+    # almashtiradi.
+    #
+    # Bu yo'q edi, natijada `runserver` oddiy WSGI serverni ko'tarardi va
+    # `ws://.../ws/chat/` so'rovi WebSocket sifatida emas, ODDIY HTTP GET
+    # sifatida Django'ga tushardi. Django esa bunday manzilni bilmaydi:
+    #
+    #     WARNING Not Found: /ws/chat/
+    #     "GET /ws/chat/?token=... HTTP/1.1" 404 4846
+    #
+    # Chatdagi «Ulanish yo'q — qayta urinilmoqda» tasmasi aynan shundan edi.
+    'daphne',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -99,6 +116,7 @@ INSTALLED_APPS = [
     'notifications',
     'chat',
     'telegram_bot',
+    'agenda',
 ]
 
 MIDDLEWARE = [

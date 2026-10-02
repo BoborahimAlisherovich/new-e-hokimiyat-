@@ -15,22 +15,27 @@ from django.db import close_old_connections
 from ..models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
-    AppealAttachment, AppealMessage, UserState
+    AppealMessage, UserState
 )
 from .messages import get_text
+from ..media import save_appeal_attachment
 from ..region_sync import build_region_fields, load_map_region_names
 from .keyboards import (
     main_menu_keyboard, gender_keyboard, phone_keyboard,
     regions_keyboard, appeal_types_keyboard, categories_keyboard,
     confirm_keyboard, attachment_keyboard, settings_keyboard,
-    language_keyboard, back_keyboard, admin_review_keyboard,
-    remove_keyboard, rating_keyboard, satisfaction_with_rating_keyboard,
+    language_keyboard, admin_review_keyboard,
+    remove_keyboard, rating_keyboard,
     location_keyboard, comment_keyboard
 )
 
 logger = logging.getLogger(__name__)
 background_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="telegram-bot")
 
+# Bot orqali keladigan fayl chegarasi 20 MB — bu TELEGRAM cheklovi:
+# Bot API `getFile` shundan katta faylni bermaydi, ya'ni biz uni na
+# yuklab ola olamiz, na saytda ko'rsata olamiz. Saytdan yuklashda
+# chegara 40 MB (`core/file_validators.MAX_FILE_SIZE`).
 MAX_BOT_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024
 ALLOWED_BOT_ATTACHMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg"}
 ALLOWED_BOT_ATTACHMENT_MIME_TYPES = {
@@ -1032,54 +1037,32 @@ def handle_media(user: TelegramUser, message: Dict, chat_id: int):
         bot.send_message(chat_id, get_text('appeal_not_found', user.language), reply_markup=main_menu_keyboard(user.language))
         return
 
-    try:
-        file_url = bot.get_file(file_id)
-        attachment = AppealAttachment(
-            appeal=appeal,
-            file_type=file_type,
-            telegram_file_id=file_id
+    # Fayl BAYTLARI ko'chirilmaydi — Telegram serverida qoladi va saytda
+    # ko'rilganda `telegram_bot/media.py` orqali oqim bilan uzatiladi.
+    # Ilgari har bir video diskka yozilardi va `media/` katalogi
+    # boshqarib bo'lmas darajada o'sardi.
+    if file_size and file_size > MAX_BOT_ATTACHMENT_SIZE_BYTES:
+        bot.send_message(
+            chat_id,
+            get_text(
+                'attachment_too_large',
+                user.language,
+                file_name=file_name or "fayl",
+                size_mb=format_file_size_mb(file_size),
+            ),
+            reply_markup=attachment_keyboard(user.language)
         )
-        if file_name:
-            attachment.file_name = file_name
-        if mime_type:
-            attachment.mime_type = mime_type
+        return
 
-        if file_url:
-            from django.core.files.base import ContentFile
-
-            response = requests.get(file_url, timeout=30)
-            if response.status_code == 200:
-                if len(response.content) > MAX_BOT_ATTACHMENT_SIZE_BYTES:
-                    bot.send_message(
-                        chat_id,
-                        get_text(
-                            'attachment_too_large',
-                            user.language,
-                            file_name=file_name or "fayl",
-                            size_mb=format_file_size_mb(len(response.content)),
-                        ),
-                        reply_markup=attachment_keyboard(user.language)
-                    )
-                    return
-
-                file_ext = file_type
-                if file_ext == 'photo':
-                    file_ext = 'jpg'
-                elif file_ext == 'document':
-                    if file_name:
-                        _, ext = os.path.splitext(file_name)
-                        file_ext = ext.lstrip('.') or 'bin'
-                    else:
-                        file_ext = 'bin'
-                else:
-                    file_ext = 'bin'
-
-                stored_name = f"{file_id[:20]}.{file_ext}"
-                attachment.file_name = attachment.file_name or stored_name
-                attachment.file_size = len(response.content)
-                attachment.file.save(stored_name, ContentFile(response.content), save=False)
-
-        attachment.save()
+    try:
+        save_appeal_attachment(
+            appeal,
+            file_id=file_id,
+            file_type=file_type,
+            file_name=file_name or '',
+            mime_type=mime_type or '',
+            file_size=file_size,
+        )
     except Exception as e:
         logger.error(f"Feedback attachment save error: {e}")
 
@@ -1836,50 +1819,19 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
                     )
                     continue
 
-                file_url = bot.get_file(file_id)
-                original_file_name = att.get('file_name')
-                mime_type = att.get('mime_type')
-                
-                # Faylni yuklab olish va saqlash
-                attachment = AppealAttachment(
-                    appeal=appeal,
+                # Fayl BAYTLARI ko'chirilmaydi. Ilova faqat `file_id` bilan
+                # saqlanadi, baytlar Telegram serverida qoladi va saytda
+                # ko'rilganda `telegram_bot/media.py` orqali oqim bilan
+                # uzatiladi. Ilgari har bir ilova diskka yozilar edi —
+                # `media/` katalogi oyiga o'nlab gigabaytga o'sardi.
+                save_appeal_attachment(
+                    appeal,
+                    file_id=file_id,
                     file_type=file_type,
-                    telegram_file_id=file_id
+                    file_name=att.get('file_name') or '',
+                    mime_type=att.get('mime_type') or '',
+                    file_size=int(att.get('file_size') or 0),
                 )
-
-                if original_file_name:
-                    attachment.file_name = original_file_name
-                if mime_type:
-                    attachment.mime_type = mime_type
-                
-                # Fayl URL mavjud bo'lsa, yuklab olish
-                if file_url:
-                    try:
-                        import requests
-                        import os
-                        from django.core.files.base import ContentFile
-                        
-                        response = requests.get(file_url, timeout=30)
-                        if response.status_code == 200:
-                            # Fayl nomini aniqlash
-                            file_ext = file_type
-                            if file_ext == 'photo':
-                                file_ext = 'jpg'
-                            elif file_ext == 'document':
-                                if original_file_name:
-                                    _, ext = os.path.splitext(original_file_name)
-                                    file_ext = ext.lstrip('.') or 'bin'
-                                else:
-                                    file_ext = 'bin'
-                            
-                            file_name = f"{file_id[:20]}.{file_ext}"
-                            attachment.file_name = file_name
-                            attachment.file_size = len(response.content)
-                            attachment.file.save(file_name, ContentFile(response.content), save=False)
-                    except Exception as e:
-                        logger.error(f"Fayl yuklashda xato: {e}")
-                
-                attachment.save()
             except Exception as e:
                 logger.error(f"Attachment saqlashda xato: {e}")
         
@@ -1919,43 +1871,60 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
 
 
 def process_appeal_with_ai(appeal: TelegramAppeal):
-    """AI orqali murojaatni tahlil qilish"""
+    """AI orqali murojaatni tahlil qilish va mas'ul tashkilotga biriktirish.
+
+    Tahlildan keyin murojaat `pending_review` da turib qolmaydi: soha
+    aniqlanadi, mas'ul tashkilot topiladi va topshiriq yaratiladi
+    (`auto_assign_appeal`). Tashkilot topilmasa — qo'lda ko'rib chiqish
+    uchun qoladi, tasodifiy biriktirish qilinmaydi.
+    """
     from .ai_service import analyze_appeal
-    from django.utils import timezone
-    
+    from ..auto_assign import auto_assign_appeal
+
+    result = {}
     try:
         settings_obj = BotSettings.objects.first()
+
         if not settings_obj or settings_obj.ai_provider == 'disabled':
+            # AI o'chirilgan bo'lsa ham yo'naltirish ishlaydi: fuqaro
+            # sohani botda o'zi tanlagan, ya'ni mas'ul tashkilot
+            # jadvaldan topiladi.
             appeal.status = 'pending_review'
             appeal.save()
+            auto_assign_appeal(appeal, None)
             return
-        
-        result = analyze_appeal(appeal, settings_obj)
-        
+
+        result = analyze_appeal(appeal, settings_obj) or {}
+
         appeal.ai_analysis = result.get('analysis', '')
         appeal.ai_score = result.get('score', 0)
         appeal.ai_priority = result.get('priority', 'medium')
         appeal.priority = result.get('priority', 'medium')
         appeal.ai_is_valid = result.get('is_valid', True)
         appeal.ai_rejection_reason = result.get('reject_reason', '')
-        
+
         # AI ballga qarab avtomatik rad etish (30 dan past bo'lsa)
         if result.get('score', 100) < 30 and not result.get('is_valid', True):
             appeal.status = 'rejected'
             appeal.admin_response = result.get('reject_reason', 'AI tahlili asosida rad etildi')
             appeal.save()
-            
+
             # Foydalanuvchiga ogohlantirish yuborish
             user = appeal.telegram_user
             send_ai_rejection_warning(user, appeal, result.get('reject_reason', ''))
-        else:
-            appeal.status = 'pending_review'
-            appeal.save()
-        
+            return
+
+        appeal.status = 'pending_review'
+        appeal.save()
+
     except Exception as e:
         logger.error(f"AI tahlilida xato: {e}")
         appeal.status = 'pending_review'
         appeal.save()
+
+    # Tahlil muvaffaqiyatli bo'ldimi yoki xato berdimi — murojaat baribir
+    # mas'ul tashkilotga yetib borishi kerak.
+    auto_assign_appeal(appeal, result)
 
 
 def send_ai_rejection_warning(user: TelegramUser, appeal: TelegramAppeal, reason: str):

@@ -26,6 +26,23 @@ function truncateWords(value: string | null | undefined, wordLimit = 3): string 
   return `${words.slice(0, wordLimit).join(" ")}...`
 }
 
+/**
+ * Ro'yxatdan o'tgan sana.
+ *
+ * `created_at` har doim ham kelmaydi: `/auth/me` va login javobi uni
+ * yubormaydi. Ilgari `new Date(undefined)` chaqirilar va jadvalda
+ * «Invalid Date» chiqardi.
+ */
+function formatJoinedDate(value: string | undefined, language: string): string {
+  if (!value) return "—"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+
+  const locale =
+    language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
+  return date.toLocaleDateString(locale)
+}
+
 export function UserTable({ users }: UserTableProps) {
   const router = useRouter()
   const { language } = useI18n()
@@ -119,9 +136,7 @@ export function UserTable({ users }: UserTableProps) {
           const organizationText = user.organization?.name || user.organization_name || tr.notSet
           const mobilePositionText = truncateWords(user.position, 3) || "—"
           const mobileOrganizationText = truncateWords(organizationText, 3)
-          const createdDate = new Date(user.created_at).toLocaleDateString(
-            language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
-          )
+          const createdDate = formatJoinedDate(user.created_at, language)
 
           return (
             <button
@@ -258,9 +273,7 @@ export function UserTable({ users }: UserTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden py-4 text-muted-foreground text-sm font-medium 2xl:table-cell whitespace-normal">
-                    {new Date(user.created_at).toLocaleDateString(
-                      language === "uz-cyrl" ? "uz-Cyrl-UZ" : language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ"
-                    )}
+                    {formatJoinedDate(user.created_at, language)}
                   </TableCell>
                   <TableCell className="py-4">
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />

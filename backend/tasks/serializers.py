@@ -33,18 +33,52 @@ def _guess_file_type(file_obj) -> str:
 
 
 class TaskAttachmentSerializer(serializers.ModelSerializer):
+    """Topshiriq ilovasi.
+
+    `preview_kind` frontend uchun: fayl saytda qaysi ko'rgichda
+    ochilishini aytadi (rasm, video, PDF, hujjat...). Ilgari frontend
+    buni fayl nomidan taxmin qilardi va `.docx` har doim yuklab
+    olinardi.
     """
-    Task attachment serializer.
-    """
+
     uploaded_by_name = serializers.CharField(source='uploaded_by.full_name', read_only=True)
-    
+    file_url = serializers.SerializerMethodField()
+    preview_kind = serializers.SerializerMethodField()
+    content_type = serializers.SerializerMethodField()
+
     class Meta:
         model = TaskAttachment
         fields = [
-            'id', 'file', 'file_name', 'file_type', 'file_size',
+            'id', 'file', 'file_url', 'file_name', 'file_type', 'file_size',
+            'preview_kind', 'content_type',
             'uploaded_by', 'uploaded_by_name', 'created_at'
         ]
         read_only_fields = ['id', 'uploaded_by', 'created_at']
+
+    def get_file_url(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get('request')
+        try:
+            url = obj.file.url
+        except ValueError:
+            return None
+        return request.build_absolute_uri(url) if request else url
+
+    def get_content_type(self, obj):
+        import mimetypes
+
+        guessed, _ = mimetypes.guess_type(obj.file_name or '')
+        return guessed or 'application/octet-stream'
+
+    def get_preview_kind(self, obj):
+        from core.file_validators import preview_kind
+
+        return preview_kind(
+            file_name=obj.file_name or '',
+            content_type=self.get_content_type(obj),
+            file_type=obj.file_type or '',
+        )
 
 
 class TaskExecutionSerializer(serializers.ModelSerializer):
@@ -136,7 +170,12 @@ class TaskMinimalSerializer(serializers.ModelSerializer):
         task_org_status = None
 
         if user and getattr(user, 'role', None) in [UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL] and getattr(user, 'organization_id', None):
-            task_org = task.assigned_organizations.filter(organization_id=user.organization_id).only('status').first()
+            # Prefetch keshidan tanlanadi: `.filter().only()` prefetch'dagi
+            # select_related('organization') bilan FieldError berardi (500).
+            task_org = next(
+                (to for to in task.assigned_organizations.all() if to.organization_id == user.organization_id),
+                None,
+            )
             if task_org:
                 task_org_status = task_org.status
                 base_status = task_org_status
@@ -219,7 +258,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         base_status = task.status
         if user and getattr(user, 'role', None) in [UserRole.TASHKILOT_RAHBARI, UserRole.TASHKILOT_MASUL] and getattr(user, 'organization_id', None):
-            task_org = task.assigned_organizations.filter(organization_id=user.organization_id).only('status').first()
+            # Prefetch keshidan tanlanadi: `.filter().only()` prefetch'dagi
+            # select_related('organization') bilan FieldError berardi (500).
+            task_org = next(
+                (to for to in task.assigned_organizations.all() if to.organization_id == user.organization_id),
+                None,
+            )
             if task_org:
                 base_status = task_org.status
 
@@ -294,8 +338,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Task
+        # `id` — yaratilgan topshiriqqa o'tish uchun (faqat o'qiladi).
         fields = [
-            'title', 'description', 'priority', 'category',
+            'id', 'title', 'description', 'priority', 'category',
             'sector', 'sector_name',
             'deadline', 'latitude', 'longitude', 'address',
             'organizations', 'deputy_ids', 'attachments'

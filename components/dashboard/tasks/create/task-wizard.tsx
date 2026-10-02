@@ -216,7 +216,6 @@ export function TaskWizard() {
 
     const draft = loadDraft()
     if (draft && isDirty(draft.form)) setDraftFound(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, sectors, organizations])
 
   /* ------------------------------------------------------- Qoralamani saqlash */

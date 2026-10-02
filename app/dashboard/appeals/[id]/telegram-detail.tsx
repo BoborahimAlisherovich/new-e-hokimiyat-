@@ -82,6 +82,8 @@ import Image from "next/image"
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Appeal, AppealAttachment } from "@/types"
+import { FileViewer, useFileViewer } from "@/components/dashboard/file-viewer"
+import { toViewerFile, type ViewerFile } from "@/lib/file-preview"
 
 const FILE_TYPE_LABELS: Record<string, string> = {
   photo: "Rasm",
@@ -175,7 +177,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>([])
   const [organizations, setOrganizations] = useState<any[]>([])
   const [creatingTask, setCreatingTask] = useState(false)
-  const [activeAttachment, setActiveAttachment] = useState<AppealAttachment | null>(null)
+  const attachmentViewer = useFileViewer()
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
   const [imageCarouselApi, setImageCarouselApi] = useState<CarouselApi | null>(null)
   
@@ -199,6 +201,15 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
     () => (appeal?.attachments || []).filter((attachment) => attachment.file_type !== "photo"),
     [appeal?.attachments]
   )
+
+  /** Rasm bo'lmagan ilovani sayt ichidagi ko'rgichda ochish. */
+  const openAttachmentViewer = (attachment: AppealAttachment) => {
+    const files = otherAttachments
+      .map((item, index) => toViewerFile(item, index))
+      .filter(Boolean) as ViewerFile[]
+    const index = otherAttachments.findIndex((item) => item.id === attachment.id)
+    if (files.length) attachmentViewer.open(files, Math.max(index, 0))
+  }
 
   const locationUrl = useMemo(() => {
     const lat = appeal?.latitude
@@ -523,7 +534,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
   }
 
   // Handle paste for images
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const items = e.clipboardData?.items
     if (!items) return
     
@@ -922,7 +933,7 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
                               return (
                                 <PremiumAttachmentItem
                                   key={attachment.id}
-                                  onClick={() => setActiveAttachment(attachment)}
+                                  onClick={() => openAttachmentViewer(attachment)}
                                   icon={Paperclip}
                                   title={fileName}
                                   meta={`${fileLabel}${fileSize ? ` • ${fileSize}` : ""}`}
@@ -1712,57 +1723,11 @@ export default function TelegramAppealDetail({ appealId }: TelegramAppealDetailP
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!activeAttachment} onOpenChange={(open) => !open && setActiveAttachment(null)}>
-        <DialogContent className="max-w-4xl border-border bg-card">
-          <DialogHeader>
-            <DialogTitle>{activeAttachment?.file_name || "Biriktirilgan fayl"}</DialogTitle>
-            <DialogDescription>Fayl platformaning o'zida ko'rsatilmoqda.</DialogDescription>
-          </DialogHeader>
+      {/* Hujjatlar sayt ichida ochiladi: PDF, Word va Excel ham.
+          Ilgari bu yerda `<iframe src={apiUrl}>` bor edi — backend
+          `X-Frame-Options` yuborgani uchun u bo'sh oyna ko'rsatardi. */}
+      <FileViewer {...attachmentViewer.props} />
 
-          {activeAttachment ? (
-            <div className="overflow-hidden rounded-[24px] border border-border bg-background p-3">
-              {activeAttachment.file_type === "photo" && getAttachmentUrl(activeAttachment) ? (
-                <div className="relative h-[60vh] w-full overflow-hidden rounded-[20px] bg-white">
-                  <Image
-                    src={getAttachmentUrl(activeAttachment)}
-                    alt={activeAttachment.file_name || "Murojaat rasmi"}
-                    fill
-                    unoptimized
-                    className="object-contain"
-                  />
-                </div>
-              ) : activeAttachment.file_type === "video" && getAttachmentUrl(activeAttachment) ? (
-                <video
-                  controls
-                  className="max-h-[60vh] w-full rounded-[20px] bg-black"
-                  src={getAttachmentUrl(activeAttachment)}
-                />
-              ) : activeAttachment.file_type === "audio" || activeAttachment.file_type === "voice" ? (
-                <audio controls className="w-full" src={getAttachmentUrl(activeAttachment)} />
-              ) : (
-                <iframe
-                  title={activeAttachment.file_name || "Murojaat fayli"}
-                  src={getAttachmentUrl(activeAttachment)}
-                  className="h-[60vh] w-full rounded-[20px] bg-white"
-                />
-              )}
-            </div>
-          ) : null}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActiveAttachment(null)}>
-              Yopish
-            </Button>
-            {getAttachmentUrl(activeAttachment) ? (
-              <Button asChild>
-                <a href={getAttachmentUrl(activeAttachment)} target="_blank" rel="noreferrer">
-                  Yangi oynada ochish
-                </a>
-              </Button>
-            ) : null}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

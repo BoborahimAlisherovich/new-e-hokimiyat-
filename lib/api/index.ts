@@ -339,3 +339,26 @@ export type {
   NotificationPreferences,
   PushStatusResponse,
 } from './common.api'
+
+// ============================================================================
+// Calendar (Kalendar)
+// ============================================================================
+
+export {
+  getCalendarFeed,
+  getUpcomingCalendarItems,
+  createCalendarEvent,
+  updateCalendarEvent,
+  deleteCalendarEvent,
+  rawEventId,
+} from './calendar.api'
+
+export type {
+  CalendarSource,
+  CalendarEventKind,
+  CalendarVisibility,
+  CalendarFeedItem,
+  CalendarFeed,
+  CalendarEvent,
+  CalendarEventInput,
+} from './calendar.api'

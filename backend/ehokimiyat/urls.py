@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/analytics/', include('analytics.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/chat/', include('chat.urls')),
+    path('api/calendar/', include('agenda.urls')),
     path('api/telegram-bot/', include('telegram_bot.urls')),
     
     # AI Chat API

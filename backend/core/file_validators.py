@@ -6,7 +6,7 @@ Bu modul topshiriq hisobotlari (`/api/tasks/{id}/report/`), timeline
 BIR XIL qoidalarni qo'llaydi.
 
 Qoidalar:
-    - Har bir fayl uchun maksimal hajm: 20 MB
+    - Har bir fayl uchun maksimal hajm: 40 MB
     - Bitta so'rovda maksimal fayl soni: 10
     - Faqat ruxsat etilgan kengaytmalar
     - Xavfli kengaytmalar (.exe, .js, .sh, .svg, .html ...) butunlay taqiqlangan
@@ -25,7 +25,10 @@ from rest_framework import serializers
 # LIMITLAR
 # =============================================================================
 
-MAX_FILE_SIZE = 20 * 1024 * 1024      # 20 MB
+# Bitta fayl uchun yuqori chegara. 40 MB dan katta fayl qabul qilinmaydi
+# (nginx `client_max_body_size` va bu qiymat birga o'zgaradi — nginx kichik
+# bo'lsa foydalanuvchi Django xatosini emas, 413 ni ko'radi).
+MAX_FILE_SIZE = 40 * 1024 * 1024      # 40 MB
 MAX_FILES_PER_REQUEST = 10
 
 # =============================================================================
@@ -49,7 +52,10 @@ BLOCKED_EXTENSIONS = frozenset({
     '.exe', '.js', '.sh', '.bat', '.cmd', '.msi', '.scr',
     '.php', '.html', '.htm', '.svg',
     # qo'shimcha xavfli turlar
-    '.jar', '.vbs', '.ps1', '.com', '.dll', '.apk', '.deb', '.app',
+    '.jar', '.vbs', '.ps1', '.com', '.dll', '.deb', '.app',
+    # o'rnatiladigan mobil ilova paketlari: platformaga aloqasi yo'q,
+    # yuklansa hokimlik sayti ilova tarqatish kanaliga aylanadi
+    '.apk', '.apks', '.xapk', '.aab', '.ipa',
 })
 
 # =============================================================================
@@ -86,6 +92,20 @@ _SCRIPTISH_PREFIXES = (
     b'<?php', b'<!doctype html', b'<html', b'<script', b'<svg',
     b'#!/', b'MZ', b'\x7fELF',
 )
+
+# APK / AAB — bu ZIP arxiv. `.docx` deb nomlansa magic bytes (PK)
+# mos keladi va sniffing uni o'tkazib yuboradi. Arxiv boshidagi yozuv
+# nomlari bo'yicha aniqlaymiz — bu markerlar Office hujjatlarida uchramaydi.
+_ANDROID_ARCHIVE_MARKERS = (
+    b'AndroidManifest.xml',
+    b'classes.dex',
+    b'resources.arsc',
+    b'META-INF/com/android/',
+)
+
+# Arxiv boshidan shuncha bayt o'qiladi: APK ning birinchi yozuvlari
+# (odatda AndroidManifest.xml) shu oraliqqa tushadi.
+_ARCHIVE_PROBE_SIZE = 8192
 
 
 # =============================================================================
@@ -161,9 +181,66 @@ def _sniff_matches_extension(head: bytes, ext: str) -> Optional[bool]:
     return None
 
 
+def _looks_like_android_package(file_obj) -> bool:
+    """ZIP arxiv Android ilova paketimi (APK/AAB) — arxiv boshidagi
+    yozuv nomlari bo'yicha aniqlanadi.
+
+    Office hujjatlari ham ZIP, shuning uchun magic bytes yetarli emas.
+    APK ichida `AndroidManifest.xml` / `classes.dex` bo'ladi, `.docx`
+    ichida esa hech qachon.
+    """
+    probe = _read_head(file_obj, _ARCHIVE_PROBE_SIZE)
+    return any(marker in probe for marker in _ANDROID_ARCHIVE_MARKERS)
+
+
 # =============================================================================
 # ASOSIY VALIDATOR
 # =============================================================================
+
+# =============================================================================
+# SAYT ICHIDA KO'RISH TURI
+# =============================================================================
+
+#: Frontend qaysi ko'rgichni ochishini aytadigan qiymatlar.
+PREVIEW_IMAGE = 'image'
+PREVIEW_VIDEO = 'video'
+PREVIEW_AUDIO = 'audio'
+PREVIEW_PDF = 'pdf'
+PREVIEW_TEXT = 'text'
+PREVIEW_OFFICE = 'office'
+PREVIEW_OTHER = 'other'
+
+_OFFICE_EXTENSIONS = frozenset({'.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'})
+_TEXT_EXTENSIONS = frozenset({'.txt', '.csv'})
+
+
+def preview_kind(file_name: str = '', content_type: str = '', file_type: str = '') -> str:
+    """Fayl saytda qanday ochilishini aniqlash.
+
+    Frontend shu qiymatga qarab rasm, video, PDF yoki hujjat ko'rgichini
+    ochadi. Aniqlanmasa `'other'` — u holda yuklab olish taklif qilinadi.
+    """
+    ext = get_extension(file_name)
+    mime = (content_type or '').lower()
+    kind = (file_type or '').upper()
+
+    if ext in IMAGE_EXTENSIONS or mime.startswith('image/') or kind == 'IMAGE':
+        return PREVIEW_IMAGE
+    if ext in VIDEO_EXTENSIONS or mime.startswith('video/') or kind == 'VIDEO':
+        return PREVIEW_VIDEO
+    if ext in AUDIO_EXTENSIONS or mime.startswith('audio/') or kind == 'AUDIO':
+        return PREVIEW_AUDIO
+    if ext == '.pdf' or mime == 'application/pdf':
+        return PREVIEW_PDF
+    if ext in _TEXT_EXTENSIONS or mime.startswith('text/'):
+        return PREVIEW_TEXT
+    if ext in _OFFICE_EXTENSIONS or any(marker in mime for marker in (
+        'wordprocessingml', 'spreadsheetml', 'presentationml',
+        'msword', 'ms-excel', 'ms-powerpoint',
+    )):
+        return PREVIEW_OFFICE
+    return PREVIEW_OTHER
+
 
 def validate_upload(file_obj) -> str:
     """Bitta faylni tekshirish.
@@ -226,6 +303,15 @@ def validate_upload(file_obj) -> str:
                 f"«{name}» faylining haqiqiy mazmuni {ext} kengaytmasiga mos kelmaydi. "
                 "Faylni to'g'ri formatda saqlab, qaytadan yuklang."
             )
+
+    # Kengaytma almashtirilgan APK: ZIP arxiv bo'lgani uchun `.docx` yoki
+    # `.xlsx` sifatida sniffing'dan o'tib ketadi. Arxiv boshini alohida
+    # tekshiramiz.
+    if head[:4] == b'PK' and _looks_like_android_package(file_obj):
+        raise serializers.ValidationError(
+            f"«{name}» fayli Android ilova paketiga (APK) o'xshaydi. "
+            "Bunday fayllarni yuklash mumkin emas."
+        )
 
     return resolve_file_type(file_obj)
 

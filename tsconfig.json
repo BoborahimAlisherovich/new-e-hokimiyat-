@@ -38,6 +38,9 @@
   "exclude": [
     "node_modules",
     "frontend",
-    "backend/src"
+    "backend/src",
+    "backend",
+    "_to_delete",
+    "Claude outputs"
   ]
 }

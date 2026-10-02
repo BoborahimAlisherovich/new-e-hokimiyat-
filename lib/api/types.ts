@@ -1,3 +1,4 @@
+import type { User } from '@/types'
 /**
  * API Module Type Definitions
  * 
@@ -68,7 +69,12 @@ export interface LoginRequest {
 export interface LoginResponse {
   access: string
   refresh: string
-  user: AuthUser
+  /**
+   * Backend login javobida `UserMeSerializer` ni qaytaradi — ya'ni
+   * `/auth/me` bilan AYNAN bir xil shakl. Ilgari bu yerda qisqartirilgan
+   * `AuthUser` turgan va kesh funksiyasiga uzatib bo'lmasdi.
+   */
+  user: User
 }
 
 /** Autentifikatsiyalangan foydalanuvchi */

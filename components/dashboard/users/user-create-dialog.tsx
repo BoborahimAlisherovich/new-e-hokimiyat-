@@ -297,7 +297,15 @@ export function UserCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-2rem)] max-w-2xl overflow-hidden rounded-3xl border-0 bg-card p-0 shadow-[0_1px_2px_rgba(13,21,36,0.06),0_40px_90px_-30px_rgba(13,21,36,0.35)]">
+      {/*
+        Oyna kengaytirildi: 2xl (672px) -> 5xl (1024px).
+        Ilgari uchta bo'lim ustma-ust joylashib, oyna ichida uzun
+        vertikal skroll hosil bo'lardi — foydalanuvchi «Rol» ni tanlab,
+        keyin parolni ko'rish uchun pastga aylantirib borardi va nima
+        to'ldirilganini bir qarashda ko'ra olmasdi. Keng ekranda
+        bo'limlar YONMA-YON turadi va hammasi bitta oynaga sig'adi.
+      */}
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden rounded-3xl border-0 bg-card p-0 shadow-[0_1px_2px_rgba(13,21,36,0.06),0_40px_90px_-30px_rgba(13,21,36,0.35)]">
         <form onSubmit={handleSubmit} noValidate className="flex max-h-[92dvh] flex-col">
           {/* ---------------------------------------------------------- Sarlavha */}
           <DialogHeader className="px-6 pb-4 pt-6 text-left sm:px-8">
@@ -314,11 +322,17 @@ export function UserCreateDialog({
           </DialogHeader>
 
           {/* ------------------------------------------------------------ Tana */}
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pb-2 sm:px-8">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 sm:px-8">
+            {/*
+              lg dan boshlab ikki ustun: «Vakolat» butun kenglikni oladi
+              (chunki ROL qolgan maydonlarni belgilaydi va birinchi
+              to'ldiriladi), «Shaxs» va «Kirish» esa yonma-yon turadi.
+            */}
+            <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
             {errors.submit && (
               <p
                 role="alert"
-                className="flex items-start gap-2 rounded-xl bg-destructive-soft px-3.5 py-2.5 text-sm text-destructive-soft-foreground"
+                className="flex items-start gap-2 rounded-xl bg-destructive-soft px-3.5 py-2.5 text-sm text-destructive-soft-foreground lg:col-span-2"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {errors.submit}
@@ -326,7 +340,12 @@ export function UserCreateDialog({
             )}
 
             {/* ===== 1. VAKOLAT — rol birinchi, qolgani undan kelib chiqadi */}
-            <Section icon={Shield} title="Vakolat" hint="Rol qolgan majburiy maydonlarni belgilaydi">
+            <Section
+              icon={Shield}
+              title="Vakolat"
+              hint="Rol qolgan majburiy maydonlarni belgilaydi"
+              className="lg:col-span-2"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Rol" required error={errors.role} className="sm:col-span-2">
                   <Select
@@ -631,11 +650,17 @@ export function UserCreateDialog({
                 </Field>
               </div>
             </Section>
+            </div>
           </div>
 
           {/* ------------------------------------------------------------ Tugmalar */}
-          <div className="flex items-center justify-between gap-3 border-t border-border px-6 py-4 sm:px-8">
-            <p className="hidden text-xs text-muted-foreground sm:block">
+          {/*
+            `whitespace-nowrap` — MAJBURIY. Busiz tor ekranda «Bekor qilish»
+            va «Foydalanuvchini yaratish» ikki qatorga bo'linib, tugma
+            qutisidan toshib chiqar va bir-birining ustiga tushardi.
+          */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-4 sm:px-8">
+            <p className="hidden whitespace-nowrap text-xs text-muted-foreground sm:block">
               <span className="text-destructive">*</span> — majburiy maydon
             </p>
             <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
@@ -643,14 +668,14 @@ export function UserCreateDialog({
                 type="button"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="inline-flex h-11 items-center rounded-xl px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
+                className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
               >
                 Bekor qilish
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_-14px_var(--primary)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:translate-y-0 disabled:opacity-60"
+                className="inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_-14px_var(--primary)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:translate-y-0 disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -673,15 +698,17 @@ function Section({
   icon: Icon,
   title,
   hint,
+  className,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
   hint?: string
+  className?: string
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-2xl bg-background p-4 sm:p-5">
+    <section className={cn("h-full rounded-2xl bg-background p-4 sm:p-5", className)}>
       <div className="mb-4 flex items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
           <Icon className="h-4 w-4" />

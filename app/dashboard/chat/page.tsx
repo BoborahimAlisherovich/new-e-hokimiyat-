@@ -26,6 +26,7 @@ import {
 import { Avatar, ConversationList, type ConversationRow } from "@/components/chat/conversation-list"
 import { MessageThread, type MessageAction } from "@/components/chat/message-thread"
 import { MessageComposer } from "@/components/chat/message-composer"
+import { NewChatDialog } from "@/components/chat/new-chat-dialog"
 import { lastSeenLabel, previewOf, toLocal, type LocalMessage } from "@/components/chat/chat-utils"
 
 /**
@@ -94,6 +95,15 @@ export default function ChatPage() {
   const [editing, setEditing] = useState<LocalMessage | null>(null)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [newChatOpen, setNewChatOpen] = useState(false)
+  /**
+   * «+» orqali ochilgan, lekin hali xabar yozilmagan suhbatlar.
+   * Yon ro'yxat faqat YOZISHILGAN suhbatlarni ko'rsatadi — aks holda u
+   * yuz xodimli telefon kitobiga aylanadi. Yangi tanlangan odam esa
+   * darhol ro'yxatda turishi kerak, aks holda foydalanuvchi «qayerga
+   * yozayotganini» yo'qotadi.
+   */
+  const [openedIds, setOpenedIds] = useState<string[]>([])
 
   const activeIdRef = useRef<string | null>(null)
   const typingTimers = useRef<Record<string, number>>({})
@@ -345,6 +355,9 @@ export default function ChatPage() {
       setActiveId(peerId)
       setReplyTo(null)
       setEditing(null)
+      // Hali xabar yozilmagan bo'lsa ham, tanlangan odam yon ro'yxatda
+      // ko'rinib tursin — aks holda «qayerga yozyapman» degan savol tug'iladi.
+      setOpenedIds((prev) => (prev.includes(peerId) ? prev : [...prev, peerId]))
 
       // Mobil: orqaga tugmasi ro'yxatga qaytarishi uchun tarix holati
       if (typeof window !== "undefined" && window.innerWidth < 1024) {
@@ -646,7 +659,20 @@ export default function ChatPage() {
   /* ============================================================== RO'YXAT */
 
   const rows: ConversationRow[] = useMemo(() => {
+    // Yon ro'yxat = YOZISHILGAN suhbatlar + shu seansda «+» orqali
+    // ochilganlar + faol suhbat. Butun xodimlar ro'yxati «+» tugmasi
+    // ortidagi oynada (NewChatDialog).
+    const visible = new Set<string>(openedIds)
+    if (activeId) visible.add(activeId)
+    for (const [id, m] of Object.entries(lastMsg)) {
+      if (m) visible.add(id)
+    }
+    for (const [id, count] of Object.entries(unread)) {
+      if (count > 0) visible.add(id)
+    }
+
     return peers
+      .filter((p) => visible.has(String(p.id)))
       .map((p) => {
         const id = String(p.id)
         const lm = lastMsg[id] ?? null
@@ -667,7 +693,7 @@ export default function ChatPage() {
         if (tb !== ta) return tb - ta
         return displayName(a.peer).localeCompare(displayName(b.peer), "uz")
       })
-  }, [peers, lastMsg, unread, presence, typingPeers, myId])
+  }, [peers, lastMsg, unread, presence, typingPeers, myId, openedIds, activeId])
 
   const activePeer = activeId ? peers.find((p) => String(p.id) === activeId) : undefined
   const activeThread = activeId ? (threads[activeId] ?? emptyThread()) : emptyThread()
@@ -728,6 +754,7 @@ export default function ChatPage() {
               activePeerId={activeId}
               loading={listLoading}
               onSelect={(id) => void openPeer(id)}
+              onNewChat={() => setNewChatOpen(true)}
               language={language}
             />
           </div>
@@ -835,6 +862,15 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* «+» — butun xodimlar ro'yxati, tepasida qidiruv */}
+      <NewChatDialog
+        open={newChatOpen}
+        onOpenChange={setNewChatOpen}
+        peers={peers.filter((p) => String(p.id) !== myId)}
+        recentIds={rows.map((r) => String(r.peer.id))}
+        onSelect={(id) => void openPeer(id)}
+      />
     </>
   )
 }

@@ -87,6 +87,7 @@ export const uzTranslations: Translations = {
     dashboard: 'Asosiy sahifa',
     tasks: 'Topshiriqlar',
     recurringTasks: "Takrorlanuvchi topshiriqlar",
+    calendar: "Kalendar",
     projects: 'Loyihalar',
     users: 'Foydalanuvchilar',
     organizations: 'Tashkilotlar',
@@ -217,6 +218,7 @@ export const uzTranslations: Translations = {
     deadline: 'Muddat',
   },
   tasks: {
+    listTitle: "Topshiriqlar ro'yxati",
     emptyTitle: 'Topshiriqlar topilmadi',
     emptyDescription:
       "Hozircha bu filtrlar bo'yicha topshiriqlar mavjud emas. Yangi topshiriq qo'shing yoki filtrlarni o'zgartiring.",
@@ -429,8 +431,8 @@ export const uzTranslations: Translations = {
     totalCreated: "Jami yaratilgan topshiriqlar",
     statusActive: 'Faol',
     statusPaused: "To'xtatilgan",
-    title: 'Sarlavha',
-    description: 'Tavsif',
+    fieldTitle: 'Sarlavha',
+    fieldDescription: 'Tavsif',
     priority: 'Muhimlik darajasi',
     organizations: 'Tashkilotlar',
     category: 'Soha',

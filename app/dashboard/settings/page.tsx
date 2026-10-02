@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/header"
 import { Tabs } from "@/components/ui/tabs"
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react"
 import { useI18n, useTranslation, type Language } from "@/lib/i18n/context"
 import { getCurrentUser, getNotificationPreferences, getPushPublicKey, getPushStatus, updateNotificationPreferences } from "@/lib/api"
 import { User } from "@/types"
@@ -25,7 +25,13 @@ import {
   syncPushSubscription,
 } from "@/lib/push-notifications"
 
-export default function SettingsPage() {
+/**
+ * `useSearchParams()` ishlatilgani uchun bu komponent Suspense ichida
+ * bo'lishi SHART. Ilgari u sahifaning o'zida edi va `next build`
+ * «useSearchParams() should be wrapped in a suspense boundary» xatosi
+ * bilan yiqilardi — ishlab chiqarish build'i umuman yig'ilmasdi.
+ */
+function SettingsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const t = useTranslation()
@@ -240,5 +246,27 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
+  )
+}
+
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<SettingsFallback />}>
+      <SettingsPageContent />
+    </Suspense>
+  )
+}
+
+/** Sozlamalar yuklanguncha ko'rinadigan bo'sh karkas. */
+function SettingsFallback() {
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+      <div className="mt-6 space-y-3">
+        <div className="h-24 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-24 animate-pulse rounded-2xl bg-muted" />
+      </div>
+    </div>
   )
 }

@@ -1,50 +1,45 @@
 "use client"
 
-import dynamic from "next/dynamic"
+import Link from "next/link"
+import { Map as MapIcon, ArrowRight } from "lucide-react"
 
 import { useI18n } from "@/lib/i18n/context"
 import { getMapLabels } from "@/lib/i18n/map-labels"
 
 /**
- * ANALITIKA SAHIFASIDAGI QISHLOQLAR KESIMI
+ * ESKIRGAN — xaritaning o'zi endi bu yerda chizilmaydi.
  *
- * Bu fayl ilgari 35 725 bayt edi va o'z ichiga oldi:
- *   - 4 tilli matn jadvali (13-98 qatorlar) → lib/i18n/map-labels.ts
- *   - to'liq kirill→lotin transliteratsiya jadvali → lib/translit.ts
- *   - `/api/hatirchi-map` dan 1.21 MiB JSON yuklab, 69 ta SVG yo'lni
- *     (o'rtacha 18.3 KB) DOM'ga yozadigan xarita → components/dashboard/map
- *   - har qishloq uchun `stats: EMPTY_STATS` — shuning uchun xarita butunlay
- *     qizil bo'lib, hamma tooltipda nol turardi
+ * Ilgari analitika sahifasi ham, «Interaktiv xarita» bo'limi ham AYNAN
+ * BIR XIL `DistrictMap` ni chizardi. Xarita 1.21 MiB GeoJSON yuklab,
+ * 69 ta SVG yo'lni DOM'ga yozadi — analitika ochilganda bu ish bekorga
+ * ikkinchi marta bajarilardi.
  *
- * Endi bu shunchaki o'ram: haqiqiy xarita `DistrictMap` da.
+ * Komponent butunlay o'chirilmadi, chunki uni boshqa joyda import
+ * qilingan bo'lishi mumkin: endi u xaritaning o'rniga xarita bo'limiga
+ * havola beradi. Loyihada boshqa hech kim import qilmasa, faylni
+ * bemalol o'chirib tashlash mumkin.
  */
-
-// Xarita faqat kerak bo'lganda yuklanadi — analitika sahifasining asosiy
-// bundle'iga tushmaydi. Loyihada ilgari birorta `next/dynamic` yo'q edi.
-const DistrictMap = dynamic(
-  () => import("@/components/dashboard/map/district-map").then((m) => m.DistrictMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="surface p-4">
-        <div className="h-[420px] animate-pulse rounded-lg bg-muted" aria-busy="true" />
-      </div>
-    ),
-  },
-)
-
 export function VillageAnalytics() {
   const { language: locale } = useI18n()
   const L = getMapLabels(locale)
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground">{L.title}</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">{L.subtitle}</p>
-      </div>
-      <DistrictMap showHeading={false} />
-    </div>
+    <Link
+      href="/dashboard/map"
+      className="group flex items-center gap-4 rounded-[14px] bg-card p-4 shadow-[inset_0_0_0_1px_var(--border)] transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:p-5"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+        <MapIcon className="h-5 w-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-md font-semibold text-foreground">{L.title}</span>
+        <span className="mt-0.5 block text-sm text-muted-foreground">{L.subtitle}</span>
+      </span>
+      <ArrowRight
+        className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
   )
 }
 

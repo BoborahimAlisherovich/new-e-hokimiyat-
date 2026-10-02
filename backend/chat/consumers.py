@@ -420,6 +420,17 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         await self._mark_delivered_sync()
 
     @database_sync_to_async
+    def _typing_sync(self, other_user_id, is_typing):
+        from . import services
+
+        services.broadcast_typing(self.user.id, other_user_id, is_typing)
+
+    async def _typing(self, other_user_id, is_typing=True):
+        # Ilgari bu metod umuman yo'q edi: klient `typing` yuborganda
+        # AttributeError chiqib, butun socket uzilib qolardi.
+        await self._typing_sync(other_user_id, is_typing)
+
+    @database_sync_to_async
     def _resync_sync(self, since_id, other_user_id):
         """
         Uzilish davomida kelgan xabarlarni qaytaradi. Ilgani reconnect

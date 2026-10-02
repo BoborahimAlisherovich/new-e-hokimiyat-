@@ -260,22 +260,28 @@ class UserViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class PositionViewSet(viewsets.ModelViewSet):
-    """Managed positions list used by user forms."""
-
-    queryset = Position.objects.all()
-    serializer_class = PositionSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['is_active']
-    search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at']
-    ordering = ['name']
-
-    def get_permissions(self):
-        if self.action == 'list':
-            return [IsAuthenticated()]
-        return [IsAuthenticated(), CanManageUsers()]
-    
+    # ==========================================================================
+    # DIQQAT — TUZATILGAN JIDDIY XATO
+    # --------------------------------------------------------------------------
+    # Quyidagi amallar (`perform_create`, `block`, `unblock`, `archive`,
+    # `activate`, `chat_users`, `avatar`) `class PositionViewSet` e'lonidan
+    # KEYIN yozilgan edi, ya'ni Python ularni LAVOZIMLAR viewsetiga biriktirib
+    # qo'ygan edi. Oqibati:
+    #
+    #   /api/users/chat_users/            -> 404   (chat «+» oynasi doim bo'sh)
+    #   /api/users/<id>/block/            -> 404   (bloklash ishlamasdi)
+    #   /api/users/<id>/archive/          -> 404
+    #   /api/users/<id>/activate/         -> 404
+    #   /api/users/avatar/                -> 404
+    #
+    # Haqiqiy manzillar `/api/users/positions/...` bo'lib qolgan edi, ya'ni
+    # foydalanuvchini bloklash uchun LAVOZIM endpointiga murojaat qilish
+    # kerak bo'lardi. Bundan tashqari `PositionViewSet.perform_create`
+    # har bir lavozim yaratilganda audit jurnaliga «yangi foydalanuvchi
+    # yaratdi» deb yozardi.
+    #
+    # Endi hammasi o'z joyida — UserViewSet ichida.
+    # ==========================================================================
     def perform_create(self, serializer):
         """Create user and log the action."""
         user = serializer.save()
@@ -617,6 +623,25 @@ class PositionViewSet(viewsets.ModelViewSet):
             'status': 'Rasm muvaffaqiyatli yuklandi',
             'avatar_url': avatar_url
         })
+
+
+
+
+class PositionViewSet(viewsets.ModelViewSet):
+    """Managed positions list used by user forms."""
+
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), CanManageUsers()]
 
 
 class UserAssignmentViewSet(viewsets.ReadOnlyModelViewSet):

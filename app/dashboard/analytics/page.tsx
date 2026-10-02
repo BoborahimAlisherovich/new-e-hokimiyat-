@@ -6,7 +6,6 @@ import { useEffect, useState, useCallback } from "react"
 import { AnalyticsOverview } from "@/components/dashboard/analytics/analytics-overview"
 import { AnalyticsTabs } from "@/components/dashboard/analytics/analytics-tabs"
 import { AnalyticsMetrics } from "@/components/dashboard/analytics/analytics-metrics"
-import { VillageAnalytics } from "@/components/dashboard/analytics/village-analytics"
 import { AnalyticsCharts } from "@/components/dashboard/analytics/analytics-charts"
 import { Loader2 } from "lucide-react"
 import { useGSAPPageEntrance } from "@/hooks/use-gsap"
@@ -28,12 +27,6 @@ export default function AnalyticsPage() {
         getOrganizations(),
         getAppeals()
       ])
-      console.log('Analytics Data Loaded:', {
-        tasks: tasksList?.length || 0,
-        organizations: orgsList?.length || 0,
-        appeals: appealsList?.length || 0,
-        orgsData: orgsList
-      })
       setTasks(Array.isArray(tasksList) ? tasksList : [])
       setOrgs(Array.isArray(orgsList) ? orgsList : [])
       setAppeals(Array.isArray(appealsList) ? appealsList : [])
@@ -92,10 +85,16 @@ export default function AnalyticsPage() {
             <section data-gsap-section>
               <AnalyticsMetrics tasks={tasks} />
             </section>
-            
-            <section data-gsap-section>
-              <VillageAnalytics />
-            </section>
+
+            {/*
+              XARITA BU YERDAN OLIB TASHLANDI.
+              Ilgari aynan bir xil `DistrictMap` ikki joyda chizilardi:
+              shu sahifada va «Interaktiv xarita» bo'limida. Xarita
+              1.21 MiB GeoJSON yuklab, 69 ta SVG yo'lni DOM'ga yozadi —
+              analitika ochilganda bu ish bekorga takrorlanardi va
+              sahifa sezilarli sekinlashardi.
+              Xaritaning yagona joyi: /dashboard/map
+            */}
 
           </div>
         </div>

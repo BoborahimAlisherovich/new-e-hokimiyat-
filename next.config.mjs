@@ -2,17 +2,14 @@
 const nextConfig = {
   output: 'standalone',
 
-  // TODO(yakuniy bosqich): ikkisini ham false ga o'tkazish.
-  // Tip xatolari yashirilganda frontend/backend maydon nomlari mos
-  // kelmasligi kabi buglar ishlab chiqarishga o'tib ketadi (masalan
-  // TaskCreateInput'dagi organization_id: number, backend UUID kutadi).
-  // Hozircha true — mavjud xatolar bosqichma-bosqich tuzatiladi.
+  // Tip tekshiruvi YOQILGAN: `npx tsc --noEmit` toza o'tadi, shuning
+  // uchun uni yashirishning hojati yo'q. Yashirilganda frontend/backend
+  // maydon nomlari mos kelmasligi ishlab chiqarishga o'tib ketardi.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Eslatma: Next 16 da `eslint` kaliti qo'llab-quvvatlanmaydi —
+  // lint alohida `npm run lint` bilan ishga tushiriladi.
 
   // Faqat kerakli ikonka/komponentlar bundle'ga tushadi.
   // lucide-react 82 joyda import qilinadi — bu eng katta yutuq.
@@ -43,6 +40,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'api.ehokimiyat.uz' },
       { protocol: 'https', hostname: 'api.pytech.uz' },
       { protocol: 'http', hostname: 'localhost', port: '8000' },
+      // Rahbariyat rasmlari — Hukumat portalining o'z serveri (landing)
+      { protocol: 'https', hostname: 'api-portal.gov.uz' },
     ],
   },
 

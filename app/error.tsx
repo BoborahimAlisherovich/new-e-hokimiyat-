@@ -31,7 +31,7 @@ export default function GlobalError({
               <Link href="/dashboard">Dashboard</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href="/login">Login</Link>
+              <Link href="/">Bosh sahifa</Link>
             </Button>
           </div>
         </main>

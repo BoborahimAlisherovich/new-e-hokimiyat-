@@ -25,6 +25,39 @@ from django.db.models import Count, Avg, Q
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# MUROJAAT MAYDONLARINI XAVFSIZ O'QISH
+# =============================================================================
+# `TelegramAppeal` da `appeal_text` va `user` maydonlari YO'Q — ular `text`
+# va `telegram_user` deb ataladi. Ilgari bu yerda noto'g'ri nom ishlatilgan
+# va `AttributeError` try blokidan tashqarida ko'tarilib, murojaat tahlili
+# har safar jim ravishda fallback'ga tushib qolgan.
+
+
+def _appeal_text(appeal) -> str:
+    """Murojaat matni. Model maydoni nomi qanday bo'lishidan qat'i nazar."""
+    for attr in ('text', 'appeal_text', 'content', 'description'):
+        value = getattr(appeal, attr, None)
+        if value:
+            return str(value)
+    return ''
+
+
+def _appeal_citizen_name(appeal) -> str:
+    """Murojaat egasining ismi. Topilmasa — «Noma'lum» (o'ylab chiqarilmaydi)."""
+    telegram_user = getattr(appeal, 'telegram_user', None)
+    if telegram_user is not None:
+        full_name = getattr(telegram_user, 'full_name', '') or ''
+        if full_name.strip():
+            return full_name.strip()
+
+    manual_name = (getattr(appeal, 'citizen_name', '') or '').strip()
+    if manual_name:
+        return manual_name
+
+    return "Noma'lum"
+
+
 class AIService:
     """
     Markaziy AI xizmat klassi.
@@ -1759,8 +1792,8 @@ Faqat JSON qaytaring:
             return self._fallback_appeal_analysis(appeal)
         
         # Murojaat matni va kontekst
-        appeal_text = appeal.appeal_text or ""
-        user_name = appeal.user.full_name if appeal.user else "Noma'lum"
+        appeal_text = _appeal_text(appeal)
+        user_name = _appeal_citizen_name(appeal)
         
         analysis_prompt = f"""
 Quyidagi fuqaro murojaatini tahlil qil:
@@ -1809,7 +1842,7 @@ Faqat JSON formatda javob ber, boshqa matn bo'lmasin.
             
             # JSON parse
             if result_text:
-                json_match = re.search(r'\\{.*\\}', str(result_text), re.DOTALL)
+                json_match = re.search(r'\{.*\}', str(result_text), re.DOTALL)
                 if json_match:
                     return json.loads(json_match.group())
             return self._fallback_appeal_analysis(appeal)
@@ -1820,7 +1853,7 @@ Faqat JSON formatda javob ber, boshqa matn bo'lmasin.
     
     def _fallback_appeal_analysis(self, appeal) -> Dict:
         """AI ishlamasa oddiy tahlil"""
-        text = (appeal.appeal_text or "").lower()
+        text = (_appeal_text(appeal)).lower()
         
         # Oddiy keyword tahlil
         categories = {
@@ -1865,7 +1898,7 @@ Faqat JSON formatda javob ber, boshqa matn bo'lmasin.
         prompt = f"""
 Quyidagi fuqaro murojaatiga rasmiy javob tayyorla:
 
-Murojaat: {appeal.appeal_text}
+Murojaat: {_appeal_text(appeal)}
 Murojaat raqami: #{appeal.appeal_number}
 Holat: {appeal.get_status_display() if hasattr(appeal, 'get_status_display') else appeal.status}
 

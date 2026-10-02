@@ -415,7 +415,7 @@ function SidebarFooter({ collapsed }: { collapsed: boolean }) {
     try {
       await logout()
     } finally {
-      window.location.href = "/login"
+      window.location.href = "/"
     }
   }
 

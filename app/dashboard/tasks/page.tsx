@@ -1,15 +1,13 @@
 "use client"
 
-import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowUpDown, Plus, ShieldCheck, Sparkles } from "lucide-react"
+import { CalendarDays, Plus, ShieldCheck, Sparkles } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import {
   EMPTY_TASK_FILTERS,
-  TaskFilters,
   TaskViewTabs,
   viewToParams,
   type PersonOption,
@@ -18,10 +16,15 @@ import {
   type TaskViewCounts,
 } from "@/components/dashboard/tasks/task-filters"
 import { TaskStats } from "@/components/dashboard/tasks/task-stats"
-import { TaskTable } from "@/components/dashboard/tasks/task-table"
-import { PremiumTableSkeleton, PremiumStatsSkeleton } from "@/components/dashboard/premium-dashboard-ui"
-import { cn } from "@/lib/utils"
-import { useTranslation } from "@/lib/i18n/context"
+import {
+  TaskOrderFilterBar,
+  TaskOrderList,
+  TaskSearchField,
+  type TaskSortKey,
+} from "@/components/dashboard/tasks/task-order-list"
+import { TaskAdvancedFilters } from "@/components/dashboard/tasks/task-advanced-filters"
+import { PremiumStatsSkeleton, PremiumTableSkeleton } from "@/components/dashboard/premium-dashboard-ui"
+import { useI18n, useTranslation } from "@/lib/i18n/context"
 import { getCurrentUser } from "@/lib/api/auth.api"
 import { getAssignableOrganizations, type AssignableOrganization } from "@/lib/api/organizations.api"
 import { getSectors, type Sector } from "@/lib/api/sectors.api"
@@ -30,24 +33,19 @@ import { deleteTask, getTaskStats, getTasksPage } from "@/lib/api/tasks.api"
 import type { Task } from "@/types"
 
 /**
- * TOPSHIRIQLAR RO'YXATI
+ * TOPSHIRIQLAR RO'YXATI — DashStack «Order List» ko'rinishida
  *
- * Bu qadamda tuzatilgani:
- *  1. Satrni bosganda modal ochilardi (`TaskDetailDialog`) — mazmun,
- *     isbotlar, chat va tarix telefon ekranida sig'masdi. Endi har bir
- *     topshiriq O'Z SAHIFASIDA ochiladi: /dashboard/tasks/[id].
- *  2. «Tahrirlash» ham shu modalni ochardi (ya'ni tahrirlamasdi). Endi
- *     topshiriq sahifasiga o'tadi — tahrirlash oynasi shu yerda va
- *     huquq backend bayrog'i (can_edit) bilan tekshiriladi.
- *  3. Filtrlar: tezkor ko'rinish tablari (Menga tegishli, Tasdiqlashda,
- *     Kechikkan…), mas'ul yordamchi, muallif va muddat oralig'i qo'shildi.
- *  4. Tashkilot ro'yxati endi `/organizations/assignable/` dan keladi —
- *     hokim yordamchisi faqat O'ZIGA biriktirilgan tashkilotlarni
- *     ko'radi, ilgari esa hamma tashkilot chiqardi.
- *  5. Jadval sarlavhalari bo'yicha saralash ishlaydi (ilgari `sortKey`
- *     uzatilmagani uchun sarlavhalar bosilmasdi).
- *  6. Telefon uchun: tab qatori gorizontal siljiydi, KPI plitalari
- *     ikki ustun, asosiy harakat pastda qadalgan.
+ * Sahifa tuzilishi:
+ *   Sarlavha
+ *   Asosiy harakatlar + qidiruv
+ *   Tezkor ko'rinish tablari (Barchasi / Menga tegishli / Tasdiqlashda …)
+ *   Ko'rsatkichlar
+ *   ORDER LIST PLITASI: filtr qatori → jadval → sahifalash
+ *
+ * Muhim: ro'yxat SERVER tomonida saralanadi va sahifalanadi. Barcha
+ * topshiriqni brauzerga tortib, keyin filtrlash tuman miqyosida ham
+ * sekinlashadi — shuning uchun har bir filtr `query` ga tushadi va
+ * `reqIdRef` kechikkan javobni bekor qiladi.
  */
 
 type StatsShape = {
@@ -70,9 +68,7 @@ const EMPTY_STATS: StatsShape = {
   overdue: 0,
 }
 
-type SortKey = "title" | "deadline" | "created_at" | "status" | "priority"
-
-const SORT_FIELD: Record<SortKey, string> = {
+const SORT_FIELD: Record<TaskSortKey, string> = {
   title: "title",
   deadline: "deadline",
   created_at: "created_at",
@@ -83,13 +79,14 @@ const SORT_FIELD: Record<SortKey, string> = {
 const SCOPE_NOTE: Record<string, string> = {
   curated: "Sizga biriktirilgan tashkilotlar",
   sector: "Sohangizdagi tashkilotlar",
-  own: "O‘z tashkilotingiz",
+  own: "O'z tashkilotingiz",
   all: "",
   none: "",
 }
 
 export default function TasksPage() {
   const t = useTranslation()
+  const { language } = useI18n()
   const router = useRouter()
 
   /* --------------------------------------------------------- Ma'lumotnoma */
@@ -111,10 +108,11 @@ export default function TasksPage() {
   /* ------------------------------------------------------------- Filtrlar */
   const [view, setView] = useState<TaskView>("all")
   const [filters, setFilters] = useState<TaskFilterState>(EMPTY_TASK_FILTERS)
-  const [sortKey, setSortKey] = useState<SortKey>("deadline")
+  const [searchDraft, setSearchDraft] = useState("")
+  const [sortKey, setSortKey] = useState<TaskSortKey>("deadline")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(20)
 
   const reqIdRef = useRef(0)
 
@@ -134,7 +132,6 @@ export default function TasksPage() {
         setOrgScope(assignable?.scope ?? "all")
         setSectors((secs as Sector[]).filter((s) => s.is_active !== false))
 
-        // Mas'ul yordamchi filtri faqat hokim va admin uchun kerak
         const role = String((me as any)?.role ?? "")
         if (role === "HOKIM" || role === "ADMIN") {
           void getUsers({ role: "HOKIM_YORDAMCHISI" } as any, 1, 200)
@@ -143,7 +140,10 @@ export default function TasksPage() {
               setDeputies(
                 (list || []).map((u: any) => ({
                   id: u.id,
-                  name: u.full_name || [u.last_name, u.first_name].filter(Boolean).join(" ") || u.username,
+                  name:
+                    u.full_name ||
+                    [u.last_name, u.first_name].filter(Boolean).join(" ") ||
+                    u.username,
                 })),
               )
             })
@@ -151,7 +151,7 @@ export default function TasksPage() {
         }
       })
       .catch(() => {
-        if (alive) setRefError("Ma’lumotnomani yuklab bo‘lmadi.")
+        if (alive) setRefError("Ma'lumotnomani yuklab bo'lmadi.")
       })
       .finally(() => {
         if (alive) setRefLoaded(true)
@@ -166,11 +166,35 @@ export default function TasksPage() {
   useEffect(() => {
     if (typeof window === "undefined") return
     const media = window.matchMedia?.("(max-width: 767px)")
-    const apply = () => setPageSize(media?.matches ? 20 : 50)
+    const apply = () => setPageSize(media?.matches ? 12 : 20)
     apply()
     media?.addEventListener?.("change", apply)
     return () => media?.removeEventListener?.("change", apply)
   }, [])
+
+  /* --------------------------------------------------- Qidiruvni debounce */
+  // Maydonga yozilgani 400 ms dan keyin filtrga tushadi — har harfda
+  // so'rov ketmasligi uchun.
+  useEffect(() => {
+    if (searchDraft === filters.search) return
+    const timer = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchDraft }))
+    }, 400)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchDraft])
+
+  /**
+   * Teskari yo'nalish: filtr TASHQARIDAN o'zgarsa (chipdagi ✕ bosildi
+   * yoki «Filtrni tozalash») maydon ham tozalanishi kerak.
+   *
+   * Busiz shunday bo'lardi: foydalanuvchi «maktab» deb qidiradi, keyin
+   * chipdagi ✕ ni bosadi — ro'yxat to'liq qaytadi, lekin maydonda hali
+   * ham «maktab» yozuvi turadi. Ya'ni ekran yolg'on gapiradi.
+   */
+  useEffect(() => {
+    setSearchDraft((draft) => (draft === filters.search ? draft : filters.search))
+  }, [filters.search])
 
   /* ------------------------------------------------------------- Rollar */
   const role = String(currentUser?.role ?? "")
@@ -210,7 +234,6 @@ export default function TasksPage() {
         getTaskStats(query as any),
       ])
 
-      // Kechikkan javob yangi natijani bosib ketmasligi uchun
       if (id !== reqIdRef.current) return
 
       setTasks(tasksPage?.results || [])
@@ -223,7 +246,7 @@ export default function TasksPage() {
       setStats(EMPTY_STATS)
       setListError(
         err?.message ||
-          "Topshiriqlarni yuklab bo‘lmadi. Ulanishni tekshirib, qayta urinib ko‘ring.",
+          "Topshiriqlarni yuklab bo'lmadi. Ulanishni tekshirib, qayta urinib ko'ring.",
       )
     } finally {
       if (id === reqIdRef.current) setListLoading(false)
@@ -253,18 +276,18 @@ export default function TasksPage() {
   /* ----------------------------------------------------------- Harakatlar */
   const handleDelete = useCallback(
     async (taskId: number | string) => {
-      if (!window.confirm(t.pages?.tasks?.deleteConfirm ?? "Topshiriq o‘chirilsinmi?")) return
+      if (!window.confirm(t.pages?.tasks?.deleteConfirm ?? "Topshiriq o'chirilsinmi?")) return
       try {
         await deleteTask(taskId)
         await loadList()
       } catch {
-        setListError("O‘chirib bo‘lmadi. Huquqingiz yetarli ekanini tekshirib ko‘ring.")
+        setListError("O'chirib bo'lmadi. Huquqingiz yetarli ekanini tekshirib ko'ring.")
       }
     },
     [loadList, t],
   )
 
-  const handleSort = useCallback((key: SortKey) => {
+  const handleSort = useCallback((key: TaskSortKey) => {
     setSortKey((prev) => {
       if (prev === key) {
         setSortDir((d) => (d === "asc" ? "desc" : "asc"))
@@ -279,16 +302,24 @@ export default function TasksPage() {
     setFilters((prev) => ({ ...prev, ...patch }))
   }, [])
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const clearFilters = useCallback(() => {
+    setSearchDraft("")
+    setFilters(EMPTY_TASK_FILTERS)
+  }, [])
+
+  const filtersDirty = useMemo(
+    () =>
+      (Object.keys(EMPTY_TASK_FILTERS) as (keyof TaskFilterState)[]).some(
+        (k) => filters[k] !== EMPTY_TASK_FILTERS[k],
+      ),
+    [filters],
+  )
+
   const scopeNote = SCOPE_NOTE[orgScope] || undefined
 
   /* ------------------------------------------------------------------ RENDER */
   return (
     <>
-      {/* Sarlavhada harakat tugmalari YO'Q: ular qo'ng'iroq, til va avatar
-          ikonkalari yonida turib, xuddi shu o'lchamdagi ikkilamchi element
-          kabi ko'rinardi va e'tibordan chetda qolardi. Asosiy harakat
-          kontent boshida, alohida qatorda. */}
       <Header
         title={t.pages?.tasks?.title ?? "Topshiriqlar"}
         description={t.pages?.tasks?.description ?? "Ijro intizomi va nazorat"}
@@ -296,42 +327,47 @@ export default function TasksPage() {
 
       <div className="space-y-4 p-4 pb-20 sm:p-6 sm:pb-6">
         {refError && (
-          <p role="alert" className="rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
+          <p
+            role="alert"
+            className="rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground"
+          >
             {refError}
           </p>
         )}
 
-        {/* ASOSIY HARAKAT — sahifaning eng yuqorisida, barcha
-            o'lchamlarda ko'rinadi. Ko'k tugma rangli soya bilan sirtdan
-            ko'tarilib turadi, ikkinchi tugma yumshoq ko'k fonda —
-            ilgari u deyarli oq edi va ko'zga tashlanmasdi. */}
-        {canCreateTask && (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Link
-              href="/dashboard/tasks/new"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-[0_1px_2px_rgb(51_102_255_/_0.28),0_10px_24px_-10px_rgb(51_102_255_/_0.55)] transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-11"
-            >
-              <Plus className="h-5 w-5" aria-hidden />
-              Yangi topshiriq
-            </Link>
-            <Link
-              href="/dashboard/tasks/new/ai"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary-soft px-5 text-[15px] font-semibold text-primary-soft-foreground transition-colors hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-11"
-            >
-              <Sparkles className="h-5 w-5" aria-hidden />
-              AI orqali yaratish
-            </Link>
-            <span className="hidden flex-1 sm:block" />
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              <span className="font-semibold tabular-nums text-foreground">{totalCount}</span> topshiriq
-            </span>
-          </div>
-        )}
+        {/* ------------------------------- Asosiy harakatlar + qidiruv */}
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          {canCreateTask && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Link
+                href="/dashboard/tasks/new"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-[0_1px_2px_rgb(51_102_255_/_0.28),0_10px_24px_-10px_rgb(51_102_255_/_0.55)] transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Plus className="h-5 w-5" aria-hidden />
+                Yangi topshiriq
+              </Link>
+              <Link
+                href="/dashboard/tasks/new/ai"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary-soft px-5 text-[15px] font-semibold text-primary-soft-foreground transition-colors hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Sparkles className="h-5 w-5" aria-hidden />
+                AI orqali yaratish
+              </Link>
+            </div>
+          )}
 
-        {/* Tasdiqlash chaqiruvi — bir qatorli tasma.
-            Ilgari bu uch qatorli karta edi va telefonda ~140px joy
-            olardi; ayni paytda «Tasdiqlashda» tabi va ko'rsatkich
-            plitasi ham xuddi shu narsani aytardi. */}
+          <TaskSearchField value={searchDraft} onChange={setSearchDraft} />
+
+          <Link
+            href="/dashboard/calendar"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-card px-4 text-sm font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)] transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <CalendarDays className="h-4.5 w-4.5" aria-hidden />
+            Kalendar
+          </Link>
+        </div>
+
+        {/* --------------------------------------- Tasdiqlash chaqiruvi */}
         {canApprove && stats.awaiting_approval > 0 && view !== "awaiting" && (
           <button
             type="button"
@@ -340,18 +376,18 @@ export default function TasksPage() {
           >
             <ShieldCheck className="h-4 w-4 shrink-0 text-warning-soft-foreground" aria-hidden />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-warning-soft-foreground">
-              {stats.awaiting_approval} ta topshiriq tasdig‘ingizni kutmoqda
+              {stats.awaiting_approval} ta topshiriq tasdig'ingizni kutmoqda
             </span>
-            <span className="shrink-0 text-sm font-semibold text-warning-soft-foreground">Ko‘rish →</span>
+            <span className="shrink-0 text-sm font-semibold text-warning-soft-foreground">
+              Ko'rish →
+            </span>
           </button>
         )}
 
-        {/* Tezkor ko'rinishlar */}
+        {/* --------------------------------------- Tezkor ko'rinishlar */}
         <TaskViewTabs value={view} counts={viewCounts} canApprove={canApprove} onChange={setView} />
 
-        {/* Ko'rsatkichlar — ixcham qator. «Ijroda / Tasdiqlashda /
-            Kechikkan» sanoqlari tablarda ham bor, shuning uchun bu
-            yerda faqat tablarda yo'q raqamlar qoldirildi. */}
+        {/* --------------------------------------------- Ko'rsatkichlar */}
         {!refLoaded && listLoading ? (
           <PremiumStatsSkeleton count={4} />
         ) : (
@@ -364,76 +400,65 @@ export default function TasksPage() {
           />
         )}
 
-        {/* Filtrlar */}
-        <TaskFilters
+        {/* ------------------- Qo'shimcha filtrlar (soha, tashkilot, mas'ul) */}
+        <TaskAdvancedFilters
           value={filters}
           onChange={patchFilters}
-          onClear={() => setFilters(EMPTY_TASK_FILTERS)}
           sectors={sectors}
           organizations={organizations}
           deputies={isWideScope ? deputies : []}
           showSectorFilter={isWideScope}
-          resultCount={totalCount}
           scopeNote={scopeNote}
         />
 
-        {/* Saralash — telefonda jadval sarlavhalari ko'rinmaydi */}
-        <div className="flex items-center gap-2 md:hidden">
-          <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-          <label htmlFor="task-sort" className="sr-only">
-            Saralash
-          </label>
-          <select
-            id="task-sort"
-            value={`${sortKey}:${sortDir}`}
-            onChange={(e) => {
-              const [k, d] = e.target.value.split(":")
-              setSortKey(k as SortKey)
-              setSortDir(d as "asc" | "desc")
-            }}
-            className="h-10 flex-1 rounded-xl bg-card px-3 text-sm text-foreground shadow-[inset_0_0_0_1px_var(--border)] focus:outline-none"
-          >
-            <option value="deadline:asc">Muddati yaqinlari birinchi</option>
-            <option value="deadline:desc">Muddati uzoqlari birinchi</option>
-            <option value="created_at:desc">Yangi yaratilganlar birinchi</option>
-            <option value="created_at:asc">Eski yaratilganlar birinchi</option>
-            <option value="priority:desc">Muhimligi bo‘yicha</option>
-            <option value="title:asc">Nomi bo‘yicha (A–Z)</option>
-          </select>
-        </div>
-
-        {/* Jadval — faqat shu joy yuklanish holatiga o'tadi */}
+        {/* --------------------------------------------- ORDER LIST plitasi */}
         {listError ? (
-          <div role="alert" className="surface p-6 text-center">
-            <p className="text-md font-semibold text-foreground">Yuklab bo‘lmadi</p>
+          <div
+            role="alert"
+            className="rounded-[14px] bg-card p-6 text-center shadow-[inset_0_0_0_1px_var(--border)]"
+          >
+            <p className="text-md font-semibold text-foreground">Yuklab bo'lmadi</p>
             <p className="mt-1 text-sm text-muted-foreground">{listError}</p>
             <button
               type="button"
               onClick={() => void loadList()}
-              className="mt-4 inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              className="mt-4 inline-flex h-11 items-center rounded-[10px] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Qayta urinish
             </button>
           </div>
         ) : listLoading ? (
-          <div className="surface overflow-hidden">
-            <PremiumTableSkeleton rows={8} columns={5} />
+          <div className="overflow-hidden rounded-[14px] bg-card shadow-[inset_0_0_0_1px_var(--border)]">
+            <PremiumTableSkeleton rows={8} columns={6} />
           </div>
         ) : (
-          <TaskTable
+          <TaskOrderList
             tasks={tasks}
+            locale={language}
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
             sortKey={sortKey}
             sortDir={sortDir}
             onSortChange={handleSort}
-            onEdit={canCreateTask ? (task) => router.push(`/dashboard/tasks/${task.id}?tahrir=1`) : undefined}
+            onEdit={
+              canCreateTask ? (task) => router.push(`/dashboard/tasks/${task.id}?tahrir=1`) : undefined
+            }
             onDelete={canDelete ? handleDelete : undefined}
-            canEdit={canCreateTask}
-            canDelete={canDelete}
+            filterBar={
+              <TaskOrderFilterBar
+                value={filters}
+                onChange={patchFilters}
+                onClear={clearFilters}
+                dirty={filtersDirty}
+              />
+            }
             emptyAction={
               canCreateTask ? (
                 <Link
                   href="/dashboard/tasks/new"
-                  className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                  className="inline-flex h-11 items-center gap-1.5 rounded-[10px] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Birinchi topshiriqni yaratish
@@ -442,56 +467,7 @@ export default function TasksPage() {
             }
           />
         )}
-
-        {/* Sahifalash */}
-        {totalPages > 1 && (
-          <div className="surface flex flex-col items-center justify-between gap-3 p-3 sm:flex-row">
-            <p className="text-sm text-muted-foreground">
-              Jami:{" "}
-              <span className="font-semibold tabular-nums text-foreground">{totalCount}</span>
-            </p>
-            <div className="flex items-center gap-2">
-              <PageBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-                Oldingi
-              </PageBtn>
-              <span className="rounded-lg bg-muted px-3 py-1.5 text-sm font-medium tabular-nums text-foreground">
-                {page} / {totalPages}
-              </span>
-              <PageBtn onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages}>
-                Keyingi
-              </PageBtn>
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Ilgari telefonda pastda suzuvchi tugma bor edi — u kontentni
-          yopib turardi va yuqoridagi qator bilan ikkilanardi. Endi
-          yagona harakat qatori sahifa boshida. */}
     </>
-  )
-}
-
-function PageBtn({
-  onClick,
-  disabled,
-  children,
-}: {
-  onClick: () => void
-  disabled?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border)]",
-        disabled ? "opacity-40" : "hover:bg-muted",
-      )}
-    >
-      {children}
-    </button>
   )
 }

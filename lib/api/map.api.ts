@@ -163,10 +163,16 @@ export function availableMetrics(stats: VillageStatsMap | null): VillageMetric[]
  * yangilash zanjirini boshlaydi. Xarita uchun endpoint yo'qligi kutilgan
  * holat, shuning uchun bu yerda oddiy `fetch` va `null` qaytarish afzal.
  *
- * @param signal Komponent unmount bo'lganda so'rovni bekor qilish uchun
+ * DIQQAT: `AbortSignal` ATAYLAB qabul qilinmaydi (`loadGeometry` bilan bir
+ * xil sabab). `inflight` promise modul darajasida umumiy: StrictMode'da
+ * birinchi mount cleanup'i signalni bekor qilardi, ikkinchi mount o'sha
+ * bekor qilingan promise'ni olardi va `null` TTL davomida keshda qolardi —
+ * xaritada statistika umuman chiqmasdi. Unmount'dan keyingi natijani
+ * chaqiruvchi o'zining `alive` bayrog'i bilan e'tiborsiz qoldiradi.
+ *
  * @returns kod → statistika, yoki null (endpoint yo'q / bo'sh / xato)
  */
-export async function getVillageStats(signal?: AbortSignal): Promise<VillageStatsMap | null> {
+export async function getVillageStats(): Promise<VillageStatsMap | null> {
   if (cache && Date.now() - cache.at < TTL_MS) return cache.data
   if (inflight) return inflight
 
@@ -174,7 +180,6 @@ export async function getVillageStats(signal?: AbortSignal): Promise<VillageStat
 
   inflight = fetch(`${API_BASE}/analytics/villages/`, {
     method: 'GET',
-    signal,
     headers: {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

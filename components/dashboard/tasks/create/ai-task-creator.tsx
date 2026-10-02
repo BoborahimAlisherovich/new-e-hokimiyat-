@@ -7,15 +7,14 @@ import {
   AlertCircle,
   ArrowRight,
   Loader2,
-  Mic,
   Pencil,
   Send,
   Sparkles,
-  Square,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { aiAnalyzeTask } from "@/lib/api/tasks.api"
+import { VoiceRecorder } from "@/components/chat/voice-recorder"
 import { AiRobot, VoiceWave, type RobotState } from "./ai-robot"
 import { addDays, putAiPrefill, type AiPrefill } from "./wizard-types"
 
@@ -106,10 +105,6 @@ export function AiTaskCreator() {
   const [busy, setBusy] = useState(false)
   const [micError, setMicError] = useState<string | null>(null)
 
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const cancelledRef = useRef(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const liveRef = useRef<HTMLDivElement | null>(null)
 
@@ -128,27 +123,6 @@ export function AiTaskCreator() {
       : turns.length === 0
         ? "Topshiriqni ayting — qolganini o‘zim to‘ldiraman"
         : "Yana bir topshiriq aytishingiz mumkin"
-
-  /* --------------------------------------------------- Mikrofonni tozalash */
-  const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-    recorderRef.current = null
-    chunksRef.current = []
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      // Sahifadan chiqilganda yozuv to'xtaydi va natija ISHLATILMAYDI
-      cancelledRef.current = true
-      try {
-        if (recorderRef.current?.state === "recording") recorderRef.current.stop()
-      } catch {
-        /* ignore */
-      }
-      stopStream()
-    }
-  }, [stopStream])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -197,67 +171,23 @@ export function AiTaskCreator() {
   )
 
   /* --------------------------------------------------------- Ovoz yozish */
-  const startRecording = useCallback(async () => {
-    setMicError(null)
-    cancelledRef.current = false
-
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      setMicError("Bu brauzer mikrofonni qo‘llab-quvvatlamaydi. Matn orqali yozing.")
-      return
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      streamRef.current = stream
-      chunksRef.current = []
-
-      const recorder = new MediaRecorder(stream)
-      recorderRef.current = recorder
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data)
-      }
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, {
-          type: recorder.mimeType || "audio/webm",
-        })
-        stopStream()
-        setRecording(false)
-
-        // Bekor qilingan yozuv tahlil qilinmaydi
-        if (cancelledRef.current) return
-        if (blob.size < 1200) {
-          setMicError("Yozuv juda qisqa chiqdi. Yana urinib ko‘ring.")
-          return
-        }
-        void analyze({ audio: blob })
-      }
-
-      recorder.start()
-      setRecording(true)
-      announce("Yozuv boshlandi.")
-    } catch {
-      stopStream()
-      setMicError(
-        "Mikrofonga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering yoki matn orqali yozing.",
-      )
-    }
-  }, [analyze, stopStream])
-
-  const stopRecording = useCallback(() => {
-    cancelledRef.current = false
-    try {
-      if (recorderRef.current?.state === "recording") recorderRef.current.stop()
-      else {
-        stopStream()
-        setRecording(false)
-      }
-    } catch {
-      stopStream()
-      setRecording(false)
-    }
-  }, [stopStream])
+  /**
+   * Ovoz yozish endi umumiy `VoiceRecorder` komponentida — chatdagi
+   * bilan BIR XIL xatti-harakat: bosib turing, qo'yib yuborsangiz ketadi,
+   * chapga sursangiz bekor bo'ladi.
+   *
+   * Ilgari bu yerda alohida `MediaRecorder` mantig'i yotardi va u
+   * chatdagidan farq qilardi: bir marta bosib boshlash, yana bosib
+   * to'xtatish. Bir tizimda ovoz yozishning ikki xil usuli bo'lishi —
+   * foydalanuvchi uchun eng tez unutiladigan narsa.
+   */
+  const handleVoice = useCallback(
+    async (recorded: { blob: Blob }) => {
+      setMicError(null)
+      await analyze({ audio: recorded.blob })
+    },
+    [analyze],
+  )
 
   /* -------------------------------------------------- Wizard'ga o'tkazish */
   const useSuggestion = useCallback(
@@ -304,35 +234,18 @@ export function AiTaskCreator() {
 
           <VoiceWave active={recording} className="mt-5 w-full max-w-[280px]" />
 
-          {/* Mikrofon */}
-          <button
-            type="button"
-            onClick={recording ? stopRecording : startRecording}
-            disabled={busy}
-            aria-pressed={recording}
-            className={cn(
-              "flex h-16 w-16 items-center justify-center rounded-full text-white transition-transform duration-300",
-              "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
-              "disabled:opacity-50",
-              recording
-                ? "bg-destructive shadow-[0_16px_40px_-14px_var(--destructive)]"
-                : "bg-primary shadow-[0_16px_40px_-14px_var(--primary)] hover:-translate-y-0.5",
-            )}
-          >
-            {busy ? (
-              <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-            ) : recording ? (
-              <Square className="h-5 w-5" aria-hidden />
-            ) : (
-              <Mic className="h-6 w-6" aria-hidden />
-            )}
-            <span className="sr-only">
-              {recording ? "Yozuvni to‘xtatish" : "Ovoz bilan aytish"}
-            </span>
-          </button>
-          <p className="mt-2.5 text-[12px] font-medium text-muted-foreground">
-            {recording ? "To‘xtatish uchun bosing" : "Bosib gapiring"}
-          </p>
+          {/*
+            Mikrofon — chatdagi bilan bir xil komponent, «round» ko'rinishi.
+            Bosib turing va gapiring; qo'yib yuborsangiz AI ga ketadi,
+            chapga sursangiz bekor bo'ladi (yozuv umuman saqlanmaydi).
+          */}
+          <VoiceRecorder
+            variant="round"
+            onRecorded={handleVoice}
+            busy={busy}
+            onRecordingChange={setRecording}
+            className="mt-1"
+          />
 
           {micError && (
             <p
