@@ -142,6 +142,12 @@ async function proxyRequest(
       responseHeaders['Set-Cookie'] = setCookie
     }
 
+    // 204/304 javobida body bo'lmaydi; NextResponse unga "" berilsa xato tashlaydi
+    // (DELETE muvaffaqiyatli bo'lsa ham foydalanuvchi 500 ko'rardi)
+    if (response.status === 204 || response.status === 304) {
+      return new NextResponse(null, { status: response.status, headers: responseHeaders })
+    }
+
     if (isBinary) {
       const buffer = await response.arrayBuffer()
       return new NextResponse(buffer, {

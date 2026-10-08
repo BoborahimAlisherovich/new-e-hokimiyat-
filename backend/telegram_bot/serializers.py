@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+from django.utils.text import slugify
 from .models import (
     BotSettings, BotAdmin, BotRegion, TelegramUser,
     AppealCategory, AppealType, TelegramAppeal,
@@ -61,10 +63,28 @@ class BotAdminSerializer(serializers.ModelSerializer):
 
 class BotRegionSerializer(serializers.ModelSerializer):
     """Hudud serializer"""
-    
+
+    # Kod ixtiyoriy: bo'sh bo'lsa name_uz dan yaratiladi (forma uni majburiy ko'rsatmaydi)
+    code = serializers.CharField(
+        max_length=20, required=False, allow_blank=True,
+        validators=[UniqueValidator(queryset=BotRegion.objects.all())],
+    )
+
     class Meta:
         model = BotRegion
         fields = ['id', 'name_uz', 'name_ru', 'name_en', 'code', 'is_active', 'order']
+
+    def validate(self, attrs):
+        name = attrs.get('name_uz') or getattr(self.instance, 'name_uz', '')
+        if not attrs.get('code') and (self.instance is None or 'code' in attrs):
+            base = slugify(name)[:16] or 'hudud'
+            code, n = base, 1
+            others = BotRegion.objects.exclude(pk=getattr(self.instance, 'pk', None))
+            while others.filter(code=code).exists():
+                n += 1
+                code = f'{base}-{n}'
+            attrs['code'] = code
+        return attrs
 
 
 class TelegramUserSerializer(serializers.ModelSerializer):

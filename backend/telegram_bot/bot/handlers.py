@@ -1731,6 +1731,8 @@ def create_appeal(user: TelegramUser, data: Dict, chat_id: int):
         if not type_id or not category_id:
             logger.error(f"Missing type_id or category_id: type_id={type_id}, category_id={category_id}")
             bot.send_message(chat_id, bot_error_text(lang, "Murojaat turi yoki soha tanlanmagan"), reply_markup=main_menu_keyboard(lang))
+            return
+        appeal_type = AppealType.objects.get(id=type_id)
         category = AppealCategory.objects.get(id=category_id)
 
         loc = data.get('location') or {}
