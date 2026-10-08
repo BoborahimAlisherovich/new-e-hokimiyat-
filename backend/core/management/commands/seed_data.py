@@ -150,6 +150,7 @@ class Command(BaseCommand):
         hokim, created = User.objects.get_or_create(
             pnfl='12345678901234',
             defaults={
+                'login': '12345678901234',
                 'first_name': 'Abdulloh',
                 'last_name': 'Karimov',
                 'middle_name': 'Shavkatovich',
@@ -176,6 +177,7 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 pnfl=pnfl,
                 defaults={
+                    'login': pnfl,
                     'first_name': first_name,
                     'last_name': last_name,
                     'middle_name': middle_name,
@@ -208,6 +210,7 @@ class Command(BaseCommand):
         test_rahbari, created = User.objects.get_or_create(
             pnfl='12345678901236',
             defaults={
+                'login': '12345678901236',
                 'first_name': 'Tashkilot',
                 'last_name': 'Rahbari',
                 'middle_name': 'Test',
@@ -228,6 +231,7 @@ class Command(BaseCommand):
         test_masul, created = User.objects.get_or_create(
             pnfl='12345678901237',
             defaults={
+                'login': '12345678901237',
                 'first_name': 'Tashkilot',
                 'last_name': 'Masul',
                 'middle_name': 'Test',
@@ -248,6 +252,7 @@ class Command(BaseCommand):
         test_ijrochi, created = User.objects.get_or_create(
             pnfl='12345678901238',
             defaults={
+                'login': '12345678901238',
                 'first_name': 'Ijrochi',
                 'last_name': 'Test',
                 'middle_name': 'User',
@@ -272,6 +277,7 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 pnfl=pnfl,
                 defaults={
+                    'login': pnfl,
                     'first_name': first_name,
                     'last_name': last_name,
                     'middle_name': 'Tashkilotovich',
@@ -303,6 +309,7 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 pnfl=pnfl,
                 defaults={
+                    'login': pnfl,
                     'first_name': first_name,
                     'last_name': last_name,
                     'middle_name': 'Xodimovich',
