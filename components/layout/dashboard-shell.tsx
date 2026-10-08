@@ -84,25 +84,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 function AccessGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { role, status } = useCurrentUser()
+  const { role, user, status } = useCurrentUser()
 
-  // Ruxsat RENDER vaqtida hisoblanadi. Ilgari `denied` useEffect ichida
-  // o'rnatilardi — bola sahifaning effektlari ota effektidan oldin
-  // ishlagani uchun ruxsatsiz sahifa baribir API'ni so'rab ulgurardi
-  // (konsolda 403). Endi bunday sahifa bir marta ham chizilmaydi.
+  const isUnauthenticated = status !== "loading" && !user
   const denied = !!role && !canAccessDashboardPath(role, pathname)
+  const waitForRole = status === "loading"
 
   useEffect(() => {
-    if (denied) router.replace(getFirstAllowedDashboardPath(role))
-  }, [denied, role, router])
+    if (isUnauthenticated) {
+      window.location.href = "/kirish"
+    } else if (denied) {
+      router.replace(getFirstAllowedDashboardPath(role))
+    }
+  }, [isUnauthenticated, denied, role, router])
 
-  // Rol hali kelmagan va sahifa eng kam huquqli rolga ham ochiq emas
-  // (telegram-bot, users, analytics...) — kontent rolni kutadi.
-  // Hamma uchun ochiq sahifalar darhol chiziladi.
-  const waitForRole = !role && status === "loading" && !canAccessDashboardPath(null, pathname)
-
-  // Ruxsat yo'q — yo'naltirish davomida kontent ko'rsatilmaydi
-  if (denied || waitForRole) {
+  if (denied || waitForRole || isUnauthenticated) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background p-4">
         <div className="surface flex flex-col items-center gap-3 px-6 py-5">
@@ -110,13 +106,13 @@ function AccessGate({ children }: { children: React.ReactNode }) {
             className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary"
             aria-hidden
           />
-          <p className="text-sm text-muted-foreground">Yo‘naltirilmoqda…</p>
+          <p className="text-sm text-muted-foreground">
+            {isUnauthenticated ? "Kirish sahifasiga yo‘naltirilmoqda…" : "Tekshirilmoqda…"}
+          </p>
         </div>
       </div>
     )
   }
 
-  // Hamma rollarga ochiq sahifalarda rol hali kelmagan bo'lsa ham kontent
-  // ko'rsatiladi: sahifalar o'z skeletlarini chizadi.
   return <>{children}</>
 }

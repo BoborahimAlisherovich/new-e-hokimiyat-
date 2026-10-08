@@ -20,6 +20,7 @@ import * as React from "react"
 import type { User, UserRole } from "@/types"
 import { loadCurrentUser, peekCurrentUser, getCachedUserFromStorage } from "@/lib/current-user"
 import { normalizeUserRole } from "@/lib/role-utils"
+import { getAccessToken, clearTokens } from "@/lib/api/client"
 
 export type CurrentUserStatus = "loading" | "ready" | "error"
 
@@ -45,10 +46,14 @@ export function CurrentUserProvider({
   /** 401 bo'lganda chaqiriladi (odatda /login ga yo'naltirish) */
   onUnauthenticated?: () => void
 }) {
-  const [user, setUser] = React.useState<User | null>(() => peekCurrentUser())
-  const [status, setStatus] = React.useState<CurrentUserStatus>(() =>
-    peekCurrentUser() ? "ready" : "loading",
-  )
+  const [user, setUser] = React.useState<User | null>(() => {
+    if (typeof window !== "undefined" && !getAccessToken()) return null
+    return peekCurrentUser()
+  })
+  const [status, setStatus] = React.useState<CurrentUserStatus>(() => {
+    if (typeof window !== "undefined" && !getAccessToken()) return "error"
+    return peekCurrentUser() ? "ready" : "loading"
+  })
   const [error, setError] = React.useState<string | null>(null)
   const [isStale, setIsStale] = React.useState(false)
 
@@ -62,6 +67,17 @@ export function CurrentUserProvider({
 
   const resolve = React.useCallback(
     async (force: boolean) => {
+      const hasToken = typeof window !== "undefined" && Boolean(getAccessToken())
+      if (!hasToken) {
+        if (!mountedRef.current) return
+        setUser(null)
+        setError("Avtorizatsiyadan o'tilmagan")
+        setIsStale(false)
+        setStatus("error")
+        onUnauthenticated?.()
+        return
+      }
+
       try {
         const next = await loadCurrentUser({ force })
         if (!mountedRef.current) return
@@ -74,13 +90,15 @@ export function CurrentUserProvider({
 
         const statusCode = (err as { status?: number })?.status
         if (statusCode === 401) {
+          clearTokens()
+          setUser(null)
+          setStatus("error")
+          setError("Avtorizatsiyadan o'tilmagan")
           onUnauthenticated?.()
           return
         }
 
-        // Zaxira: oxirgi ma'lum foydalanuvchi. Lekin bu holat YASHIRILMAYDI —
-        // isStale/error orqali interfeysga chiqadi.
-        const fallback = getCachedUserFromStorage()
+        const fallback = getAccessToken() ? getCachedUserFromStorage() : null
         setUser(fallback)
         setIsStale(Boolean(fallback))
         setError(
@@ -88,6 +106,10 @@ export function CurrentUserProvider({
             "Foydalanuvchi ma'lumotlarini olish muvaffaqiyatsiz tugadi",
         )
         setStatus("error")
+
+        if (!fallback) {
+          onUnauthenticated?.()
+        }
       }
     },
     [onUnauthenticated],

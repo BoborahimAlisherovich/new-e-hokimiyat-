@@ -10,5 +10,5 @@ import { redirect } from "next/navigation"
  * `/login` oddiy 404 bo'ladi. Fayl faqat orqaga moslik uchun qoldirilgan.
  */
 export default function LoginRemoved() {
-  redirect("/")
+  redirect("/kirish")
 }

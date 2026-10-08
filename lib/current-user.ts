@@ -12,7 +12,7 @@
  */
 
 import type { User } from "@/types"
-import { fetchApi } from "@/lib/api/client"
+import { fetchApi, getAccessToken } from "@/lib/api/client"
 import { TOKEN_KEYS } from "@/lib/api/types"
 
 /** Kesh muddati — navigatsiya paytida takroriy so'rovni to'xtatish uchun yetarli */
@@ -64,6 +64,10 @@ export function loadCurrentUser(options?: { force?: boolean }): Promise<User> {
   }
 
   if (!force && inFlight) return inFlight
+
+  if (typeof window !== "undefined" && !getAccessToken()) {
+    return Promise.reject({ status: 401, message: "Avtorizatsiyadan o'tilmagan" })
+  }
 
   const request = fetchApi<User>("/auth/me/")
     .then((user) => {

@@ -123,8 +123,8 @@ export function isRoleResolved(role?: UserRole | string | null): boolean {
 
 export function getAllowedDashboardPaths(role?: UserRole | null): string[] {
   const normalizedRole = normalizeUserRole(role)
-  if (!normalizedRole) return DASHBOARD_ROUTE_ACCESS[FALLBACK_ROLE]
-  return DASHBOARD_ROUTE_ACCESS[normalizedRole] || DASHBOARD_ROUTE_ACCESS[FALLBACK_ROLE]
+  if (!normalizedRole) return []
+  return DASHBOARD_ROUTE_ACCESS[normalizedRole] || []
 }
 
 /**
